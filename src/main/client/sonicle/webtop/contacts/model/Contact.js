@@ -36,10 +36,11 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContacts'),
 	
 	identifier: 'negative',
-	idProperty: 'contactId',
+	idProperty: 'id',
 	fields: [
-		WTF.field('contactId', 'int', false),
-		WTF.field('folderId', 'int', false),
+		WTF.field('id', 'string', false),
+		WTF.field('contactId', 'string', false),
+		WTF.field('folderId', 'string', false),
 		WTF.field('title', 'string', true),
 		WTF.field('firstName', 'string', true),
 		WTF.field('lastName', 'string', true),
@@ -73,7 +74,6 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('otherCity', 'string', true),
 		WTF.field('otherState', 'string', true),
 		WTF.field('otherCountry', 'string', true),
-		WTF.field('otherTelephone', 'string', true),
 		WTF.field('otherEmail', 'string', true),
 		WTF.field('otherInstantMsg', 'string', true),
 		WTF.field('company', 'string', true),

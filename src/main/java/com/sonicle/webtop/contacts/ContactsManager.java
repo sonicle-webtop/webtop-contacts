@@ -35,8 +35,10 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.dal.FolderDAO;
 import com.sonicle.webtop.contacts.directory.DBDirectoryManager;
+import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
 import com.sonicle.webtop.contacts.directory.DirectoryResult;
 import com.sonicle.webtop.contacts.directory.LDAPDirectoryManager;
@@ -53,12 +55,13 @@ import com.sonicle.webtop.core.dal.UserDAO;
 import com.sonicle.webtop.core.sdk.BaseServiceManager;
 import com.sonicle.webtop.core.RunContext;
 import com.sonicle.webtop.core.bol.IncomingShare;
-import com.sonicle.webtop.core.bol.model.AuthResourceShareInstance;
+import com.sonicle.webtop.core.bol.model.AuthResourceShareElement;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -123,7 +126,7 @@ public class ContactsManager extends BaseServiceManager {
 		Connection coreCon = null;
 		try {
 			CoreManager core = WT.getCoreManager(getRunContext());
-			List<IncomingShare> shares = core.listIncomingSharesForUser(getServiceId(), pid, SHARE_RESOURCE_CONTACTS);
+			List<IncomingShare> shares = null;//core.shareListIncoming(getServiceId(), pid, SHARE_RESOURCE_CONTACTS);
 			
 			//coreCon = WT.getCoreConnection();
 			//UserDAO useDao = UserDAO.getInstance();
@@ -258,7 +261,7 @@ public class ContactsManager extends BaseServiceManager {
 			DBDirectoryManager dbdm = null;
 			DirectoryResult dr = null;
 			for(OFolder fold : folds) {
-				dbdm = createDBDManager(pid, fold, locale);
+				dbdm = createDBDManager(pid, fold.getFolderId(), locale);
 				dr = dbdm.lookup(pattern, locale, false, false);
 				foldContacts.add(new FolderContacts(fold, dr));
 			}
@@ -269,6 +272,95 @@ public class ContactsManager extends BaseServiceManager {
 		}
 	}
 	
+	public Contact getContact(OFolder folder, String contactId, Locale locale) throws Exception {
+		Connection con = null;
+		Contact item = null;
+		
+		try {
+			UserProfile.Id profileId = new UserProfile.Id(folder.getDomainId(), folder.getUserId());
+			DBDirectoryManager dbdm = createDBDManager(profileId, folder.getFolderId(), locale);
+			
+			DirectoryResult dr = dbdm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), locale, true, true, false);
+			DirectoryElement de = dr.elementAt(0);
+			item = new Contact();
+			item.setContactId(contactId);
+			item.setFolderId(de.getField("FOLDER_ID"));
+			item.setListId(de.getField("LIST_ID"));
+			item.setStatus(de.getField("STATUS"));
+			item.setTitle(de.getField(dbdm.getAliasField("TITLE")));
+			item.setFirstName(de.getField(dbdm.getAliasField("FIRSTNAME")));
+			item.setLastName(de.getField(dbdm.getAliasField("LASTNAME")));
+			item.setNickname(de.getField(dbdm.getAliasField("NICKNAME")));
+			item.setGender(de.getField(dbdm.getAliasField("GENDER")));
+			item.setWorkAddress(de.getField(dbdm.getAliasField("CADDRESS")));
+			item.setWorkPostalCode(de.getField(dbdm.getAliasField("CPOSTALCODE")));
+			item.setWorkCity(de.getField(dbdm.getAliasField("CCITY")));
+			item.setWorkState(de.getField(dbdm.getAliasField("CSTATE")));
+			item.setWorkCountry(de.getField(dbdm.getAliasField("CCOUNTRY")));
+			item.setWorkTelephone(de.getField(dbdm.getAliasField("CTELEPHONE")));
+			item.setWorkTelephone2(de.getField(dbdm.getAliasField("CTELEPHONE2")));
+			item.setWorkMobile(de.getField(dbdm.getAliasField("CMOBILE")));
+			item.setWorkFax(de.getField(dbdm.getAliasField("CFAX")));
+			item.setWorkPager(de.getField(dbdm.getAliasField("CPAGER")));
+			item.setWorkEmail(de.getField(dbdm.getAliasField("CEMAIL")));
+			item.setWorkInstantMsg(de.getField(dbdm.getAliasField("CINSTANT_MSG")));
+			item.setHomeAddress(de.getField(dbdm.getAliasField("HADDRESS")));
+			item.setHomePostalCode(de.getField(dbdm.getAliasField("HPOSTALCODE")));
+			item.setHomeCity(de.getField(dbdm.getAliasField("HCITY")));
+			item.setHomeState(de.getField(dbdm.getAliasField("HSTATE")));
+			item.setHomeCountry(de.getField(dbdm.getAliasField("HCOUNTRY")));
+			item.setHomeTelephone(de.getField(dbdm.getAliasField("HTELEPHONE")));
+			item.setHomeMobile(de.getField(dbdm.getAliasField("HMOBILE")));
+			item.setHomeFax(de.getField(dbdm.getAliasField("HFAX")));
+			item.setHomePager(de.getField(dbdm.getAliasField("HPAGER")));
+			item.setHomeEmail(de.getField(dbdm.getAliasField("HEMAIL")));
+			item.setHomeInstantMsg(de.getField(dbdm.getAliasField("HINSTANT_MSG")));
+			item.setOtherAddress(de.getField(dbdm.getAliasField("OADDRESS")));
+			item.setOtherPostalCode(de.getField(dbdm.getAliasField("OPOSTALCODE")));
+			item.setOtherCity(de.getField(dbdm.getAliasField("OCITY")));
+			item.setOtherState(de.getField(dbdm.getAliasField("OSTATE")));
+			item.setOtherCountry(de.getField(dbdm.getAliasField("OCOUNTRY")));
+			item.setOtherEmail(de.getField(dbdm.getAliasField("OEMAIL")));
+			item.setOtherInstantMsg(de.getField(dbdm.getAliasField("OINSTANT_MSG")));
+			item.setCompany(de.getField(dbdm.getAliasField("COMPANY")));
+			item.setFunction(de.getField(dbdm.getAliasField("FUNCTION")));
+			item.setDepartment(de.getField(dbdm.getAliasField("CDEPARTMENT")));
+			item.setManager(de.getField(dbdm.getAliasField("CMANAGER")));
+			item.setAssistant(de.getField(dbdm.getAliasField("CASSISTANT")));
+			item.setAssistantTelephone(de.getField(dbdm.getAliasField("CTELEPHONEASSISTANT")));
+			item.setPartner(de.getField(dbdm.getAliasField("HPARTNER")));
+			item.setBirthday(de.getField(dbdm.getAliasField("HBIRTHDAY")));
+			item.setAnniversary(de.getField(dbdm.getAliasField("HANNIVERSARY")));
+			item.setUrl(de.getField(dbdm.getAliasField("URL")));
+			item.setPhoto(de.getField(dbdm.getAliasField("PHOTO")));
+			item.setNotes(de.getField(dbdm.getAliasField("NOTES")));
+			return item;
+		
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	} 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	private String ofGroup(String group) {
 		return MessageFormat.format("_{0}", group);
 	}
@@ -277,7 +369,7 @@ public class ContactsManager extends BaseServiceManager {
 		return StringUtils.defaultIfBlank(lookupResource(locale, key), StringUtils.removeStart(key, "fields.")).toUpperCase();
 	}
 	
-	private DBDirectoryManager createDBDManager(UserProfile.Id pid, OFolder folder, Locale locale) throws SQLException {
+	private DBDirectoryManager createDBDManager(UserProfile.Id pid, int folderId, Locale locale) throws SQLException {
 		String groupwork = lookupHeader(locale, ContactsLocale.FIELDS_GROUPWORK);
 		String grouphome = lookupHeader(locale, ContactsLocale.FIELDS_GROUPHOME);
 		String groupother = lookupHeader(locale, ContactsLocale.FIELDS_GROUPOTHER);
@@ -409,15 +501,12 @@ public class ContactsManager extends BaseServiceManager {
 				+ "+FOLDER_ID FOLDER_ID,"
 				+ "STATUS STATUS,"
 				+ "LIST_ID LIST_ID }",
-				
-				
-				
 				null,
 				clickfields, null, searchfields, mailfield, faxfield, firstnamefield, lastnamefield, companyfield,
 				"contact_id",
-				"(status is null or status!='D') and (folder_id=" + folder.getFolderId() + ")",
+				"(status is null or status!='D') and (folder_id=" + folderId + ")",
 				"lastname,firstname,company",
-				"contact_id=nextval('seq_contacts'),folder_id=" + folder.getFolderId()
+				"contact_id=nextval('seq_contacts'),folder_id=" + folderId
 		);
 		dbdm.setWritable(true);
 		dbdm.setIsContact(true);

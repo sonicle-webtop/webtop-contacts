@@ -36,7 +36,8 @@ package com.sonicle.webtop.contacts;
 import com.sonicle.commons.validation.Validator;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
-import com.sonicle.commons.web.json.JsListPayload;
+import com.sonicle.commons.web.json.CompositeId;
+import com.sonicle.commons.web.json.PayloadAsList;
 import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.commons.web.json.Payload;
@@ -55,6 +56,7 @@ import com.sonicle.webtop.core.bol.model.FolderBase;
 import com.sonicle.webtop.contacts.bol.js.JsFolderLkp;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
+import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
 import com.sonicle.webtop.core.CoreManager;
@@ -164,7 +166,7 @@ public class Service extends BaseService {
 				new JsonResult("children", children).printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
-				JsListPayload<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
+				PayloadAsList<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
 				
 				for(JsFolderNode folder : pl.data) {
 					if(folder._type.equals(JsFolderNode.TYPE_ROOT)) {
@@ -176,7 +178,7 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				JsListPayload<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
+				PayloadAsList<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
 				
 				for(JsFolderNode share : pl.data) {
 					if(share._type.equals(JsFolderNode.TYPE_FOLDER)) {
@@ -273,7 +275,7 @@ public class Service extends BaseService {
 			
 		} catch(Exception ex) {
 			logger.error("Error executing action ManageFolders", ex);
-			new JsonResult(false, "Error").printTo(out);	
+			new JsonResult(false, "Error").printTo(out);
 		}
 	}
 	
@@ -286,7 +288,15 @@ public class Service extends BaseService {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
+				CompositeId cid = new CompositeId(id, 2); 
 				
+				OFolder folder = manager.getFolder(Integer.valueOf(cid.getToken(0)));
+				if(folder == null) throw new Exception("Folder not found");
+				
+				Contact contact = manager.getContact(folder, cid.getToken(1), up.getLocale());
+				item = new JsContact(folder, contact);
+				
+				/*
 				item = new JsContact();
 				item.contactId = 1;
 				item.folderId = 1;
@@ -338,6 +348,7 @@ public class Service extends BaseService {
 				item.url = "url";
 				item.photo = "http://www.sentieriselvaggi.it/wp-content/uploads/public/articoli/46507/Images/brad-pitt.jpg";
 				item.notes = "notes";
+				*/
 				
 				//Event evt = manager.readEvent(id);
 				//item = new JsContact(evt, manager.getCalendarGroupId(evt.getCalendarId()));
@@ -378,7 +389,7 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error executing action ManageEvents", ex);
+			logger.error("Error executing action ManageContacts", ex);
 			new JsonResult(false, "Error").printTo(out);	
 		}
 	}
@@ -395,29 +406,12 @@ public class Service extends BaseService {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				
-				String query = ServletUtils.getStringParameter(request, "query", null);
-				String letter = ServletUtils.getStringParameter(request, "letter", null);
-				String pattern;
-				
-				if(StringUtils.isEmpty(query)) {
-					if(StringUtils.isEmpty(letter)) {
-						pattern = "A%";
-					} else if(letter.equals("*")) {
-						pattern = "%";
-					} else {
-						pattern = letter + "%";
-					}
-				} else {
-					pattern = StringUtils.replace(query, " ", "%");
-					pattern = StringUtils.prependIfMissingIgnoreCase(pattern, "%");
-					pattern = StringUtils.appendIfMissingIgnoreCase(pattern, "%");
-				}
-				
+				String query = ServletUtils.getStringParameter(request, "query", "%");
+				String pattern = StringUtils.replace(query, " ", "%");
 				
 				// Generates fields and columnsInfo dynamically
 				ArrayList<ExtFieldMeta> fields = new ArrayList<>();
 				ArrayList<ExtGridColumnMeta> colsInfo = new ArrayList<>();
-				
 				
 				// Get contacts for each visible folder
 				Integer[] checked = getCheckedFolders();
@@ -469,7 +463,10 @@ public class Service extends BaseService {
 								}
 							}
 							
-							//items.add(new JsGridContact(foldContact.folder, foldContact.result.elementAt(i)));
+							fields.add(new ExtFieldMeta("id").setType("string"));
+							colsInfo.add(new ExtGridColumnMeta("id").setHidden(true));
+							item.put("id", new CompositeId(item.get("folderId"), item.get("contactId")).toString());
+							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
 							items.add(item);
 						}
 					}

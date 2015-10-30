@@ -31,23 +31,14 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.GridContact', {
-	extend: 'WT.model.Base',
+package com.sonicle.webtop.contacts.bol;
+
+import com.sonicle.webtop.contacts.jooq.tables.pojos.ListRecipients;
+
+/**
+ *
+ * @author malbinola
+ */
+public class OListRecipient extends ListRecipients {
 	
-	idProperty: 'contactId',
-	fields: [
-		WTF.roField('contactId', 'string'),
-		WTF.roField('listId', 'string'),
-		WTF.roField('title', 'string'),
-		WTF.roField('firstName', 'string'),
-		WTF.roField('lastName', 'string'),
-		WTF.roField('workTelephone', 'string'),
-		WTF.roField('workMobile', 'string'),
-		WTF.roField('workEmail', 'string'),
-		WTF.roField('homeTelephone', 'string'),
-		WTF.roField('homeMobile', 'string'),
-		WTF.roField('homeEmail', 'string'),
-		WTF.roField('birthday', 'date', {dateFormat: 'Y-m-d'}),
-		WTF.roField('_profileId', 'string')
-	]
-});
+}

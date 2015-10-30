@@ -130,6 +130,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					fieldLabel: me.mys.res('contact.fld-title.lbl')
 				}, {
 					xtype: 'textfield',
+					reference: 'fldfirstname',
 					bind: '{record.firstName}',
 					fieldLabel: me.mys.res('contact.fld-firstName.lbl')
 				}, {
@@ -372,10 +373,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldLabel: me.mys.res('contact.fld-country.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.otherTelephone}',
-				fieldLabel: me.mys.res('contact.fld-telephone.lbl')	
-			}, {
-				xtype: 'textfield',
 				bind: '{record.otherInstantMsg}',
 				fieldLabel: me.mys.res('contact.fld-instantMsg.lbl')
 			}]
@@ -425,7 +422,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				bind: '{record.url}',
 				fieldLabel: me.mys.res('contact.fld-url.lbl')
 			}, {
-				xtype: 'soseparator'
+				xtype: 'formseparator'
 			}, {
 				xtype: 'textfield',
 				bind: '{record.partner}',
@@ -457,7 +454,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.add({
 			region: 'center',
 			xtype: 'tabpanel',
-			reference: 'tabs',
 			defaults: {
 				
 			},
@@ -469,12 +465,16 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	
 	onViewLoad: function(s, success) {
 		if(!success) return;
-		/*
 		var me = this,
-				model = me.getModel(),
-				main = me.lookupReference('tabs').getComponent('main'),
-				photo = main.lookupReference('fldphoto');
-		*/
-
+				//model = me.getModel(),
+				owner = me.lref('fldowner');
+		
+		if(me.isMode(me.MODE_NEW)) {
+			owner.setDisabled(false);
+		} else if(me.isMode(me.MODE_EDIT)) {
+			owner.setDisabled(true);
+		}
+		
+		me.lref('fldfirstname').focus(true);
 	}
 });

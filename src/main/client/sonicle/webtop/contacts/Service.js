@@ -42,12 +42,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	],
 	
 	init: function() {
-		var me = this;
+		var me = this, ies, iitems = [];
 		
 		me.initActions();
 		me.initCxm();
 		
-		//me.on('activate', me.onActivate, me);
+		me.on('activate', me.onActivate, me);
 		
 		me.setToolbar(Ext.create({
 			xtype: 'toolbar',
@@ -62,15 +62,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						search: {
 							cls: Ext.baseCSSPrefix + 'form-search-trigger',
 							handler: function(s) {
-								me.refreshContacts(s.getValue());
+								me.queryContacts(s.getValue());
 							}
 						}
 					},
 					listeners: {
 						specialkey: function(s, e) {
-							if(e.getKey() === e.ENTER) {
-								me.refreshContacts(s.getValue());
-							}
+							if(e.getKey() === e.ENTER) me.queryContacts(s.getValue());
 						}
 					}
 				}
@@ -124,87 +122,119 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			]
 		}));
 		
+		ies = ['#','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','*'];
+		for(var i=0; i<ies.length; i++) {
+			iitems.push({
+				text: ies[i],
+				handler: function(s) {
+					me.refreshContacts((s.getText() === '*') ? '%' : s.getText()+'%');
+				}
+			});
+		}
+		
 		me.setMainComponent(Ext.create({
-			xtype: 'gridpanel',
-			store: {
-				model: 'WT.model.Empty',
-				proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'contacts', {
-					extraParams: {
-						query: 'Bul'
-					}
-				}),
-				listeners: {
-					metachange: function(s, meta) {
-						if(meta.colsInfo) {
-							var colsInfo = [];
-							colsInfo.push({
-								xtype: 'soiconcolumn',
-								iconField: function(rec) {
-									return WTF.cssIconCls(me.XID, (rec.get('listId')>0) ? 'contact-list' : 'contact', 'xs');
-								},
-								iconSize: WTU.imgSizeToPx('xs'),
-								width: 30
-							});
-							
-							Ext.iterate(meta.colsInfo, function(col,i) {
-								if(col.dataIndex === 'folderId') {
-									//col.header = me.res('event.gp-planning.recipient.lbl');
-									col.xtype = 'socolorcolumn',
-									col.header = 'Gruppo';
-									col.colorField = 'folderColor',
-									col.displayField = 'folderName',
-									col.width = 100;
-									col.hidden = false;
-								}
-								colsInfo.push(col);
-							});
-							
-							/*
-							var colsInfo = [];
-							Ext.iterate(meta.colsInfo, function(col,i) {
-								if(col.dataIndex === 'recipient') {
-									col.header = me.mys.res('event.gp-planning.recipient.lbl');
-									col.locked = true;
-									col.width = 200;
+			xtype: 'container',
+			layout: 'border',
+			referenceHolder: true,
+			items: [{
+				region: 'center',
+				xtype: 'gridpanel',
+				reference: 'gpcontacts',
+				store: {
+					model: 'WT.model.Empty',
+					proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'contacts', {
+						extraParams: {
+							query: null
+						}
+					}),
+					listeners: {
+						metachange: function(s, meta) {
+							if(meta.colsInfo) {
+								var colsInfo = [];
+								colsInfo.push({
+									xtype: 'soiconcolumn',
+									iconField: function(rec) {
+										return WTF.cssIconCls(me.XID, (rec.get('listId')>0) ? 'contact-list' : 'contact', 'xs');
+									},
+									iconSize: WTU.imgSizeToPx('xs'),
+									width: 30
+								});
 
-									// Add this column as is... skip nesting
-									colsInfo.push(col);
-
-								} else {
-									col.renderer = WTF.clsColRenderer({
-										clsPrefix: 'wtcal-planning-',
-										moreCls: (col.overlaps) ? 'wtcal-planning-overlaps' : null
-									});
-									col.lockable = false;
-									col.sortable = false;
-									col.hideable = false;
-									col.menuDisabled = true;
-									col.draggable = false;
-									col.width = 55;
-
-									// Nest this column under right day date
-									if(colsInfo[colsInfo.length-1].date !== col.date) {
-										colsInfo.push({
-											date: col.date,
-											text: col.date,
-											columns: []
-										});
+								Ext.iterate(meta.colsInfo, function(col,i) {
+									if(col.dataIndex === 'folderId') {
+										//col.header = me.res('event.gp-planning.recipient.lbl');
+										col.xtype = 'socolorcolumn',
+										col.header = 'Gruppo';
+										col.colorField = 'folderColor',
+										col.displayField = 'folderName',
+										col.width = 100;
+										col.hidden = false;
 									}
-									colsInfo[colsInfo.length-1].columns.push(col);
-								}
-							});
-							*/
-							me.getMainComponent().reconfigure(s, colsInfo);
+									colsInfo.push(col);
+								});
+
+								/*
+								var colsInfo = [];
+								Ext.iterate(meta.colsInfo, function(col,i) {
+									if(col.dataIndex === 'recipient') {
+										col.header = me.mys.res('event.gp-planning.recipient.lbl');
+										col.locked = true;
+										col.width = 200;
+
+										// Add this column as is... skip nesting
+										colsInfo.push(col);
+
+									} else {
+										col.renderer = WTF.clsColRenderer({
+											clsPrefix: 'wtcal-planning-',
+											moreCls: (col.overlaps) ? 'wtcal-planning-overlaps' : null
+										});
+										col.lockable = false;
+										col.sortable = false;
+										col.hideable = false;
+										col.menuDisabled = true;
+										col.draggable = false;
+										col.width = 55;
+
+										// Nest this column under right day date
+										if(colsInfo[colsInfo.length-1].date !== col.date) {
+											colsInfo.push({
+												date: col.date,
+												text: col.date,
+												columns: []
+											});
+										}
+										colsInfo[colsInfo.length-1].columns.push(col);
+									}
+								});
+								*/
+								me.gpContacts().reconfigure(s, colsInfo);
+							}
 						}
 					}
+				},
+				columns: [],
+				listeners: {
+					rowdblclick: function(s, rec) {
+						//TODO: handle edit permission
+						me.editContact(rec.get('_profileId'), rec.get('id'));
+					}
 				}
-			},
-			columns: []
+			}, {
+				region: 'east',
+				xtype: 'toolbar',
+				vertical: true,
+				overflowHandler: 'scroller',
+				defaults: {
+					padding: 0
+				},
+				items: iitems
+			}]
 		}));
-		
-		Ext.defer(function() {
-			me.refreshContacts();
-		}, 1000);
+	},
+	
+	gpContacts: function() {
+		return this.getMainComponent().lookupReference('gpcontacts');
 	},
 	
 	initActions: function() {
@@ -246,7 +276,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me._showHideAllFolders(me.getSelectedRootFolder(), false);
 			}
 		});
-		me.addAction('editContact', {
+		
+		
+		
+		
+		
+		
+		
+		
+		me.addAction('dummyEdit', {
 			handler: function() {
 				//var node = me.getSelectedFolder();
 				//if(node) me.addContact('matteo.albinola@sonicleldap', 1);
@@ -262,9 +300,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			xtype: 'menu',
 			items: [
 				me.getAction('addFolder'),
-				'-',
-				me.getAction('addContact'),
-				me.getAction('editContact')
+				me.getAction('dummyEdit')
 				//TODO: azioni altri servizi?
 			]
 		}));
@@ -294,6 +330,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}));
 	},
 	
+	onActivate: function() {
+		var me = this;
+		me.refreshContacts();
+	},
+	
 	onFolderViewSave: function(s, success, model) {
 		if(!success) return;
 		var me = this,
@@ -303,6 +344,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		// Look for root folder and reload it!
 		node = store.getNodeById(model.get('_profileId'));
 		if(node) store.load({node: node});
+	},
+	
+	queryContacts: function(txt) {
+		this.refreshContacts('%'+txt+'%');
+	},
+	
+	refreshContacts: function(query) {
+		var me = this,
+				sto = me.gpContacts().getStore();
+		if(query) {
+			WTU.loadExtraParams(sto, {
+				query: query
+			});
+		} else {
+			sto.load();
+		}
 	},
 	
 	addFolder: function(domainId, userId) {
@@ -340,18 +397,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}, this);
 	},
 	
-	refreshContacts: function(query) {
-		var me = this,
-				sto = me.getMainComponent().getStore();
-		if(query) {
-			WTU.loadExtraParams(sto, {
-				query: query
-			});
-		} else {
-			sto.load();
-		}
-	},
-	
 	editContact: function(profileId, id) {
 		var me = this,
 				vwc = WT.createView(me.ID, 'view.Contact', {
@@ -364,7 +409,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		vwc.show(false, function() {
 			vwc.getView().beginEdit({
 				data: {
-					contactId: id
+					id: id
 				}
 			});
 		});

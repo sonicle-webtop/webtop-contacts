@@ -33,13 +33,19 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.web.json.CompositeId;
+import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.contacts.bol.model.Contact;
+import com.sonicle.webtop.core.sdk.UserProfile;
+
 /**
  *
  * @author malbinola
  */
 public class JsContact {
-	public Integer contactId;
-	public Integer folderId;
+	public String id;
+	public String contactId;
+	public String folderId;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -73,7 +79,6 @@ public class JsContact {
 	public String otherCity;
 	public String otherState;
 	public String otherCountry;
-	public String otherTelephone;
 	public String otherEmail;
 	public String otherInstantMsg;
 	public String company;
@@ -88,4 +93,63 @@ public class JsContact {
 	public String url;
 	public String photo;
 	public String notes;
+	public String _profileId;
+	
+	public JsContact() {
+		
+	}
+	
+	public JsContact(OFolder folder, Contact contact) {
+		id = new CompositeId(contact.getFolderId(), contact.getContactId()).toString();
+		contactId = contact.getContactId();
+		folderId = contact.getFolderId();
+		title = contact.getTitle();
+		firstName = contact.getFirstName();
+		lastName = contact.getLastName();
+		nickname = contact.getNickname();
+		gender = contact.getGender();
+		workAddress = contact.getWorkAddress();
+		workPostalCode = contact.getWorkPostalCode();
+		workCity = contact.getWorkCity();
+		workState = contact.getWorkState();
+		workCountry = contact.getWorkCountry();
+		workTelephone = contact.getWorkTelephone();
+		workTelephone2 = contact.getWorkTelephone2();
+		workMobile = contact.getWorkMobile();
+		workFax = contact.getWorkFax();
+		workPager = contact.getWorkPager();
+		workEmail = contact.getWorkEmail();
+		workInstantMsg = contact.getWorkInstantMsg();
+		homeAddress = contact.getHomeAddress();
+		homePostalCode = contact.getHomePostalCode();
+		homeCity = contact.getHomeCity();
+		homeState = contact.getHomeState();
+		homeCountry = contact.getHomeCountry();
+		homeTelephone = contact.getHomeTelephone();
+		homeMobile = contact.getHomeMobile();
+		homeFax = contact.getHomeFax();
+		homePager = contact.getHomePager();
+		homeEmail = contact.getHomeEmail();
+		homeInstantMsg = contact.getHomeInstantMsg();
+		otherAddress = contact.getOtherAddress();
+		otherPostalCode = contact.getOtherPostalCode();
+		otherCity = contact.getOtherCity();
+		otherState = contact.getOtherState();
+		otherCountry = contact.getOtherCountry();
+		otherEmail = contact.getOtherEmail();
+		otherInstantMsg = contact.getOtherInstantMsg();
+		company = contact.getCompany();
+		function = contact.getFunction();
+		department = contact.getDepartment();
+		manager = contact.getManager();
+		assistant = contact.getAssistant();
+		assistantTelephone = contact.getAssistantTelephone();
+		partner = contact.getPartner();
+		birthday = contact.getBirthday();
+		anniversary = contact.getAnniversary();
+		url = contact.getUrl();
+		photo = contact.getPhoto();
+		notes = contact.getNotes();
+		_profileId = new UserProfile.Id(folder.getDomainId(), folder.getUserId()).toString();
+	}
 }
