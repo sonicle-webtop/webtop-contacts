@@ -34,7 +34,7 @@
 package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.web.json.CompositeId;
-import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.core.sdk.UserProfile;
 
@@ -95,11 +95,9 @@ public class JsContact {
 	public String notes;
 	public String _profileId;
 	
-	public JsContact() {
-		
-	}
+	public JsContact() {}
 	
-	public JsContact(OFolder folder, Contact contact) {
+	public JsContact(UserProfile.Id ownerId, Contact contact) {
 		id = new CompositeId(contact.getFolderId(), contact.getContactId()).toString();
 		contactId = contact.getContactId();
 		folderId = contact.getFolderId();
@@ -150,6 +148,6 @@ public class JsContact {
 		url = contact.getUrl();
 		photo = contact.getPhoto();
 		notes = contact.getNotes();
-		_profileId = new UserProfile.Id(folder.getDomainId(), folder.getUserId()).toString();
+		_profileId = ownerId.toString();
 	}
 }

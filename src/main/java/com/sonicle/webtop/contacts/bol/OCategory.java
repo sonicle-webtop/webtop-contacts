@@ -31,22 +31,29 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.FolderLkp', {
-	extend: 'WT.model.Base',
+package com.sonicle.webtop.contacts.bol;
+
+import com.sonicle.webtop.contacts.jooq.tables.pojos.Categories;
+import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
+import com.sonicle.webtop.core.sdk.UserProfile;
+import org.apache.commons.lang3.StringUtils;
+
+/**
+ *
+ * @author malbinola
+ */
+public class OCategory extends Categories {
 	
-	idProperty: 'folderId',
-	fields: [
-		WTF.field('folderId', 'int', false),
-		WTF.field('domainId', 'string', false),
-		WTF.field('userId', 'string', false),
-		WTF.field('name', 'string', false),
-		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
-		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
-		WTF.calcField('colorCls', 'string', 'color', function(v, rec) {
-			return (rec.get('color')) ? 'wt-palette-' + rec.get('color').replace('#', '') : v;
-		}),
-		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
-			return rec.get('userId') + '@' + rec.get('domainId');
-		})
-	]
-});
+	public UserProfile.Id getProfileId() {
+		return new UserProfile.Id(getDomainId(), getUserId());
+	}
+	
+	public String getHexColor() {
+		String color = getColor();
+		return (StringUtils.indexOf(color, "#") == 0) ? StringUtils.substring(color, 1) : color;
+	}
+	
+	public void setRevisionInfo(RevisionInfo revision) {
+		setLastModified(revision.lastModified);
+	}
+}

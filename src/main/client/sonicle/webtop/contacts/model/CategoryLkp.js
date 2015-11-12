@@ -31,28 +31,22 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol.js;
-
-import java.util.ArrayList;
-
-/**
- *
- * @author malbinola
- */
-public class JsFolderNode {
-	public static final String TYPE_ROOT = "root";
-	public static final String TYPE_FOLDER = "folder";
+Ext.define('Sonicle.webtop.contacts.model.CategoryLkp', {
+	extend: 'WT.model.Base',
 	
-	public String id;
-	public String _type;
-	public String _rootId;
-	public Boolean _visible;
-	
-	public JsFolderNode() {}
-	
-	public static class JsFolderNodeList extends ArrayList<JsFolderNode> {
-		public JsFolderNodeList() {
-			super();
-		}
-	}
-}
+	idProperty: 'categoryId',
+	fields: [
+		WTF.field('categoryId', 'int', false),
+		WTF.field('domainId', 'string', false),
+		WTF.field('userId', 'string', false),
+		WTF.field('name', 'string', false),
+		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
+		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
+		WTF.calcField('colorCls', 'string', 'color', function(v, rec) {
+			return (rec.get('color')) ? 'wt-palette-' + rec.get('color').replace('#', '') : v;
+		}),
+		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
+			return rec.get('userId') + '@' + rec.get('domainId');
+		})
+	]
+});

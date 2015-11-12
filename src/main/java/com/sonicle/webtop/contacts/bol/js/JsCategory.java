@@ -31,26 +31,48 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.Folder', {
-	extend: 'WT.model.Base',
-	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageFolders'),
+package com.sonicle.webtop.contacts.bol.js;
+
+import com.sonicle.webtop.contacts.bol.OCategory;
+
+/**
+ *
+ * @author malbinola
+ */
+public class JsCategory {
+	public Integer categoryId;
+	public String domainId;
+	public String userId;
+	public Boolean builtIn;
+	public String name;
+	public String description;
+	public String color;
+	public Boolean sync;
+	public Boolean isDefault;
 	
-	identifier: 'negative',
-	idProperty: 'folderId',
-	fields: [
-		WTF.field('folderId', 'int', false),
-		WTF.field('domainId', 'string', false),
-		WTF.field('userId', 'string', false),
-		WTF.field('name', 'string', false),
-		WTF.field('description', 'string', true),
-		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
-		WTF.calcField('colorCls', 'string', 'color', function(v, rec) {
-			return (rec.get('color')) ? 'wt-palette-' + rec.get('color').replace('#', '') : v;
-		}),
-		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
-		WTF.field('sync', 'boolean', false, {defaultValue: false}),
-		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
-			return rec.get('userId') + '@' + rec.get('domainId');
-		})
-	]
-});
+	public JsCategory(OCategory bean) {
+		categoryId = bean.getCategoryId();
+		domainId = bean.getDomainId();
+		userId = bean.getUserId();
+		builtIn = bean.getBuiltIn();
+		name = bean.getName();
+		description = bean.getDescription();
+		color = bean.getColor();
+		sync = bean.getSync();
+		isDefault = bean.getIsDefault();
+	}
+	
+	public static OCategory buildFolder(JsCategory js) {
+		OCategory bean = new OCategory();
+		bean.setCategoryId(js.categoryId);
+		bean.setDomainId(js.domainId);
+		bean.setUserId(js.userId);
+		bean.setBuiltIn(js.builtIn);
+		bean.setName(js.name);
+		bean.setDescription(js.description);
+		bean.setColor(js.color);
+		bean.setSync(js.sync);
+		bean.setIsDefault(js.isDefault);
+		return bean;
+	}
+}

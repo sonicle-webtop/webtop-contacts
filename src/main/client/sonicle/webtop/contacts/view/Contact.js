@@ -39,7 +39,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		'Sonicle.form.field.IconComboBox',
 		'Sonicle.form.field.Image',
 		'Sonicle.webtop.core.store.Gender',
-		'Sonicle.webtop.contacts.model.FolderLkp'
+		'Sonicle.webtop.contacts.model.CategoryLkp'
 	],
 	
 	dockableConfig: {
@@ -80,7 +80,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					store: {
 						autoLoad: true,
 						model: 'WT.model.Simple',
-						proxy: WTF.proxy(me.mys.ID, 'LookupRootFolders', 'folders')
+						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
 					},
 					fieldLabel: me.mys.res('contact.fld-owner.lbl'),
 					labelWidth: 75,
@@ -113,16 +113,16 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					width: 400
 				},
 				items: [Ext.create(
-					WTF.lookupCombo('folderId', 'name', {
+					WTF.lookupCombo('categoryId', 'name', {
 						xtype: 'soiconcombo',
-						bind: '{record.folderId}',
+						bind: '{record.categoryId}',
 						store: {
 							autoLoad: true,
-							model: 'Sonicle.webtop.contacts.model.FolderLkp',
-							proxy: WTF.proxy(me.mys.ID, 'LookupFolders', 'folders')
+							model: 'Sonicle.webtop.contacts.model.CategoryLkp',
+							proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'categorys')
 						},
 						iconClsField: 'colorCls',
-						fieldLabel: me.mys.res('contact.fld-folder.lbl')
+						fieldLabel: me.mys.res('contact.fld-category.lbl')
 					})
 				), {
 					xtype: 'textfield',

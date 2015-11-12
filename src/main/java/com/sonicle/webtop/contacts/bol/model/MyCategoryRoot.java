@@ -31,28 +31,19 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol.js;
+package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.core.bol.model.SharePermsRoot;
+import com.sonicle.webtop.core.sdk.UserProfile;
 
 /**
  *
  * @author malbinola
  */
-public class JsFolderLkp {
-	public Integer folderId;
-	public String domainId;
-	public String userId;
-	public String name;
-	public Boolean isDefault;
-	public String color;
+public class MyCategoryRoot extends CategoryRoot {
+	public static final String SHARE_ID = "0";
 	
-	public void fillFrom(OFolder item) {
-		folderId = item.getFolderId();
-		domainId = item.getDomainId();
-		userId = item.getUserId();
-		name = item.getName();
-		isDefault = item.getIsDefault();
-		color = item.getHexColor();
+	public MyCategoryRoot(UserProfile.Id ownerId) {
+		super(SHARE_ID, SharePermsRoot.full(), ownerId, null);
 	}
 }

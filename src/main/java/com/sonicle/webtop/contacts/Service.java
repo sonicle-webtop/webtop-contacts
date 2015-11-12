@@ -47,16 +47,17 @@ import com.sonicle.commons.web.json.extjs.ExtGridMetaData;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
-import com.sonicle.webtop.core.bol.model.IncomingFolder;
-import com.sonicle.webtop.core.bol.model.MyFolder;
-import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
-import com.sonicle.webtop.contacts.bol.js.JsFolder;
-import com.sonicle.webtop.core.bol.model.FolderBase;
-import com.sonicle.webtop.contacts.bol.js.JsFolderLkp;
+import com.sonicle.webtop.contacts.bol.js.JsCategory;
+import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
+import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
+import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
+import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
+import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
 import com.sonicle.webtop.core.CoreManager;
@@ -64,6 +65,7 @@ import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.WebTopSession.UploadedFile;
 import com.sonicle.webtop.core.bol.OCustomer;
 import com.sonicle.webtop.core.bol.js.JsSimple;
+import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import java.io.File;
@@ -72,7 +74,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
@@ -89,11 +90,11 @@ public class Service extends BaseService {
 	private ContactsUserSettings us;
 	
 	public static final String EVENTS_EXPORT_FILENAME = "events_{0}-{1}-{2}.{3}";
-	public final String DEFAULT_PERSONAL_CALENDAR_COLOR = "#FFFFFF";
 	
-	private final LinkedHashMap<String, FolderBase> roots = new LinkedHashMap<>();
+	private final LinkedHashMap<String, CategoryRoot> roots = new LinkedHashMap<>();
 	private CheckedRoots checkedRoots = null;
 	private CheckedFolders checkedFolders = null;
+	
 	//private ExportWizard wizard = null;
 	
 	@Override
@@ -120,16 +121,18 @@ public class Service extends BaseService {
 		UserProfile.Id pid = getEnv().getProfile().getId();
 		synchronized(roots) {
 			roots.clear();
-			roots.putAll(manager.listRootFolders(pid));
-
-			checkedRoots = us.getCheckedRoots();
-			if(checkedRoots.isEmpty()) {
-				// If empty, adds MyNode checked by default!
-				checkedRoots.add(pid.toString());
-				us.setCheckedRoots(checkedRoots);
+			roots.put(MyCategoryRoot.SHARE_ID, new MyCategoryRoot(pid));
+			for(CategoryRoot root : manager.listIncomingCategoryRoots()) {
+				roots.put(root.getShareId(), root);
 			}
 
-			checkedFolders = us.getCheckedFolders();
+			checkedRoots = us.getCheckedCategoryRoots();
+			// If empty, adds MyNode checked by default!
+			if(checkedRoots.isEmpty()) {
+				checkedRoots.add(MyCategoryRoot.SHARE_ID);
+				us.setCheckedCategoryRoots(checkedRoots);
+			}
+			checkedFolders = us.getCheckedCategoryFolders();
 		}
 	}
 	
@@ -141,38 +144,37 @@ public class Service extends BaseService {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String node = ServletUtils.getStringParameter(request, "node", true);
-				if(node.equals("root")) { // Node: root -> list folder roots
-					MyFolder myFolder = null;
-					IncomingFolder incFolder = null;
-					for(FolderBase folder : roots.values()) {
-						if(folder instanceof MyFolder) { // Adds node as Mine
-							myFolder = (MyFolder)folder;
-							child = createFolderNode(myFolder, false);
-							children.add(child.setExpanded(true));
-							
-						} else if(folder instanceof IncomingFolder) { // Adds node as Shared
-							incFolder = (IncomingFolder)folder;
-							child = createFolderNode(incFolder, false);
-							children.add(child);
+				
+				if(node.equals("root")) { // Node: root -> list roots
+					for(CategoryRoot root : roots.values()) {
+						children.add(createRootNode(root));
+					}
+				} else { // Node: folder -> list folders (categories)
+					CategoryRoot root = roots.get(node);
+					
+					if(root instanceof MyCategoryRoot) {
+						for(OCategory cal : manager.listCategories()) {
+							MyCategoryFolder folder = new MyCategoryFolder(node, cal);
+							children.add(createFolderNode(folder, root.getPerms()));
+						}
+					} else {
+						for(CategoryFolder folder : manager.listIncomingCategoryFolders(node)) {
+							children.add(createFolderNode(folder, root.getPerms()));
 						}
 					}
-
-				} else { // Node: folder -> list contained folders (contact groups)
-					UserProfile.Id upId = new UserProfile.Id(node);
-					List<OFolder> folders = manager.listFolders(upId);
-					
-					for(OFolder cal : folders) children.add(createFolderNode(node, cal));
 				}
 				new JsonResult("children", children).printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
 				PayloadAsList<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
 				
-				for(JsFolderNode folder : pl.data) {
-					if(folder._type.equals(JsFolderNode.TYPE_ROOT)) {
-						toggleCheckedRoot(folder._rootId, folder._visible);
-					} else if(folder._type.equals(JsFolderNode.TYPE_FOLDER)) {
-						toggleCheckedFolder(Integer.valueOf(folder.id), folder._visible);
+				for(JsFolderNode node : pl.data) {
+					if(node._type.equals(JsFolderNode.TYPE_ROOT)) {
+						toggleCheckedRoot(node.id, node._visible);
+						
+					} else if(node._type.equals(JsFolderNode.TYPE_FOLDER)) {
+						CompositeId cid = new CompositeId().parse(node.id);
+						toggleCheckedFolder(Integer.valueOf(cid.getToken(1)), node._visible);
 					}
 				}
 				new JsonResult().printTo(out);
@@ -180,9 +182,10 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.DELETE)) {
 				PayloadAsList<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
 				
-				for(JsFolderNode share : pl.data) {
-					if(share._type.equals(JsFolderNode.TYPE_FOLDER)) {
-						manager.deleteFolder(Integer.valueOf(share.id));
+				for(JsFolderNode node : pl.data) {
+					if(node._type.equals(JsFolderNode.TYPE_FOLDER)) {
+						CompositeId cid = new CompositeId().parse(node.id);
+						manager.deleteCategory(Integer.valueOf(cid.getToken(1)));
 					}
 				}
 				new JsonResult().printTo(out);
@@ -193,26 +196,23 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processLookupRootFolders(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+	public void processLookupCategoryRoots(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		List<JsSimple> items = new ArrayList<>();
 		
 		try {
 			Boolean writableOnly = ServletUtils.getBooleanParameter(request, "writableOnly", true);
-			UserProfile up = getEnv().getProfile();
-			IncomingFolder incFolder = null;
-			for(FolderBase folder : roots.values()) {
-				if(folder instanceof MyFolder) {
+			
+			for(CategoryRoot root : roots.values()) {
+				if(root instanceof MyCategoryRoot) {
+					UserProfile up = getEnv().getProfile();
 					items.add(new JsSimple(up.getStringId(), up.getDisplayName()));
-					
-				} else if(folder instanceof IncomingFolder) {
+				} else {
 					//TODO: se writableOnly verificare che il gruppo condiviso sia scrivibile
-					//if(writableOnly)
-					incFolder = (IncomingFolder)folder;
-					items.add(new JsSimple(incFolder.getId(), incFolder.getDescription()));
+					items.add(new JsSimple(root.getOwnerProfileId().toString(), root.getDescription()));
 				}
 			}
 			
-			new JsonResult("folders", items, items.size()).printTo(out);
+			new JsonResult("roots", items, items.size()).printTo(out);
 			
 		} catch(Exception ex) {
 			logger.error("Error executing action LookupRootFolders", ex);
@@ -220,61 +220,64 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processLookupFolders(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		List<JsFolderLkp> items = new ArrayList<>();
+	public void processLookupCategoryFolders(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		List<JsCategoryLkp> items = new ArrayList<>();
 		
 		try {
-			JsFolderLkp js = null;
-			List<OFolder> folders = null;
-			for(FolderBase folder : roots.values()) {
-				folders = manager.listFolders(new UserProfile.Id(folder.getId()));
-				for(OFolder fol : folders) {
-					js = new JsFolderLkp();
-					js.fillFrom(fol);
-					items.add(js);
+			JsCategoryLkp js = null;
+			for(CategoryRoot root : roots.values()) {
+				if(root instanceof MyCategoryRoot) {
+					for(OCategory cal : manager.listCategories()) {
+						items.add(new JsCategoryLkp(cal));
+					}
+				} else {
+					for(CategoryFolder folder : manager.listIncomingCategoryFolders(root.getShareId())) {
+						if(!folder.getElsPerms().implies("CREATE")) continue;
+						items.add(new JsCategoryLkp(folder.getCategory()));
+					}
 				}
 			}
 			new JsonResult("folders", items, items.size()).printTo(out);
 			
 		} catch(Exception ex) {
-			logger.error("Error executing action LookupFolders", ex);
+			logger.error("Error in action LookupCategoryFolders", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}
 	
-	public void processManageFolders(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		OFolder bean = null;
+	public void processManageCategories(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		OCategory item = null;
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				Integer id = ServletUtils.getIntParameter(request, "id", true);
 				
-				bean = manager.getFolder(id);
-				new JsonResult(new JsFolder(bean)).printTo(out);
+				item = manager.getCategory(id);
+				new JsonResult(new JsCategory(item)).printTo(out);
 				
 			} else if(crud.equals(Crud.CREATE)) {
-				Payload<MapItem, JsFolder> pl = ServletUtils.getPayload(request, JsFolder.class);
+				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				bean = manager.insertFolder(JsFolder.buildFolder(pl.data));
-				toggleCheckedFolder(bean.getFolderId(), true);
+				item = manager.addCategory(JsCategory.buildFolder(pl.data));
+				toggleCheckedFolder(item.getCategoryId(), true);
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
-				Payload<MapItem, JsFolder> pl = ServletUtils.getPayload(request, JsFolder.class);
+				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				manager.updateFolder(JsFolder.buildFolder(pl.data));
+				manager.updateCategory(JsCategory.buildFolder(pl.data));
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				Payload<MapItem, JsFolder> pl = ServletUtils.getPayload(request, JsFolder.class);
+				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				manager.deleteFolder(pl.data.folderId);
+				manager.deleteCategory(pl.data.categoryId);
 				new JsonResult().printTo(out);
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error executing action ManageFolders", ex);
+			logger.error("Error in action ManageCategories", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}
@@ -288,13 +291,12 @@ public class Service extends BaseService {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
-				CompositeId cid = new CompositeId(id, 2); 
+				CompositeId cid = new CompositeId().parse(id); 
 				
-				OFolder folder = manager.getFolder(Integer.valueOf(cid.getToken(0)));
-				if(folder == null) throw new Exception("Folder not found");
-				
-				Contact contact = manager.getContact(folder, cid.getToken(1), up.getLocale());
-				item = new JsContact(folder, contact);
+				int categoryId = Integer.valueOf(cid.getToken(0));
+				UserProfile.Id ownerId = manager.getCategoryOwner(categoryId);
+				Contact contact = manager.getContact(categoryId, cid.getToken(1), up.getLocale());
+				item = new JsContact(ownerId, contact);
 				
 				/*
 				item = new JsContact();
@@ -418,8 +420,9 @@ public class Service extends BaseService {
 				List<ContactsManager.FolderContacts> foldContacts = null;
 				DirectoryManager dm = null;
 				DirectoryElement de = null;
-				for(FolderBase root : getCheckedRoots()) {
+				for(CategoryRoot root : getCheckedRoots()) {
 					foldContacts = manager.listContacts(root, checked, up.getLocale(), pattern);
+					
 					for(ContactsManager.FolderContacts foldContact : foldContacts) {
 						for(int i=0; i<foldContact.result.getElementsCount(); i++) {
 							dm = foldContact.result.getDirectoryManager();
@@ -446,7 +449,7 @@ public class Service extends BaseService {
 										colsInfo.add(new ExtGridColumnMeta("folderId").setHidden(true));
 										item.put("folderId", Integer.parseInt(de.getField("FOLDER_ID")));
 										
-										OFolder folder = manager.getFolder(Integer.parseInt(de.getField(col)));
+										OCategory folder = manager.getCategory(Integer.parseInt(de.getField(col)));
 										if(folder != null) {
 											fields.add(new ExtFieldMeta("folderName"));
 											colsInfo.add(new ExtGridColumnMeta("folderName").setHidden(true));
@@ -527,33 +530,27 @@ public class Service extends BaseService {
 		}
 	}
 	
-	
-	
-	
-	
-	
-	
-	private List<FolderBase> getCheckedRoots() {
-		ArrayList<FolderBase> folders = new ArrayList<>();
-		for(FolderBase folder : roots.values()) {
-			if(!checkedRoots.contains(folder.getId())) continue; // Skip folder if not visible
-			folders.add(folder);
+	private List<CategoryRoot> getCheckedRoots() {
+		ArrayList<CategoryRoot> checked = new ArrayList<>();
+		for(CategoryRoot root : roots.values()) {
+			if(!checkedRoots.contains(root.getShareId())) continue; // Skip folder if not visible
+			checked.add(root);
 		}
-		return folders;
+		return checked;
 	}
 	
 	private Integer[] getCheckedFolders() {
 		return checkedFolders.toArray(new Integer[checkedFolders.size()]);
 	}
 	
-	private void toggleCheckedRoot(String folderId, boolean checked) {
+	private void toggleCheckedRoot(String shareId, boolean checked) {
 		synchronized(roots) {
 			if(checked) {
-				checkedRoots.add(folderId);
+				checkedRoots.add(shareId);
 			} else {
-				checkedRoots.remove(folderId);
+				checkedRoots.remove(shareId);
 			}
-			us.setCheckedRoots(checkedRoots);
+			us.setCheckedCategoryRoots(checkedRoots);
 		}
 	}
 	
@@ -564,40 +561,54 @@ public class Service extends BaseService {
 			} else {
 				checkedFolders.remove(folderId);
 			}
-			us.setCheckedFolders(checkedFolders);
+			us.setCheckedCategoryFolders(checkedFolders);
 		}
 	}
 	
-	private ExtTreeNode createFolderNode(MyFolder folder, boolean leaf) {
-		return createFolderNode(folder.getId(), lookupResource(ContactsLocale.FOLDERS_MY), leaf, "wtcon-icon-root-my-xs");
+	private ExtTreeNode createRootNode(CategoryRoot root) {
+		if(root instanceof MyCategoryRoot) {
+			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-root-my-xs").setExpanded(true);
+		} else {
+			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-root-incoming-xs");
+		}
 	}
 	
-	private ExtTreeNode createFolderNode(IncomingFolder folder, boolean leaf) {
-		return createFolderNode(folder.getId(), folder.getDescription(), leaf, "wtcon-icon-root-incoming-xs");
-	}
-	
-	private ExtTreeNode createFolderNode(String rootId, String text, boolean leaf, String iconClass) {
-		boolean visible = checkedRoots.contains(rootId);
-		ExtTreeNode node = new ExtTreeNode(rootId, text, leaf);
+	private ExtTreeNode createRootNode(String id, String pid, String rights, String text, boolean leaf, String iconClass) {
+		boolean visible = checkedRoots.contains(id);
+		ExtTreeNode node = new ExtTreeNode(id, text, leaf);
 		node.put("_type", JsFolderNode.TYPE_ROOT);
-		node.put("_rootId", rootId);
+		node.put("_pid", pid);
+		node.put("_rrights", rights);
 		node.put("_visible", visible);
 		node.setIconClass(iconClass);
 		node.setChecked(visible);
 		return node;
 	}
 	
-	private ExtTreeNode createFolderNode(String rootId, OFolder folder) {
-		boolean visible = checkedFolders.contains(folder.getFolderId());
-		ExtTreeNode node = new ExtTreeNode(folder.getFolderId(), folder.getName(), true);
+	private ExtTreeNode createFolderNode(CategoryFolder folder, SharePermsRoot rootPerms) {
+		OCategory cat = folder.getCategory();
+		String id = new CompositeId(folder.getShareId(), cat.getCategoryId()).toString();
+		boolean visible = checkedFolders.contains(cat.getCategoryId());
+		ExtTreeNode node = new ExtTreeNode(id, cat.getName(), true);
 		node.put("_type", JsFolderNode.TYPE_FOLDER);
-		node.put("_rootId", rootId);
-		node.put("_builtIn", folder.getBuiltIn());
-		node.put("_default", folder.getIsDefault());
-		node.put("_color", folder.getColor());
+		node.put("_pid", cat.getProfileId().toString());
+		node.put("_rrights", rootPerms.toString());
+		node.put("_frights", folder.getPerms().toString());
+		node.put("_erights", folder.getElsPerms().toString());
+		node.put("_catId", cat.getCategoryId());
+		node.put("_builtIn", cat.getBuiltIn());
+		node.put("_default", cat.getIsDefault());
+		node.put("_color", cat.getColor());
 		node.put("_visible", visible);
-		if(folder.getIsDefault()) node.setCls("wtcon-tree-default");
-		node.setIconClass("wt-palette-" + folder.getHexColor());
+		
+		List<String> classes = new ArrayList<>();
+		if(cat.getIsDefault()) classes.add("wtcon-tree-default");
+		if(!folder.getElsPerms().implies("CREATE") 
+				&& !folder.getElsPerms().implies("UPDATE")
+				&& !folder.getElsPerms().implies("DELETE")) classes.add("wtcon-tree-readonly");
+		node.setCls(StringUtils.join(classes, " "));
+		
+		node.setIconClass("wt-palette-" + cat.getHexColor());
 		node.setChecked(visible);
 		return node;
 	}

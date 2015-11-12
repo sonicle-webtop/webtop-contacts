@@ -2,12 +2,12 @@
 .wtcon-icon-service-s { background-image: url('service_24.png') !important; }
 .wtcon-icon-service-m { background-image: url('service_32.png') !important; }
 .wtcon-icon-service-l { background-image: url('service_48.png') !important; }
-.wtcon-icon-folder-xs { background-image: url('group_16.png') !important; }
+.wtcon-icon-category-xs { background-image: url('group_16.png') !important; }
 .wtcon-icon-root-my-xs { background-image: url('root-my_16.png') !important; }
 .wtcon-icon-root-incoming-xs { background-image: url('root-incoming_16.png') !important; }
-.wtcon-icon-addFolder-xs { background-image: url('group-add_16.png') !important; }
-.wtcon-icon-editFolder-xs { background-image: url('group-edit_16.png') !important; }
-.wtcon-icon-deleteFolder-xs { background-image: url('group-delete_16.png') !important; }
+.wtcon-icon-addCategory-xs { background-image: url('group-add_16.png') !important; }
+.wtcon-icon-editCategory-xs { background-image: url('group-edit_16.png') !important; }
+.wtcon-icon-deleteCategory-xs { background-image: url('group-delete_16.png') !important; }
 .wtcon-icon-contact-xs { background-image: url('contact_16.png') !important; }
 .wtcon-icon-contact-list-xs { background-image: url('contact-list_16.png') !important; }
 .wtcon-icon-newContact-xs { background-image: url('contact-new_16.png') !important; }

@@ -33,47 +33,26 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.contacts.bol.OCategory;
 
 /**
  *
  * @author malbinola
  */
-public class JsFolder {
-	public Integer folderId;
+public class JsCategoryLkp {
+	public Integer categoryId;
 	public String domainId;
 	public String userId;
-	public Boolean builtIn;
 	public String name;
-	public String description;
-	public String color;
-	public Boolean sync;
 	public Boolean isDefault;
-	public String lastModified;
+	public String color;
 	
-	public JsFolder(OFolder bean) {
-		folderId = bean.getFolderId();
-		domainId = bean.getDomainId();
-		userId = bean.getUserId();
-		builtIn = bean.getBuiltIn();
-		name = bean.getName();
-		description = bean.getDescription();
-		color = bean.getColor();
-		sync = bean.getSync();
-		isDefault = bean.getIsDefault();
-	}
-	
-	public static OFolder buildFolder(JsFolder js) {
-		OFolder bean = new OFolder();
-		bean.setFolderId(js.folderId);
-		bean.setDomainId(js.domainId);
-		bean.setUserId(js.userId);
-		bean.setBuiltIn(js.builtIn);
-		bean.setName(js.name);
-		bean.setDescription(js.description);
-		bean.setColor(js.color);
-		bean.setSync(js.sync);
-		bean.setIsDefault(js.isDefault);
-		return bean;
+	public JsCategoryLkp(OCategory item) {
+		categoryId = item.getCategoryId();
+		domainId = item.getDomainId();
+		userId = item.getUserId();
+		name = item.getName();
+		isDefault = item.getIsDefault();
+		color = item.getHexColor();
 	}
 }

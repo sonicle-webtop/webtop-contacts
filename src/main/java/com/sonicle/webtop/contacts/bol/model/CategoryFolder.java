@@ -31,24 +31,24 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol;
+package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.contacts.jooq.tables.pojos.Folders;
-import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
-import org.apache.commons.lang3.StringUtils;
+import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.core.bol.model.ShareFolder;
+import com.sonicle.webtop.core.bol.model.SharePermsFolder;
+import com.sonicle.webtop.core.bol.model.SharePermsFolderEls;
 
 /**
  *
  * @author malbinola
  */
-public class OFolder extends Folders {
+public class CategoryFolder extends ShareFolder {
 	
-	public String getHexColor() {
-		String color = getColor();
-		return (StringUtils.indexOf(color, "#") == 0) ? StringUtils.substring(color, 1) : color;
+	public CategoryFolder(String shareId, SharePermsFolder perms, SharePermsFolderEls elsPerms, OCategory category) {
+		super(shareId, perms, elsPerms, category);
 	}
-	
-	public void setRevisionInfo(RevisionInfo revision) {
-		setLastModified(revision.lastModified);
+
+	public OCategory getCategory() {
+		return (OCategory)object;
 	}
 }

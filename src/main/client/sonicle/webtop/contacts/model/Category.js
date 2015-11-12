@@ -31,79 +31,26 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.view.Folder', {
-	extend: 'WT.sdk.ModelView',
-	requires: [
-		'Sonicle.form.field.Palette',
-		'Sonicle.form.RadioGroup'
-	],
+Ext.define('Sonicle.webtop.contacts.model.Category', {
+	extend: 'WT.model.Base',
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageCategories'),
 	
-	dockableConfig: {
-		title: '@folder.tit',
-		iconCls: 'wtcon-icon-folder-xs',
-		width: 360,
-		height: 300
-	},
-	model: 'Sonicle.webtop.contacts.model.Folder',
-	viewModel: {
-		formulas: {
-			isDefault: WTF.checkboxBind('record', 'isDefault'),
-			sync: WTF.checkboxBind('record', 'sync')
-		}
-	},
-	
-	initComponent: function() {
-		var me = this;
-		me.callParent(arguments);
-		
-		me.add({
-			region: 'center',
-			xtype: 'form',
-			reference: 'main',
-			referenceHolder: true,
-			layout: 'anchor',
-			modelValidation: true,
-			bodyPadding: 5,
-			defaults: {
-				labelWidth: 100
-			},
-			items: [{
-				xtype: 'textfield',
-				reference: 'fldname',
-				bind: '{record.name}',
-				fieldLabel: me.mys.res('folder.fld-name.lbl'),
-				anchor: '100%'
-			}, {
-				xtype: 'textareafield',
-				bind: '{record.description}',
-				fieldLabel: me.mys.res('folder.fld-description.lbl'),
-				anchor: '100%'
-			}, {
-				xtype: 'sopalettefield',
-				bind: '{record.color}',
-				colors: WT.getColorPalette(),
-				fieldLabel: me.mys.res('folder.fld-color.lbl'),
-				width: 200
-			}, {
-				xtype: 'checkbox',
-				bind: '{isDefault}',
-				hideEmptyLabel: false,
-				boxLabel: me.mys.res('folder.fld-default.lbl')
-			}, {
-				xtype: 'checkbox',
-				bind: '{sync}',
-				hideEmptyLabel: false,
-				boxLabel: me.mys.res('folder.fld-sync.lbl')
-			}]
-		});
-		me.on('viewload', me.onViewLoad);
-	},
-	
-	onViewLoad: function(s, success) {
-		if(!success) return;
-		var me = this,
-				main = me.lookupReference('main');
-		
-		main.lookupReference('fldname').focus(true);
-	}
+	identifier: 'negative',
+	idProperty: 'categoryId',
+	fields: [
+		WTF.field('categoryId', 'int', false),
+		WTF.field('domainId', 'string', false),
+		WTF.field('userId', 'string', false),
+		WTF.field('name', 'string', false),
+		WTF.field('description', 'string', true),
+		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
+		WTF.calcField('colorCls', 'string', 'color', function(v, rec) {
+			return (rec.get('color')) ? 'wt-palette-' + rec.get('color').replace('#', '') : v;
+		}),
+		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
+		WTF.field('sync', 'boolean', false, {defaultValue: false}),
+		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
+			return rec.get('userId') + '@' + rec.get('domainId');
+		})
+	]
 });

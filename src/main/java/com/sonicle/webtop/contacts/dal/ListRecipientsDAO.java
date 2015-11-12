@@ -49,7 +49,6 @@ import org.jooq.DSLContext;
  */
 public class ListRecipientsDAO extends BaseDAO {
 	private final static ListRecipientsDAO INSTANCE = new ListRecipientsDAO();
-
 	public static ListRecipientsDAO getInstance() {
 		return INSTANCE;
 	}

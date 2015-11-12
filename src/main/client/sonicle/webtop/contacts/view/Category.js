@@ -31,28 +31,79 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol.js;
-
-import java.util.ArrayList;
-
-/**
- *
- * @author malbinola
- */
-public class JsFolderNode {
-	public static final String TYPE_ROOT = "root";
-	public static final String TYPE_FOLDER = "folder";
+Ext.define('Sonicle.webtop.contacts.view.Category', {
+	extend: 'WT.sdk.ModelView',
+	requires: [
+		'Sonicle.form.field.Palette',
+		'Sonicle.form.RadioGroup'
+	],
 	
-	public String id;
-	public String _type;
-	public String _rootId;
-	public Boolean _visible;
-	
-	public JsFolderNode() {}
-	
-	public static class JsFolderNodeList extends ArrayList<JsFolderNode> {
-		public JsFolderNodeList() {
-			super();
+	dockableConfig: {
+		title: '@category.tit',
+		iconCls: 'wtcon-icon-category-xs',
+		width: 360,
+		height: 300
+	},
+	model: 'Sonicle.webtop.contacts.model.Category',
+	viewModel: {
+		formulas: {
+			isDefault: WTF.checkboxBind('record', 'isDefault'),
+			sync: WTF.checkboxBind('record', 'sync')
 		}
+	},
+	
+	initComponent: function() {
+		var me = this;
+		me.callParent(arguments);
+		
+		me.add({
+			region: 'center',
+			xtype: 'form',
+			reference: 'main',
+			referenceHolder: true,
+			layout: 'anchor',
+			modelValidation: true,
+			bodyPadding: 5,
+			defaults: {
+				labelWidth: 100
+			},
+			items: [{
+				xtype: 'textfield',
+				reference: 'fldname',
+				bind: '{record.name}',
+				fieldLabel: me.mys.res('category.fld-name.lbl'),
+				anchor: '100%'
+			}, {
+				xtype: 'textareafield',
+				bind: '{record.description}',
+				fieldLabel: me.mys.res('category.fld-description.lbl'),
+				anchor: '100%'
+			}, {
+				xtype: 'sopalettefield',
+				bind: '{record.color}',
+				colors: WT.getColorPalette(),
+				fieldLabel: me.mys.res('category.fld-color.lbl'),
+				width: 200
+			}, {
+				xtype: 'checkbox',
+				bind: '{isDefault}',
+				hideEmptyLabel: false,
+				boxLabel: me.mys.res('category.fld-default.lbl')
+			}, {
+				xtype: 'checkbox',
+				bind: '{sync}',
+				hideEmptyLabel: false,
+				boxLabel: me.mys.res('category.fld-sync.lbl')
+			}]
+		});
+		me.on('viewload', me.onViewLoad);
+	},
+	
+	onViewLoad: function(s, success) {
+		if(!success) return;
+		var me = this,
+				main = me.lookupReference('main');
+		
+		main.lookupReference('fldname').focus(true);
 	}
-}
+});

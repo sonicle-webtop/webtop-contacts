@@ -34,9 +34,11 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.db.DbUtils;
-import com.sonicle.webtop.contacts.bol.OFolder;
+import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
+import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
-import com.sonicle.webtop.contacts.dal.FolderDAO;
+import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.directory.DBDirectoryManager;
 import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
@@ -45,23 +47,27 @@ import com.sonicle.webtop.contacts.directory.LDAPDirectoryManager;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.bol.OShare;
-import com.sonicle.webtop.core.bol.OUser;
-import com.sonicle.webtop.core.bol.model.FolderBase;
-import com.sonicle.webtop.core.bol.model.IncomingFolder;
-import com.sonicle.webtop.core.bol.model.MyFolder;
 import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
-import com.sonicle.webtop.core.dal.ShareDAO;
-import com.sonicle.webtop.core.dal.UserDAO;
 import com.sonicle.webtop.core.sdk.BaseServiceManager;
 import com.sonicle.webtop.core.RunContext;
-import com.sonicle.webtop.core.bol.IncomingShare;
-import com.sonicle.webtop.core.bol.model.AuthResourceShareElement;
+import com.sonicle.webtop.core.bol.Owner;
+import com.sonicle.webtop.core.bol.model.IncomingRootShare;
+import com.sonicle.webtop.core.bol.model.SharePermsFolder;
+import com.sonicle.webtop.core.bol.model.SharePermsFolderEls;
+import com.sonicle.webtop.core.bol.model.SharePermsRoot;
+import com.sonicle.webtop.core.dal.DAOException;
+import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.WTException;
+import com.sonicle.webtop.core.sdk.WTRuntimeException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -76,10 +82,16 @@ import org.slf4j.Logger;
  */
 public class ContactsManager extends BaseServiceManager {
 	public static final Logger logger = WT.getLogger(ContactsManager.class);
-	private static final String SHARE_RESOURCE_CONTACTS = "CONTACTS";
+	private static final String RESOURCE_CATEGORY = "CATEGORY";
 	
 	private final LinkedHashMap<String, DirectoryManager> globalDirectories;
 	private final LinkedHashMap<String, DirectoryManager> directories;
+	
+	private final HashMap<Integer, UserProfile.Id> categoryToOwnerCache = new HashMap<>();
+	private final Object shareCacheLock = new Object();
+	private final HashMap<UserProfile.Id, String> ownerToRootShareCache = new HashMap<>();
+	private final HashMap<UserProfile.Id, String> ownerToWildcardFolderShareCache = new HashMap<>();
+	private final HashMap<Integer, String> categoryToFolderShareCache = new HashMap<>();
 
 	public ContactsManager(String serviceId, RunContext context) {
 		super(serviceId, context);
@@ -105,98 +117,250 @@ public class ContactsManager extends BaseServiceManager {
 	
 	
 	
+	private void buildShareCache() {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		UserProfile.Id pid = getTargetProfileId();
+		try {
+			ownerToRootShareCache.clear();
+			ownerToWildcardFolderShareCache.clear();
+			categoryToFolderShareCache.clear();
+			for(CategoryRoot root : listIncomingCategoryRoots()) {
+				ownerToRootShareCache.put(pid, root.getShareId());
+				for(OShare folder : core.listIncomingShareFolders(pid, root.getShareId(), getServiceId(), RESOURCE_CATEGORY)) {
+					if(folder.hasWildcard()) {
+						UserProfile.Id ownerId = core.userUidToProfileId(folder.getUserUid());
+						ownerToWildcardFolderShareCache.put(ownerId, folder.getShareId().toString());
+					} else {
+						categoryToFolderShareCache.put(Integer.valueOf(folder.getInstance()), folder.getShareId().toString());
+					}
+				}
+			}
+		} catch(WTException ex) {
+			throw new WTRuntimeException(ex.getMessage());
+		}
+	}
 	
+	private String ownerToRootShareId(UserProfile.Id owner) {
+		synchronized(shareCacheLock) {
+			if(!ownerToRootShareCache.containsKey(owner)) buildShareCache();
+			return ownerToRootShareCache.get(owner);
+		}
+	}
 	
+	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
+		synchronized(shareCacheLock) {
+			if(!ownerToWildcardFolderShareCache.containsKey(ownerPid) && ownerToRootShareCache.isEmpty()) buildShareCache();
+			return ownerToWildcardFolderShareCache.get(ownerPid);
+		}
+	}
 	
+	private String categoryToFolderShareId(int category) {
+		synchronized(shareCacheLock) {
+			if(!categoryToFolderShareCache.containsKey(category)) buildShareCache();
+			return categoryToFolderShareCache.get(category);
+		}
+	}
+	
+	private UserProfile.Id categoryToOwner(int categoryId) {
+		synchronized(categoryToOwnerCache) {
+			if(categoryToOwnerCache.containsKey(categoryId)) {
+				return categoryToOwnerCache.get(categoryId);
+			} else {
+				try {
+					UserProfile.Id owner = findCategoryOwner(categoryId);
+					categoryToOwnerCache.put(categoryId, owner);
+					return owner;
+				} catch(WTException ex) {
+					throw new WTRuntimeException(ex.getMessage());
+				}
+			}
+		}
+	}
 	
 	private RevisionInfo createRevisionInfo() {
 		return new RevisionInfo("WT", getRunContext().getProfileId().toString());
 	}
 	
-	public LinkedHashMap<String, FolderBase> listRootFolders(UserProfile.Id pid) throws Exception {
-		LinkedHashMap<String, FolderBase> folders = new LinkedHashMap();
-		MyFolder myFolder = null;
-		IncomingFolder incFolder = null;
+	private void checkRightsOnCategoryRoot(UserProfile.Id ownerPid, String action) throws WTException {
+		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		if(ownerPid.equals(getTargetProfileId())) return;
 		
-		// Defines personal folders
-		myFolder = new MyFolder(pid);
-		folders.put(myFolder.getId(), myFolder);
+		String shareId = ownerToRootShareId(ownerPid);
+		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
+		CoreManager core = WT.getCoreManager(getRunContext());
+		if(!core.isPermittedOnShareRoot(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) {
+			throw new AuthException("");
+		}
+	}
+	
+	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
+		if(WT.isWebTopAdmin(getRunProfileId())) return;
 		
-		// Reads incoming folders
-		Connection coreCon = null;
+		// Skip rights check if running user is resource's owner
+		UserProfile.Id ownerPid = categoryToOwner(categoryId);
+		if(ownerPid.equals(getTargetProfileId())) return;
+		
+		// Checks rights on the wildcard instance (if present)
+		CoreManager core = WT.getCoreManager(getRunContext());
+		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
+		if(wildcardShareId != null) {
+			if(core.isPermittedOnShareFolder(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		}
+		
+		// Checks rights on calendar instance
+		String shareId = categoryToFolderShareId(categoryId);
+		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+		if(core.isPermittedOnShareFolder(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		throw new AuthException("");
+	}
+	
+	private void checkRightsOnCategoryFolderEls(int categoryId, String action) throws WTException {
+		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		
+		// Skip rights check if running user is resource's owner
+		UserProfile.Id ownerPid = categoryToOwner(categoryId);
+		if(ownerPid.equals(getTargetProfileId())) return;
+		
+		// Checks rights on the wildcard instance (if present)
+		CoreManager core = WT.getCoreManager(getRunContext());
+		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
+		if(wildcardShareId != null) {
+			if(core.isPermittedOnShareFolderEls(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		}
+		
+		// Checks rights on calendar instance
+		String shareId = categoryToFolderShareId(categoryId);
+		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+		if(core.isPermittedOnShareFolderEls(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		throw new AuthException("");
+	}
+	
+	private UserProfile.Id findCategoryOwner(int categoryId) throws WTException {
+		Connection con = null;
+		
 		try {
-			CoreManager core = WT.getCoreManager(getRunContext());
-			List<IncomingShare> shares = null;//core.shareListIncoming(getServiceId(), pid, SHARE_RESOURCE_CONTACTS);
+			con = WT.getConnection(getManifest());
+			CategoryDAO dao = CategoryDAO.getInstance();
+			Owner owner = dao.selectOwnerById(con, categoryId);
+			if(owner == null) throw new WTException("Category not found [{0}]", categoryId);
+			return new UserProfile.Id(owner.getDomainId(), owner.getUserId());
 			
-			//coreCon = WT.getCoreConnection();
-			//UserDAO useDao = UserDAO.getInstance();
-			//OUser user = null;
-			//UserProfile.Id inProfileId = null;
-			for(IncomingShare share : shares) {
-				incFolder = new IncomingFolder(share);
-				folders.put(incFolder.getId(), incFolder);
-				
-				/*
-				inProfileId = new UserProfile.Id(share.getDomainId(), share.getUserId());
-				user = useDao.selectByDomainUser(coreCon, inProfileId.getDomainId(), inProfileId.getUserId());
-				if(user != null) {
-					incFolder = new IncomingFolder(user);
-					folders.put(incFolder.getId(), incFolder);
-				}
-				*/
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		ArrayList<CategoryRoot> roots = new ArrayList();
+		HashSet<String> hs = new HashSet<>();
+		
+		List<IncomingRootShare> shares = core.listIncomingShareRoots(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY);
+		for(IncomingRootShare share : shares) {
+			SharePermsRoot perms = core.getShareRootPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId());
+			CategoryRoot root = new CategoryRoot(share, perms);
+			if(hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
+			hs.add(root.getShareId());
+			roots.add(root);
+		}
+		return roots;
+	}
+	
+	public Collection<CategoryFolder> listIncomingCategoryFolders(String rootShareId) throws WTException {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		LinkedHashMap<Integer, CategoryFolder> folders = new LinkedHashMap<>();
+		UserProfile.Id pid = getTargetProfileId();
+		
+		// Retrieves incoming folders (from sharing). This lookup already 
+		// returns readable shares (we don't need to test READ permission)
+		List<OShare> shares = core.listIncomingShareFolders(pid, rootShareId, getServiceId(), RESOURCE_CATEGORY);
+		for(OShare share : shares) {
+			
+			List<OCategory> cats = null;
+			if(share.hasWildcard()) {
+				UserProfile.Id ownerId = core.userUidToProfileId(share.getUserUid());
+				cats = listCategories(ownerId);
+			} else {
+				cats = Arrays.asList(getCategory(Integer.valueOf(share.getInstance())));
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Unable to build root folders", ex);
-			throw ex;
-		} finally {
-			DbUtils.closeQuietly(coreCon);
+			for(OCategory cat : cats) {
+				SharePermsFolder fperms = core.getShareFolderPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
+				SharePermsFolderEls eperms = core.getShareFolderElsPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
+				
+				if(folders.containsKey(cat.getCategoryId())) {
+					CategoryFolder folder = folders.get(cat.getCategoryId());
+					folder.getPerms().merge(fperms);
+					folder.getElsPerms().merge(eperms);
+				} else {
+					folders.put(cat.getCategoryId(), new CategoryFolder(share.getShareId().toString(), fperms, eperms, cat));
+				}
+			}
 		}
-		return folders;
+		return folders.values();
 	}
 	
-	public List<OFolder> listFolders(UserProfile.Id user) throws Exception {
+	public UserProfile.Id getCategoryOwner(int categoryId) throws WTException {
+		return categoryToOwner(categoryId);
+	}
+	
+	public List<OCategory> listCategories() throws WTException {
+		return listCategories(getTargetProfileId());
+	}
+	
+	private List<OCategory> listCategories(UserProfile.Id pid) throws WTException {
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(getManifest());
-			FolderDAO folDao = FolderDAO.getInstance();
-			return folDao.selectByDomainUser(con, user.getDomainId(), user.getUserId());
+			CategoryDAO dao = CategoryDAO.getInstance();
+			return dao.selectByDomainUser(con, pid.getDomainId(), pid.getUserId());
 			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 	}
 	
-	public OFolder getFolder(int folderId) throws Exception {
+	public OCategory getCategory(int categoryId) throws WTException {
 		Connection con = null;
 		
 		try {
+			checkRightsOnCategoryFolder(categoryId, "READ");
 			con = WT.getConnection(getManifest());
-			FolderDAO folDao = FolderDAO.getInstance();
-			return folDao.select(con, folderId);
+			CategoryDAO dao = CategoryDAO.getInstance();
+			return dao.selectById(con, categoryId);
 			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 	}
 	
-	public OFolder insertFolder(OFolder item) throws Exception {
+	public OCategory addCategory(OCategory item) throws WTException {
 		Connection con = null;
 		
 		try {
+			checkRightsOnCategoryRoot(item.getProfileId(), "CREATE");
 			con = WT.getConnection(getManifest());
 			con.setAutoCommit(false);
-			FolderDAO folDao = FolderDAO.getInstance();
+			CategoryDAO dao = CategoryDAO.getInstance();
 			
-			item.setFolderId(folDao.getSequence(con).intValue());
+			item.setCategoryId(dao.getSequence(con).intValue());
 			item.setBuiltIn(false);
-			if(item.getIsDefault()) folDao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
+			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			item.setRevisionInfo(createRevisionInfo());
-			folDao.insert(con, item);
+			dao.insert(con, item);
 			DbUtils.commitQuietly(con);
 			return item;
 			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
 		} catch(Exception ex) {
 			DbUtils.rollbackQuietly(con);
 			throw ex;
@@ -205,20 +369,24 @@ public class ContactsManager extends BaseServiceManager {
 		}
 	}
 	
-	public OFolder updateFolder(OFolder item) throws Exception {
+	public OCategory updateCategory(OCategory item) throws Exception {
 		Connection con = null;
 		
 		try {
+			checkRightsOnCategoryFolder(item.getCategoryId(), "UPDATE");
 			con = WT.getConnection(getManifest());
 			con.setAutoCommit(false);
-			FolderDAO folDao = FolderDAO.getInstance();
+			CategoryDAO dao = CategoryDAO.getInstance();
 			
-			if(item.getIsDefault()) folDao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
+			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			item.setRevisionInfo(createRevisionInfo());
-			folDao.update(con, item);
+			dao.update(con, item);
 			DbUtils.commitQuietly(con);
 			return item;
 			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
 		} catch(Exception ex) {
 			DbUtils.rollbackQuietly(con);
 			throw ex;
@@ -227,29 +395,36 @@ public class ContactsManager extends BaseServiceManager {
 		}
 	}
 	
-	public void deleteFolder(int folderId) throws Exception {
+	public void deleteCategory(int categoryId) throws WTException {
 		Connection con = null;
 		
 		try {
+			checkRightsOnCategoryFolder(categoryId, "DELETE");
 			con = WT.getConnection(getManifest());
-			FolderDAO folDao = FolderDAO.getInstance();
-			folDao.delete(con, folderId);
+			
+			CategoryDAO dao = CategoryDAO.getInstance();
+			dao.deleteById(con, categoryId);
 			//TODO: cancellare contatti collegati
 			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 	}
 	
-	public List<FolderContacts> listContacts(FolderBase folder, Integer[] folders, Locale locale, String pattern) throws Exception {
-		UserProfile.Id profileId = new UserProfile.Id(folder.getDomainId(), folder.getUserId());
-		return listContacts(profileId, folders, locale, pattern);
+	public List<FolderContacts> listContacts(CategoryRoot root, Integer[] folders, Locale locale, String pattern) throws Exception {
+		return listContacts(root.getOwnerProfileId(), folders, locale, pattern);
 	}
 	
 	public List<FolderContacts> listContacts(UserProfile.Id pid, Integer[] folders, Locale locale, String pattern) throws Exception {
-		Connection con = null;
+		CategoryDAO folDao = CategoryDAO.getInstance();
 		ArrayList<FolderContacts> foldContacts = new ArrayList<>();
-		FolderDAO folDao = FolderDAO.getInstance();
+		Connection con = null;
 		
 		try {
 			con = WT.getConnection(getManifest());
@@ -257,28 +432,31 @@ public class ContactsManager extends BaseServiceManager {
 			// Lists desired groups (tipically visibles) coming from passed list
 			// Passed ids should belong to referenced folder(group), 
 			// this is ensured using domainId and userId parameters in below query.
-			List<OFolder> folds = folDao.selectByDomainUserIn(con, pid.getDomainId(), pid.getUserId(), folders);
+			List<OCategory> cats = folDao.selectByDomainUserIn(con, pid.getDomainId(), pid.getUserId(), folders);
 			DBDirectoryManager dbdm = null;
 			DirectoryResult dr = null;
-			for(OFolder fold : folds) {
-				dbdm = createDBDManager(pid, fold.getFolderId(), locale);
+			for(OCategory cat : cats) {
+				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
+				
+				dbdm = createDBDManager(pid, cat.getCategoryId(), locale);
 				dr = dbdm.lookup(pattern, locale, false, false);
-				foldContacts.add(new FolderContacts(fold, dr));
+				foldContacts.add(new FolderContacts(cat, dr));
 			}
 			return foldContacts;
 		
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 	}
 	
-	public Contact getContact(OFolder folder, String contactId, Locale locale) throws Exception {
-		Connection con = null;
+	public Contact getContact(int categoryId, String contactId, Locale locale) throws WTException {
 		Contact item = null;
 		
 		try {
-			UserProfile.Id profileId = new UserProfile.Id(folder.getDomainId(), folder.getUserId());
-			DBDirectoryManager dbdm = createDBDManager(profileId, folder.getFolderId(), locale);
+			UserProfile.Id ownerPid = categoryToOwner(categoryId);
+			DBDirectoryManager dbdm = createDBDManager(ownerPid, categoryId, locale);
 			
 			DirectoryResult dr = dbdm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), locale, true, true, false);
 			DirectoryElement de = dr.elementAt(0);
@@ -336,8 +514,8 @@ public class ContactsManager extends BaseServiceManager {
 			item.setNotes(de.getField(dbdm.getAliasField("NOTES")));
 			return item;
 		
-		} finally {
-			DbUtils.closeQuietly(con);
+		} catch(SQLException ex) {
+			throw new WTException(ex, "DB error");
 		}
 	} 
 	
@@ -822,10 +1000,10 @@ public class ContactsManager extends BaseServiceManager {
 	}
 	
 	public static class FolderContacts {
-		public final OFolder folder;
+		public final OCategory folder;
 		public final DirectoryResult result;
 		
-		public FolderContacts(OFolder folder, DirectoryResult result) {
+		public FolderContacts(OCategory folder, DirectoryResult result) {
 			this.folder = folder;
 			this.result = result;
 		}

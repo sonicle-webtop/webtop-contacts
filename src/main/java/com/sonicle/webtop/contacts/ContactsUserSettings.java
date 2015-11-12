@@ -71,13 +71,13 @@ public class ContactsUserSettings extends BaseUserSettings {
 	 * [string[]]
 	 * List of checked (or visible) folder root nodes.
 	 */
-	public static final String CHECKED_ROOTS = "roots.checked";
+	public static final String CHECKED_CATEGORY_ROOTS = "category.roots.checked";
 	
 	/**
 	 * [int[]]
 	 * List of checked (or visible) folders (groups).
 	 */
-	public static final String CHECKED_FOLDERS = "folders.checked";
+	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
 	
 	public String getAnniversaryNotification() {
 		return getString(NOTIFICATION_ANNIVERSARY, NOTIFICATION_ANNIVERSARY_OFF);
@@ -95,20 +95,20 @@ public class ContactsUserSettings extends BaseUserSettings {
 		return setString(SELECTED_ROOT, value);
 	}
 	
-	public CheckedRoots getCheckedRoots() {
-		return getObject(CHECKED_ROOTS, new CheckedRoots(), CheckedRoots.class);
+	public CheckedRoots getCheckedCategoryRoots() {
+		return getObject(CHECKED_CATEGORY_ROOTS, new CheckedRoots(), CheckedRoots.class);
 	}
 	
-	public boolean setCheckedRoots(CheckedRoots value) {
-		return setObject(CHECKED_ROOTS, value, CheckedRoots.class);
+	public boolean setCheckedCategoryRoots(CheckedRoots value) {
+		return setObject(CHECKED_CATEGORY_ROOTS, value, CheckedRoots.class);
 	}
 	
-	public CheckedFolders getCheckedFolders() {
-		return getObject(CHECKED_FOLDERS, new CheckedFolders(), CheckedFolders.class);
+	public CheckedFolders getCheckedCategoryFolders() {
+		return getObject(CHECKED_CATEGORY_FOLDERS, new CheckedFolders(), CheckedFolders.class);
 	}
 	
-	public boolean setCheckedFolders(CheckedFolders value) {
-		return setObject(CHECKED_FOLDERS, value, CheckedFolders.class);
+	public boolean setCheckedCategoryFolders(CheckedFolders value) {
+		return setObject(CHECKED_CATEGORY_FOLDERS, value, CheckedFolders.class);
 	}
 	
 	public static class CheckedRoots extends HashSet<String> {

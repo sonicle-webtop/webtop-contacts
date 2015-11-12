@@ -38,7 +38,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.grid.column.Color',
 		'WT.model.Empty',
 		'Sonicle.webtop.contacts.model.FolderNode',
-		'Sonicle.webtop.contacts.view.Folder'
+		'Sonicle.webtop.contacts.view.Category'
 	],
 	
 	init: function() {
@@ -161,12 +161,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								});
 
 								Ext.iterate(meta.colsInfo, function(col,i) {
-									if(col.dataIndex === 'folderId') {
+									if(col.dataIndex === 'categoryId') {
 										//col.header = me.res('event.gp-planning.recipient.lbl');
 										col.xtype = 'socolorcolumn',
 										col.header = 'Gruppo';
-										col.colorField = 'folderColor',
-										col.displayField = 'folderName',
+										col.colorField = 'categoryColor',
+										col.displayField = 'categoryName',
 										col.width = 100;
 										col.hidden = false;
 									}
@@ -246,22 +246,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAction('addContact').execute();
 			}
 		});
-		me.addAction('addFolder', {
+		me.addAction('addCategory', {
 			handler: function() {
 				var node = me.getSelectedFolder();
-				if(node) me.addFolder(node.get('_domainId'), node.get('_userId'));
+				if(node) me.addCategory(node.get('_domainId'), node.get('_userId'));
 			}
 		});
-		me.addAction('editFolder', {
+		me.addAction('editCategory', {
 			handler: function() {
 				var node = me.getSelectedFolder();
-				if(node) me.editFolder(node.getId());
+				if(node) me.editCategory(node.getId());
 			}
 		});
-		me.addAction('deleteFolder', {
+		me.addAction('deleteCategory', {
 			handler: function() {
 				var node = me.getSelectedFolder();
-				if(node) me.deleteFolder(node);
+				if(node) me.deleteCategory(node);
 			}
 		});
 		me.addAction('viewAllFolders', {
@@ -299,7 +299,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addRef('cxmRootFolder', Ext.create({
 			xtype: 'menu',
 			items: [
-				me.getAction('addFolder'),
+				me.getAction('addCategory'),
 				me.getAction('dummyEdit')
 				//TODO: azioni altri servizi?
 			]
@@ -308,10 +308,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addRef('cxmFolder', Ext.create({
 			xtype: 'menu',
 			items: [
-				me.getAction('editFolder'),
-				me.getAction('deleteFolder'),
+				me.getAction('editCategory'),
+				me.getAction('deleteCategory'),
 				'-',
-				me.getAction('addFolder'),
+				me.getAction('addCategory'),
 				me.getRef('uploaders', 'importContacts'),
 				'-',
 				me.getAction('viewAllFolders'),
@@ -323,7 +323,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			listeners: {
 				beforeshow: function() {
 					var rec = WT.getContextMenuData().folder;
-					me.getAction('deleteFolder').setDisabled(rec.get('_builtIn'));
+					me.getAction('deleteCategory').setDisabled(rec.get('_builtIn'));
 					//TODO: disabilitare azioni se readonly
 				}
 			}
@@ -335,14 +335,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.refreshContacts();
 	},
 	
-	onFolderViewSave: function(s, success, model) {
+	onCategoryViewSave: function(s, success, model) {
 		if(!success) return;
 		var me = this,
 				store = me.getRef('folderstree').getStore(),
 				node;
 		
 		// Look for root folder and reload it!
-		node = store.getNodeById(model.get('_profileId'));
+		node = store.findNode('_pid', model.get('_profileId'), false);
 		if(node) store.load({node: node});
 	},
 	
@@ -362,11 +362,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
-	addFolder: function(domainId, userId) {
+	addCategory: function(domainId, userId) {
 		var me = this,
-				vwc = WT.createView(me.ID, 'view.Folder');
+				vwc = WT.createView(me.ID, 'view.Category');
 		
-		vwc.getView().on('viewsave', me.onFolderViewSave, me);
+		vwc.getView().on('viewsave', me.onCategoryViewSave, me);
 		vwc.show(false, function() {
 			vwc.getView().beginNew({
 				data: {
@@ -377,22 +377,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	editFolder: function(folderId) {
+	editCategory: function(categoryId) {
 		var me = this,
-				vwc = WT.createView(me.ID, 'view.Folder');
+				vwc = WT.createView(me.ID, 'view.Category');
 		
-		vwc.getView().on('viewsave', me.onFolderViewSave, me);
+		vwc.getView().on('viewsave', me.onCategoryViewSave, me);
 		vwc.show(false, function() {
 			vwc.getView().beginEdit({
 				data: {
-					folderId: folderId
+					categoryId: categoryId
 				}
 			});
 		});
 	},
 	
-	deleteFolder: function(rec) {
-		WT.confirm(this.res('folder.confirm.delete', rec.get('text')), function(bid) {
+	deleteCategory: function(rec) {
+		WT.confirm(this.res('category.confirm.delete', rec.get('text')), function(bid) {
 			if(bid === 'yes') rec.drop();
 		}, this);
 	},
@@ -429,7 +429,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		if(sel.length === 0) {
 			if(!force) return null;
 			// As default returns myFolder, which have id equals to principal option
-			return tree.getStore().getNodeById(WT.getOption('principal'));
+			return tree.getStore().findNode('_pid', WT.getOption('profileId'), false);
 		}
 		return (sel[0].get('_type') === 'root') ? sel[0] : sel[0].parentNode;
 	},
@@ -453,7 +453,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				return sel[0];
 			}
 		} else {
-			node = tree.getStore().getNodeById(WT.getOption('principal'));
+			node = tree.getStore().findNode('_pid', WT.getOption('profileId'), false);
 			if(node) return me.getFolderByRoot(node);
 		}
 		return null;
