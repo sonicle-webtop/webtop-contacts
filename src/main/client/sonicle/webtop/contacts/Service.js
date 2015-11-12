@@ -264,13 +264,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if(node) me.deleteCategory(node);
 			}
 		});
-		me.addAction('viewAllFolders', {
+		me.addAction('viewAllCategories', {
 			iconCls: 'wt-icon-select-all-xs',
 			handler: function() {
 				me._showHideAllFolders(me.getSelectedRootFolder(), true);
 			}
 		});
-		me.addAction('viewNoneFolders', {
+		me.addAction('viewNoneCategories', {
 			iconCls: 'wt-icon-select-none-xs',
 			handler: function() {
 				me._showHideAllFolders(me.getSelectedRootFolder(), false);
@@ -310,14 +310,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			items: [
 				me.getAction('editCategory'),
 				me.getAction('deleteCategory'),
-				'-',
 				me.getAction('addCategory'),
-				me.getRef('uploaders', 'importContacts'),
 				'-',
 				me.getAction('viewAllFolders'),
 				me.getAction('viewNoneFolders'),
 				'-',
-				me.getAction('addContact')
+				me.getAction('addContact'),
+				me.getRef('uploaders', 'importContacts')
 				//TODO: azioni altri servizi?
 			],
 			listeners: {

@@ -224,7 +224,6 @@ public class Service extends BaseService {
 		List<JsCategoryLkp> items = new ArrayList<>();
 		
 		try {
-			JsCategoryLkp js = null;
 			for(CategoryRoot root : roots.values()) {
 				if(root instanceof MyCategoryRoot) {
 					for(OCategory cal : manager.listCategories()) {

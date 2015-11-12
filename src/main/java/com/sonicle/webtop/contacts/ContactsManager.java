@@ -125,7 +125,7 @@ public class ContactsManager extends BaseServiceManager {
 			ownerToWildcardFolderShareCache.clear();
 			categoryToFolderShareCache.clear();
 			for(CategoryRoot root : listIncomingCategoryRoots()) {
-				ownerToRootShareCache.put(pid, root.getShareId());
+				ownerToRootShareCache.put(root.getOwnerProfileId(), root.getShareId());
 				for(OShare folder : core.listIncomingShareFolders(pid, root.getShareId(), getServiceId(), RESOURCE_CATEGORY)) {
 					if(folder.hasWildcard()) {
 						UserProfile.Id ownerId = core.userUidToProfileId(folder.getUserUid());
@@ -188,9 +188,9 @@ public class ContactsManager extends BaseServiceManager {
 		String shareId = ownerToRootShareId(ownerPid);
 		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
 		CoreManager core = WT.getCoreManager(getRunContext());
-		if(!core.isPermittedOnShareRoot(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) {
-			throw new AuthException("");
-		}
+		if(core.isPermittedOnShareRoot(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		
+		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
 	
 	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
@@ -211,7 +211,8 @@ public class ContactsManager extends BaseServiceManager {
 		String shareId = categoryToFolderShareId(categoryId);
 		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
 		if(core.isPermittedOnShareFolder(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
-		throw new AuthException("");
+		
+		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
 	
 	private void checkRightsOnCategoryFolderEls(int categoryId, String action) throws WTException {
@@ -232,7 +233,8 @@ public class ContactsManager extends BaseServiceManager {
 		String shareId = categoryToFolderShareId(categoryId);
 		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
 		if(core.isPermittedOnShareFolderEls(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
-		throw new AuthException("");
+		
+		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
 	
 	private UserProfile.Id findCategoryOwner(int categoryId) throws WTException {
@@ -345,7 +347,7 @@ public class ContactsManager extends BaseServiceManager {
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryRoot(item.getProfileId(), "CREATE");
+			checkRightsOnCategoryRoot(item.getProfileId(), "MANAGE");
 			con = WT.getConnection(getManifest());
 			con.setAutoCommit(false);
 			CategoryDAO dao = CategoryDAO.getInstance();
