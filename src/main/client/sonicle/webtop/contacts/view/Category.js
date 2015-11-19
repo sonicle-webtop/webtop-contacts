@@ -46,11 +46,17 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	},
 	fieldTitle: 'name',
 	model: 'Sonicle.webtop.contacts.model.Category',
-	viewModel: {
-		formulas: {
-			isDefault: WTF.checkboxBind('record', 'isDefault'),
-			sync: WTF.checkboxBind('record', 'sync')
-		}
+	
+	constructor: function(config) {
+		var me = this;
+		
+		me.config.viewModel = {
+			formulas: {
+				isDefault: WTF.checkboxBind('record', 'isDefault'),
+				sync: WTF.checkboxBind('record', 'sync')
+			}
+		};
+		me.callParent([config]);
 	},
 	
 	initComponent: function() {
