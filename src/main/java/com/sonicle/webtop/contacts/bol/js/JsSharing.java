@@ -1,5 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+ * webtop-calendar is a WebTop Service developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -31,24 +31,54 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol.model;
+package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.bol.OCategory;
-import com.sonicle.webtop.core.bol.model.ShareFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsElements;
+import com.sonicle.webtop.core.bol.model.Sharing;
+import java.util.ArrayList;
 
 /**
  *
  * @author malbinola
  */
-public class CategoryFolder extends ShareFolder {
+public class JsSharing {
+	public String id;
+	public int level;
+	public String description;
+	public ArrayList<RoleRights> rights;
 	
-	public CategoryFolder(String shareId, SharePermsFolder perms, SharePermsElements elsPerms, OCategory category) {
-		super(shareId, perms, elsPerms, category);
+	public JsSharing() {}
+	
+	public JsSharing(Sharing sharing, String description) {
+		id = sharing.getId();
+		level = sharing.getLevel();
+		this.description = description;
+		rights = new ArrayList<>();
+		for(Sharing.RoleRights rr : sharing.getRights()) {
+			rights.add(new RoleRights(rr));
+		}
 	}
-
-	public OCategory getCategory() {
-		return (OCategory)object;
+	
+	public static class RoleRights {
+		public String roleUid;
+		public Boolean rootManage;
+		public Boolean folderRead;
+		public Boolean folderUpdate;
+		public Boolean folderDelete;
+		public Boolean elementsCreate;
+		public Boolean elementsUpdate;
+		public Boolean elementsDelete;
+		
+		public RoleRights() {}
+		
+		public RoleRights(Sharing.RoleRights perms) {
+			roleUid = perms.roleUid;
+			rootManage = perms.rootManage;
+			folderRead = perms.folderRead;
+			folderUpdate = perms.folderUpdate;
+			folderDelete = perms.folderDelete;
+			elementsCreate = perms.elementsCreate;
+			elementsUpdate = perms.elementsUpdate;
+			elementsDelete = perms.elementsDelete;
+		}
 	}
 }

@@ -39,11 +39,12 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	],
 	
 	dockableConfig: {
-		title: '@category.tit',
+		title: '{category.tit}',
 		iconCls: 'wtcon-icon-category-xs',
 		width: 360,
 		height: 300
 	},
+	fieldTitle: 'name',
 	model: 'Sonicle.webtop.contacts.model.Category',
 	viewModel: {
 		formulas: {
@@ -58,12 +59,8 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		
 		me.add({
 			region: 'center',
-			xtype: 'form',
-			reference: 'main',
-			referenceHolder: true,
-			layout: 'anchor',
+			xtype: 'wtfieldspanel',
 			modelValidation: true,
-			bodyPadding: 5,
 			defaults: {
 				labelWidth: 100
 			},
@@ -101,9 +98,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	
 	onViewLoad: function(s, success) {
 		if(!success) return;
-		var me = this,
-				main = me.lookupReference('main');
-		
-		main.lookupReference('fldname').focus(true);
+		var me = this;
+		me.lref('fldname').focus(true);
 	}
 });

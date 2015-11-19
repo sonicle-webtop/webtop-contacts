@@ -39,7 +39,6 @@ package com.sonicle.webtop.contacts;
  */
 public class ContactsLocale {
 	public static final String CATEGORIES_MY = "categories.my";
-	
 	public static final String FIELDS_GROUPMAIN = "fields.groupmain";
 	public static final String FIELDS_GROUPWORK = "fields.groupwork";
 	public static final String FIELDS_GROUPHOME = "fields.grouphome";

@@ -53,6 +53,7 @@ import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
+import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
@@ -66,8 +67,10 @@ import com.sonicle.webtop.core.WebTopSession.UploadedFile;
 import com.sonicle.webtop.core.bol.OCustomer;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
+import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.WTException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
@@ -102,7 +105,7 @@ public class Service extends BaseService {
 		UserProfile profile = getEnv().getProfile();
 		manager = new ContactsManager(getId(), getRunContext());
 		//manager.initializeDirectories(profile);
-		us = new ContactsUserSettings(profile.getDomainId(), profile.getUserId(), getId());
+		us = new ContactsUserSettings(getId(), profile.getId());
 		initFolders();
 	}
 	
@@ -231,7 +234,7 @@ public class Service extends BaseService {
 					}
 				} else {
 					for(CategoryFolder folder : manager.listIncomingCategoryFolders(root.getShareId())) {
-						if(!folder.getElsPerms().implies("CREATE")) continue;
+						if(!folder.getElementsPerms().implies("CREATE")) continue;
 						items.add(new JsCategoryLkp(folder.getCategory()));
 					}
 				}
@@ -240,6 +243,30 @@ public class Service extends BaseService {
 			
 		} catch(Exception ex) {
 			logger.error("Error in action LookupCategoryFolders", ex);
+			new JsonResult(false, "Error").printTo(out);
+		}
+	}
+	
+	public void processManageSharing(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String crud = ServletUtils.getStringParameter(request, "crud", true);
+			if(crud.equals(Crud.READ)) {
+				String id = ServletUtils.getStringParameter(request, "id", true);
+				
+				Sharing sharing = manager.getSharing(id);
+				String description = buildSharingPath(sharing);
+				new JsonResult(new JsSharing(sharing, description)).printTo(out);
+				
+			} else if(crud.equals(Crud.UPDATE)) {
+				Payload<MapItem, Sharing> pl = ServletUtils.getPayload(request, Sharing.class);
+				
+				manager.updateSharing(pl.data);
+				new JsonResult().printTo(out);
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ManageSharing", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}
@@ -529,6 +556,37 @@ public class Service extends BaseService {
 		}
 	}
 	
+	
+	
+	
+	
+	
+	
+	private String buildSharingPath(Sharing sharing) throws WTException {
+		StringBuilder sb = new StringBuilder();
+		
+		// Root description part
+		CompositeId cid = new CompositeId().parse(sharing.getId());
+		if(roots.containsKey(cid.getToken(0))) {
+			CategoryRoot root = roots.get(cid.getToken(0));
+			if(root instanceof MyCategoryRoot) {
+				sb.append(lookupResource(ContactsLocale.CATEGORIES_MY));
+			} else {
+				sb.append(root.getDescription());
+			}
+		}
+		
+		// Folder description part
+		if(sharing.getLevel() == 1) {
+			int catId = Integer.valueOf(cid.getToken(1));
+			OCategory category = manager.getCategory(catId);
+			sb.append("/");
+			sb.append((category != null) ? category.getName() : cid.getToken(1));
+		}
+		
+		return sb.toString();
+	}
+	
 	private List<CategoryRoot> getCheckedRoots() {
 		ArrayList<CategoryRoot> checked = new ArrayList<>();
 		for(CategoryRoot root : roots.values()) {
@@ -593,7 +651,7 @@ public class Service extends BaseService {
 		node.put("_pid", cat.getProfileId().toString());
 		node.put("_rrights", rootPerms.toString());
 		node.put("_frights", folder.getPerms().toString());
-		node.put("_erights", folder.getElsPerms().toString());
+		node.put("_erights", folder.getElementsPerms().toString());
 		node.put("_catId", cat.getCategoryId());
 		node.put("_builtIn", cat.getBuiltIn());
 		node.put("_default", cat.getIsDefault());
@@ -602,9 +660,9 @@ public class Service extends BaseService {
 		
 		List<String> classes = new ArrayList<>();
 		if(cat.getIsDefault()) classes.add("wtcon-tree-default");
-		if(!folder.getElsPerms().implies("CREATE") 
-				&& !folder.getElsPerms().implies("UPDATE")
-				&& !folder.getElsPerms().implies("DELETE")) classes.add("wtcon-tree-readonly");
+		if(!folder.getElementsPerms().implies("CREATE") 
+				&& !folder.getElementsPerms().implies("UPDATE")
+				&& !folder.getElementsPerms().implies("DELETE")) classes.add("wtcon-tree-readonly");
 		node.setCls(StringUtils.join(classes, " "));
 		
 		node.setIconClass("wt-palette-" + cat.getHexColor());

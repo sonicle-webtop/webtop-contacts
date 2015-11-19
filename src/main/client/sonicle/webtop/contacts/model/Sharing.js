@@ -1,5 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+ * webtop-calendar is a WebTop Service developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -31,24 +31,20 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol.model;
-
-import com.sonicle.webtop.contacts.bol.OCategory;
-import com.sonicle.webtop.core.bol.model.ShareFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsElements;
-
-/**
- *
- * @author malbinola
- */
-public class CategoryFolder extends ShareFolder {
+Ext.define('Sonicle.webtop.contacts.model.Sharing', {
+	extend: 'WT.sdk.model.Sharing',
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageSharing', 'data', {
+		writer: {
+			type: 'sojson',
+			writeAssociations: true
+		}
+	}),
 	
-	public CategoryFolder(String shareId, SharePermsFolder perms, SharePermsElements elsPerms, OCategory category) {
-		super(shareId, perms, elsPerms, category);
-	}
-
-	public OCategory getCategory() {
-		return (OCategory)object;
-	}
-}
+	field:[
+		WTF.roField('description', 'string')
+	],
+	hasMany: [{
+		name: 'rights',
+		model: 'Sonicle.webtop.core.sdk.model.SharingRoleRights'
+	}]
+});

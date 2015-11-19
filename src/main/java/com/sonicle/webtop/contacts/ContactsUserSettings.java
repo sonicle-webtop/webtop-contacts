@@ -44,13 +44,9 @@ import java.util.HashSet;
  */
 public class ContactsUserSettings extends BaseUserSettings {
 	
-	public ContactsUserSettings(UserProfile.Id profileId, String serviceId) {
-		super(profileId, serviceId);
+	public ContactsUserSettings(String serviceId, UserProfile.Id profileId) {
+		super(serviceId, profileId);
 	}
-	
-	public ContactsUserSettings(String domainId, String userId, String serviceId) {
-        super(domainId, userId, serviceId);
-    }
 	
 	/**
 	 * [string]

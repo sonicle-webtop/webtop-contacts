@@ -51,10 +51,11 @@ import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
 import com.sonicle.webtop.core.sdk.BaseServiceManager;
 import com.sonicle.webtop.core.RunContext;
 import com.sonicle.webtop.core.bol.Owner;
-import com.sonicle.webtop.core.bol.model.IncomingRootShare;
+import com.sonicle.webtop.core.bol.model.IncomingShareRoot;
 import com.sonicle.webtop.core.bol.model.SharePermsFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsFolderEls;
+import com.sonicle.webtop.core.bol.model.SharePermsElements;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
+import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.UserProfile;
@@ -188,7 +189,7 @@ public class ContactsManager extends BaseServiceManager {
 		String shareId = ownerToRootShareId(ownerPid);
 		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
 		CoreManager core = WT.getCoreManager(getRunContext());
-		if(core.isPermittedOnShareRoot(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		if(core.isShareRootPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
@@ -204,18 +205,18 @@ public class ContactsManager extends BaseServiceManager {
 		CoreManager core = WT.getCoreManager(getRunContext());
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
 		if(wildcardShareId != null) {
-			if(core.isPermittedOnShareFolder(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
+			if(core.isShareFolderPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on calendar instance
 		String shareId = categoryToFolderShareId(categoryId);
 		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isPermittedOnShareFolder(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		if(core.isShareFolderPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
 	
-	private void checkRightsOnCategoryFolderEls(int categoryId, String action) throws WTException {
+	private void checkRightsOnCategoryrElements(int categoryId, String action) throws WTException {
 		if(WT.isWebTopAdmin(getRunProfileId())) return;
 		
 		// Skip rights check if running user is resource's owner
@@ -226,13 +227,13 @@ public class ContactsManager extends BaseServiceManager {
 		CoreManager core = WT.getCoreManager(getRunContext());
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
 		if(wildcardShareId != null) {
-			if(core.isPermittedOnShareFolderEls(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
+			if(core.isShareElementsPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on calendar instance
 		String shareId = categoryToFolderShareId(categoryId);
 		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isPermittedOnShareFolderEls(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		if(core.isShareElementsPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
@@ -259,8 +260,8 @@ public class ContactsManager extends BaseServiceManager {
 		ArrayList<CategoryRoot> roots = new ArrayList();
 		HashSet<String> hs = new HashSet<>();
 		
-		List<IncomingRootShare> shares = core.listIncomingShareRoots(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY);
-		for(IncomingRootShare share : shares) {
+		List<IncomingShareRoot> shares = core.listIncomingShareRoots(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY);
+		for(IncomingShareRoot share : shares) {
 			SharePermsRoot perms = core.getShareRootPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId());
 			CategoryRoot root = new CategoryRoot(share, perms);
 			if(hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
@@ -290,18 +291,28 @@ public class ContactsManager extends BaseServiceManager {
 			
 			for(OCategory cat : cats) {
 				SharePermsFolder fperms = core.getShareFolderPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
-				SharePermsFolderEls eperms = core.getShareFolderElsPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
+				SharePermsElements eperms = core.getShareElementsPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
 				
 				if(folders.containsKey(cat.getCategoryId())) {
 					CategoryFolder folder = folders.get(cat.getCategoryId());
 					folder.getPerms().merge(fperms);
-					folder.getElsPerms().merge(eperms);
+					folder.getElementsPerms().merge(eperms);
 				} else {
 					folders.put(cat.getCategoryId(), new CategoryFolder(share.getShareId().toString(), fperms, eperms, cat));
 				}
 			}
 		}
 		return folders.values();
+	}
+	
+	public Sharing getSharing(String shareId) throws WTException {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		return core.getSharing(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, shareId);
+	}
+	
+	public void updateSharing(Sharing sharing) throws WTException {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		core.updateSharing(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, sharing);
 	}
 	
 	public UserProfile.Id getCategoryOwner(int categoryId) throws WTException {

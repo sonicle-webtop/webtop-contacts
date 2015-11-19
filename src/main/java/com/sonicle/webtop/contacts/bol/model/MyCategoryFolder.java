@@ -35,7 +35,7 @@ package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.core.bol.model.SharePermsFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsFolderEls;
+import com.sonicle.webtop.core.bol.model.SharePermsElements;
 
 /**
  *
@@ -45,6 +45,6 @@ public class MyCategoryFolder extends CategoryFolder {
 	public static final String RIGHTS = "crud";
 
 	public MyCategoryFolder(String shareId, OCategory category) {
-		super(shareId, SharePermsFolder.full(), SharePermsFolderEls.full(), category);
+		super(shareId, SharePermsFolder.full(), SharePermsElements.full(), category);
 	}
 }

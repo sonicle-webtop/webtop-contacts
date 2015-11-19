@@ -1,5 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+ * WebTop Services is a Web Application framework developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -27,28 +27,16 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.model;
-
-import com.sonicle.webtop.contacts.bol.OCategory;
-import com.sonicle.webtop.core.bol.model.ShareFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsElements;
-
-/**
- *
- * @author malbinola
- */
-public class CategoryFolder extends ShareFolder {
+Ext.define('Sonicle.webtop.contacts.view.Sharing', {
+	extend: 'WT.sdk.Sharing',
+	requires: [
+		'Sonicle.webtop.contacts.model.Sharing'
+	],
 	
-	public CategoryFolder(String shareId, SharePermsFolder perms, SharePermsElements elsPerms, OCategory category) {
-		super(shareId, perms, elsPerms, category);
-	}
-
-	public OCategory getCategory() {
-		return (OCategory)object;
-	}
-}
+	modelName: 'Sonicle.webtop.contacts.model.Sharing',
+	fieldTitle: 'description'
+});
