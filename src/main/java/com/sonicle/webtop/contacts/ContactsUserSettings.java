@@ -52,10 +52,10 @@ public class ContactsUserSettings extends BaseUserSettings {
 	 * [string]
 	 * Set anniversary notifications delivery mode
 	 */
-	public static final String NOTIFICATION_ANNIVERSARY = "notification.anniversary";
-	public static final String NOTIFICATION_ANNIVERSARY_OFF = "off";
-	public static final String NOTIFICATION_ANNIVERSARY_DEFAULT = "default";
-	public static final String NOTIFICATION_ANNIVERSARY_EMAIL = "email";
+	public static final String ANNIVERSARY_NOTIFICATION = "notification.anniversary";
+	public static final String ANNIVERSARY_NOTIFICATION_OFF = "off";
+	public static final String ANNIVERSARY_NOTIFICATION_DEFAULT = "default";
+	public static final String ANNIVERSARY_NOTIFICATION_EMAIL = "email";
 	
 	/**
 	 * [string]
@@ -76,11 +76,11 @@ public class ContactsUserSettings extends BaseUserSettings {
 	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
 	
 	public String getAnniversaryNotification() {
-		return getString(NOTIFICATION_ANNIVERSARY, NOTIFICATION_ANNIVERSARY_OFF);
+		return getString(ANNIVERSARY_NOTIFICATION, ANNIVERSARY_NOTIFICATION_OFF);
 	}
 	
 	public boolean setAnniversaryNotification(String value) {
-		return setString(NOTIFICATION_ANNIVERSARY, value);
+		return setString(ANNIVERSARY_NOTIFICATION, value);
 	}
 	
 	public String getSelectedRoot() {
@@ -121,7 +121,7 @@ public class ContactsUserSettings extends BaseUserSettings {
 		}
 	}
 	
-	public static class CheckedFolders extends HashSet<Integer> {
+	public static class CheckedFolders extends HashSet<String> {
 		public CheckedFolders() {
 			super();
 		}

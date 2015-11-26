@@ -98,9 +98,9 @@ public class JsContact {
 	public JsContact() {}
 	
 	public JsContact(UserProfile.Id ownerId, Contact contact) {
-		id = new CompositeId(contact.getFolderId(), contact.getContactId()).toString();
+		id = new CompositeId(contact.getCategoryId(), contact.getContactId()).toString();
 		contactId = contact.getContactId();
-		folderId = contact.getFolderId();
+		folderId = contact.getCategoryId();
 		title = contact.getTitle();
 		firstName = contact.getFirstName();
 		lastName = contact.getLastName();

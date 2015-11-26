@@ -103,9 +103,9 @@ public class Service extends BaseService {
 	@Override
 	public void initialize() throws Exception {
 		UserProfile profile = getEnv().getProfile();
-		manager = new ContactsManager(getId(), getRunContext());
+		manager = new ContactsManager(getRunContext());
 		//manager.initializeDirectories(profile);
-		us = new ContactsUserSettings(getId(), profile.getId());
+		us = new ContactsUserSettings(SERVICE_ID, profile.getId());
 		initFolders();
 	}
 	
@@ -116,7 +116,7 @@ public class Service extends BaseService {
 		checkedRoots.clear();
 		checkedRoots = null;
 		us = null;
-		manager.cleanupDirectories();
+		//manager.cleanupDirectories();
 		manager = null;
 	}
 	
@@ -177,7 +177,7 @@ public class Service extends BaseService {
 						
 					} else if(node._type.equals(JsFolderNode.TYPE_FOLDER)) {
 						CompositeId cid = new CompositeId().parse(node.id);
-						toggleCheckedFolder(Integer.valueOf(cid.getToken(1)), node._visible);
+						toggleCheckedFolder(cid.getToken(1), node._visible);
 					}
 				}
 				new JsonResult().printTo(out);
@@ -286,7 +286,7 @@ public class Service extends BaseService {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
 				item = manager.addCategory(JsCategory.buildFolder(pl.data));
-				toggleCheckedFolder(item.getCategoryId(), true);
+				toggleCheckedFolder(item.getCategoryId().toString(), true);
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
@@ -312,22 +312,20 @@ public class Service extends BaseService {
 		JsContact item = null;
 		
 		try {
-			UserProfile up = getEnv().getProfile();
-			
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
-				CompositeId cid = new CompositeId().parse(id); 
+				CompositeId cid = new CompositeId().parse(id);
 				
 				int categoryId = Integer.valueOf(cid.getToken(0));
 				UserProfile.Id ownerId = manager.getCategoryOwner(categoryId);
-				Contact contact = manager.getContact(categoryId, cid.getToken(1), up.getLocale());
+				Contact contact = manager.getContact(id);
 				item = new JsContact(ownerId, contact);
 				
 				/*
 				item = new JsContact();
 				item.contactId = 1;
-				item.folderId = 1;
+				item.categoryId = 1;
 				item.title = "Mr";
 				item.firstName = "firstName";
 				item.lastName = "lastName";
@@ -383,35 +381,20 @@ public class Service extends BaseService {
 				new JsonResult(item).printTo(out);
 				
 			} else if(crud.equals(Crud.CREATE)) {
-				/*
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				//TODO: verificare che il calendario supporti la scrittura (specialmente per quelli condivisi)
-				
-				Event evt = JsEvent.buildEvent(pl.data, us.getWorkdayStart(), us.getWorkdayEnd());
-				// Adds an organizer if event doesn't have it
-				if(evt.hasAttendees()) {
-					EventAttendee org = evt.getOrganizer();
-					if(org == null) {
-						org = new EventAttendee();
-						org.setRecipient(up.getEmailAddress());
-						org.setRecipientType(EventAttendee.RECIPIENT_TYPE_ORGANIZER);
-						org.setResponseStatus(EventAttendee.RESPONSE_STATUS_ACCEPTED);
-						org.setNotify(false);
-						evt.getAttendees().add(org);
-					}
-				}
-				manager.addEvent(evt);
+				/*
+				Contact cont = JsContact.buildContact(pl.data);
+				manager.updateContact(cont);
 				new JsonResult().printTo(out);
 				*/
 				
 			} else if(crud.equals(Crud.UPDATE)) {
-				/*
-				String target = ServletUtils.getStringParameter(request, "target", "this");
-				Payload<MapItem, JsEvent> pl = ServletUtils.getPayload(request, JsEvent.class);
+				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				Event evt = JsEvent.buildEvent(pl.data, us.getWorkdayStart(), us.getWorkdayEnd());
-				manager.editEvent(target, evt, up.getTimeZone());
+				/*
+				Contact cont = JsContact.buildContact(pl.data);
+				manager.updateContact(cont);
 				new JsonResult().printTo(out);
 				*/
 			}
@@ -428,7 +411,6 @@ public class Service extends BaseService {
 		CoreManager corem = WT.getCoreManager(getRunContext());
 		
 		try {
-			UserProfile up = getEnv().getProfile();
 			//DateTimeZone utz = up.getTimeZone();
 			
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
@@ -442,18 +424,19 @@ public class Service extends BaseService {
 				ArrayList<ExtGridColumnMeta> colsInfo = new ArrayList<>();
 				
 				// Get contacts for each visible folder
-				Integer[] checked = getCheckedFolders();
+				String[] checked = getCheckedFolders();
 				List<ContactsManager.FolderContacts> foldContacts = null;
 				DirectoryManager dm = null;
 				DirectoryElement de = null;
 				for(CategoryRoot root : getCheckedRoots()) {
-					foldContacts = manager.listContacts(root, checked, up.getLocale(), pattern);
+					foldContacts = manager.listContacts(root, checked, pattern);
 					
 					for(ContactsManager.FolderContacts foldContact : foldContacts) {
 						for(int i=0; i<foldContact.result.getElementsCount(); i++) {
 							dm = foldContact.result.getDirectoryManager();
 							de = foldContact.result.elementAt(i);
 							item = new MapItem();
+							
 							
 							fields.add(new ExtFieldMeta("contactId").setType("int"));
 							colsInfo.add(new ExtGridColumnMeta("contactId").setHidden(true));
@@ -470,19 +453,19 @@ public class Service extends BaseService {
 										fields.add(new ExtFieldMeta(col));
 										colsInfo.add(new ExtGridColumnMeta(col, col));
 										item.put(col, (customer != null) ? customer.getDescription() : de.getField(col));
-									} else if(dm.getAliasField("FOLDER_ID").equals(col)) {
-										fields.add(new ExtFieldMeta("folderId"));
-										colsInfo.add(new ExtGridColumnMeta("folderId").setHidden(true));
-										item.put("folderId", Integer.parseInt(de.getField("FOLDER_ID")));
+									} else if(dm.getAliasField("CATEGORY_ID").equals(col)) {
+										fields.add(new ExtFieldMeta("categoryId"));
+										colsInfo.add(new ExtGridColumnMeta("categoryId").setHidden(true));
+										item.put("categoryId", Integer.parseInt(de.getField("CATEGORY_ID")));
 										
-										OCategory folder = manager.getCategory(Integer.parseInt(de.getField(col)));
-										if(folder != null) {
-											fields.add(new ExtFieldMeta("folderName"));
-											colsInfo.add(new ExtGridColumnMeta("folderName").setHidden(true));
-											item.put("folderName", folder.getName());
-											fields.add(new ExtFieldMeta("folderColor"));
-											colsInfo.add(new ExtGridColumnMeta("folderColor").setHidden(true));
-											item.put("folderColor", folder.getColor());
+										OCategory cat = manager.getCategory(Integer.parseInt(de.getField(col)));
+										if(cat != null) {
+											fields.add(new ExtFieldMeta("categoryName"));
+											colsInfo.add(new ExtGridColumnMeta("categoryName").setHidden(true));
+											item.put("categoryName", cat.getName());
+											fields.add(new ExtFieldMeta("categoryColor"));
+											colsInfo.add(new ExtGridColumnMeta("categoryColor").setHidden(true));
+											item.put("categoryColor", cat.getColor());
 										}
 									} else {
 										fields.add(new ExtFieldMeta(col));
@@ -494,7 +477,7 @@ public class Service extends BaseService {
 							
 							fields.add(new ExtFieldMeta("id").setType("string"));
 							colsInfo.add(new ExtGridColumnMeta("id").setHidden(true));
-							item.put("id", new CompositeId(item.get("folderId"), item.get("contactId")).toString());
+							item.put("id", new CompositeId(item.get("categoryId"), item.get("contactId")).toString());
 							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
 							items.add(item);
 						}
@@ -538,6 +521,10 @@ public class Service extends BaseService {
 			File photoFile = null;
 			
 			if(Validator.isInteger(id)) {
+				
+				
+				//TODO: 
+				
 				
 			} else {
 				UploadedFile uploaded = getUploadedFile(id);
@@ -596,8 +583,8 @@ public class Service extends BaseService {
 		return checked;
 	}
 	
-	private Integer[] getCheckedFolders() {
-		return checkedFolders.toArray(new Integer[checkedFolders.size()]);
+	private String[] getCheckedFolders() {
+		return checkedFolders.toArray(new String[checkedFolders.size()]);
 	}
 	
 	private void toggleCheckedRoot(String shareId, boolean checked) {
@@ -611,7 +598,7 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private void toggleCheckedFolder(int folderId, boolean checked) {
+	private void toggleCheckedFolder(String folderId, boolean checked) {
 		synchronized(roots) {
 			if(checked) {
 				checkedFolders.add(folderId);

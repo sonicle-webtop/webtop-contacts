@@ -50,7 +50,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	confirm: 'yn',
 	autoToolbar: false,
-	model: 'Sonicle.webtop.contacts.model.Contact',
+	modelName: 'Sonicle.webtop.contacts.model.Contact',
 	/*
 	viewModel: {
 		formulas: {
@@ -97,11 +97,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.callParent(arguments);
 		
 		main = Ext.create({
-			itemId: 'main',
-			xtype: 'panel',
+			xtype: 'wtfieldspanel',
 			layout: 'column',
 			title: me.mys.res('contact.main.tit'),
-			bodyPadding: 5,
 			defaults: {
 				xtype: 'container',
 				layout: 'anchor',
@@ -119,7 +117,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						store: {
 							autoLoad: true,
 							model: 'Sonicle.webtop.contacts.model.CategoryLkp',
-							proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'categorys')
+							proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 						},
 						iconClsField: 'colorCls',
 						fieldLabel: me.mys.res('contact.fld-category.lbl')
@@ -217,12 +215,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		work = Ext.create({
-			itemId: 'work',
-			xtype: 'panel',
-			layout: 'anchor',
+			xtype: 'wtfieldspanel',
 			modelValidation: true,
 			title: me.mys.res('contact.work.tit'),
-			bodyPadding: 5,
 			defaults: {
 				labelWidth: 120,
 				width: 400
@@ -279,9 +274,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		home = Ext.create({
-			itemId: 'home',
-			xtype: 'panel',
-			layout: 'anchor',
+			xtype: 'wtfieldspanel',
 			modelValidation: true,
 			title: me.mys.res('contact.home.tit'),
 			bodyPadding: 5,
@@ -337,12 +330,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		other = Ext.create({
-			itemId: 'other',
-			xtype: 'panel',
-			layout: 'anchor',
+			xtype: 'wtfieldspanel',
 			modelValidation: true,
 			title: me.mys.res('contact.other.tit'),
-			bodyPadding: 5,
 			defaults: {
 				labelWidth: 120,
 				width: 400
@@ -379,9 +369,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		more = Ext.create({
-			itemId: 'more',
-			xtype: 'panel',
-			layout: 'anchor',
+			xtype: 'wtfieldspanel',
 			modelValidation: true,
 			title: me.mys.res('contact.more.tit'),
 			bodyPadding: 5,
@@ -439,12 +427,10 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		notes = Ext.create({
-			itemId: 'notes',
-			xtype: 'panel',
+			xtype: 'wtfieldspanel',
 			layout: 'fit',
 			modelValidation: true,
 			title: me.mys.res('contact.notes.tit'),
-			bodyPadding: 5,
 			items: [{
 				xtype: 'textarea',
 				bind: '{record.notes}'
@@ -453,7 +439,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		
 		me.add({
 			region: 'center',
-			xtype: 'tabpanel',
+			xtype: 'wttabpanel',
 			defaults: {
 				
 			},

@@ -38,8 +38,9 @@ package com.sonicle.webtop.contacts.bol.model;
  * @author malbinola
  */
 public class Contact {
+	protected String id;
 	protected String contactId;
-	protected String folderId;
+	protected String categoryId;
 	protected String listId;
 	protected String status;
 	protected String title;
@@ -89,6 +90,18 @@ public class Contact {
 	protected String url;
 	protected String photo;
 	protected String notes;
+	
+	public Contact(String id) {
+		this.id = id;
+	}
+	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
 
 	public String getContactId() {
 		return contactId;
@@ -98,12 +111,12 @@ public class Contact {
 		this.contactId = contactId;
 	}
 
-	public String getFolderId() {
-		return folderId;
+	public String getCategoryId() {
+		return categoryId;
 	}
 
-	public void setFolderId(String folderId) {
-		this.folderId = folderId;
+	public void setCategoryId(String categoryId) {
+		this.categoryId = categoryId;
 	}
 
 	public String getListId() {

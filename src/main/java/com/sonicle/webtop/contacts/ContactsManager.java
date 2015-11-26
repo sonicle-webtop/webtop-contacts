@@ -34,11 +34,13 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.db.DbUtils;
+import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.dal.CategoryDAO;
+import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.directory.DBDirectoryManager;
 import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
@@ -48,7 +50,7 @@ import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.bol.OShare;
 import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
-import com.sonicle.webtop.core.sdk.BaseServiceManager;
+import com.sonicle.webtop.core.sdk.BaseManager;
 import com.sonicle.webtop.core.RunContext;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.bol.model.IncomingShareRoot;
@@ -61,6 +63,7 @@ import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -81,38 +84,50 @@ import org.slf4j.Logger;
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseServiceManager {
+public class ContactsManager extends BaseManager {
 	public static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String RESOURCE_CATEGORY = "CATEGORY";
 	
-	private final LinkedHashMap<String, DirectoryManager> globalDirectories;
-	private final LinkedHashMap<String, DirectoryManager> directories;
+	private final LinkedHashMap<String, DirectoryManager> cacheGlobalDirectories = new LinkedHashMap<>();
+	private final LinkedHashMap<Integer, DirectoryManager> cacheDirectories = new LinkedHashMap<>();
 	
-	private final HashMap<Integer, UserProfile.Id> categoryToOwnerCache = new HashMap<>();
+	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
 	private final Object shareCacheLock = new Object();
-	private final HashMap<UserProfile.Id, String> ownerToRootShareCache = new HashMap<>();
-	private final HashMap<UserProfile.Id, String> ownerToWildcardFolderShareCache = new HashMap<>();
-	private final HashMap<Integer, String> categoryToFolderShareCache = new HashMap<>();
+	private final HashMap<UserProfile.Id, String> cacheOwnerToRootShare = new HashMap<>();
+	private final HashMap<UserProfile.Id, String> cacheOwnerToWildcardFolderShare = new HashMap<>();
+	private final HashMap<Integer, String> cacheCategoryToFolderShare = new HashMap<>();
 
-	public ContactsManager(String serviceId, RunContext context) {
-		super(serviceId, context);
-		globalDirectories = new LinkedHashMap<>();
-		directories = new LinkedHashMap<>();
+	public ContactsManager(RunContext context) {
+		super(context);
 	}
 	
+	private DirectoryManager getDirectoryManager(int categoryId) throws WTException {
+		try {
+			synchronized(cacheDirectories) {
+				if(!cacheDirectories.containsKey(categoryId)) {
+					cacheDirectories.put(categoryId, createDBDManager(getTargetProfileId(), categoryId, Locale.FRENCH));
+				}
+				return cacheDirectories.get(categoryId);
+			}
+		} catch(SQLException ex) {
+			throw new WTException(ex, "DB error");
+		}
+	}
+	
+	/*
 	public void initializeDirectories(UserProfile profile) throws SQLException {
 		initGlobalDirectories(profile.getId());
 		// Adds global DMs to the sessions
-		for (DirectoryManager dm : globalDirectories.values()) {
-			directories.put(dm.getId(), dm);
+		for (DirectoryManager dm : cacheGlobalDirectories.values()) {
+			cacheDirectories.put(dm.getId(), dm);
 		}
 	}
 	
 	public void cleanupDirectories() {
-		globalDirectories.clear();
-		directories.clear();
+		cacheGlobalDirectories.clear();
+		cacheDirectories.clear();
 	};
-	
+	*/
 	
 	
 	
@@ -122,17 +137,17 @@ public class ContactsManager extends BaseServiceManager {
 		CoreManager core = WT.getCoreManager(getRunContext());
 		UserProfile.Id pid = getTargetProfileId();
 		try {
-			ownerToRootShareCache.clear();
-			ownerToWildcardFolderShareCache.clear();
-			categoryToFolderShareCache.clear();
+			cacheOwnerToRootShare.clear();
+			cacheOwnerToWildcardFolderShare.clear();
+			cacheCategoryToFolderShare.clear();
 			for(CategoryRoot root : listIncomingCategoryRoots()) {
-				ownerToRootShareCache.put(root.getOwnerProfileId(), root.getShareId());
-				for(OShare folder : core.listIncomingShareFolders(pid, root.getShareId(), getServiceId(), RESOURCE_CATEGORY)) {
+				cacheOwnerToRootShare.put(root.getOwnerProfileId(), root.getShareId());
+				for(OShare folder : core.listIncomingShareFolders(pid, root.getShareId(), SERVICE_ID, RESOURCE_CATEGORY)) {
 					if(folder.hasWildcard()) {
 						UserProfile.Id ownerId = core.userUidToProfileId(folder.getUserUid());
-						ownerToWildcardFolderShareCache.put(ownerId, folder.getShareId().toString());
+						cacheOwnerToWildcardFolderShare.put(ownerId, folder.getShareId().toString());
 					} else {
-						categoryToFolderShareCache.put(Integer.valueOf(folder.getInstance()), folder.getShareId().toString());
+						cacheCategoryToFolderShare.put(Integer.valueOf(folder.getInstance()), folder.getShareId().toString());
 					}
 				}
 			}
@@ -143,33 +158,33 @@ public class ContactsManager extends BaseServiceManager {
 	
 	private String ownerToRootShareId(UserProfile.Id owner) {
 		synchronized(shareCacheLock) {
-			if(!ownerToRootShareCache.containsKey(owner)) buildShareCache();
-			return ownerToRootShareCache.get(owner);
+			if(!cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
+			return cacheOwnerToRootShare.get(owner);
 		}
 	}
 	
 	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
 		synchronized(shareCacheLock) {
-			if(!ownerToWildcardFolderShareCache.containsKey(ownerPid) && ownerToRootShareCache.isEmpty()) buildShareCache();
-			return ownerToWildcardFolderShareCache.get(ownerPid);
+			if(!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty()) buildShareCache();
+			return cacheOwnerToWildcardFolderShare.get(ownerPid);
 		}
 	}
 	
 	private String categoryToFolderShareId(int category) {
 		synchronized(shareCacheLock) {
-			if(!categoryToFolderShareCache.containsKey(category)) buildShareCache();
-			return categoryToFolderShareCache.get(category);
+			if(!cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
+			return cacheCategoryToFolderShare.get(category);
 		}
 	}
 	
 	private UserProfile.Id categoryToOwner(int categoryId) {
-		synchronized(categoryToOwnerCache) {
-			if(categoryToOwnerCache.containsKey(categoryId)) {
-				return categoryToOwnerCache.get(categoryId);
+		synchronized(cacheCategoryToOwner) {
+			if(cacheCategoryToOwner.containsKey(categoryId)) {
+				return cacheCategoryToOwner.get(categoryId);
 			} else {
 				try {
 					UserProfile.Id owner = findCategoryOwner(categoryId);
-					categoryToOwnerCache.put(categoryId, owner);
+					cacheCategoryToOwner.put(categoryId, owner);
 					return owner;
 				} catch(WTException ex) {
 					throw new WTRuntimeException(ex.getMessage());
@@ -189,7 +204,7 @@ public class ContactsManager extends BaseServiceManager {
 		String shareId = ownerToRootShareId(ownerPid);
 		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
 		CoreManager core = WT.getCoreManager(getRunContext());
-		if(core.isShareRootPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		if(core.isShareRootPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
@@ -205,13 +220,13 @@ public class ContactsManager extends BaseServiceManager {
 		CoreManager core = WT.getCoreManager(getRunContext());
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
 		if(wildcardShareId != null) {
-			if(core.isShareFolderPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
+			if(core.isShareFolderPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on calendar instance
 		String shareId = categoryToFolderShareId(categoryId);
 		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isShareFolderPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		if(core.isShareFolderPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
@@ -227,13 +242,13 @@ public class ContactsManager extends BaseServiceManager {
 		CoreManager core = WT.getCoreManager(getRunContext());
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
 		if(wildcardShareId != null) {
-			if(core.isShareElementsPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, wildcardShareId)) return;
+			if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on calendar instance
 		String shareId = categoryToFolderShareId(categoryId);
 		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isShareElementsPermitted(getRunProfileId(), getServiceId(), RESOURCE_CATEGORY, action, shareId)) return;
+		if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
@@ -260,9 +275,9 @@ public class ContactsManager extends BaseServiceManager {
 		ArrayList<CategoryRoot> roots = new ArrayList();
 		HashSet<String> hs = new HashSet<>();
 		
-		List<IncomingShareRoot> shares = core.listIncomingShareRoots(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY);
+		List<IncomingShareRoot> shares = core.listIncomingShareRoots(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY);
 		for(IncomingShareRoot share : shares) {
-			SharePermsRoot perms = core.getShareRootPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId());
+			SharePermsRoot perms = core.getShareRootPermissions(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, share.getShareId());
 			CategoryRoot root = new CategoryRoot(share, perms);
 			if(hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
 			hs.add(root.getShareId());
@@ -278,7 +293,7 @@ public class ContactsManager extends BaseServiceManager {
 		
 		// Retrieves incoming folders (from sharing). This lookup already 
 		// returns readable shares (we don't need to test READ permission)
-		List<OShare> shares = core.listIncomingShareFolders(pid, rootShareId, getServiceId(), RESOURCE_CATEGORY);
+		List<OShare> shares = core.listIncomingShareFolders(pid, rootShareId, SERVICE_ID, RESOURCE_CATEGORY);
 		for(OShare share : shares) {
 			
 			List<OCategory> cats = null;
@@ -290,8 +305,8 @@ public class ContactsManager extends BaseServiceManager {
 			}
 			
 			for(OCategory cat : cats) {
-				SharePermsFolder fperms = core.getShareFolderPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
-				SharePermsElements eperms = core.getShareElementsPermissions(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, share.getShareId().toString());
+				SharePermsFolder fperms = core.getShareFolderPermissions(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, share.getShareId().toString());
+				SharePermsElements eperms = core.getShareElementsPermissions(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, share.getShareId().toString());
 				
 				if(folders.containsKey(cat.getCategoryId())) {
 					CategoryFolder folder = folders.get(cat.getCategoryId());
@@ -307,12 +322,12 @@ public class ContactsManager extends BaseServiceManager {
 	
 	public Sharing getSharing(String shareId) throws WTException {
 		CoreManager core = WT.getCoreManager(getRunContext());
-		return core.getSharing(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, shareId);
+		return core.getSharing(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, shareId);
 	}
 	
 	public void updateSharing(Sharing sharing) throws WTException {
 		CoreManager core = WT.getCoreManager(getRunContext());
-		core.updateSharing(getTargetProfileId(), getServiceId(), RESOURCE_CATEGORY, sharing);
+		core.updateSharing(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, sharing);
 	}
 	
 	public UserProfile.Id getCategoryOwner(int categoryId) throws WTException {
@@ -430,12 +445,12 @@ public class ContactsManager extends BaseServiceManager {
 		}
 	}
 	
-	public List<FolderContacts> listContacts(CategoryRoot root, Integer[] folders, Locale locale, String pattern) throws Exception {
-		return listContacts(root.getOwnerProfileId(), folders, locale, pattern);
+	public List<FolderContacts> listContacts(CategoryRoot root, String[] categoryFolders, String pattern) throws Exception {
+		return listContacts(root.getOwnerProfileId(), categoryFolders, pattern);
 	}
 	
-	public List<FolderContacts> listContacts(UserProfile.Id pid, Integer[] folders, Locale locale, String pattern) throws Exception {
-		CategoryDAO folDao = CategoryDAO.getInstance();
+	public List<FolderContacts> listContacts(UserProfile.Id pid, String[] categoryFolders, String pattern) throws Exception {
+		CategoryDAO datdao = CategoryDAO.getInstance();
 		ArrayList<FolderContacts> foldContacts = new ArrayList<>();
 		Connection con = null;
 		
@@ -445,14 +460,15 @@ public class ContactsManager extends BaseServiceManager {
 			// Lists desired groups (tipically visibles) coming from passed list
 			// Passed ids should belong to referenced folder(group), 
 			// this is ensured using domainId and userId parameters in below query.
-			List<OCategory> cats = folDao.selectByDomainUserIn(con, pid.getDomainId(), pid.getUserId(), folders);
-			DBDirectoryManager dbdm = null;
+			Integer[] categories = toIntArray(categoryFolders);
+			List<OCategory> cats = datdao.selectByDomainUserIn(con, pid.getDomainId(), pid.getUserId(), categories);
+			DirectoryManager dm = null;
 			DirectoryResult dr = null;
 			for(OCategory cat : cats) {
 				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
 				
-				dbdm = createDBDManager(pid, cat.getCategoryId(), locale);
-				dr = dbdm.lookup(pattern, locale, false, false);
+				dm = getDirectoryManager(cat.getCategoryId());
+				dr = dm.lookup(pattern, getRunContext().getLocale(), false, false);
 				foldContacts.add(new FolderContacts(cat, dr));
 			}
 			return foldContacts;
@@ -464,77 +480,112 @@ public class ContactsManager extends BaseServiceManager {
 		}
 	}
 	
-	public Contact getContact(int categoryId, String contactId, Locale locale) throws WTException {
+	public String buildContactId(String categoryId, String contactId) {
+		return new CompositeId(categoryId, contactId).toString();
+	}
+	
+	public Contact getContact(String id) throws WTException {
 		Contact item = null;
 		
 		try {
-			UserProfile.Id ownerPid = categoryToOwner(categoryId);
-			DBDirectoryManager dbdm = createDBDManager(ownerPid, categoryId, locale);
+			CompositeId cid = new CompositeId().parse(id, 2);
+			int categoryId = Integer.parseInt(cid.getToken(0));
+			String contactId = cid.getToken(1);
 			
-			DirectoryResult dr = dbdm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), locale, true, true, false);
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getRunContext().getLocale(), true, true, false);
 			DirectoryElement de = dr.elementAt(0);
-			item = new Contact();
+			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			
+			item = new Contact(id);
+			item.setId(cid.toString());
 			item.setContactId(contactId);
-			item.setFolderId(de.getField("FOLDER_ID"));
+			item.setCategoryId(de.getField("CATEGORY_ID"));
 			item.setListId(de.getField("LIST_ID"));
 			item.setStatus(de.getField("STATUS"));
-			item.setTitle(de.getField(dbdm.getAliasField("TITLE")));
-			item.setFirstName(de.getField(dbdm.getAliasField("FIRSTNAME")));
-			item.setLastName(de.getField(dbdm.getAliasField("LASTNAME")));
-			item.setNickname(de.getField(dbdm.getAliasField("NICKNAME")));
-			item.setGender(de.getField(dbdm.getAliasField("GENDER")));
-			item.setWorkAddress(de.getField(dbdm.getAliasField("CADDRESS")));
-			item.setWorkPostalCode(de.getField(dbdm.getAliasField("CPOSTALCODE")));
-			item.setWorkCity(de.getField(dbdm.getAliasField("CCITY")));
-			item.setWorkState(de.getField(dbdm.getAliasField("CSTATE")));
-			item.setWorkCountry(de.getField(dbdm.getAliasField("CCOUNTRY")));
-			item.setWorkTelephone(de.getField(dbdm.getAliasField("CTELEPHONE")));
-			item.setWorkTelephone2(de.getField(dbdm.getAliasField("CTELEPHONE2")));
-			item.setWorkMobile(de.getField(dbdm.getAliasField("CMOBILE")));
-			item.setWorkFax(de.getField(dbdm.getAliasField("CFAX")));
-			item.setWorkPager(de.getField(dbdm.getAliasField("CPAGER")));
-			item.setWorkEmail(de.getField(dbdm.getAliasField("CEMAIL")));
-			item.setWorkInstantMsg(de.getField(dbdm.getAliasField("CINSTANT_MSG")));
-			item.setHomeAddress(de.getField(dbdm.getAliasField("HADDRESS")));
-			item.setHomePostalCode(de.getField(dbdm.getAliasField("HPOSTALCODE")));
-			item.setHomeCity(de.getField(dbdm.getAliasField("HCITY")));
-			item.setHomeState(de.getField(dbdm.getAliasField("HSTATE")));
-			item.setHomeCountry(de.getField(dbdm.getAliasField("HCOUNTRY")));
-			item.setHomeTelephone(de.getField(dbdm.getAliasField("HTELEPHONE")));
-			item.setHomeMobile(de.getField(dbdm.getAliasField("HMOBILE")));
-			item.setHomeFax(de.getField(dbdm.getAliasField("HFAX")));
-			item.setHomePager(de.getField(dbdm.getAliasField("HPAGER")));
-			item.setHomeEmail(de.getField(dbdm.getAliasField("HEMAIL")));
-			item.setHomeInstantMsg(de.getField(dbdm.getAliasField("HINSTANT_MSG")));
-			item.setOtherAddress(de.getField(dbdm.getAliasField("OADDRESS")));
-			item.setOtherPostalCode(de.getField(dbdm.getAliasField("OPOSTALCODE")));
-			item.setOtherCity(de.getField(dbdm.getAliasField("OCITY")));
-			item.setOtherState(de.getField(dbdm.getAliasField("OSTATE")));
-			item.setOtherCountry(de.getField(dbdm.getAliasField("OCOUNTRY")));
-			item.setOtherEmail(de.getField(dbdm.getAliasField("OEMAIL")));
-			item.setOtherInstantMsg(de.getField(dbdm.getAliasField("OINSTANT_MSG")));
-			item.setCompany(de.getField(dbdm.getAliasField("COMPANY")));
-			item.setFunction(de.getField(dbdm.getAliasField("FUNCTION")));
-			item.setDepartment(de.getField(dbdm.getAliasField("CDEPARTMENT")));
-			item.setManager(de.getField(dbdm.getAliasField("CMANAGER")));
-			item.setAssistant(de.getField(dbdm.getAliasField("CASSISTANT")));
-			item.setAssistantTelephone(de.getField(dbdm.getAliasField("CTELEPHONEASSISTANT")));
-			item.setPartner(de.getField(dbdm.getAliasField("HPARTNER")));
-			item.setBirthday(de.getField(dbdm.getAliasField("HBIRTHDAY")));
-			item.setAnniversary(de.getField(dbdm.getAliasField("HANNIVERSARY")));
-			item.setUrl(de.getField(dbdm.getAliasField("URL")));
-			item.setPhoto(de.getField(dbdm.getAliasField("PHOTO")));
-			item.setNotes(de.getField(dbdm.getAliasField("NOTES")));
+			item.setTitle(de.getField(dm.getAliasField("TITLE")));
+			item.setFirstName(de.getField(dm.getAliasField("FIRSTNAME")));
+			item.setLastName(de.getField(dm.getAliasField("LASTNAME")));
+			item.setNickname(de.getField(dm.getAliasField("NICKNAME")));
+			item.setGender(de.getField(dm.getAliasField("GENDER")));
+			item.setWorkAddress(de.getField(dm.getAliasField("CADDRESS")));
+			item.setWorkPostalCode(de.getField(dm.getAliasField("CPOSTALCODE")));
+			item.setWorkCity(de.getField(dm.getAliasField("CCITY")));
+			item.setWorkState(de.getField(dm.getAliasField("CSTATE")));
+			item.setWorkCountry(de.getField(dm.getAliasField("CCOUNTRY")));
+			item.setWorkTelephone(de.getField(dm.getAliasField("CTELEPHONE")));
+			item.setWorkTelephone2(de.getField(dm.getAliasField("CTELEPHONE2")));
+			item.setWorkMobile(de.getField(dm.getAliasField("CMOBILE")));
+			item.setWorkFax(de.getField(dm.getAliasField("CFAX")));
+			item.setWorkPager(de.getField(dm.getAliasField("CPAGER")));
+			item.setWorkEmail(de.getField(dm.getAliasField("CEMAIL")));
+			item.setWorkInstantMsg(de.getField(dm.getAliasField("CINSTANT_MSG")));
+			item.setHomeAddress(de.getField(dm.getAliasField("HADDRESS")));
+			item.setHomePostalCode(de.getField(dm.getAliasField("HPOSTALCODE")));
+			item.setHomeCity(de.getField(dm.getAliasField("HCITY")));
+			item.setHomeState(de.getField(dm.getAliasField("HSTATE")));
+			item.setHomeCountry(de.getField(dm.getAliasField("HCOUNTRY")));
+			item.setHomeTelephone(de.getField(dm.getAliasField("HTELEPHONE")));
+			item.setHomeMobile(de.getField(dm.getAliasField("HMOBILE")));
+			item.setHomeFax(de.getField(dm.getAliasField("HFAX")));
+			item.setHomePager(de.getField(dm.getAliasField("HPAGER")));
+			item.setHomeEmail(de.getField(dm.getAliasField("HEMAIL")));
+			item.setHomeInstantMsg(de.getField(dm.getAliasField("HINSTANT_MSG")));
+			item.setOtherAddress(de.getField(dm.getAliasField("OADDRESS")));
+			item.setOtherPostalCode(de.getField(dm.getAliasField("OPOSTALCODE")));
+			item.setOtherCity(de.getField(dm.getAliasField("OCITY")));
+			item.setOtherState(de.getField(dm.getAliasField("OSTATE")));
+			item.setOtherCountry(de.getField(dm.getAliasField("OCOUNTRY")));
+			item.setOtherEmail(de.getField(dm.getAliasField("OEMAIL")));
+			item.setOtherInstantMsg(de.getField(dm.getAliasField("OINSTANT_MSG")));
+			item.setCompany(de.getField(dm.getAliasField("COMPANY")));
+			item.setFunction(de.getField(dm.getAliasField("FUNCTION")));
+			item.setDepartment(de.getField(dm.getAliasField("CDEPARTMENT")));
+			item.setManager(de.getField(dm.getAliasField("CMANAGER")));
+			item.setAssistant(de.getField(dm.getAliasField("CASSISTANT")));
+			item.setAssistantTelephone(de.getField(dm.getAliasField("CTELEPHONEASSISTANT")));
+			item.setPartner(de.getField(dm.getAliasField("HPARTNER")));
+			item.setBirthday(de.getField(dm.getAliasField("HBIRTHDAY")));
+			item.setAnniversary(de.getField(dm.getAliasField("HANNIVERSARY")));
+			item.setUrl(de.getField(dm.getAliasField("URL")));
+			item.setPhoto(de.getField(dm.getAliasField("PHOTO")));
+			item.setNotes(de.getField(dm.getAliasField("NOTES")));
 			return item;
 		
-		} catch(SQLException ex) {
-			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			throw ex;
 		}
 	} 
 	
+	public byte[] getContactPhoto(String id) throws WTException {
+		Connection con = null;
+		ContactDAO dao = ContactDAO.getInstance();
+		
+		try {
+			CompositeId cid = new CompositeId().parse(id, 2);
+			int categoryId = Integer.parseInt(cid.getToken(0));
+			String contactId = cid.getToken(1);
+			
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getRunContext().getLocale(), true, true, false);
+			DirectoryElement de = dr.elementAt(0);
+			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			
+			con = WT.getConnection(getManifest());
+			return dao.readPhoto(con, Integer.valueOf(contactId));
+		
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} catch(IOException ex) {
+			throw new WTException(ex, "Error reading bytes");
+		}
+	}
 	
-	
-	
+	public void updateContact(Contact contact) throws WTException {
+		
+		
+		
+	}
 	
 	
 	
@@ -560,7 +611,7 @@ public class ContactsManager extends BaseServiceManager {
 		return StringUtils.defaultIfBlank(lookupResource(locale, key), StringUtils.removeStart(key, "fields.")).toUpperCase();
 	}
 	
-	private DBDirectoryManager createDBDManager(UserProfile.Id pid, int folderId, Locale locale) throws SQLException {
+	private DBDirectoryManager createDBDManager(UserProfile.Id pid, int categoryId, Locale locale) throws SQLException {
 		String groupwork = lookupHeader(locale, ContactsLocale.FIELDS_GROUPWORK);
 		String grouphome = lookupHeader(locale, ContactsLocale.FIELDS_GROUPHOME);
 		String groupother = lookupHeader(locale, ContactsLocale.FIELDS_GROUPOTHER);
@@ -577,7 +628,7 @@ public class ContactsManager extends BaseServiceManager {
 		DBDirectoryManager dbdm = new DBDirectoryManager(
 				DirectoryManager.DirectoryType.USER,
 				"privatedb: " + pid.toString(), pid.toString(),
-				WT.getDataSource(getServiceId()),
+				WT.getDataSource(SERVICE_ID),
 				"contacts.contacts",
 				lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"		
 				/*
@@ -633,7 +684,7 @@ public class ContactsManager extends BaseServiceManager {
 				+ "OEMAIL X__" + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ","
 				+ "OINSTANT_MSG X__" + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + "}|"
 				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "+FOLDER_ID FOLDER_ID,"
+				+ "+CATEGORY_ID CATEGORY_ID,"
 				+ "STATUS STATUS,"
 				+ "LIST_ID LIST_ID }",
 				*/
@@ -689,15 +740,15 @@ public class ContactsManager extends BaseServiceManager {
 				+ "OEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupother) + ","
 				+ "OINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupother) + "}|"
 				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "+FOLDER_ID FOLDER_ID,"
+				+ "+CATEGORY_ID CATEGORY_ID,"
 				+ "STATUS STATUS,"
 				+ "LIST_ID LIST_ID }",
 				null,
 				clickfields, null, searchfields, mailfield, faxfield, firstnamefield, lastnamefield, companyfield,
 				"contact_id",
-				"(status is null or status!='D') and (folder_id=" + folderId + ")",
+				"(status is null or status!='D') and (category_id=" + categoryId + ")",
 				"lastname,firstname,company",
-				"contact_id=nextval('seq_contacts'),folder_id=" + folderId
+				"contact_id=nextval('seq_contacts'),category_id=" + categoryId
 		);
 		dbdm.setWritable(true);
 		dbdm.setIsContact(true);
@@ -759,7 +810,7 @@ public class ContactsManager extends BaseServiceManager {
 				+ "OEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupother) + ","
 				+ "OINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupother) + "}|"
 				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "+FOLDER_ID FOLDER_ID,"
+				+ "+CATEGORY_ID CATEGORY_ID,"
 				+ "STATUS STATUS,"
 				+ "LIST_ID LIST_ID }",
 	*/
@@ -781,7 +832,7 @@ public class ContactsManager extends BaseServiceManager {
 		DBDirectoryManager dbdm = new DBDirectoryManager(
 				DirectoryManager.DirectoryType.USER,
 				"privatedb: " + profile.getUserId(), profile.getDisplayName(),
-				WT.getDataSource(getServiceId()),
+				WT.getDataSource(SERVICE_ID),
 				"contacts",
 				lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"
 				+ "+TITLE " + lookupResource(locale, ContactsLocale.FIELDS_TITLE) + ","
@@ -854,14 +905,14 @@ public class ContactsManager extends BaseServiceManager {
 		
 		
 		CoreManager core = WT.getCoreManager(getRunContext());
-		List<IncomingShare> shares = core.listIncomingSharesForUser(getServiceId(), profile.getId(), SHARE_RESOURCE_CONTACTS);
+		List<IncomingShare> shares = core.listIncomingSharesForUser(SERVICE_ID, profile.getId(), SHARE_RESOURCE_CONTACTS);
 		String resource = AuthResourceShareInstance.buildName("GROUP");
 		for(IncomingShare share : shares) {
-			if(!WT.isPermitted(getServiceId(), resource, AuthResourceShareInstance.ACTION_READ, share.getShareId())) continue;
+			if(!WT.isPermitted(SERVICE_ID, resource, AuthResourceShareInstance.ACTION_READ, share.getShareId())) continue;
 			dbdm = new DBDirectoryManager(
 					DirectoryManager.DirectoryType.GROUP,
 					"privatedb: " + share.getUserId(), wg.getDescription(),
-					WT.getDataSource(getServiceId()),
+					WT.getDataSource(SERVICE_ID),
 					"contacts",
 					lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"
 					+ "+TITLE " + lookupResource(locale, ContactsLocale.FIELDS_TITLE) + ","
@@ -938,7 +989,7 @@ public class ContactsManager extends BaseServiceManager {
 	*/
 	
 	private synchronized void initGlobalDirectories(UserProfile.Id pid) throws SQLException {
-		ContactsServiceSettings css = new ContactsServiceSettings(pid.getDomainId(), getServiceId());
+		ContactsServiceSettings css = new ContactsServiceSettings(pid.getDomainId(), SERVICE_ID);
 		
 		int index = 0;
 		while (true) {
@@ -964,9 +1015,9 @@ public class ContactsManager extends BaseServiceManager {
 				if (!iswebtop) {
 					DataSource ds = null;
 					try {
-						ds = WT.getDataSource(getServiceId(), sname);
+						ds = WT.getDataSource(SERVICE_ID, sname);
 					} catch (Exception ex) {
-						logger.error("Unable to get DataSouce [{}, {}]", ex, getServiceId(), sname);
+						logger.error("Unable to get DataSouce [{}, {}]", ex, SERVICE_ID, sname);
 						++index;
 						continue;
 					}
@@ -983,13 +1034,13 @@ public class ContactsManager extends BaseServiceManager {
 					dm = new DBDirectoryManager(
 							DirectoryManager.DirectoryType.GLOBAL,
 							sid, sdescription,
-							WT.getDataSource(getServiceId()),
+							WT.getDataSource(SERVICE_ID),
 							stable, sfields, null, sclickfields, null, ssearchfields,
 							smailfield, null, sfirstnamefield, slastnamefield, null, null, null,
 							sorderfields, null
 					);
 				}
-				globalDirectories.put(sid, dm);
+				cacheGlobalDirectories.put(sid, dm);
 				
 			} else if (value.startsWith("ldap:")) {
 				StringTokenizer st = new StringTokenizer(value, ";");
@@ -1005,11 +1056,17 @@ public class ContactsManager extends BaseServiceManager {
 						sid, sdescription,
 						sserver, Integer.parseInt(sport), sbase
 				);
-				globalDirectories.put(sid, dm);
+				cacheGlobalDirectories.put(sid, dm);
 			}
 			
 			++index;
 		}
+	}
+	
+	private Integer[] toIntArray(String[] in) {
+		Integer[] out = new Integer[in.length];
+		for(int i=0; i<in.length; i++) out[i] = Integer.valueOf(in[i]);
+		return out;
 	}
 	
 	public static class FolderContacts {

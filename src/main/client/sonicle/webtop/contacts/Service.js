@@ -154,7 +154,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								var colsInfo = [];
 								colsInfo.push({
 									xtype: 'soiconcolumn',
-									iconField: function(rec) {
+									iconField: function(v,rec) {
 										return WTF.cssIconCls(me.XID, (rec.get('listId')>0) ? 'contact-list' : 'contact', 'xs');
 									},
 									iconSize: WTU.imgSizeToPx('xs'),
@@ -273,6 +273,28 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if(node) me.deleteCategory(node);
 			}
 		});
+		me.addRef('uploaders', 'importContacts', Ext.create('Sonicle.upload.Item', {
+			text: WT.res(me.ID, 'act-importContacts.lbl'),
+			iconCls: WTF.cssIconCls(me.XID, 'importContacts', 'xs'),
+			uploaderConfig: WTF.uploader(me.ID, 'VCardImport', {
+				extraParams: {
+					categoryId: null // Depends on selected node...
+				},
+				mimeTypes: [
+					{title: 'vCard files', extensions: 'vcf,vcard'}
+				]
+			}),
+			handler: function(s) {
+				/*
+				var node = me.getSelectedFolder();
+				if(node) {
+					s.uploader.mergeExtraParams({
+						calendarId: node.get('_catId')
+					});
+				}
+				*/
+			}
+		}));
 		me.addAction('viewAllCategories', {
 			iconCls: 'wt-icon-select-all-xs',
 			handler: function() {
@@ -285,7 +307,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me._showHideAllFolders(me.getSelectedRootFolder(), false);
 			}
 		});
-		
+		me.addAction('addContact', {
+			handler: function() {
+				var cal = me.getSelectedFolder();
+				//if(cal) me.addEventAtNow(cal.get('_pid'), cal.get('_calId'), cal.get('_isPrivate'), cal.get('_busy'), cal.get('_reminder'), day);
+			}
+		});
 		
 		me.addAction('dummyEdit', {
 			handler: function() {
