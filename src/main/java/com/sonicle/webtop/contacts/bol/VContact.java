@@ -31,33 +31,44 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import com.sonicle.webtop.core.sdk.UserProfile;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
+public class VContact extends OContact {
+	private String companyAsCustomer;
+	private String categoryDomainId;
+	private String categoryUserId;
 	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+	public String getCompanyAsCustomer() {
+		return companyAsCustomer;
+	}
+
+	public void setCompanyAsCustomer(String value) {
+		companyAsCustomer = value;
 	}
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+	public String getCategoryDomainId() {
+		return categoryDomainId;
+	}
+
+	public void setCategoryDomainId(String value) {
+		categoryDomainId = value;
 	}
 	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
+	public String getCategoryUserId() {
+		return categoryUserId;
+	}
+
+	public void setCategoryUserId(String value) {
+		categoryUserId = value;
 	}
 	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
-	
+	public UserProfile.Id getCategoryProfileId() {
+		return new UserProfile.Id(categoryDomainId, categoryUserId);
+	}
 }

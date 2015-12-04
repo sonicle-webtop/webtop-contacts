@@ -906,14 +906,13 @@ public class DBDirectoryManager implements DirectoryManager {
 				String sql = "update " + table + " set " + sqlset + " where " + sqlwhere;
 				if (iscontact) {
 					if (con.getMetaData().getDatabaseProductName().equalsIgnoreCase("oracle")) {
-						sql = "update " + table + " set REVISION=SYSDATE," + sqlset + " where " + sqlwhere;
+						sql = "update " + table + " set LAST_MODIFIED=SYSDATE," + sqlset + " where " + sqlwhere;
 					} else if (con.getMetaData().getDatabaseProductName().equalsIgnoreCase("postgresql")) {
-						sql = "update " + table + " set REVISION=NOW()," + sqlset + " where " + sqlwhere;
+						sql = "update " + table + " set LAST_MODIFIED=NOW()," + sqlset + " where " + sqlwhere;
 					}
 				}
 				stmt.execute(sql);
 				stmt.close();
-				con.commit();
 			} catch (Exception exc) {
 				exc.printStackTrace();
 			} finally {
@@ -990,7 +989,7 @@ public class DBDirectoryManager implements DirectoryManager {
 			}
 			//!!!!!
 			if (iscontact) {
-				sql += ",searchfield,revision";
+				sql += ",searchfield,last_modified";
 				//!!!!!
 			}
 			sql += ") values (";
@@ -1014,7 +1013,6 @@ public class DBDirectoryManager implements DirectoryManager {
 			sql += ")";
 			stmt.execute(sql);
 			stmt.close();
-			con.commit();
 		} catch (SQLException exc) {
 			exc.printStackTrace();
 		} finally {
@@ -1063,7 +1061,6 @@ public class DBDirectoryManager implements DirectoryManager {
 			stmt = con.createStatement();
 			stmt.execute(sql);
 			stmt.close();
-			con.commit();
 		} catch (Exception exc) {
 			exc.printStackTrace();
 		} finally {

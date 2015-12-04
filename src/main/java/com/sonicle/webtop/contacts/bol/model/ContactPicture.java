@@ -31,33 +31,61 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import com.sonicle.webtop.contacts.bol.OContactPicture;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
+public class ContactPicture {
+	protected String mimeType;
+	protected byte[] bytes;
+	protected int width;
+	protected int height;
 	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+	public ContactPicture(String mimeType, byte[] bytes) {
+		this.mimeType = mimeType;
+		this.bytes = bytes;
 	}
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+	public ContactPicture(OContactPicture pic) {
+		width = pic.getWidth();
+		height = pic.getHeight();
+		mimeType = pic.getMimeType();
+		bytes = pic.getBytes();
+	}
+
+	public String getMimeType() {
+		return mimeType;
+	}
+
+	public void setMimeType(String mimeType) {
+		this.mimeType = mimeType;
+	}
+
+	public byte[] getBytes() {
+		return bytes;
+	}
+
+	public void setBytes(byte[] bytes) {
+		this.bytes = bytes;
 	}
 	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
+	public int getWidth() {
+		return width;
 	}
-	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
-	
+
+	public void setWidth(int width) {
+		this.width = width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+
+	public void setHeight(int height) {
+		this.height = height;
+	}
 }

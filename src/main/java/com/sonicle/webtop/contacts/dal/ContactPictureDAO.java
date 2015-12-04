@@ -31,33 +31,64 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.dal;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import com.sonicle.webtop.contacts.bol.OContactPicture;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
+import com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord;
+import com.sonicle.webtop.core.dal.BaseDAO;
+import com.sonicle.webtop.core.dal.DAOException;
+import java.sql.Connection;
+import org.jooq.DSLContext;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
-	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+public class ContactPictureDAO extends BaseDAO {
+	private final static ContactPictureDAO INSTANCE = new ContactPictureDAO();
+	public static ContactPictureDAO getInstance() {
+		return INSTANCE;
 	}
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+	public boolean hasPicture(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.selectCount()
+			.from(CONTACTS_PICTURES)
+			.where(
+					CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
+			)
+			.fetchOne(0, Integer.class) == 1;
 	}
 	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
+	public OContactPicture select(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select()
+			.from(CONTACTS_PICTURES)
+			.where(
+					CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
+			)
+			.fetchOneInto(OContactPicture.class);
 	}
 	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
+	public int insert(Connection con, OContactPicture item) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		ContactsPicturesRecord record = dsl.newRecord(CONTACTS_PICTURES, item);
+		return dsl
+			.insertInto(CONTACTS_PICTURES)
+			.set(record)
+			.execute();
+	}
 	
+	public int delete(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+				.delete(CONTACTS_PICTURES)
+				.where(
+					CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
+				)
+				.execute();
+	}
 }

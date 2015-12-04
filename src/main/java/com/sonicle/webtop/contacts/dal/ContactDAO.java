@@ -35,38 +35,219 @@ package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.commons.db.RSUtils;
 import com.sonicle.commons.db.StatementUtils;
+import com.sonicle.webtop.contacts.bol.OContact;
+import com.sonicle.webtop.contacts.bol.VContact;
+import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
+import static com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS;
+import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
+import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.apache.commons.io.IOUtils;
+import java.util.List;
+import org.apache.commons.lang.StringUtils;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import static org.jooq.impl.DSL.field;
+import org.postgresql.largeobject.LargeObject;
+import org.postgresql.largeobject.LargeObjectManager;
 
 /**
  *
  * @author malbinola
  */
-public class ContactDAO {
+public class ContactDAO extends BaseDAO {
 	private final static ContactDAO INSTANCE = new ContactDAO();
 	public static ContactDAO getInstance() {
 		return INSTANCE;
 	}
+	
+	public static Field<String> CUSTOMERS_DESCRIPTION = field("public.customers.description", String.class);
+	
+	public Long getSequence(Connection con) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Long nextID = dsl.nextval(SEQ_CONTACTS);
+		return nextID;
+	}
+	
+	public List<VContact> viewByCategoryQuery(Connection con, int categoryId, String query) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.LIST_ID,
+				CONTACTS.SEARCHFIELD,
+				CONTACTS.TITLE,
+				CONTACTS.FIRSTNAME,
+				CONTACTS.LASTNAME,
+				CONTACTS.NICKNAME,
+				CONTACTS.COMPANY,
+				CONTACTS.FUNCTION,
+				CONTACTS.CADDRESS,
+				CONTACTS.CCITY,
+				CONTACTS.CTELEPHONE,
+				CONTACTS.CMOBILE,
+				CONTACTS.CEMAIL,
+				CONTACTS.HTELEPHONE,
+				CONTACTS.HEMAIL,
+				CONTACTS.HBIRTHDAY
+			)
+			.select(
+				CUSTOMERS_DESCRIPTION.as("company_as_customer"),
+				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
+				CATEGORIES.USER_ID.as("category_user_id")
+			)
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin("public.customers").on("contacts.contacts.company = public.customers.customer_id")
+			.where(
+				CONTACTS.CATEGORY_ID.equal(categoryId)
+				.and(
+					CONTACTS.STATUS.equal("N")
+					.or(CONTACTS.STATUS.equal("M"))
+				)
+				.and(
+					CONTACTS.CEMAIL.like(query)
+					.or(CONTACTS.COMPANY.like(query))
+					.or(CONTACTS.SEARCHFIELD.like(query))
+				)
+			)
+			.orderBy(
+				CONTACTS.LASTNAME.asc(),
+				CONTACTS.FIRSTNAME.asc(),
+				CONTACTS.COMPANY.asc()
+			)
+			.fetchInto(VContact.class);
+	}
+	
+	public OContact selectById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select()
+			.from(CONTACTS)
+			.where(CONTACTS.CONTACT_ID.equal(contactId))
+			.fetchOneInto(OContact.class);
+	}
+	
+	public int insert(Connection con, OContact item) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		ContactsRecord record = dsl.newRecord(CONTACTS, item);
+		return dsl
+			.insertInto(CONTACTS)
+			.set(record)
+			.execute();
+	}
+	
+	public int update(Connection con, OContact item) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		ContactsRecord record = dsl.newRecord(CONTACTS, item);
+		return dsl
+			.update(CONTACTS)
+			.set(record)
+			.where(
+					CONTACTS.CONTACT_ID.equal(item.getContactId())
+			)
+			.execute();
+	}
+	
+	public int updateRevision(Connection con, int contactId, RevisionInfo updateInfo) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CONTACTS)
+			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
+			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
+			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+			)
+			.execute();
+	}
+	
+	public int updateStatus(Connection con, int contactId, String status, RevisionInfo updateInfo) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CONTACTS)
+			.set(CONTACTS.STATUS, status)
+			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
+			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
+			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+			)
+			.execute();
+	}
+	
+	public int logicDeleteById(Connection con, int contactId, RevisionInfo updateInfo) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CONTACTS)
+			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
+			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
+			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
+			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+			)
+			.execute();
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	public byte[] readPhoto(Connection con, int contactId) throws IOException {
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
 		
 		try {
-			String sql = "SELECT photo "
-					+ "FROM contacts "
-					+ "WHERE (contact_id = ?)";
+			DSLContext dsl = getDSL(con);
+			String sql = dsl
+				.select(
+					CONTACTS.PHOTO
+				)
+				.from(CONTACTS)
+				.where(
+						CONTACTS.CONTACT_ID.equal(contactId)
+				)
+				.getSQL();
 			
 			stmt = con.prepareStatement(sql);
 			StatementUtils.setInt(stmt, 1, contactId);
 			rs = stmt.executeQuery();
-			return IOUtils.toByteArray(rs.getBinaryStream(1));
+			if(!rs.next()) return null;
+			
+			LargeObjectManager lom = (con.unwrap(org.postgresql.PGConnection.class)).getLargeObjectAPI();
+			LargeObject lo = lom.open(rs.getInt(1), LargeObjectManager.READ);
+			byte buf[] = new byte[lo.size()];
+			lo.read(buf, 0, lo.size());
+			lo.close();
+			return buf;
+			
+			//return (rs.next()) ? IOUtils.toByteArray(rs.getBinaryStream(1)) : null;
 			
 		} catch(SQLException ex) {
 			throw new DAOException("Unable to read bytes", ex);
@@ -76,6 +257,8 @@ public class ContactDAO {
 		}
 	}
 	
+	
+	/*
 	public int writePhoto(Connection con, int contactId, byte[] bytes) throws IOException {
 		PreparedStatement stmt = null;
 		
@@ -96,4 +279,5 @@ public class ContactDAO {
 			StatementUtils.closeQuietly(stmt);
 		}
 	}
+	*/
 }

@@ -43,10 +43,18 @@ import java.util.HashSet;
  * @author malbinola
  */
 public class ContactsUserSettings extends BaseUserSettings {
+	private ContactsServiceSettings css;
 	
 	public ContactsUserSettings(String serviceId, UserProfile.Id profileId) {
 		super(serviceId, profileId);
+		css = new ContactsServiceSettings(serviceId);
 	}
+	
+	/**
+	 * [string][default]
+	 * Contacts grid view (w:work, h:home)
+	 */
+	public static final String VIEW = "view";
 	
 	/**
 	 * [string]
@@ -74,6 +82,16 @@ public class ContactsUserSettings extends BaseUserSettings {
 	 * List of checked (or visible) folders (groups).
 	 */
 	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
+	
+	public String getView() {
+		String value = getString(VIEW, null);
+		if(value != null) return value;
+		return css.getDefaultView();
+	}
+	
+	public boolean setView(String value) {
+		return setString(VIEW, value);
+	}
 	
 	public String getAnniversaryNotification() {
 		return getString(ANNIVERSARY_NOTIFICATION, ANNIVERSARY_NOTIFICATION_OFF);
@@ -121,7 +139,7 @@ public class ContactsUserSettings extends BaseUserSettings {
 		}
 	}
 	
-	public static class CheckedFolders extends HashSet<String> {
+	public static class CheckedFolders extends HashSet<Integer> {
 		public CheckedFolders() {
 			super();
 		}

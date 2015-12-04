@@ -32,22 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.model.GridContact', {
-	extend: 'WT.model.Base',
+	extend: 'WT.model.Empty',
 	
-	idProperty: 'contactId',
-	fields: [
-		WTF.roField('contactId', 'string'),
-		WTF.roField('listId', 'string'),
-		WTF.roField('title', 'string'),
-		WTF.roField('firstName', 'string'),
-		WTF.roField('lastName', 'string'),
-		WTF.roField('workTelephone', 'string'),
-		WTF.roField('workMobile', 'string'),
-		WTF.roField('workEmail', 'string'),
-		WTF.roField('homeTelephone', 'string'),
-		WTF.roField('homeMobile', 'string'),
-		WTF.roField('homeEmail', 'string'),
-		WTF.roField('birthday', 'date', {dateFormat: 'Y-m-d'}),
-		WTF.roField('_profileId', 'string')
-	]
+	idProperty: 'uid'
 });

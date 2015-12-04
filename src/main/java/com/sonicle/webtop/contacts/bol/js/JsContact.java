@@ -33,19 +33,18 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.commons.web.json.CompositeId;
-import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import org.apache.commons.lang.StringUtils;
 
 /**
  *
  * @author malbinola
  */
 public class JsContact {
-	public String id;
-	public String contactId;
-	public String folderId;
+	public String uid;
+	public Integer contactId;
+	public Integer categoryId;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -91,16 +90,16 @@ public class JsContact {
 	public String birthday;
 	public String anniversary;
 	public String url;
-	public String photo;
 	public String notes;
+	public String picture;
 	public String _profileId;
 	
 	public JsContact() {}
 	
 	public JsContact(UserProfile.Id ownerId, Contact contact) {
-		id = new CompositeId(contact.getCategoryId(), contact.getContactId()).toString();
+		uid = contact.getUid();
 		contactId = contact.getContactId();
-		folderId = contact.getCategoryId();
+		categoryId = contact.getCategoryId();
 		title = contact.getTitle();
 		firstName = contact.getFirstName();
 		lastName = contact.getLastName();
@@ -143,11 +142,65 @@ public class JsContact {
 		assistant = contact.getAssistant();
 		assistantTelephone = contact.getAssistantTelephone();
 		partner = contact.getPartner();
-		birthday = contact.getBirthday();
-		anniversary = contact.getAnniversary();
+		//birthday = contact.getBirthday();
+		//anniversary = contact.getAnniversary();
 		url = contact.getUrl();
-		photo = contact.getPhoto();
 		notes = contact.getNotes();
+		picture = contact.getHasPicture() ? uid : null;
 		_profileId = ownerId.toString();
+	}
+	
+	public static Contact buildContact(JsContact js) {
+		Contact item = new Contact(js.uid);
+		item.setContactId(js.contactId);
+		item.setCategoryId(js.categoryId);
+		item.setTitle(js.title);
+		item.setFirstName(js.firstName);
+		item.setLastName(js.lastName);
+		item.setNickname(js.nickname);
+		item.setGender(js.gender);
+		item.setWorkAddress(js.workAddress);
+		item.setWorkPostalCode(js.workPostalCode);
+		item.setWorkCity(js.workCity);
+		item.setWorkState(js.workState);
+		item.setWorkCountry(js.workCountry);
+		item.setWorkTelephone(js.workTelephone);
+		item.setWorkTelephone2(js.workTelephone2);
+		item.setWorkMobile(js.workMobile);
+		item.setWorkFax(js.workFax);
+		item.setWorkPager(js.workPager);
+		item.setWorkEmail(js.workEmail);
+		item.setWorkInstantMsg(js.workInstantMsg);
+		item.setHomeAddress(js.homeAddress);
+		item.setHomePostalCode(js.homePostalCode);
+		item.setHomeCity(js.homeCity);
+		item.setHomeState(js.homeState);
+		item.setHomeCountry(js.homeCountry);
+		item.setHomeTelephone(js.homeTelephone);
+		item.setHomeMobile(js.homeMobile);
+		item.setHomeFax(js.homeFax);
+		item.setHomePager(js.homePager);
+		item.setHomeEmail(js.homeEmail);
+		item.setHomeInstantMsg(js.homeInstantMsg);
+		item.setOtherAddress(js.otherAddress);
+		item.setOtherPostalCode(js.otherPostalCode);
+		item.setOtherCity(js.otherCity);
+		item.setOtherState(js.otherState);
+		item.setOtherCountry(js.otherCountry);
+		item.setOtherEmail(js.otherEmail);
+		item.setOtherInstantMsg(js.otherInstantMsg);
+		item.setCompany(js.company);
+		item.setFunction(js.function);
+		item.setDepartment(js.department);
+		item.setManager(js.manager);
+		item.setAssistant(js.assistant);
+		item.setAssistantTelephone(js.assistantTelephone);
+		item.setPartner(js.partner);
+		//item.setBirthday(js.birthday);
+		//item.setAnniversary(js.anniversary);
+		item.setUrl(js.url);
+		item.setNotes(js.notes);
+		item.setHasPicture(!StringUtils.isEmpty(js.picture));
+		return item;
 	}
 }

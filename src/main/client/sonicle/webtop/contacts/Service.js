@@ -38,13 +38,17 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.grid.column.Color',
 		'WT.model.Empty',
 		'Sonicle.webtop.contacts.model.FolderNode',
+		'Sonicle.webtop.contacts.model.GridContact',
 		'Sonicle.webtop.contacts.view.Category',
 		'Sonicle.webtop.calendar.view.Sharing'
 	],
 	
+	activeView: null,
+	
 	init: function() {
 		var me = this, ies, iitems = [];
 		
+		me.activeView = me.getOption('view');
 		me.initActions();
 		me.initCxm();
 		
@@ -56,6 +60,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			items: [
 				
 				'->',
+				me.getAction('workview'),
+				me.getAction('homeview'),
+				' ',
 				{
 					xtype: 'textfield',
 					width: 200,
@@ -142,7 +149,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				xtype: 'gridpanel',
 				reference: 'gpcontacts',
 				store: {
-					model: 'WT.model.Empty',
+					model: 'Sonicle.webtop.contacts.model.GridContact',
 					proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'contacts', {
 						extraParams: {
 							query: null
@@ -155,7 +162,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								colsInfo.push({
 									xtype: 'soiconcolumn',
 									iconField: function(v,rec) {
-										return WTF.cssIconCls(me.XID, (rec.get('listId')>0) ? 'contact-list' : 'contact', 'xs');
+										return WTF.cssIconCls(me.XID, (rec.get('listId')>0) ? 'contacts-list' : 'contact', 'xs');
 									},
 									iconSize: WTU.imgSizeToPx('xs'),
 									width: 30
@@ -163,13 +170,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 
 								Ext.iterate(meta.colsInfo, function(col,i) {
 									if(col.dataIndex === 'categoryId') {
-										//col.header = me.res('event.gp-planning.recipient.lbl');
 										col.xtype = 'socolorcolumn',
-										col.header = 'Gruppo';
+										col.header = me.res('gpcontacts.category.lbl');
 										col.colorField = 'categoryColor',
 										col.displayField = 'categoryName',
 										col.width = 100;
 										col.hidden = false;
+									} else {
+										col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
 									}
 									colsInfo.push(col);
 								});
@@ -218,7 +226,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				listeners: {
 					rowdblclick: function(s, rec) {
 						//TODO: handle edit permission
-						me.editContact(rec.get('_profileId'), rec.get('id'));
+						if(rec.get('listId') > 0) {
+							me.editContactsList(rec.get('_profileId'), rec.get('uid'));
+						} else {
+							me.editContact(rec.get('_profileId'), rec.get('uid'));
+						}
 					}
 				}
 			}, {
@@ -239,12 +251,25 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	initActions: function() {
-		var me = this,
-				view = me.getOption('view');
+		var me = this;
 		
 		me.addAction('new', 'newContact', {
 			handler: function() {
 				me.getAction('addContact').execute();
+			}
+		});
+		me.addAction('workview', {
+			pressed: me.activeView === 'w',
+			toggleGroup: 'view',
+			handler: function() {
+				me.changeView('w');
+			}
+		});
+		me.addAction('homeview', {
+			pressed: me.activeView === 'h',
+			toggleGroup: 'view',
+			handler: function() {
+				me.changeView('h');
 			}
 		});
 		me.addAction('editSharing', {
@@ -309,8 +334,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAction('addContact', {
 			handler: function() {
-				var cal = me.getSelectedFolder();
-				//if(cal) me.addEventAtNow(cal.get('_pid'), cal.get('_calId'), cal.get('_isPrivate'), cal.get('_busy'), cal.get('_reminder'), day);
+				var cat = me.getSelectedFolder();
+				//if(cat) me.addContact(cat.get('_pid'), cat.get('_catId'));
+			}
+		});
+		me.addAction('addContactsList', {
+			handler: function() {
+				var cat = me.getSelectedFolder();
+				if(cat) me.addContactsList(cat.get('_pid'), cat.get('_catId'));
 			}
 		});
 		
@@ -358,7 +389,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAction('viewNoneFolders'),
 				'-',
 				me.getAction('addContact'),
-				me.getRef('uploaders', 'importContacts')
+				me.getRef('uploaders', 'importContacts'),
+				me.getAction('addContactsList')
 				//TODO: azioni altri servizi?
 			],
 			listeners: {
@@ -394,13 +426,25 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		if(node) store.load({node: node});
 	},
 	
+	changeView: function(view) {
+		var me = this;
+		me.activeView = view;
+		me.refreshContacts();
+	},
+	
 	queryContacts: function(txt) {
 		this.refreshContacts('%'+txt+'%');
 	},
 	
 	refreshContacts: function(query) {
 		var me = this,
-				sto = me.gpContacts().getStore();
+				sto = me.gpContacts().getStore(), params = {};
+		
+		Ext.apply(params, {view: me.activeView});
+		if(query) Ext.apply(params, {query: query});
+		WTU.loadExtraParams(sto, params);
+		sto.load();
+		/*
 		if(query) {
 			WTU.loadExtraParams(sto, {
 				query: query
@@ -408,6 +452,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		} else {
 			sto.load();
 		}
+		*/
 	},
 	
 	editShare: function(id) {
@@ -458,7 +503,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}, this);
 	},
 	
-	editContact: function(profileId, id) {
+	editContact: function(profileId, uid) {
 		var me = this,
 				vwc = WT.createView(me.ID, 'view.Contact', {
 					viewCfg: {
@@ -466,14 +511,60 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 				});
 		
-		//vwc.getView().on('viewsave', me.onEventViewSave, me);
+		vwc.getView().on('viewsave', me.onContactViewSave, me);
 		vwc.show(false, function() {
 			vwc.getView().beginEdit({
 				data: {
-					id: id
+					uid: uid
 				}
 			});
 		});
+	},
+	
+	addContactsList: function(profileId, categoryId) {
+		var me = this,
+				vw = WT.createView(me.ID, 'view.ContactsList', {
+					viewCfg: {
+						profileId: profileId
+					}
+				});
+		
+		vw.getComponent(0).on('viewsave', me.onContactListViewSave, me);
+		vw.show(false, function() {
+			vw.getComponent(0).beginNew({
+				data: {
+					categoryId: categoryId
+				}
+			});
+		});
+	},
+	
+	editContactsList: function(profileId, uid) {
+		var me = this,
+				vwc = WT.createView(me.ID, 'view.ContactsList', {
+					viewCfg: {
+						profileId: profileId
+					}
+				});
+		
+		vwc.getView().on('viewsave', me.onContactListViewSave, me);
+		vwc.show(false, function() {
+			vwc.getView().beginEdit({
+				data: {
+					uid: uid
+				}
+			});
+		});
+	},
+	
+	onContactViewSave: function(s, success, model) {
+		if(!success) return;
+		this.refreshContacts();
+	},
+	
+	onContactListViewSave: function(s, success, model) {
+		if(!success) return;
+		this.refreshContacts();
 	},
 	
 	/**

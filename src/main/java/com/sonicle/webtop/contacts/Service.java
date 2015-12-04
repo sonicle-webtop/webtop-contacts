@@ -33,7 +33,6 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.sonicle.commons.validation.Validator;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.json.CompositeId;
@@ -48,6 +47,7 @@ import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
 import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
@@ -57,6 +57,8 @@ import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
+import com.sonicle.webtop.contacts.bol.model.ContactPicture;
+import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.directory.DirectoryElement;
@@ -71,14 +73,21 @@ import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.logging.Level;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 
@@ -97,6 +106,10 @@ public class Service extends BaseService {
 	private final LinkedHashMap<String, CategoryRoot> roots = new LinkedHashMap<>();
 	private CheckedRoots checkedRoots = null;
 	private CheckedFolders checkedFolders = null;
+	private ArrayList<ExtFieldMeta> gridFieldsW = null;
+	private ArrayList<ExtFieldMeta> gridFieldsH = null;
+	private ArrayList<ExtGridColumnMeta> gridColsInfoW = null;
+	private ArrayList<ExtGridColumnMeta> gridColsInfoH = null;
 	
 	//private ExportWizard wizard = null;
 	
@@ -107,6 +120,10 @@ public class Service extends BaseService {
 		//manager.initializeDirectories(profile);
 		us = new ContactsUserSettings(SERVICE_ID, profile.getId());
 		initFolders();
+		gridFieldsW = buildFields("w");
+		gridFieldsH = buildFields("h");
+		gridColsInfoW = buildColsInfo("w");
+		gridColsInfoH = buildColsInfo("h");
 	}
 	
 	@Override
@@ -118,6 +135,13 @@ public class Service extends BaseService {
 		us = null;
 		//manager.cleanupDirectories();
 		manager = null;
+	}
+	
+	@Override
+	public ClientOptions returnClientOptions() {
+		ClientOptions co = new ClientOptions();
+		co.put("view", us.getView());
+		return co;
 	}
 	
 	private void initFolders() throws Exception {
@@ -177,7 +201,7 @@ public class Service extends BaseService {
 						
 					} else if(node._type.equals(JsFolderNode.TYPE_FOLDER)) {
 						CompositeId cid = new CompositeId().parse(node.id);
-						toggleCheckedFolder(cid.getToken(1), node._visible);
+						toggleCheckedFolder(Integer.valueOf(cid.getToken(1)), node._visible);
 					}
 				}
 				new JsonResult().printTo(out);
@@ -286,7 +310,7 @@ public class Service extends BaseService {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
 				item = manager.addCategory(JsCategory.buildFolder(pl.data));
-				toggleCheckedFolder(item.getCategoryId().toString(), true);
+				toggleCheckedFolder(item.getCategoryId(), true);
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
@@ -308,6 +332,131 @@ public class Service extends BaseService {
 		}
 	}
 	
+	private ArrayList<ExtFieldMeta> buildFields(String view) {
+		ArrayList<ExtFieldMeta> fields = new ArrayList<>();
+		
+		fields.add(new ExtFieldMeta("uid").setType("string"));
+		fields.add(new ExtFieldMeta("contactId").setType("int"));
+		fields.add(new ExtFieldMeta("categoryId"));
+		fields.add(new ExtFieldMeta("categoryName"));
+		fields.add(new ExtFieldMeta("categoryColor"));
+		fields.add(new ExtFieldMeta("listId").setType("int"));
+		if(view.equals("w")) fields.add(new ExtFieldMeta("title").setType("string"));
+		fields.add(new ExtFieldMeta("firstName").setType("string"));
+		fields.add(new ExtFieldMeta("lastName").setType("string"));
+		if(view.equals("h")) fields.add(new ExtFieldMeta("nickname").setType("string"));
+		if(view.equals("w")) {
+			fields.add(new ExtFieldMeta("company").setType("string"));
+			fields.add(new ExtFieldMeta("function").setType("string"));
+			//fields.add(new ExtFieldMeta("caddress").setType("string"));
+			//fields.add(new ExtFieldMeta("ccity").setType("string"));
+			fields.add(new ExtFieldMeta("ctelephone").setType("string"));
+			fields.add(new ExtFieldMeta("cmobile").setType("string"));
+			fields.add(new ExtFieldMeta("cemail").setType("string"));
+		}
+		if(view.equals("h")) {
+			fields.add(new ExtFieldMeta("htelephone").setType("string"));
+			fields.add(new ExtFieldMeta("hemail").setType("string"));
+			fields.add(new ExtFieldMeta("hbirthday").setType("string"));
+		}
+		
+		fields.add(new ExtFieldMeta("_profileId"));
+		
+		return fields;
+	}
+	
+	private ArrayList<ExtGridColumnMeta> buildColsInfo(String view) {
+		ArrayList<ExtGridColumnMeta> colsInfo = new ArrayList<>();
+		
+		colsInfo.add(new ExtGridColumnMeta("contactId").setHidden(true));
+		colsInfo.add(new ExtGridColumnMeta("categoryId"));
+		//colsInfo.add(new ExtGridColumnMeta("categoryName").setHidden(true));
+		//colsInfo.add(new ExtGridColumnMeta("categoryColor").setHidden(true));
+		if(view.equals("w")) colsInfo.add(new ExtGridColumnMeta("title"));
+		colsInfo.add(new ExtGridColumnMeta("firstName"));
+		colsInfo.add(new ExtGridColumnMeta("lastName"));
+		if(view.equals("h")) colsInfo.add(new ExtGridColumnMeta("nickname"));
+		if(view.equals("w")) {
+			colsInfo.add(new ExtGridColumnMeta("company"));
+			colsInfo.add(new ExtGridColumnMeta("function"));
+			//colsInfo.add(new ExtGridColumnMeta("caddress"));
+			//colsInfo.add(new ExtGridColumnMeta("ccity"));
+			colsInfo.add(new ExtGridColumnMeta("ctelephone"));
+			colsInfo.add(new ExtGridColumnMeta("cmobile"));
+			colsInfo.add(new ExtGridColumnMeta("cemail"));
+		}
+		if(view.equals("h")) {
+			colsInfo.add(new ExtGridColumnMeta("htelephone"));
+			colsInfo.add(new ExtGridColumnMeta("hemail"));
+			colsInfo.add(new ExtGridColumnMeta("hbirthday"));
+		}
+		
+		return colsInfo;
+	}
+	
+	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		ArrayList<MapItem> items = new ArrayList<>();
+		MapItem item = null;
+		
+		try {
+			String crud = ServletUtils.getStringParameter(request, "crud", true);
+			if(crud.equals(Crud.READ)) {
+				String view = ServletUtils.getStringParameter(request, "view", "w");
+				String query = ServletUtils.getStringParameter(request, "query", "%");
+				String pattern = StringUtils.replace(query, " ", "%");
+				
+				// Get contacts for each visible folder
+				Integer[] checked = getCheckedFolders();
+				List<ContactsManager.CategoryContacts> foldContacts = null;
+				for(CategoryRoot root : getCheckedRoots()) {
+					foldContacts = manager.listContacts(root, checked, pattern);
+					
+					for(ContactsManager.CategoryContacts foldContact : foldContacts) {
+						for(VContact vc : foldContact.contacts) {
+							item = new MapItem();
+							item.put("uid", manager.buildContactUid(foldContact.folder.getCategoryId(), vc.getContactId()));
+							item.put("contactId", vc.getContactId());
+							item.put("listId", vc.getListId());
+							if(view.equals("w")) item.put("title", vc.getTitle());
+							item.put("firstName", vc.getFirstname());
+							item.put("lastName", vc.getLastname());
+							if(view.equals("h")) item.put("nickname", vc.getNickname());
+							if(view.equals("w")) {
+								item.put("company", StringUtils.defaultIfEmpty(vc.getCompanyAsCustomer(), vc.getCompany()));
+								item.put("function", vc.getFunction());
+								//item.put("caddress", vc.getCaddress());
+								//item.put("ccity", vc.getCcity());
+								item.put("ctelephone", vc.getCtelephone());
+								item.put("cmobile", vc.getCmobile());
+								item.put("cemail", vc.getCemail());
+							}
+							if(view.equals("h")) {
+								item.put("htelephone", vc.getHtelephone());
+								item.put("hemail", vc.getHemail());
+								item.put("hbirthday", vc.getHbirthday());
+							}
+							item.put("categoryId", foldContact.folder.getCategoryId());
+							item.put("categoryName", foldContact.folder.getName());
+							item.put("categoryColor", foldContact.folder.getColor());
+							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
+							items.add(item);
+						}
+					}
+				}
+				
+				ExtGridMetaData meta = new ExtGridMetaData(true);
+				meta.setFields(view.equals("w") ? gridFieldsW : gridFieldsH);
+				meta.setColumnsInfo(view.equals("w") ? gridColsInfoW : gridColsInfoH);
+				new JsonResult(items, meta, items.size()).printTo(out);
+			}
+		
+		} catch(Exception ex) {
+			logger.error("Error executing action ManageGridContacts", ex);
+			new JsonResult(false, "Error").printTo(out);
+			
+		}
+	}
+	
 	public void processManageContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		JsContact item = null;
 		
@@ -322,81 +471,41 @@ public class Service extends BaseService {
 				Contact contact = manager.getContact(id);
 				item = new JsContact(ownerId, contact);
 				
-				/*
-				item = new JsContact();
-				item.contactId = 1;
-				item.categoryId = 1;
-				item.title = "Mr";
-				item.firstName = "firstName";
-				item.lastName = "lastName";
-				item.nickname = "nickname";
-				item.gender = "gender";
-				item.workAddress = "workAddress";
-				item.workPostalCode = "workPostalCode";
-				item.workCity = "workCity";
-				item.workState = "workState";
-				item.workCountry = "workCountry";
-				item.workTelephone = "workTelephone";
-				item.workTelephone2 = "workTelephone2";
-				item.workMobile = "workMobile";
-				item.workFax = "workFax";
-				item.workPager = "workPager";
-				item.workEmail = "workEmail";
-				item.workInstantMsg = "workInstantMsg";
-				item.homeAddress = "homeAddress";
-				item.homePostalCode = "homePostalCode";
-				item.homeCity = "homeCity";
-				item.homeState = "homeState";
-				item.homeCountry = "homeCountry";
-				item.homeTelephone = "homeTelephone";
-				item.homeMobile = "homeMobile";
-				item.homeFax = "homeFax";
-				item.homePager = "homePager";
-				item.homeEmail = "homeEmail";
-				item.homeInstantMsg = "homeInstantMsg";
-				item.otherAddress = "otherAddress";
-				item.otherPostalCode = "otherPostalCode";
-				item.otherCity = "otherCity";
-				item.otherState = "otherState";
-				item.otherCountry = "otherCountry";
-				item.otherTelephone = "otherTelephone";
-				item.otherEmail = "otherEmail";
-				item.otherInstantMsg = "otherInstantMsg";
-				item.partner = "partner";
-				item.birthday = "1983-11-28";
-				item.anniversary = "2015-09-12";
-				item.company = "company";
-				item.function = "function";
-				item.department = "department";
-				item.manager = "manager";
-				item.assistant = "assistant";
-				item.assistantTelephone = "assistantTelephone";
-				item.url = "url";
-				item.photo = "http://www.sentieriselvaggi.it/wp-content/uploads/public/articoli/46507/Images/brad-pitt.jpg";
-				item.notes = "notes";
-				*/
-				
-				//Event evt = manager.readEvent(id);
-				//item = new JsContact(evt, manager.getCalendarGroupId(evt.getCalendarId()));
 				new JsonResult(item).printTo(out);
 				
 			} else if(crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				/*
-				Contact cont = JsContact.buildContact(pl.data);
-				manager.updateContact(cont);
+				Contact contact = JsContact.buildContact(pl.data);
+				ContactPicture picture = null;
+				if(contact.getHasPicture() && hasUploadedFile(pl.data.picture)) {
+					picture = getUploadedContactPicture(pl.data.picture);
+				}
+				
+				if(picture != null) {
+					manager.addContact(contact, picture);
+				} else {
+					manager.addContact(contact);
+				}
+				
 				new JsonResult().printTo(out);
-				*/
 				
 			} else if(crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				/*
-				Contact cont = JsContact.buildContact(pl.data);
-				manager.updateContact(cont);
+				Contact contact = JsContact.buildContact(pl.data);
+				ContactPicture picture = null;
+				if(contact.getHasPicture() && hasUploadedFile(pl.data.picture)) {
+					picture = getUploadedContactPicture(pl.data.picture);
+				}
+				
+				if(picture != null) {
+					manager.updateContact(contact, picture);
+				} else {
+					manager.updateContact(contact);
+				}
+				
 				new JsonResult().printTo(out);
-				*/
 			}
 			
 		} catch(Exception ex) {
@@ -405,14 +514,43 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+	public void processManageContactsLists(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		ContactsList item = null;
+		
+		try {
+			String crud = ServletUtils.getStringParameter(request, "crud", true);
+			if(crud.equals(Crud.READ)) {
+				String id = ServletUtils.getStringParameter(request, "id", true);
+				
+				item = manager.getContactsList(id);
+				new JsonResult(item).printTo(out);
+				
+			} else if(crud.equals(Crud.CREATE)) {
+				Payload<MapItem, ContactsList> pl = ServletUtils.getPayload(request, ContactsList.class);
+				
+				manager.addContactsList(pl.data);
+				new JsonResult().printTo(out);
+				
+			} else if(crud.equals(Crud.UPDATE)) {
+				Payload<MapItem, ContactsList> pl = ServletUtils.getPayload(request, ContactsList.class);
+				
+				manager.updateContactsList(pl.data);
+				new JsonResult().printTo(out);
+				
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ManageContactsLists", ex);
+			new JsonResult(false, "Error").printTo(out);
+		}
+	}
+	
+	public void processManageGridContacts2(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<MapItem> items = new ArrayList<>();
 		MapItem item = null;
 		CoreManager corem = WT.getCoreManager(getRunContext());
 		
 		try {
-			//DateTimeZone utz = up.getTimeZone();
-			
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				
@@ -424,14 +562,14 @@ public class Service extends BaseService {
 				ArrayList<ExtGridColumnMeta> colsInfo = new ArrayList<>();
 				
 				// Get contacts for each visible folder
-				String[] checked = getCheckedFolders();
-				List<ContactsManager.FolderContacts> foldContacts = null;
+				Integer[] checked = getCheckedFolders();
+				List<ContactsManager.CategoryContacts> foldContacts = null;
 				DirectoryManager dm = null;
 				DirectoryElement de = null;
 				for(CategoryRoot root : getCheckedRoots()) {
 					foldContacts = manager.listContacts(root, checked, pattern);
 					
-					for(ContactsManager.FolderContacts foldContact : foldContacts) {
+					for(ContactsManager.CategoryContacts foldContact : foldContacts) {
 						for(int i=0; i<foldContact.result.getElementsCount(); i++) {
 							dm = foldContact.result.getDirectoryManager();
 							de = foldContact.result.elementAt(i);
@@ -453,20 +591,6 @@ public class Service extends BaseService {
 										fields.add(new ExtFieldMeta(col));
 										colsInfo.add(new ExtGridColumnMeta(col, col));
 										item.put(col, (customer != null) ? customer.getDescription() : de.getField(col));
-									} else if(dm.getAliasField("CATEGORY_ID").equals(col)) {
-										fields.add(new ExtFieldMeta("categoryId"));
-										colsInfo.add(new ExtGridColumnMeta("categoryId").setHidden(true));
-										item.put("categoryId", Integer.parseInt(de.getField("CATEGORY_ID")));
-										
-										OCategory cat = manager.getCategory(Integer.parseInt(de.getField(col)));
-										if(cat != null) {
-											fields.add(new ExtFieldMeta("categoryName"));
-											colsInfo.add(new ExtGridColumnMeta("categoryName").setHidden(true));
-											item.put("categoryName", cat.getName());
-											fields.add(new ExtFieldMeta("categoryColor"));
-											colsInfo.add(new ExtGridColumnMeta("categoryColor").setHidden(true));
-											item.put("categoryColor", cat.getColor());
-										}
 									} else {
 										fields.add(new ExtFieldMeta(col));
 										colsInfo.add(new ExtGridColumnMeta(col, col));
@@ -475,9 +599,19 @@ public class Service extends BaseService {
 								}
 							}
 							
-							fields.add(new ExtFieldMeta("id").setType("string"));
-							colsInfo.add(new ExtGridColumnMeta("id").setHidden(true));
-							item.put("id", new CompositeId(item.get("categoryId"), item.get("contactId")).toString());
+							fields.add(new ExtFieldMeta("categoryId"));
+							colsInfo.add(new ExtGridColumnMeta("categoryId").setHidden(true));
+							item.put("categoryId", foldContact.folder.getCategoryId());
+							fields.add(new ExtFieldMeta("categoryName"));
+							colsInfo.add(new ExtGridColumnMeta("categoryName").setHidden(true));
+							item.put("categoryName", foldContact.folder.getName());
+							fields.add(new ExtFieldMeta("categoryColor"));
+							colsInfo.add(new ExtGridColumnMeta("categoryColor").setHidden(true));
+							item.put("categoryColor", foldContact.folder.getColor());
+							
+							fields.add(new ExtFieldMeta("uid").setType("string"));
+							colsInfo.add(new ExtGridColumnMeta("uid").setHidden(true));
+							item.put("uid", manager.buildContactUid(foldContact.folder.getCategoryId(), item.get("contactId")));
 							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
 							items.add(item);
 						}
@@ -488,23 +622,6 @@ public class Service extends BaseService {
 				meta.setFields(fields);
 				meta.setColumnsInfo(colsInfo);
 				new JsonResult(items, meta, items.size()).printTo(out);
-				
-				
-				/*
-				// Get contacts for each visible folder
-				Integer[] checked = getCheckedFolders();
-				List<ContactsManager.FolderContacts> foldContacts = null;
-				for(FolderBase root : getCheckedRoots()) {
-					foldContacts = manager.listContacts(root, checked, up.getLocale(), pattern);
-					for(ContactsManager.FolderContacts foldContact : foldContacts) {
-						for(int i=0; i<foldContact.result.getElementsCount(); i++) {
-							items.add(new JsGridContact(foldContact.folder, foldContact.result.elementAt(i)));
-						}
-					}
-				}
-				
-				new JsonResult("contacts", items).printTo(out);
-				*/
 			}
 		
 		} catch(Exception ex) {
@@ -514,14 +631,56 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processGetContactPhoto(HttpServletRequest request, HttpServletResponse response) {
+	public void processGetContactPicture(HttpServletRequest request, HttpServletResponse response) {
 		
 		try {
 			String id = ServletUtils.getStringParameter(request, "id", true);
+			
+			ContactPicture picture = null;
+			if(hasUploadedFile(id)) {
+				picture = getUploadedContactPicture(id);
+			} else {
+				picture = manager.getContactPicture(id);
+			}
+			
+			if(picture != null) {
+				try(ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
+					ServletUtils.writeContent(response, bais, picture.getMimeType());
+				}
+			}
+			
+			
+			/*
 			File photoFile = null;
 			
-			if(Validator.isInteger(id)) {
+			if(hasUploadedFile(id)) {
+				UploadedFile uploaded = getUploadedFile(id);
+				if(uploaded == null) throw new Exception();
+				File tempFolder = WT.getTempFolder();
+				photoFile = new File(tempFolder, uploaded.id);
 				
+				try(FileInputStream fis = new FileInputStream(photoFile)) {
+					ServletUtils.writeContent(response, fis, "");
+					//ServletUtils.writeInputStream(response, fis);
+				}
+				
+			} else {
+				ContactPicture pic = manager.getContactPicture(id);
+				try(ByteArrayInputStream bais = new ByteArrayInputStream(pic.getBytes())) {
+					ServletUtils.writeContent(response, bais, pic.getMimeType());
+				}
+				
+				//byte[] photo = manager.getContactPhoto(id);
+				//try(ByteArrayInputStream bais = new ByteArrayInputStream(photo)) {
+				//	ServletUtils.writeContent(response, bais, "image/png");
+					//ServletUtils.writeInputStream(response, bais);
+				//}
+			}
+			*/
+			
+			/*
+			if(Validator.isInteger(id)) {
+				manager.getContactPhoto(id)
 				
 				//TODO: 
 				
@@ -536,6 +695,7 @@ public class Service extends BaseService {
 			try(FileInputStream fis = new FileInputStream(photoFile)) {
 				ServletUtils.writeInputStream(response, fis);
 			}
+			*/
 			
 		} catch(Exception ex) {
 			//TODO: logging
@@ -547,7 +707,25 @@ public class Service extends BaseService {
 	
 	
 	
-	
+	private ContactPicture getUploadedContactPicture(String id) throws WTException {
+		UploadedFile upl = getUploadedFile(id);
+		if(upl == null) throw new WTException();
+		
+		ContactPicture pic = null;
+		FileInputStream fis = null;
+		try {
+			File uplFile = new File(WT.getTempFolder(), upl.id);
+			fis = new FileInputStream(uplFile);
+			pic = new ContactPicture("image/png", IOUtils.toByteArray(fis));
+		} catch (FileNotFoundException ex) {
+			throw new WTException(ex, "File not found {0}");
+		} catch (IOException ex) {
+			throw new WTException(ex, "Unable to read file {0}");
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+		return pic;
+	}
 	
 	private String buildSharingPath(Sharing sharing) throws WTException {
 		StringBuilder sb = new StringBuilder();
@@ -583,8 +761,8 @@ public class Service extends BaseService {
 		return checked;
 	}
 	
-	private String[] getCheckedFolders() {
-		return checkedFolders.toArray(new String[checkedFolders.size()]);
+	private Integer[] getCheckedFolders() {
+		return checkedFolders.toArray(new Integer[checkedFolders.size()]);
 	}
 	
 	private void toggleCheckedRoot(String shareId, boolean checked) {
@@ -598,7 +776,7 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private void toggleCheckedFolder(String folderId, boolean checked) {
+	private void toggleCheckedFolder(int folderId, boolean checked) {
 		synchronized(roots) {
 			if(checked) {
 				checkedFolders.add(folderId);

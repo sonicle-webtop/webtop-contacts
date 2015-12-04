@@ -31,33 +31,45 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
-
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
-
-/**
- *
- * @author malbinola
- */
-public class ContactsServiceSettings extends BaseServiceSettings {
+Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
+	extend: 'WT.model.Base',
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContactsLists', 'data', {
+		writer: {
+			type: 'sojson',
+			writeAssociations: true
+		}
+	}),
 	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
-	}
+	identifier: 'negative',
+	idProperty: 'uid',
+	fields: [
+		WTF.field('uid', 'string', false),
+		WTF.field('contactId', 'string', true),
+		WTF.field('categoryId', 'string', false),
+		WTF.field('listId', 'int', true),
+		WTF.field('name', 'string', false)
+	]
+/*
+	hasMany: [{
+		name: 'recipients',
+		model: 'Sonicle.webtop.contacts.model.ContactsListRecipients'
+	}]
+*/
+});
+Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipients', {
+	extend: 'WT.model.Base',
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
-	}
-	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
-	}
-	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
-	
-}
+	identifier: 'negative',
+	idProperty: 'contactListId',
+	fields: [
+		WTF.field('fk', 'string', true, {
+			reference: {
+				parent: 'Sonicle.webtop.contacts.model.ContactsList',
+				inverse: 'recipients'
+			}
+		}),
+		WTF.field('contactListId', 'int', false),
+		WTF.field('recipientType', 'string', false),
+		WTF.field('recipient', 'string', false)
+	]
+});

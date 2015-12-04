@@ -31,33 +31,27 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.dal;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_LISTS;
+import com.sonicle.webtop.core.dal.BaseDAO;
+import com.sonicle.webtop.core.dal.DAOException;
+import java.sql.Connection;
+import org.jooq.DSLContext;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
-	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+public class ListDAO extends BaseDAO {
+	private final static ListDAO INSTANCE = new ListDAO();
+	public static ListDAO getInstance() {
+		return INSTANCE;
 	}
-	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+
+	public Long getSequence(Connection con) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Long nextID = dsl.nextval(SEQ_LISTS);
+		return nextID;
 	}
-	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
-	}
-	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
-	
 }

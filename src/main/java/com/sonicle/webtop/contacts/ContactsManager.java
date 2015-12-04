@@ -33,14 +33,25 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.contacts.bol.OContact;
+import com.sonicle.webtop.contacts.bol.OContactPicture;
+import com.sonicle.webtop.contacts.bol.OListRecipient;
+import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
+import com.sonicle.webtop.contacts.bol.model.ContactPicture;
+import com.sonicle.webtop.contacts.bol.model.ContactsList;
+import com.sonicle.webtop.contacts.bol.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
+import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
+import com.sonicle.webtop.contacts.dal.ListDAO;
+import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.directory.DBDirectoryManager;
 import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
@@ -58,11 +69,16 @@ import com.sonicle.webtop.core.bol.model.SharePermsFolder;
 import com.sonicle.webtop.core.bol.model.SharePermsElements;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
+import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
+import eu.medsea.mimeutil.MimeType;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -76,8 +92,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import javax.imageio.ImageIO;
 import javax.sql.DataSource;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.imgscalr.Scalr;
 import org.slf4j.Logger;
 
 /**
@@ -105,7 +124,7 @@ public class ContactsManager extends BaseManager {
 		try {
 			synchronized(cacheDirectories) {
 				if(!cacheDirectories.containsKey(categoryId)) {
-					cacheDirectories.put(categoryId, createDBDManager(getTargetProfileId(), categoryId, Locale.FRENCH));
+					cacheDirectories.put(categoryId, createDBDManager(getTargetProfileId(), getLocale(), categoryId));
 				}
 				return cacheDirectories.get(categoryId);
 			}
@@ -128,147 +147,6 @@ public class ContactsManager extends BaseManager {
 		cacheDirectories.clear();
 	};
 	*/
-	
-	
-	
-	
-	
-	private void buildShareCache() {
-		CoreManager core = WT.getCoreManager(getRunContext());
-		UserProfile.Id pid = getTargetProfileId();
-		try {
-			cacheOwnerToRootShare.clear();
-			cacheOwnerToWildcardFolderShare.clear();
-			cacheCategoryToFolderShare.clear();
-			for(CategoryRoot root : listIncomingCategoryRoots()) {
-				cacheOwnerToRootShare.put(root.getOwnerProfileId(), root.getShareId());
-				for(OShare folder : core.listIncomingShareFolders(pid, root.getShareId(), SERVICE_ID, RESOURCE_CATEGORY)) {
-					if(folder.hasWildcard()) {
-						UserProfile.Id ownerId = core.userUidToProfileId(folder.getUserUid());
-						cacheOwnerToWildcardFolderShare.put(ownerId, folder.getShareId().toString());
-					} else {
-						cacheCategoryToFolderShare.put(Integer.valueOf(folder.getInstance()), folder.getShareId().toString());
-					}
-				}
-			}
-		} catch(WTException ex) {
-			throw new WTRuntimeException(ex.getMessage());
-		}
-	}
-	
-	private String ownerToRootShareId(UserProfile.Id owner) {
-		synchronized(shareCacheLock) {
-			if(!cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
-			return cacheOwnerToRootShare.get(owner);
-		}
-	}
-	
-	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
-		synchronized(shareCacheLock) {
-			if(!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty()) buildShareCache();
-			return cacheOwnerToWildcardFolderShare.get(ownerPid);
-		}
-	}
-	
-	private String categoryToFolderShareId(int category) {
-		synchronized(shareCacheLock) {
-			if(!cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
-			return cacheCategoryToFolderShare.get(category);
-		}
-	}
-	
-	private UserProfile.Id categoryToOwner(int categoryId) {
-		synchronized(cacheCategoryToOwner) {
-			if(cacheCategoryToOwner.containsKey(categoryId)) {
-				return cacheCategoryToOwner.get(categoryId);
-			} else {
-				try {
-					UserProfile.Id owner = findCategoryOwner(categoryId);
-					cacheCategoryToOwner.put(categoryId, owner);
-					return owner;
-				} catch(WTException ex) {
-					throw new WTRuntimeException(ex.getMessage());
-				}
-			}
-		}
-	}
-	
-	private RevisionInfo createRevisionInfo() {
-		return new RevisionInfo("WT", getRunContext().getProfileId().toString());
-	}
-	
-	private void checkRightsOnCategoryRoot(UserProfile.Id ownerPid, String action) throws WTException {
-		if(WT.isWebTopAdmin(getRunProfileId())) return;
-		if(ownerPid.equals(getTargetProfileId())) return;
-		
-		String shareId = ownerToRootShareId(ownerPid);
-		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
-		CoreManager core = WT.getCoreManager(getRunContext());
-		if(core.isShareRootPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
-		
-		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
-	}
-	
-	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
-		if(WT.isWebTopAdmin(getRunProfileId())) return;
-		
-		// Skip rights check if running user is resource's owner
-		UserProfile.Id ownerPid = categoryToOwner(categoryId);
-		if(ownerPid.equals(getTargetProfileId())) return;
-		
-		// Checks rights on the wildcard instance (if present)
-		CoreManager core = WT.getCoreManager(getRunContext());
-		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
-		if(wildcardShareId != null) {
-			if(core.isShareFolderPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
-		}
-		
-		// Checks rights on calendar instance
-		String shareId = categoryToFolderShareId(categoryId);
-		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isShareFolderPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
-		
-		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
-	}
-	
-	private void checkRightsOnCategoryrElements(int categoryId, String action) throws WTException {
-		if(WT.isWebTopAdmin(getRunProfileId())) return;
-		
-		// Skip rights check if running user is resource's owner
-		UserProfile.Id ownerPid = categoryToOwner(categoryId);
-		if(ownerPid.equals(getTargetProfileId())) return;
-		
-		// Checks rights on the wildcard instance (if present)
-		CoreManager core = WT.getCoreManager(getRunContext());
-		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
-		if(wildcardShareId != null) {
-			if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
-		}
-		
-		// Checks rights on calendar instance
-		String shareId = categoryToFolderShareId(categoryId);
-		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
-		
-		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
-	}
-	
-	private UserProfile.Id findCategoryOwner(int categoryId) throws WTException {
-		Connection con = null;
-		
-		try {
-			con = WT.getConnection(getManifest());
-			CategoryDAO dao = CategoryDAO.getInstance();
-			Owner owner = dao.selectOwnerById(con, categoryId);
-			if(owner == null) throw new WTException("Category not found [{0}]", categoryId);
-			return new UserProfile.Id(owner.getDomainId(), owner.getUserId());
-			
-		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
 	
 	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
 		CoreManager core = WT.getCoreManager(getRunContext());
@@ -445,13 +323,42 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	public List<FolderContacts> listContacts(CategoryRoot root, String[] categoryFolders, String pattern) throws Exception {
+	public List<CategoryContacts> listContacts(CategoryRoot root, Integer[] categoryFolders, String pattern) throws Exception {
 		return listContacts(root.getOwnerProfileId(), categoryFolders, pattern);
 	}
 	
-	public List<FolderContacts> listContacts(UserProfile.Id pid, String[] categoryFolders, String pattern) throws Exception {
+	public List<CategoryContacts> listContacts(UserProfile.Id pid, Integer[] categoryFolders, String pattern) throws Exception {
+		CategoryDAO catdao = CategoryDAO.getInstance();
+		ContactDAO condao = ContactDAO.getInstance();
+		ArrayList<CategoryContacts> catContacts = new ArrayList<>();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(getManifest());
+			
+			// Lists desired groups (tipically visibles) coming from passed list
+			// Passed ids should belong to referenced folder(group), 
+			// this is ensured using domainId and userId parameters in below query.
+			List<OCategory> cats = catdao.selectByDomainUserIn(con, pid.getDomainId(), pid.getUserId(), categoryFolders);
+			List<VContact> vcs = null;
+			for(OCategory cat : cats) {
+				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
+				vcs = condao.viewByCategoryQuery(con, cat.getCategoryId(), StringUtils.lowerCase(pattern));
+				catContacts.add(new CategoryContacts(cat, vcs, null));
+			}
+			return catContacts;
+		
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	/*
+	public List<CategoryContacts> listContacts999(UserProfile.Id pid, String[] categoryFolders, String pattern) throws Exception {
 		CategoryDAO datdao = CategoryDAO.getInstance();
-		ArrayList<FolderContacts> foldContacts = new ArrayList<>();
+		ArrayList<CategoryContacts> foldContacts = new ArrayList<>();
 		Connection con = null;
 		
 		try {
@@ -465,11 +372,11 @@ public class ContactsManager extends BaseManager {
 			DirectoryManager dm = null;
 			DirectoryResult dr = null;
 			for(OCategory cat : cats) {
-				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
+				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ"); // Rights check!
 				
 				dm = getDirectoryManager(cat.getCategoryId());
-				dr = dm.lookup(pattern, getRunContext().getLocale(), false, false);
-				foldContacts.add(new FolderContacts(cat, dr));
+				dr = dm.lookup(pattern, getLocale(), false, false);
+				foldContacts.add(new CategoryContacts(cat, null, dr));
 			}
 			return foldContacts;
 		
@@ -479,112 +386,218 @@ public class ContactsManager extends BaseManager {
 			DbUtils.closeQuietly(con);
 		}
 	}
+	*/
 	
-	public String buildContactId(String categoryId, String contactId) {
+	public String buildContactUid(Object categoryId, Object contactId) {
 		return new CompositeId(categoryId, contactId).toString();
 	}
 	
-	public Contact getContact(String id) throws WTException {
-		Contact item = null;
-		
-		try {
-			CompositeId cid = new CompositeId().parse(id, 2);
-			int categoryId = Integer.parseInt(cid.getToken(0));
-			String contactId = cid.getToken(1);
-			
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getRunContext().getLocale(), true, true, false);
-			DirectoryElement de = dr.elementAt(0);
-			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
-			
-			item = new Contact(id);
-			item.setId(cid.toString());
-			item.setContactId(contactId);
-			item.setCategoryId(de.getField("CATEGORY_ID"));
-			item.setListId(de.getField("LIST_ID"));
-			item.setStatus(de.getField("STATUS"));
-			item.setTitle(de.getField(dm.getAliasField("TITLE")));
-			item.setFirstName(de.getField(dm.getAliasField("FIRSTNAME")));
-			item.setLastName(de.getField(dm.getAliasField("LASTNAME")));
-			item.setNickname(de.getField(dm.getAliasField("NICKNAME")));
-			item.setGender(de.getField(dm.getAliasField("GENDER")));
-			item.setWorkAddress(de.getField(dm.getAliasField("CADDRESS")));
-			item.setWorkPostalCode(de.getField(dm.getAliasField("CPOSTALCODE")));
-			item.setWorkCity(de.getField(dm.getAliasField("CCITY")));
-			item.setWorkState(de.getField(dm.getAliasField("CSTATE")));
-			item.setWorkCountry(de.getField(dm.getAliasField("CCOUNTRY")));
-			item.setWorkTelephone(de.getField(dm.getAliasField("CTELEPHONE")));
-			item.setWorkTelephone2(de.getField(dm.getAliasField("CTELEPHONE2")));
-			item.setWorkMobile(de.getField(dm.getAliasField("CMOBILE")));
-			item.setWorkFax(de.getField(dm.getAliasField("CFAX")));
-			item.setWorkPager(de.getField(dm.getAliasField("CPAGER")));
-			item.setWorkEmail(de.getField(dm.getAliasField("CEMAIL")));
-			item.setWorkInstantMsg(de.getField(dm.getAliasField("CINSTANT_MSG")));
-			item.setHomeAddress(de.getField(dm.getAliasField("HADDRESS")));
-			item.setHomePostalCode(de.getField(dm.getAliasField("HPOSTALCODE")));
-			item.setHomeCity(de.getField(dm.getAliasField("HCITY")));
-			item.setHomeState(de.getField(dm.getAliasField("HSTATE")));
-			item.setHomeCountry(de.getField(dm.getAliasField("HCOUNTRY")));
-			item.setHomeTelephone(de.getField(dm.getAliasField("HTELEPHONE")));
-			item.setHomeMobile(de.getField(dm.getAliasField("HMOBILE")));
-			item.setHomeFax(de.getField(dm.getAliasField("HFAX")));
-			item.setHomePager(de.getField(dm.getAliasField("HPAGER")));
-			item.setHomeEmail(de.getField(dm.getAliasField("HEMAIL")));
-			item.setHomeInstantMsg(de.getField(dm.getAliasField("HINSTANT_MSG")));
-			item.setOtherAddress(de.getField(dm.getAliasField("OADDRESS")));
-			item.setOtherPostalCode(de.getField(dm.getAliasField("OPOSTALCODE")));
-			item.setOtherCity(de.getField(dm.getAliasField("OCITY")));
-			item.setOtherState(de.getField(dm.getAliasField("OSTATE")));
-			item.setOtherCountry(de.getField(dm.getAliasField("OCOUNTRY")));
-			item.setOtherEmail(de.getField(dm.getAliasField("OEMAIL")));
-			item.setOtherInstantMsg(de.getField(dm.getAliasField("OINSTANT_MSG")));
-			item.setCompany(de.getField(dm.getAliasField("COMPANY")));
-			item.setFunction(de.getField(dm.getAliasField("FUNCTION")));
-			item.setDepartment(de.getField(dm.getAliasField("CDEPARTMENT")));
-			item.setManager(de.getField(dm.getAliasField("CMANAGER")));
-			item.setAssistant(de.getField(dm.getAliasField("CASSISTANT")));
-			item.setAssistantTelephone(de.getField(dm.getAliasField("CTELEPHONEASSISTANT")));
-			item.setPartner(de.getField(dm.getAliasField("HPARTNER")));
-			item.setBirthday(de.getField(dm.getAliasField("HBIRTHDAY")));
-			item.setAnniversary(de.getField(dm.getAliasField("HANNIVERSARY")));
-			item.setUrl(de.getField(dm.getAliasField("URL")));
-			item.setPhoto(de.getField(dm.getAliasField("PHOTO")));
-			item.setNotes(de.getField(dm.getAliasField("NOTES")));
-			return item;
-		
-		} catch(WTException ex) {
-			throw ex;
-		}
-	} 
-	
-	public byte[] getContactPhoto(String id) throws WTException {
+	public Contact getContact(String uid) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
+		ContactPictureDAO picdao = ContactPictureDAO.getInstance();
 		Connection con = null;
-		ContactDAO dao = ContactDAO.getInstance();
 		
 		try {
-			CompositeId cid = new CompositeId().parse(id, 2);
-			int categoryId = Integer.parseInt(cid.getToken(0));
-			String contactId = cid.getToken(1);
+			CompositeId cuid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cuid.getToken(0));
+			int contactId = Integer.parseInt(cuid.getToken(1));
 			
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getRunContext().getLocale(), true, true, false);
-			DirectoryElement de = dr.elementAt(0);
-			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
 			
-			con = WT.getConnection(getManifest());
-			return dao.readPhoto(con, Integer.valueOf(contactId));
+			con = WT.getConnection(SERVICE_ID);
+			OContact cont = cntdao.selectById(con, contactId);
+			if(cont == null) throw new WTException("Unable to get contact [{}]", uid);
+			
+			boolean hasPicture = picdao.hasPicture(con, contactId);
+			return createContact(uid, cont, hasPicture);
 		
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
-		} catch(IOException ex) {
-			throw new WTException(ex, "Error reading bytes");
+		} catch(WTException ex) {
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void addContact(Contact contact) throws WTException {
+		addContact(contact, null);
+	}
+	
+	public void addContact(Contact contact, ContactPicture picture) throws WTException {
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(contact.getCategoryId(), "CREATE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			doInsertContact(con, contact, picture);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
 		}
 	}
 	
 	public void updateContact(Contact contact) throws WTException {
+		updateContact(contact, null);
+	}
+	
+	public void updateContact(Contact contact, ContactPicture picture) throws WTException {
+		Connection con = null;
 		
+		try {
+			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			doUpdateContact(con, contact, picture);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public ContactPicture getContactPicture(String uid) throws WTException {
+		ContactPictureDAO dao = ContactPictureDAO.getInstance();
+		Connection con = null;
 		
+		try {
+			CompositeId cid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cid.getToken(0));
+			String contactId = cid.getToken(1);
+			
+			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			OContactPicture pic = dao.select(con, Integer.valueOf(contactId));
+			return (pic == null) ? null : new ContactPicture(pic);
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void updateContactPicture(String uid, ContactPicture picture) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
+		Connection con = null;
 		
+		try {
+			CompositeId cid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cid.getToken(0));
+			int contactId = Integer.parseInt(cid.getToken(1));
+			
+			checkRightsOnCategoryElements(categoryId, "UPDATE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			cntdao.updateRevision(con, contactId, createRevisionInfo());
+			doUpdateContactPicture(con, contactId, picture);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public ContactsList getContactsList(String uid) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
+		ListRecipientDAO rcptdao = ListRecipientDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			CompositeId cuid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cuid.getToken(0));
+			int contactId = Integer.parseInt(cuid.getToken(1));
+			
+			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			OContact cont = cntdao.selectById(con, contactId);
+			if(cont == null) throw new WTException("Unable to get contact [{}]", uid);
+			
+			List<OListRecipient> recipients = rcptdao.selectByList(con, cont.getListId());
+			
+			return createContactsList(uid, cont, recipients);
+		
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void addContactsList(ContactsList list) throws WTException {
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(list.getCategoryId(), "CREATE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			doInsertContactsList(con, list);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void updateContactsList(ContactsList list) throws WTException {
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(list.getCategoryId(), "UPDATE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			doUpdateContactsList(con, list);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
 	}
 	
 	
@@ -602,6 +615,202 @@ public class ContactsManager extends BaseManager {
 	
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private void doInsertContact(Connection con, Contact contact, ContactPicture picture) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
+		
+		try {
+			OContact item = new OContact(contact);
+			item.setStatus(OContact.STATUS_NEW);
+			item.setRevisionInfo(createRevisionInfo());
+			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
+			item.setContactId(cntdao.getSequence(con).intValue());
+			cntdao.insert(con, item);
+			
+			if(contact.getHasPicture()) {
+				if(picture != null) {
+					doInsertContactPicture(con, item.getContactId(), picture);
+				}
+			}
+			
+		} catch(WTException ex) {
+			throw ex;
+		}
+	}
+	
+	private void doUpdateContact(Connection con, Contact contact, ContactPicture picture) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
+		
+		try {
+			OContact item = new OContact(contact);
+			item.setStatus(OContact.STATUS_MODIFIED);
+			item.setRevisionInfo(createRevisionInfo());
+			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
+			cntdao.update(con, item);
+			
+			if(contact.getHasPicture()) {
+				if(picture != null) {
+					doUpdateContactPicture(con, item.getContactId(), picture);
+				}
+			} else {
+				doDeleteContactPicture(con, item.getContactId());
+			}
+		
+		} catch(WTException ex) {
+			throw ex;
+		}
+	}
+	
+	private void doDeleteContact(Connection con, int contactId) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
+		cntdao.logicDeleteById(con, contactId, createRevisionInfo());
+	}
+	
+	private void doInsertContactPicture(Connection con, int contactId, ContactPicture picture) throws WTException {
+		ContactPictureDAO dao = ContactPictureDAO.getInstance();
+		
+		try {
+			OContactPicture pic = new OContactPicture();
+			pic.setContactId(contactId);
+			pic.setMimeType(picture.getMimeType());
+			
+			BufferedImage bi = ImageIO.read(new ByteArrayInputStream(picture.getBytes()));
+			if((bi.getWidth() > 720) || (bi.getHeight() > 720)) {
+				bi = Scalr.resize(bi, Scalr.Method.QUALITY, Scalr.Mode.AUTOMATIC, 720);
+				pic.setWidth(bi.getWidth());
+				pic.setHeight(bi.getHeight());
+				String formatName = new MimeType(picture.getMimeType()).getSubType();
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				try {
+					ImageIO.write(bi, formatName, baos);
+					baos.flush();
+					pic.setBytes(baos.toByteArray());
+				} catch(IOException ex1) {
+					logger.warn("Error resizing image", ex1);
+				} finally {
+					IOUtils.closeQuietly(baos);
+				}
+			} else {
+				pic.setWidth(bi.getWidth());
+				pic.setHeight(bi.getHeight());
+				pic.setBytes(picture.getBytes());
+			}
+			dao.insert(con, pic);
+			
+		} catch(IOException ex) {
+			throw new WTException(ex, "Unable to read image");
+		}
+	}
+	
+	public void doUpdateContactPicture(Connection con, int contactId, ContactPicture picture) throws WTException {
+		if(picture == null) throw new WTException("Picture not defined");
+		doDeleteContactPicture(con, contactId);
+		doInsertContactPicture(con, contactId, picture);
+	}
+	
+	private void doDeleteContactPicture(Connection con, int contactId) throws WTException {
+		ContactPictureDAO dao = ContactPictureDAO.getInstance();
+		dao.delete(con, contactId);
+	}
+	
+	private void doInsertContactsList(Connection con, ContactsList list) throws WTException {
+		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
+		
+		try {
+			doInsertContact(con, createContact(list), null);
+			
+			for(ContactsListRecipient rcpt : list.getRecipients()) {
+				OListRecipient item = new OListRecipient(rcpt);
+				item.setListId(list.getListId());
+				item.setListRecipientId(lrdao.getSequence(con).intValue());
+				lrdao.insert(con, item);
+			}
+			
+		} catch(WTException ex) {
+			throw ex;
+		}
+	}
+	
+	private void doUpdateContactsList(Connection con, ContactsList list) throws WTException {
+		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
+		
+		try {
+			doUpdateContact(con, createContact(list), null);
+			//TODO: gestire la modifica determinando gli eliminati e gli aggiunti?
+			lrdao.deleteByList(con, list.getListId());
+			for(ContactsListRecipient rcpt : list.getRecipients()) {
+				OListRecipient item = new OListRecipient(rcpt);
+				item.setListId(list.getListId());
+				item.setListRecipientId(lrdao.getSequence(con).intValue());
+				lrdao.insert(con, item);
+			}
+			
+		} catch(WTException ex) {
+			throw ex;
+		}
+	}
+	
+	private String buildSearchfield(OContact contact) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(StringUtils.defaultString(contact.getLastname()));
+		sb.append(StringUtils.defaultString(contact.getFirstname()));
+		
+		String customer = null;
+		if(!StringUtils.isEmpty(contact.getCompany())) {
+			customer = lookupCustomerDescription(contact.getCompany());
+		}
+		String company = StringUtils.defaultIfBlank(customer, contact.getCompany());
+		sb.append(StringUtils.defaultString(company));
+		return sb.toString();
+	}
+	
+	private String lookupCustomerDescription(String customerId) {
+		CustomerDAO cusdao = CustomerDAO.getInstance();
+		Connection con = null;
+
+		try {
+			con = WT.getCoreConnection();
+			return cusdao.selectDescriptionById(con, customerId);
+		} catch(SQLException | DAOException ex) {
+			logger.error("Error getting description from customers [{}]", customerId);
+			return null;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
 	
 	private String ofGroup(String group) {
 		return MessageFormat.format("_{0}", group);
@@ -611,7 +820,7 @@ public class ContactsManager extends BaseManager {
 		return StringUtils.defaultIfBlank(lookupResource(locale, key), StringUtils.removeStart(key, "fields.")).toUpperCase();
 	}
 	
-	private DBDirectoryManager createDBDManager(UserProfile.Id pid, int categoryId, Locale locale) throws SQLException {
+	private DBDirectoryManager createDBDManager(UserProfile.Id pid, Locale locale, int categoryId) throws SQLException {
 		String groupwork = lookupHeader(locale, ContactsLocale.FIELDS_GROUPWORK);
 		String grouphome = lookupHeader(locale, ContactsLocale.FIELDS_GROUPHOME);
 		String groupother = lookupHeader(locale, ContactsLocale.FIELDS_GROUPOTHER);
@@ -740,7 +949,7 @@ public class ContactsManager extends BaseManager {
 				+ "OEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupother) + ","
 				+ "OINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupother) + "}|"
 				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "+CATEGORY_ID CATEGORY_ID,"
+				//+ "+category_id category_id,"
 				+ "STATUS STATUS,"
 				+ "LIST_ID LIST_ID }",
 				null,
@@ -748,7 +957,7 @@ public class ContactsManager extends BaseManager {
 				"contact_id",
 				"(status is null or status!='D') and (category_id=" + categoryId + ")",
 				"lastname,firstname,company",
-				"contact_id=nextval('seq_contacts'),category_id=" + categoryId
+				"contact_id=nextval('contacts.seq_contacts'),category_id=" + categoryId
 		);
 		dbdm.setWritable(true);
 		dbdm.setIsContact(true);
@@ -989,7 +1198,7 @@ public class ContactsManager extends BaseManager {
 	*/
 	
 	private synchronized void initGlobalDirectories(UserProfile.Id pid) throws SQLException {
-		ContactsServiceSettings css = new ContactsServiceSettings(pid.getDomainId(), SERVICE_ID);
+		ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID);
 		
 		int index = 0;
 		while (true) {
@@ -1063,19 +1272,524 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
+	
+	private ContactsList createContactsList(String uid, OContact cnt, List<OListRecipient> rcpts) {
+		ContactsList item = new ContactsList(uid);
+		item.setContactId(cnt.getContactId());
+		item.setCategoryId(cnt.getCategoryId());
+		item.setListId(cnt.getListId());
+		item.setName(cnt.getLastname());
+		for(OListRecipient rcpt : rcpts) {
+			item.addRecipient(new ContactsListRecipient(uid, rcpt));
+		}
+		return item;
+	}
+	
+	private Contact createContact(ContactsList cl) {
+		Contact item = new Contact(cl.getUid());
+		item.setContactId(cl.getContactId());
+		item.setCategoryId(cl.getCategoryId());
+		item.setListId(cl.getListId());
+		item.setLastName(cl.getName());
+		item.setHasPicture(false);
+		return item;
+	}
+	
+	private Contact createContact(String uid, OContact cnt, boolean hasPicture) {
+		Contact item = new Contact(uid);
+		item.setContactId(cnt.getContactId());
+		item.setCategoryId(cnt.getCategoryId());
+		item.setListId(cnt.getListId());
+		item.setStatus(cnt.getStatus());
+		item.setTitle(cnt.getTitle());
+		item.setFirstName(cnt.getFirstname());
+		item.setLastName(cnt.getLastname());
+		item.setNickname(cnt.getNickname());
+		item.setGender(cnt.getGender());
+		item.setWorkAddress(cnt.getCaddress());
+		item.setWorkPostalCode(cnt.getCpostalcode());
+		item.setWorkCity(cnt.getCcity());
+		item.setWorkState(cnt.getCstate());
+		item.setWorkCountry(cnt.getCcountry());
+		item.setWorkTelephone(cnt.getCtelephone());
+		item.setWorkTelephone2(cnt.getCtelephone2());
+		item.setWorkMobile(cnt.getCmobile());
+		item.setWorkFax(cnt.getCfax());
+		item.setWorkPager(cnt.getCpager());
+		item.setWorkEmail(cnt.getCemail());
+		item.setWorkInstantMsg(cnt.getCinstantMsg());
+		item.setHomeAddress(cnt.getHaddress());
+		item.setHomePostalCode(cnt.getHpostalcode());
+		item.setHomeCity(cnt.getHcity());
+		item.setHomeState(cnt.getHstate());
+		item.setHomeCountry(cnt.getHcountry());
+		item.setHomeTelephone(cnt.getHtelephone());
+		//item.setHomeTelephone2(cont.getHtelephone2());
+		item.setHomeMobile(cnt.getHmobile());
+		item.setHomeFax(cnt.getHfax());
+		item.setHomePager(cnt.getHpager());
+		item.setHomeEmail(cnt.getHemail());
+		item.setHomeInstantMsg(cnt.getHinstantMsg());
+		item.setOtherAddress(cnt.getOaddress());
+		item.setOtherPostalCode(cnt.getOpostalcode());
+		item.setOtherCity(cnt.getOcity());
+		item.setOtherState(cnt.getOstate());
+		item.setOtherCountry(cnt.getOcountry());
+		item.setOtherEmail(cnt.getOemail());
+		item.setOtherInstantMsg(cnt.getOinstantMsg());
+		item.setCompany(cnt.getCompany());
+		item.setFunction(cnt.getFunction());
+		item.setDepartment(cnt.getCdepartment());
+		item.setManager(cnt.getCmanager());
+		item.setAssistant(cnt.getCassistant());
+		item.setAssistantTelephone(cnt.getCtelephoneassistant());
+		item.setPartner(cnt.getHpartner());
+		item.setBirthday(cnt.getHbirthday());
+		item.setAnniversary(cnt.getHbirthday());
+		item.setUrl(cnt.getUrl());
+		item.setNotes(cnt.getNotes());
+		item.setHasPicture(hasPicture);
+		return item;
+	}
+	
+	private void buildShareCache() {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		UserProfile.Id pid = getTargetProfileId();
+		try {
+			cacheOwnerToRootShare.clear();
+			cacheOwnerToWildcardFolderShare.clear();
+			cacheCategoryToFolderShare.clear();
+			for(CategoryRoot root : listIncomingCategoryRoots()) {
+				cacheOwnerToRootShare.put(root.getOwnerProfileId(), root.getShareId());
+				for(OShare folder : core.listIncomingShareFolders(pid, root.getShareId(), SERVICE_ID, RESOURCE_CATEGORY)) {
+					if(folder.hasWildcard()) {
+						UserProfile.Id ownerId = core.userUidToProfileId(folder.getUserUid());
+						cacheOwnerToWildcardFolderShare.put(ownerId, folder.getShareId().toString());
+					} else {
+						cacheCategoryToFolderShare.put(Integer.valueOf(folder.getInstance()), folder.getShareId().toString());
+					}
+				}
+			}
+		} catch(WTException ex) {
+			throw new WTRuntimeException(ex.getMessage());
+		}
+	}
+	
+	private String ownerToRootShareId(UserProfile.Id owner) {
+		synchronized(shareCacheLock) {
+			if(!cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
+			return cacheOwnerToRootShare.get(owner);
+		}
+	}
+	
+	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
+		synchronized(shareCacheLock) {
+			if(!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty()) buildShareCache();
+			return cacheOwnerToWildcardFolderShare.get(ownerPid);
+		}
+	}
+	
+	private String categoryToFolderShareId(int category) {
+		synchronized(shareCacheLock) {
+			if(!cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
+			return cacheCategoryToFolderShare.get(category);
+		}
+	}
+	
+	private UserProfile.Id categoryToOwner(int categoryId) {
+		synchronized(cacheCategoryToOwner) {
+			if(cacheCategoryToOwner.containsKey(categoryId)) {
+				return cacheCategoryToOwner.get(categoryId);
+			} else {
+				try {
+					UserProfile.Id owner = findCategoryOwner(categoryId);
+					cacheCategoryToOwner.put(categoryId, owner);
+					return owner;
+				} catch(WTException ex) {
+					throw new WTRuntimeException(ex.getMessage());
+				}
+			}
+		}
+	}
+	
+	private UserProfile.Id findCategoryOwner(int categoryId) throws WTException {
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(getManifest());
+			CategoryDAO dao = CategoryDAO.getInstance();
+			Owner owner = dao.selectOwnerById(con, categoryId);
+			if(owner == null) throw new WTException("Category not found [{0}]", categoryId);
+			return new UserProfile.Id(owner.getDomainId(), owner.getUserId());
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	private void checkRightsOnCategoryRoot(UserProfile.Id ownerPid, String action) throws WTException {
+		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		if(ownerPid.equals(getTargetProfileId())) return;
+		
+		String shareId = ownerToRootShareId(ownerPid);
+		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
+		CoreManager core = WT.getCoreManager(getRunContext());
+		if(core.isShareRootPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
+		
+		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
+	}
+	
+	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
+		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		
+		// Skip rights check if running user is resource's owner
+		UserProfile.Id ownerPid = categoryToOwner(categoryId);
+		if(ownerPid.equals(getTargetProfileId())) return;
+		
+		// Checks rights on the wildcard instance (if present)
+		CoreManager core = WT.getCoreManager(getRunContext());
+		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
+		if(wildcardShareId != null) {
+			if(core.isShareFolderPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		}
+		
+		// Checks rights on calendar instance
+		String shareId = categoryToFolderShareId(categoryId);
+		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+		if(core.isShareFolderPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
+		
+		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
+	}
+	
+	private void checkRightsOnCategoryElements(int categoryId, String action) throws WTException {
+		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		
+		// Skip rights check if running user is resource's owner
+		UserProfile.Id ownerPid = categoryToOwner(categoryId);
+		if(ownerPid.equals(getTargetProfileId())) return;
+		
+		// Checks rights on the wildcard instance (if present)
+		CoreManager core = WT.getCoreManager(getRunContext());
+		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
+		if(wildcardShareId != null) {
+			if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		}
+		
+		// Checks rights on calendar instance
+		String shareId = categoryToFolderShareId(categoryId);
+		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+		if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
+		
+		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
+	}
+	
+	private RevisionInfo createRevisionInfo() {
+		return new RevisionInfo("WT", getRunContext().getProfileId().toString());
+	}
+	
 	private Integer[] toIntArray(String[] in) {
 		Integer[] out = new Integer[in.length];
 		for(int i=0; i<in.length; i++) out[i] = Integer.valueOf(in[i]);
 		return out;
 	}
 	
-	public static class FolderContacts {
+	public static class CategoryContacts {
 		public final OCategory folder;
+		public final List<VContact> contacts;
 		public final DirectoryResult result;
 		
-		public FolderContacts(OCategory folder, DirectoryResult result) {
+		public CategoryContacts(OCategory folder, List<VContact> contacts, DirectoryResult result) {
 			this.folder = folder;
+			this.contacts = contacts;
 			this.result = result;
 		}
 	}
+	
+	
+	
+	
+	/*
+	public Contact getContact999(String uid) throws WTException {
+		ContactPictureDAO dao = ContactPictureDAO.getInstance();
+		Connection con = null;
+		Contact item = null;
+		
+		try {
+			CompositeId cuid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cuid.getToken(0));
+			String contactId = cuid.getToken(1);
+			
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getLocale(), true, true, false);
+			DirectoryElement de = dr.elementAt(0);
+			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			
+			con = WT.getConnection(SERVICE_ID);
+			boolean hasPicture = dao.hasPicture(con, Integer.valueOf(contactId));
+			
+			item = new Contact(uid);
+			item.setContactId(contactId);
+			item.setCategoryId(String.valueOf(categoryId));
+			item.setListId(StringUtils.defaultIfEmpty(de.getField("LIST_ID"), null));
+			item.setStatus(de.getField("STATUS"));
+			item.setTitle(de.getField(dm.getAliasField("TITLE")));
+			item.setFirstName(de.getField(dm.getAliasField("FIRSTNAME")));
+			item.setLastName(de.getField(dm.getAliasField("LASTNAME")));
+			item.setNickname(de.getField(dm.getAliasField("NICKNAME")));
+			item.setGender(de.getField(dm.getAliasField("GENDER")));
+			item.setWorkAddress(de.getField(dm.getAliasField("CADDRESS")));
+			item.setWorkPostalCode(de.getField(dm.getAliasField("CPOSTALCODE")));
+			item.setWorkCity(de.getField(dm.getAliasField("CCITY")));
+			item.setWorkState(de.getField(dm.getAliasField("CSTATE")));
+			item.setWorkCountry(de.getField(dm.getAliasField("CCOUNTRY")));
+			item.setWorkTelephone(de.getField(dm.getAliasField("CTELEPHONE")));
+			item.setWorkTelephone2(de.getField(dm.getAliasField("CTELEPHONE2")));
+			item.setWorkMobile(de.getField(dm.getAliasField("CMOBILE")));
+			item.setWorkFax(de.getField(dm.getAliasField("CFAX")));
+			item.setWorkPager(de.getField(dm.getAliasField("CPAGER")));
+			item.setWorkEmail(de.getField(dm.getAliasField("CEMAIL")));
+			item.setWorkInstantMsg(de.getField(dm.getAliasField("CINSTANT_MSG")));
+			item.setHomeAddress(de.getField(dm.getAliasField("HADDRESS")));
+			item.setHomePostalCode(de.getField(dm.getAliasField("HPOSTALCODE")));
+			item.setHomeCity(de.getField(dm.getAliasField("HCITY")));
+			item.setHomeState(de.getField(dm.getAliasField("HSTATE")));
+			item.setHomeCountry(de.getField(dm.getAliasField("HCOUNTRY")));
+			item.setHomeTelephone(de.getField(dm.getAliasField("HTELEPHONE")));
+			item.setHomeMobile(de.getField(dm.getAliasField("HMOBILE")));
+			item.setHomeFax(de.getField(dm.getAliasField("HFAX")));
+			item.setHomePager(de.getField(dm.getAliasField("HPAGER")));
+			item.setHomeEmail(de.getField(dm.getAliasField("HEMAIL")));
+			item.setHomeInstantMsg(de.getField(dm.getAliasField("HINSTANT_MSG")));
+			item.setOtherAddress(de.getField(dm.getAliasField("OADDRESS")));
+			item.setOtherPostalCode(de.getField(dm.getAliasField("OPOSTALCODE")));
+			item.setOtherCity(de.getField(dm.getAliasField("OCITY")));
+			item.setOtherState(de.getField(dm.getAliasField("OSTATE")));
+			item.setOtherCountry(de.getField(dm.getAliasField("OCOUNTRY")));
+			item.setOtherEmail(de.getField(dm.getAliasField("OEMAIL")));
+			item.setOtherInstantMsg(de.getField(dm.getAliasField("OINSTANT_MSG")));
+			item.setCompany(de.getField(dm.getAliasField("COMPANY")));
+			item.setFunction(de.getField(dm.getAliasField("FUNCTION")));
+			item.setDepartment(de.getField(dm.getAliasField("CDEPARTMENT")));
+			item.setManager(de.getField(dm.getAliasField("CMANAGER")));
+			item.setAssistant(de.getField(dm.getAliasField("CASSISTANT")));
+			item.setAssistantTelephone(de.getField(dm.getAliasField("CTELEPHONEASSISTANT")));
+			item.setPartner(de.getField(dm.getAliasField("HPARTNER")));
+			item.setBirthday(de.getField(dm.getAliasField("HBIRTHDAY")));
+			item.setAnniversary(de.getField(dm.getAliasField("HANNIVERSARY")));
+			item.setUrl(de.getField(dm.getAliasField("URL")));
+			item.setNotes(de.getField(dm.getAliasField("NOTES")));
+			item.setHasPicture(hasPicture);
+			return item;
+		
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	*/
+	
+	/* con DirectoryManager
+	public ContactsList getContactsList999(String uid) throws WTException {
+		ListRecipientDAO dao = ListRecipientDAO.getInstance();
+		Connection con = null;
+		ContactsList item = null;
+		
+		try {
+			CompositeId cuid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cuid.getToken(0));
+			String contactId = cuid.getToken(1);
+			
+			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
+			
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getLocale(), true, true, false);
+			DirectoryElement de = dr.elementAt(0);
+			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			
+			int listId = Integer.valueOf(de.getField("LIST_ID"));
+			con = WT.getConnection(SERVICE_ID);
+			List<OListRecipient> recipients = dao.selectByList(con, listId);
+			
+			item = new ContactsList(uid);
+			item.setContactId(contactId);
+			item.setCategoryId(categoryId);
+			item.setListId(LangUtils.value(de.getField("LIST_ID"), (Integer)null));
+			item.setName(de.getField(dm.getAliasField("LASTNAME")));
+			for(OListRecipient recipient : recipients) {
+				item.addRecipient(new ContactsListRecipient(recipient));
+			}
+			
+			return item;
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	*/
+	
+	/*
+	private void privateAddContactsList999(int categoryId, ContactsList contactsList) throws WTException {
+		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
+		ListDAO ldao = ListDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			int listId = ldao.getSequence(con).intValue();
+			
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryElement de = dm.createEmptyElement(getLocale());
+			//de.setField("CATEGORY_ID", String.valueOf(categoryId));
+			de.setField("LIST_ID", String.valueOf(listId));
+			de.setField(dm.getLastNameField(), contactsList.getName());
+			//de.setField(dm.getMailField(), cl.getName());
+			de.setField("STATUS", "N");
+			dm.insert(de);
+			
+			for(ContactsListRecipient recipient : contactsList.getRecipients()) {
+				OListRecipient lr = new OListRecipient(recipient);
+				lr.setListId(listId);
+				lr.setListRecipientId(lrdao.getSequence(con).intValue());
+				lrdao.insert(con, lr);
+			}
+			
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	*/
+	
+	/*
+	private void privateUpdateContactsList999(int categoryId, ContactsList contactsList) throws WTException {
+		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactsList.getContactId()), getLocale(), true, true, false);
+			DirectoryElement de = dr.elementAt(0);
+			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactsList.getContactId());
+			
+			de.updateField("CATEGORY_ID", String.valueOf(contactsList.getCategoryId()));
+			de.updateField(dm.getLastNameField(), contactsList.getName());
+			de.updateField("STATUS", "M");
+			dm.update(de);
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			lrdao.deleteByList(con, contactsList.getListId());
+			for(ContactsListRecipient recipient : contactsList.getRecipients()) {
+				OListRecipient lr = new OListRecipient(recipient);
+				lr.setListId(contactsList.getListId());
+				lr.setListRecipientId(lrdao.getSequence(con).intValue());
+				lrdao.insert(con, lr);
+			}
+			
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	*/
+	
+	/*
+	public void copyContactsList999(String sourceContactListUid, int destCategoryId) throws WTException {
+		try {
+			ContactsList scl = getContactsList(sourceContactListUid);
+			
+			//TODO: controllo autorizzatione scrittura
+			
+			privateAddContactsList999(destCategoryId, scl);
+		} catch(WTException ex) {
+			throw ex;
+		}
+	}
+	
+	public void deleteContactList999(String contactListUid) throws WTException {
+		
+		try {
+			CompositeId cuid = new CompositeId().parse(contactListUid, 2);
+			int categoryId = Integer.valueOf(cuid.getToken(0));
+			String contactId = cuid.getToken(1);
+			
+			//TODO: controllo autorizzatione
+			
+			DirectoryManager dm = getDirectoryManager(categoryId);
+			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getLocale(), true, true, false);
+			DirectoryElement de = dr.elementAt(0);
+			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			
+			de.updateField("STATUS", "D");
+			dm.update(de);
+			
+		} catch(Exception ex) {
+			throw new WTException(ex);
+		}
+	}
+	*/
+	
+	/*
+	public byte[] getContactPhoto(String uid) throws WTException {
+		ContactDAO dao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			CompositeId cid = new CompositeId().parse(uid, 2);
+			int categoryId = Integer.parseInt(cid.getToken(0));
+			String contactId = cid.getToken(1);
+			
+			//DirectoryManager dm = getDirectoryManager(categoryId);
+			//DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getRunContext().getLocale(), true, true, false);
+			//DirectoryElement de = dr.elementAt(0);
+			//if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			byte[] bytes = dao.readPhoto(con, Integer.valueOf(contactId));
+			DbUtils.commitQuietly(con);
+			return bytes;
+		
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(IOException ex) {
+			throw new WTException(ex, "Error reading bytes");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	*/
 }

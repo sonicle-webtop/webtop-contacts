@@ -31,33 +31,14 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import com.sonicle.webtop.contacts.jooq.tables.pojos.ContactsPictures;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
-	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
-	}
-	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
-	}
-	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
-	}
-	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
+public class OContactPicture extends ContactsPictures {
 	
 }

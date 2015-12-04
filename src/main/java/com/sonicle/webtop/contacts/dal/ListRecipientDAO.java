@@ -47,9 +47,9 @@ import org.jooq.DSLContext;
  *
  * @author malbinola
  */
-public class ListRecipientsDAO extends BaseDAO {
-	private final static ListRecipientsDAO INSTANCE = new ListRecipientsDAO();
-	public static ListRecipientsDAO getInstance() {
+public class ListRecipientDAO extends BaseDAO {
+	private final static ListRecipientDAO INSTANCE = new ListRecipientDAO();
+	public static ListRecipientDAO getInstance() {
 		return INSTANCE;
 	}
 
@@ -59,13 +59,13 @@ public class ListRecipientsDAO extends BaseDAO {
 		return nextID;
 	}
 	
-	public OListRecipient select(Connection con, Integer uid) throws DAOException {
+	public OListRecipient select(Connection con, Integer listRecipientId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
 			.from(LIST_RECIPIENTS)
 			.where(
-					LIST_RECIPIENTS.UID.equal(uid)
+					LIST_RECIPIENTS.LIST_RECIPIENT_ID.equal(listRecipientId)
 			)
 			.fetchOneInto(OListRecipient.class);
 	}
@@ -79,8 +79,7 @@ public class ListRecipientsDAO extends BaseDAO {
 						LIST_RECIPIENTS.LIST_ID.equal(listId)
 				)
 				.orderBy(
-						LIST_RECIPIENTS.DISPLAY_NAME.asc(),
-						LIST_RECIPIENTS.EMAIL.asc()
+						LIST_RECIPIENTS.RECIPIENT.asc()
 				)
 				.fetchInto(OListRecipient.class);
 	}
@@ -98,20 +97,19 @@ public class ListRecipientsDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(LIST_RECIPIENTS)
-			.set(LIST_RECIPIENTS.EMAIL, item.getEmail())
-			.set(LIST_RECIPIENTS.DISPLAY_NAME, item.getDisplayName())
+			.set(LIST_RECIPIENTS.RECIPIENT, item.getRecipient())
 			.set(LIST_RECIPIENTS.RECIPIENT_TYPE, item.getRecipientType())
 			.where(
-				LIST_RECIPIENTS.UID.equal(item.getUid())
+				LIST_RECIPIENTS.LIST_RECIPIENT_ID.equal(item.getListRecipientId())
 			)
 			.execute();
 	}
 	
-	public int delete(Connection con, Integer uid) throws DAOException {
+	public int delete(Connection con, Integer listRecipientId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 				.delete(LIST_RECIPIENTS)
-				.where(LIST_RECIPIENTS.UID.equal(uid))
+				.where(LIST_RECIPIENTS.LIST_RECIPIENT_ID.equal(listRecipientId))
 				.execute();
 	}
 	

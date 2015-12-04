@@ -33,15 +33,17 @@
  */
 package com.sonicle.webtop.contacts.bol.model;
 
+import org.joda.time.DateTime;
+
 /**
  *
  * @author malbinola
  */
 public class Contact {
-	protected String id;
-	protected String contactId;
-	protected String categoryId;
-	protected String listId;
+	protected String uid;
+	protected Integer contactId;
+	protected Integer categoryId;
+	protected Integer listId;
 	protected String status;
 	protected String title;
 	protected String firstName;
@@ -85,45 +87,45 @@ public class Contact {
 	protected String assistant;
 	protected String assistantTelephone;
 	protected String partner;
-	protected String birthday;
-	protected String anniversary;
+	protected DateTime birthday;
+	protected DateTime anniversary;
 	protected String url;
-	protected String photo;
 	protected String notes;
+	protected boolean hasPicture;
 	
-	public Contact(String id) {
-		this.id = id;
+	public Contact(String uid) {
+		this.uid = uid;
 	}
 	
-	public String getId() {
-		return id;
+	public String getUid() {
+		return uid;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setUid(String uid) {
+		this.uid = uid;
 	}
 
-	public String getContactId() {
+	public Integer getContactId() {
 		return contactId;
 	}
 
-	public void setContactId(String contactId) {
+	public void setContactId(Integer contactId) {
 		this.contactId = contactId;
 	}
 
-	public String getCategoryId() {
+	public Integer getCategoryId() {
 		return categoryId;
 	}
 
-	public void setCategoryId(String categoryId) {
+	public void setCategoryId(Integer categoryId) {
 		this.categoryId = categoryId;
 	}
 
-	public String getListId() {
+	public Integer getListId() {
 		return listId;
 	}
 
-	public void setListId(String listId) {
+	public void setListId(Integer listId) {
 		this.listId = listId;
 	}
 
@@ -471,19 +473,19 @@ public class Contact {
 		this.partner = partner;
 	}
 
-	public String getBirthday() {
+	public DateTime getBirthday() {
 		return birthday;
 	}
 
-	public void setBirthday(String birthday) {
+	public void setBirthday(DateTime birthday) {
 		this.birthday = birthday;
 	}
 
-	public String getAnniversary() {
+	public DateTime getAnniversary() {
 		return anniversary;
 	}
 
-	public void setAnniversary(String anniversary) {
+	public void setAnniversary(DateTime anniversary) {
 		this.anniversary = anniversary;
 	}
 
@@ -495,19 +497,19 @@ public class Contact {
 		this.url = url;
 	}
 
-	public String getPhoto() {
-		return photo;
-	}
-
-	public void setPhoto(String photo) {
-		this.photo = photo;
-	}
-
 	public String getNotes() {
 		return notes;
 	}
 
 	public void setNotes(String notes) {
 		this.notes = notes;
+	}
+	
+	public boolean getHasPicture() {
+		return hasPicture;
+	}
+
+	public void setHasPicture(boolean hasPicture) {
+		this.hasPicture = hasPicture;
 	}
 }

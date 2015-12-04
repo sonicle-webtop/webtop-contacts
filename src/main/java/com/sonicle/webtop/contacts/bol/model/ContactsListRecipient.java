@@ -31,33 +31,50 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import com.sonicle.webtop.contacts.bol.OListRecipient;
+import com.sonicle.webtop.core.sdk.NestedClass;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
+public class ContactsListRecipient extends NestedClass {
+	protected Integer listRecipientId;
+	protected String recipient;
+	protected String recipientType;
 	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+	public ContactsListRecipient() {}
+	
+	public ContactsListRecipient(String fk, OListRecipient rec) {
+		super(fk);
+		listRecipientId = rec.getListRecipientId();
+		recipient = rec.getRecipient();
+		recipientType = rec.getRecipientType();
 	}
-	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+
+	public Integer getListRecipientId() {
+		return listRecipientId;
 	}
-	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
+
+	public void setListRecipientId(Integer listRecipientId) {
+		this.listRecipientId = listRecipientId;
 	}
-	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
-	
+
+	public String getRecipient() {
+		return recipient;
+	}
+
+	public void setRecipient(String recipient) {
+		this.recipient = recipient;
+	}
+
+	public String getRecipientType() {
+		return recipientType;
+	}
+
+	public void setRecipientType(String recipientType) {
+		this.recipientType = recipientType;
+	}
 }

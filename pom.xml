@@ -30,6 +30,11 @@
 			<version>3.1.0</version>
 			<scope>provided</scope>
 		</dependency>
+	 <dependency>
+	  <groupId>org.imgscalr</groupId>
+	  <artifactId>imgscalr-lib</artifactId>
+	  <version>4.2</version>
+	 </dependency>
 	</dependencies>
 	<build>
 		<resources>

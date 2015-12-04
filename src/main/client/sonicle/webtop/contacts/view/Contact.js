@@ -70,7 +70,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					text: WT.res('act-saveClose.lbl'),
 					iconCls: 'wt-icon-saveClose-xs',
 					handler: function() {
-						me.saveEvent();
+						me.saveView(true);
 					}
 				}),
 				'-',
@@ -110,8 +110,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					labelWidth: 120,
 					width: 400
 				},
-				items: [Ext.create(
-					WTF.lookupCombo('categoryId', 'name', {
+				items: [
+				WTF.lookupCombo('categoryId', 'name', {
 						xtype: 'soiconcombo',
 						bind: '{record.categoryId}',
 						store: {
@@ -121,8 +121,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						},
 						iconClsField: 'colorCls',
 						fieldLabel: me.mys.res('contact.fld-category.lbl')
-					})
-				), {
+				}), {
 					xtype: 'textfield',
 					bind: '{record.title}',
 					fieldLabel: me.mys.res('contact.fld-title.lbl')
@@ -182,16 +181,16 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				margin: '20 0 0 30',
 				items: [{
 					xtype: 'soimagefield',
-					reference: 'fldphoto',
-					bind: '{record.photo}',
+					//reference: 'fldpic',
+					bind: '{record.picture}',
 					imageWidth: 150,
 					imageHeight: 150,
 					geometry: 'circle',
-					imageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPhoto'),
+					imageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
 					blankImageUrl: WTF.resourceUrl(me.mys.ID, 'contact-placeholder.png'),
 					clearTriggerCls: 'wtcon-trash-trigger',
 					uploadTriggerCls: 'wtcon-add-trigger',
-					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPhoto', {
+					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
 						mimeTypes: [
 							{title: 'Image files', extensions: 'jpeg,jpg,png'}
 						]
@@ -207,7 +206,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 							me.unwait();
 						},
 						fileuploaded: function(up, file) {
-							me.getModel().set('photo', file.uploadId);
+							me.getModel().set('picture', file.uploadId);
 						}
 					}
 				}]

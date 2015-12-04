@@ -31,33 +31,78 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
+public class ContactsList {
+	protected String uid;
+	protected Integer contactId;
+	protected Integer categoryId;
+	protected Integer listId;
+	protected String name;
+	protected List<ContactsListRecipient> recipients = new ArrayList<>();
 	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+	public ContactsList() {}
+	
+	public ContactsList(String uid) {
+		this.uid = uid;
+	}
+
+	public String getUid() {
+		return uid;
+	}
+
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+
+	public Integer getContactId() {
+		return contactId;
+	}
+
+	public void setContactId(Integer contactId) {
+		this.contactId = contactId;
+	}
+
+	public Integer getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(Integer categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public Integer getListId() {
+		return listId;
+	}
+
+	public void setListId(Integer listId) {
+		this.listId = listId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public List<ContactsListRecipient> getRecipients() {
+		return recipients;
+	}
+
+	public void setRecipients(List<ContactsListRecipient> recipients) {
+		this.recipients = recipients;
 	}
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+	public void addRecipient(ContactsListRecipient recipient) {
+		recipients.add(recipient);
 	}
-	
-	public String getDirectory(int index) {
-		return getString(MessageFormat.format(DIRECTORY_X, String.valueOf(index)), null);
-	}
-	
-	/**
-	 * [string]
-	 * Defines a contacts directory configuration
-	 */
-	public static final String DIRECTORY_X = "directory.{0}";
-	
 }
