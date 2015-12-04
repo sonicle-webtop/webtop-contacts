@@ -32,7 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.model.CategoryLkp', {
-	extend: 'WT.model.Base',
+	extend: 'WT.ux.data.BaseModel',
 	
 	idProperty: 'categoryId',
 	fields: [

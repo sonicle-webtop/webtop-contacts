@@ -32,7 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.model.GridContact', {
-	extend: 'WT.model.Empty',
+	extend: 'WT.ux.data.EmptyModel',
 	
 	idProperty: 'uid'
 });

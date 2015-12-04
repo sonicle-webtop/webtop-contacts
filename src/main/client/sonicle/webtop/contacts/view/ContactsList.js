@@ -69,7 +69,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					reference: 'fldowner',
 					store: {
 						autoLoad: true,
-						model: 'WT.model.Simple',
+						model: 'WT.ux.data.SimpleModel',
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
 					},
 					fieldLabel: me.mys.res('contact.fld-owner.lbl'),

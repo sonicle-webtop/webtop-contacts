@@ -32,7 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
-	extend: 'WT.model.Base',
+	extend: 'WT.ux.data.BaseModel',
 	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContactsLists', 'data', {
 		writer: {
 			type: 'sojson',
@@ -57,7 +57,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
 */
 });
 Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipients', {
-	extend: 'WT.model.Base',
+	extend: 'WT.ux.data.BaseModel',
 	
 	identifier: 'negative',
 	idProperty: 'contactListId',

@@ -36,7 +36,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	requires: [
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
-		'WT.model.Empty',
+		'WT.ux.data.EmptyModel',
 		'Sonicle.webtop.contacts.model.FolderNode',
 		'Sonicle.webtop.contacts.model.GridContact',
 		'Sonicle.webtop.contacts.view.Category',
