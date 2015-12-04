@@ -80,6 +80,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -703,9 +704,13 @@ public class Service extends BaseService {
 		}
 	}
 	
-	
-	
-	
+	/*
+	public void processVCardImportUploadStream(HttpServletRequest request, InputStream uploadStream) throws Exception {
+		UserProfile up = getEnv().getProfile();
+		Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+		//manager.importVCard(categoryId, uploadStream, up.getTimeZone());
+	}
+	*/
 	
 	private ContactPicture getUploadedContactPicture(String id) throws WTException {
 		UploadedFile upl = getUploadedFile(id);

@@ -33,8 +33,6 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
-import com.sonicle.commons.db.RSUtils;
-import com.sonicle.commons.db.StatementUtils;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.VContact;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
@@ -43,18 +41,11 @@ import static com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
-import org.apache.commons.lang.StringUtils;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import static org.jooq.impl.DSL.field;
-import org.postgresql.largeobject.LargeObject;
-import org.postgresql.largeobject.LargeObjectManager;
 
 /**
  *
@@ -218,7 +209,7 @@ public class ContactDAO extends BaseDAO {
 	
 	
 	
-	
+	/*
 	public byte[] readPhoto(Connection con, int contactId) throws IOException {
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
@@ -256,7 +247,7 @@ public class ContactDAO extends BaseDAO {
 			StatementUtils.closeQuietly(stmt);
 		}
 	}
-	
+	*/
 	
 	/*
 	public int writePhoto(Connection con, int contactId, byte[] bytes) throws IOException {

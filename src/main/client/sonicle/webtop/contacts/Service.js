@@ -310,14 +310,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				]
 			}),
 			handler: function(s) {
-				/*
 				var node = me.getSelectedFolder();
 				if(node) {
 					s.uploader.mergeExtraParams({
-						calendarId: node.get('_catId')
+						categoryId: node.get('_catId')
 					});
 				}
-				*/
 			}
 		}));
 		me.addAction('viewAllCategories', {
