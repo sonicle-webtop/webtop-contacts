@@ -30,11 +30,16 @@
 			<version>3.1.0</version>
 			<scope>provided</scope>
 		</dependency>
-	 <dependency>
-	  <groupId>org.imgscalr</groupId>
-	  <artifactId>imgscalr-lib</artifactId>
-	  <version>4.2</version>
-	 </dependency>
+		<dependency>
+			<groupId>org.imgscalr</groupId>
+			<artifactId>imgscalr-lib</artifactId>
+			<version>4.2</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.ez-vcard</groupId>
+			<artifactId>ez-vcard</artifactId>
+			<version>0.9.8</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<resources>
@@ -92,12 +97,12 @@
 							<forcedTypes>
 								<forcedType>
 									<name>JodaLocalDate</name>
-									<expressions>.*</expressions>
+									<expression>.*</expression>
 									<types>date.*</types>
 								</forcedType>
 								<forcedType>
 									<name>JodaDateTime</name>
-									<expressions>.*</expressions>
+									<expression>.*</expression>
 									<types>timestamp.*</types>
 								</forcedType>
 							</forcedTypes>

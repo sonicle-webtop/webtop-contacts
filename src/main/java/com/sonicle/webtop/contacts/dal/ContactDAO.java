@@ -43,6 +43,9 @@ import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDate;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import static org.jooq.impl.DSL.field;
@@ -65,8 +68,81 @@ public class ContactDAO extends BaseDAO {
 		return nextID;
 	}
 	
-	public List<VContact> viewByCategoryQuery(Connection con, int categoryId, String query) throws DAOException {
+	public List<VContact> viewOnBirthdayByDate(Connection con, LocalDate date) throws DAOException {
 		DSLContext dsl = getDSL(con);
+		
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.FIRSTNAME,
+				CONTACTS.LASTNAME
+			)
+			.select(
+				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
+				CATEGORIES.USER_ID.as("category_user_id")
+			)
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				CONTACTS.HBIRTHDAY.equal(date)
+				.and(
+					CONTACTS.STATUS.equal("N")
+					.or(CONTACTS.STATUS.equal("M"))
+				)
+			)
+			.orderBy(
+				CONTACTS.LASTNAME.asc(),
+				CONTACTS.FIRSTNAME.asc()
+			)
+			.fetchInto(VContact.class);
+	}
+	
+	public List<VContact> viewOnAnniversaryByDate(Connection con, LocalDate date) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.FIRSTNAME,
+				CONTACTS.LASTNAME
+			)
+			.select(
+				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
+				CATEGORIES.USER_ID.as("category_user_id")
+			)
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				CONTACTS.HANNIVERSARY.equal(date)
+				.and(
+					CONTACTS.STATUS.equal("N")
+					.or(CONTACTS.STATUS.equal("M"))
+				)
+			)
+			.orderBy(
+				CONTACTS.LASTNAME.asc(),
+				CONTACTS.FIRSTNAME.asc()
+			)
+			.fetchInto(VContact.class);
+	}
+	
+	public List<VContact> viewByCategoryQuery(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		
+		Condition searchCndt = null;
+		if(searchMode.equals("lastname")) {
+			//searchCndt = CONTACTS.LASTNAME.lower().like(query);
+			searchCndt = CONTACTS.LASTNAME.lower().likeRegex(pattern);
+		} else {
+			searchCndt = CONTACTS.CEMAIL.likeIgnoreCase(pattern)
+					.or(CONTACTS.HEMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.OEMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
+					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
+		}
+		
 		return dsl
 			.select(
 				CONTACTS.CONTACT_ID,
@@ -103,9 +179,7 @@ public class ContactDAO extends BaseDAO {
 					.or(CONTACTS.STATUS.equal("M"))
 				)
 				.and(
-					CONTACTS.CEMAIL.like(query)
-					.or(CONTACTS.COMPANY.like(query))
-					.or(CONTACTS.SEARCHFIELD.like(query))
+					searchCndt
 				)
 			)
 			.orderBy(

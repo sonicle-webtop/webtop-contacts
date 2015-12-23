@@ -33,9 +33,8 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.db.DbUtils;
-import com.sonicle.commons.web.json.CompositeId;
+import com.sonicle.webtop.contacts.VCardHelper.ParseResult;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
@@ -50,10 +49,8 @@ import com.sonicle.webtop.contacts.bol.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
-import com.sonicle.webtop.contacts.dal.ListDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.directory.DBDirectoryManager;
-import com.sonicle.webtop.contacts.directory.DirectoryElement;
 import com.sonicle.webtop.contacts.directory.DirectoryManager;
 import com.sonicle.webtop.contacts.directory.DirectoryResult;
 import com.sonicle.webtop.contacts.directory.LDAPDirectoryManager;
@@ -72,14 +69,22 @@ import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.sdk.AuthException;
+import com.sonicle.webtop.core.sdk.ReminderAlert;
+import com.sonicle.webtop.core.sdk.ReminderAlertEmail;
+import com.sonicle.webtop.core.sdk.ReminderAlertWeb;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
+import com.sonicle.webtop.core.sdk.interfaces.IManagerUsesReminders;
+import com.sonicle.webtop.core.util.LogEntries;
+import com.sonicle.webtop.core.util.LogEntry;
+import com.sonicle.webtop.core.util.MessageLogEntry;
 import eu.medsea.mimeutil.MimeType;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -97,18 +102,22 @@ import javax.sql.DataSource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.imgscalr.Scalr;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
 import org.slf4j.Logger;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseManager {
+public class ContactsManager extends BaseManager implements IManagerUsesReminders {
 	public static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String RESOURCE_CATEGORY = "CATEGORY";
 	
-	private final LinkedHashMap<String, DirectoryManager> cacheGlobalDirectories = new LinkedHashMap<>();
-	private final LinkedHashMap<Integer, DirectoryManager> cacheDirectories = new LinkedHashMap<>();
+	//private final LinkedHashMap<String, DirectoryManager> cacheGlobalDirectories = new LinkedHashMap<>();
+	//private final LinkedHashMap<Integer, DirectoryManager> cacheDirectories = new LinkedHashMap<>();
 	
 	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
 	private final Object shareCacheLock = new Object();
@@ -120,6 +129,102 @@ public class ContactsManager extends BaseManager {
 		super(context);
 	}
 	
+	public ContactsManager(RunContext context, UserProfile.Id targetProfileId) {
+		super(context, targetProfileId);
+	}
+	
+	private String getAnniversaryReminderDelivery(HashMap<UserProfile.Id, String> cache, UserProfile.Id pid) {
+		if(!cache.containsKey(pid)) {
+			ContactsUserSettings cus = new ContactsUserSettings(SERVICE_ID, pid);
+			String value = cus.getAnniversaryReminderDelivery();
+			cache.put(pid, value);
+			return value;
+		} else {
+			return cache.get(pid);
+		}
+	}
+	
+	private DateTime getAnniversaryReminderTime(HashMap<UserProfile.Id, DateTime> cache, UserProfile.Id pid, LocalDate date) {
+		if(!cache.containsKey(pid)) {
+			LocalTime time = new ContactsUserSettings(SERVICE_ID, pid).getAnniversaryReminderTime();
+			//TODO: valutare se uniformare i minuti a quelli consentiti (ai min 0 e 30), se errato non verrà mai preso in considerazione
+			UserProfile.Data ud = WT.getUserData(pid);
+			DateTime value = new DateTime(ud.getTimezone()).withDate(date).withTime(time);
+			cache.put(pid, value);
+			return value;
+		} else {
+			return cache.get(pid);
+		}
+	}
+	
+	@Override
+	public List<ReminderAlert> returnReminderAlerts(DateTime now) {
+		ArrayList<ReminderAlert> alerts = new ArrayList<>();
+		HashMap<UserProfile.Id, Boolean> okCache = new HashMap<>();
+		HashMap<UserProfile.Id, DateTime> dateTimeCache = new HashMap<>();
+		HashMap<UserProfile.Id, String> deliveryCache = new HashMap<>();
+		ContactDAO cdao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		// Valid reminder times (see getAnniversaryReminderTime in options) 
+		// are only at 0 and 30 min of each hour. So skip unuseful runs...
+		if((now.getMinuteOfHour() == 0) || (now.getMinuteOfHour() == 30)) {
+			try {
+				con = WT.getConnection(SERVICE_ID);
+				LocalDate date = now.toLocalDate();
+
+				List<VContact> bdays = cdao.viewOnBirthdayByDate(con, date);
+				for(VContact cont : bdays) {
+					boolean ok = false;
+					if(!okCache.containsKey(cont.getCategoryProfileId())) {
+						ok = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date).withZone(DateTimeZone.UTC).equals(now);
+						okCache.put(cont.getCategoryProfileId(), ok);
+					}
+
+					if(ok) {
+						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
+						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
+						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+
+						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
+							alerts.add(createAnniversaryReminderAlertEmail(ud.getLocale(), true, cont, dateTime));
+						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
+							alerts.add(createAnniversaryReminderAlertWeb(ud.getLocale(), true, cont, dateTime));
+						}
+					}
+				}
+
+				List<VContact> anns = cdao.viewOnAnniversaryByDate(con, date);
+				for(VContact cont : anns) {
+					boolean ok = false;
+					if(!okCache.containsKey(cont.getCategoryProfileId())) {
+						ok = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date).withZone(DateTimeZone.UTC).equals(now);
+						okCache.put(cont.getCategoryProfileId(), ok);
+					}
+
+					if(ok) {
+						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
+						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
+						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+
+						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
+							alerts.add(createAnniversaryReminderAlertEmail(ud.getLocale(), false, cont, dateTime));
+						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
+							alerts.add(createAnniversaryReminderAlertWeb(ud.getLocale(), false, cont, dateTime));
+						}
+					}
+				}
+
+			} catch(Exception ex) {
+				logger.error("Error collecting reminder alerts", ex);
+			} finally {
+				DbUtils.closeQuietly(con);
+			}
+		} 
+		return alerts;
+	}
+	
+	/*
 	private DirectoryManager getDirectoryManager(int categoryId) throws WTException {
 		try {
 			synchronized(cacheDirectories) {
@@ -133,7 +238,6 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	/*
 	public void initializeDirectories(UserProfile profile) throws SQLException {
 		initGlobalDirectories(profile.getId());
 		// Adds global DMs to the sessions
@@ -323,11 +427,11 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	public List<CategoryContacts> listContacts(CategoryRoot root, Integer[] categoryFolders, String pattern) throws Exception {
-		return listContacts(root.getOwnerProfileId(), categoryFolders, pattern);
+	public List<CategoryContacts> listContacts(CategoryRoot root, Integer[] categoryFolders, String searchMode, String pattern) throws Exception {
+		return listContacts(root.getOwnerProfileId(), categoryFolders, searchMode, pattern);
 	}
 	
-	public List<CategoryContacts> listContacts(UserProfile.Id pid, Integer[] categoryFolders, String pattern) throws Exception {
+	public List<CategoryContacts> listContacts(UserProfile.Id pid, Integer[] categoryFolders, String searchMode, String pattern) throws Exception {
 		CategoryDAO catdao = CategoryDAO.getInstance();
 		ContactDAO condao = ContactDAO.getInstance();
 		ArrayList<CategoryContacts> catContacts = new ArrayList<>();
@@ -343,7 +447,7 @@ public class ContactsManager extends BaseManager {
 			List<VContact> vcs = null;
 			for(OCategory cat : cats) {
 				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
-				vcs = condao.viewByCategoryQuery(con, cat.getCategoryId(), StringUtils.lowerCase(pattern));
+				vcs = condao.viewByCategoryQuery(con, cat.getCategoryId(), searchMode, pattern);
 				catContacts.add(new CategoryContacts(cat, vcs, null));
 			}
 			return catContacts;
@@ -388,28 +492,20 @@ public class ContactsManager extends BaseManager {
 	}
 	*/
 	
-	public String buildContactUid(Object categoryId, Object contactId) {
-		return new CompositeId(categoryId, contactId).toString();
-	}
-	
-	public Contact getContact(String uid) throws WTException {
+	public Contact getContact(int contactId) throws WTException {
 		ContactDAO cntdao = ContactDAO.getInstance();
 		ContactPictureDAO picdao = ContactPictureDAO.getInstance();
 		Connection con = null;
 		
 		try {
-			CompositeId cuid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cuid.getToken(0));
-			int contactId = Integer.parseInt(cuid.getToken(1));
-			
-			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
-			
 			con = WT.getConnection(SERVICE_ID);
+			
 			OContact cont = cntdao.selectById(con, contactId);
-			if(cont == null) throw new WTException("Unable to get contact [{}]", uid);
+			if(cont == null) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
 			boolean hasPicture = picdao.hasPicture(con, contactId);
-			return createContact(uid, cont, hasPicture);
+			return createContact(cont, hasPicture);
 		
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -474,19 +570,19 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	public ContactPicture getContactPicture(String uid) throws WTException {
+	public ContactPicture getContactPicture(int contactId) throws WTException {
+		ContactDAO cntdao = ContactDAO.getInstance();
 		ContactPictureDAO dao = ContactPictureDAO.getInstance();
 		Connection con = null;
 		
 		try {
-			CompositeId cid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cid.getToken(0));
-			String contactId = cid.getToken(1);
-			
-			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
-			
 			con = WT.getConnection(SERVICE_ID);
-			OContactPicture pic = dao.select(con, Integer.valueOf(contactId));
+			
+			OContact cont = cntdao.selectById(con, contactId);
+			if(cont == null) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
+			
+			OContactPicture pic = dao.select(con, contactId);
 			return (pic == null) ? null : new ContactPicture(pic);
 			
 		} catch(SQLException | DAOException ex) {
@@ -496,19 +592,17 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	public void updateContactPicture(String uid, ContactPicture picture) throws WTException {
+	public void updateContactPicture(int contactId, ContactPicture picture) throws WTException {
 		ContactDAO cntdao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
-			CompositeId cid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cid.getToken(0));
-			int contactId = Integer.parseInt(cid.getToken(1));
-			
-			checkRightsOnCategoryElements(categoryId, "UPDATE"); // Rights check!
-			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
+			
+			OContact cont = cntdao.selectById(con, contactId);
+			if(cont == null) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			checkRightsOnCategoryElements(cont.getCategoryId(), "UPDATE"); // Rights check!
 			
 			cntdao.updateRevision(con, contactId, createRevisionInfo());
 			doUpdateContactPicture(con, contactId, picture);
@@ -525,25 +619,20 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	public ContactsList getContactsList(String uid) throws WTException {
+	public ContactsList getContactsList(int contactId) throws WTException {
 		ContactDAO cntdao = ContactDAO.getInstance();
 		ListRecipientDAO rcptdao = ListRecipientDAO.getInstance();
 		Connection con = null;
 		
 		try {
-			CompositeId cuid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cuid.getToken(0));
-			int contactId = Integer.parseInt(cuid.getToken(1));
-			
-			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
-			
 			con = WT.getConnection(SERVICE_ID);
+			
 			OContact cont = cntdao.selectById(con, contactId);
-			if(cont == null) throw new WTException("Unable to get contact [{}]", uid);
+			if(cont == null) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
 			List<OListRecipient> recipients = rcptdao.selectByList(con, cont.getListId());
-			
-			return createContactsList(uid, cont, recipients);
+			return createContactsList(cont, recipients);
 		
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -600,7 +689,55 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	
+	public void importVCard(int categoryId, InputStream is) throws WTException {
+		LogEntries log = new LogEntries();
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
+			
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Parsing vCard file..."));
+			ArrayList<ParseResult> parsed = null;
+			try {
+				parsed = VCardHelper.parseVCard(log, is);
+			} catch(IOException ex) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete parsing. Reason: {0}", ex.getMessage()));
+				throw new WTException(ex);
+			}
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contacts/s found!", parsed.size()));
+			
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			int count = 0;
+			for(ParseResult parse : parsed) {
+				parse.contact.setCategoryId(categoryId);
+				try {
+					doInsertContact(con, parse.contact, parse.picture);
+					DbUtils.commitQuietly(con);
+					count++;
+				} catch(Exception ex) {
+					logger.trace("Error inserting contact", ex);
+					DbUtils.rollbackQuietly(con);
+					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
+				}
+			}
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contacts/s imported!", count));
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+			//TODO: inviare email report
+			for(LogEntry entry : log) {
+				logger.trace("{}", ((MessageLogEntry)entry).getMessage());
+			}
+		}
+	}
 	
 	
 	
@@ -654,6 +791,7 @@ public class ContactsManager extends BaseManager {
 		
 		try {
 			OContact item = new OContact(contact);
+			if(StringUtils.isEmpty(contact.getPublicUid())) contact.setPublicUid(WT.generateUUID());
 			item.setStatus(OContact.STATUS_NEW);
 			item.setRevisionInfo(createRevisionInfo());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
@@ -705,14 +843,14 @@ public class ContactsManager extends BaseManager {
 		try {
 			OContactPicture pic = new OContactPicture();
 			pic.setContactId(contactId);
-			pic.setMimeType(picture.getMimeType());
+			pic.setMediaType(picture.getMediaType());
 			
 			BufferedImage bi = ImageIO.read(new ByteArrayInputStream(picture.getBytes()));
 			if((bi.getWidth() > 720) || (bi.getHeight() > 720)) {
 				bi = Scalr.resize(bi, Scalr.Method.QUALITY, Scalr.Mode.AUTOMATIC, 720);
 				pic.setWidth(bi.getWidth());
 				pic.setHeight(bi.getHeight());
-				String formatName = new MimeType(picture.getMimeType()).getSubType();
+				String formatName = new MimeType(picture.getMediaType()).getSubType();
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				try {
 					ImageIO.write(bi, formatName, baos);
@@ -812,6 +950,7 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
+	/*
 	private String ofGroup(String group) {
 		return MessageFormat.format("_{0}", group);
 	}
@@ -840,63 +979,6 @@ public class ContactsManager extends BaseManager {
 				WT.getDataSource(SERVICE_ID),
 				"contacts.contacts",
 				lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"		
-				/*
-				+ "+TITLE " + lookupHeader(locale, ContactsLocale.FIELDS_TITLE) + ","
-				+ "+FIRSTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-				+ "+LASTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-				+ "+NICKNAME " + lookupHeader(locale, ContactsLocale.FIELDS_NICKNAME) + ","
-				+ "GENDER " + lookupHeader(locale, ContactsLocale.FIELDS_GENDER) + ","
-				+ "+COMPANY " + lookupHeader(locale, ContactsLocale.FIELDS_COMPANY) + ","
-				+ "FUNCTION " + lookupHeader(locale, ContactsLocale.FIELDS_FUNCTION) + ","
-				+ "PHOTO " + lookupHeader(locale, ContactsLocale.FIELDS_PHOTO) + ","
-				+ "URL " + lookupHeader(locale, ContactsLocale.FIELDS_URL) + ","
-				+ "NOTES " + lookupHeader(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-				+ groupwork + "{"
-				+ "CADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-				+ "+CCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ","
-				+ "CSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ","
-				+ "CPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-				+ "CCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-				+ "+CTELEPHONE " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE) + ","
-				+ "CTELEPHONE2 " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE2) + ","
-				+ "CFAX " + lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ","
-				+ "+CMOBILE " + lookupHeader(locale, ContactsLocale.FIELDS_MOBILE) + ","
-				+ "CPAGER " + lookupHeader(locale, ContactsLocale.FIELDS_PAGER) + ","
-				+ "+CEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ","	
-				+ "CINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ","
-				+ "CDEPARTMENT " + lookupHeader(locale, ContactsLocale.FIELDS_DEPARTMENT) + ","
-				+ "CMANAGER " + lookupHeader(locale, ContactsLocale.FIELDS_MANAGER) + ","
-				+ "CASSISTANT " + lookupHeader(locale, ContactsLocale.FIELDS_ASSISTANT) + ","
-				+ "CTELEPHONEASSISTANT " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONEASSISTANT) + "}|"
-				+ grouphome + "{"
-				+ "HADDRESS X_" + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-				+ "HCITY X_" + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ","
-				+ "HSTATE X_" + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ","
-				+ "HPOSTALCODE X_" + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-				+ "HCOUNTRY X_" + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-				+ "+HTELEPHONE X_" + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE) + ","
-				+ "HTELEPHONE2 X_" + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE2) + ","
-				+ "HFAX X_" + lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ","
-				+ "HMOBILE X_" + lookupHeader(locale, ContactsLocale.FIELDS_MOBILE) + ","
-				+ "HPAGER X_" + lookupHeader(locale, ContactsLocale.FIELDS_PAGER) + ","
-				+ "+HEMAIL X_" + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ","	
-				+ "HINSTANT_MSG X_" + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ","
-				+ "HPARTNER " + lookupHeader(locale, ContactsLocale.FIELDS_PARTNER) + ","
-				+ "+HBIRTHDAY " + lookupHeader(locale, ContactsLocale.FIELDS_BIRTHDAY) + ","
-				+ "HANNIVERSARY " + lookupHeader(locale, ContactsLocale.FIELDS_ANNIVERSARY) + "}|"
-				+ groupother + "{"
-				+ "OADDRESS X__" + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-				+ "OCITY X__" + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ","
-				+ "OSTATE X__" + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ","
-				+ "OPOSTALCODE X__" + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-				+ "OCOUNTRY X__" + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-				+ "OEMAIL X__" + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ","
-				+ "OINSTANT_MSG X__" + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + "}|"
-				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "+CATEGORY_ID CATEGORY_ID,"
-				+ "STATUS STATUS,"
-				+ "LIST_ID LIST_ID }",
-				*/
 				+ "+TITLE " + lookupHeader(locale, ContactsLocale.FIELDS_TITLE) + ","
 				+ "+FIRSTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
 				+ "+LASTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_LASTNAME) + ","
@@ -1195,7 +1277,6 @@ public class ContactsManager extends BaseManager {
 			directories.put(dbdm.getId(), dbdm);
 		}
 	}
-	*/
 	
 	private synchronized void initGlobalDirectories(UserProfile.Id pid) throws SQLException {
 		ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID);
@@ -1271,23 +1352,20 @@ public class ContactsManager extends BaseManager {
 			++index;
 		}
 	}
+	*/
 	
-	
-	private ContactsList createContactsList(String uid, OContact cnt, List<OListRecipient> rcpts) {
-		ContactsList item = new ContactsList(uid);
-		item.setContactId(cnt.getContactId());
-		item.setCategoryId(cnt.getCategoryId());
+	private ContactsList createContactsList(OContact cnt, List<OListRecipient> rcpts) {
+		ContactsList item = new ContactsList(cnt.getContactId(), cnt.getCategoryId());
 		item.setListId(cnt.getListId());
 		item.setName(cnt.getLastname());
 		for(OListRecipient rcpt : rcpts) {
-			item.addRecipient(new ContactsListRecipient(uid, rcpt));
+			item.addRecipient(new ContactsListRecipient(rcpt));
 		}
 		return item;
 	}
 	
 	private Contact createContact(ContactsList cl) {
-		Contact item = new Contact(cl.getUid());
-		item.setContactId(cl.getContactId());
+		Contact item = new Contact(cl.getContactId(), cl.getCategoryId());
 		item.setCategoryId(cl.getCategoryId());
 		item.setListId(cl.getListId());
 		item.setLastName(cl.getName());
@@ -1295,10 +1373,8 @@ public class ContactsManager extends BaseManager {
 		return item;
 	}
 	
-	private Contact createContact(String uid, OContact cnt, boolean hasPicture) {
-		Contact item = new Contact(uid);
-		item.setContactId(cnt.getContactId());
-		item.setCategoryId(cnt.getCategoryId());
+	private Contact createContact(OContact cnt, boolean hasPicture) {
+		Contact item = new Contact(cnt.getContactId(), cnt.getCategoryId());
 		item.setListId(cnt.getListId());
 		item.setStatus(cnt.getStatus());
 		item.setTitle(cnt.getTitle());
@@ -1483,6 +1559,28 @@ public class ContactsManager extends BaseManager {
 		if(core.isShareElementsPermitted(getRunProfileId(), SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
+	}
+	
+	private ReminderAlertWeb createAnniversaryReminderAlertWeb(Locale locale, boolean birthday, VContact contact, DateTime date) {
+		String type = (birthday) ? "birthday" : "anniversary";
+		String resKey = (birthday) ? ContactsLocale.FIELDS_BIRTHDAY : ContactsLocale.FIELDS_ANNIVERSARY;
+		String fullName = StringUtils.defaultString(contact.getFirstname()) + " " + StringUtils.defaultString(contact.getLastname());
+		String title = MessageFormat.format("{0}: {1}", lookupResource(locale, resKey), StringUtils.trim(fullName));
+		
+		ReminderAlertWeb alert = new ReminderAlertWeb(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
+		alert.setTitle(title);
+		alert.setDate(date);
+		alert.setTimezone(date.getZone().getID());
+		return alert;
+	}
+	
+	private ReminderAlertEmail createAnniversaryReminderAlertEmail(Locale locale, boolean birthday, VContact contact, DateTime date) {
+		String type = (birthday) ? "birthday" : "anniversary";
+		String resKey = (birthday) ? ContactsLocale.FIELDS_BIRTHDAY : ContactsLocale.FIELDS_ANNIVERSARY;
+		
+		ReminderAlertEmail alert = new ReminderAlertEmail(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
+		//TODO: completare email
+		return alert;
 	}
 	
 	private RevisionInfo createRevisionInfo() {

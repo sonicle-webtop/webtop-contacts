@@ -59,7 +59,7 @@
 		<version>1.0.0</version>
 		<buildDate>15/07/2015</buildDate>
 		<serviceClassName>Service</serviceClassName>
-		<jobServiceClassName>JobService</jobServiceClassName>
+		<managerClassName>ContactsManager</managerClassName>
 		<clientOptionsModelJsClassName>model.ClientOptions</clientOptionsModelJsClassName>
 		<userOptions>
 			<serviceClassName>UserOptionsService</serviceClassName>

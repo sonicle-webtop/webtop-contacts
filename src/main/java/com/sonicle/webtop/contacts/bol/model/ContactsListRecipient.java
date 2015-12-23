@@ -34,21 +34,19 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.bol.OListRecipient;
-import com.sonicle.webtop.core.sdk.NestedClass;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsListRecipient extends NestedClass {
+public class ContactsListRecipient {
 	protected Integer listRecipientId;
 	protected String recipient;
 	protected String recipientType;
 	
 	public ContactsListRecipient() {}
 	
-	public ContactsListRecipient(String fk, OListRecipient rec) {
-		super(fk);
+	public ContactsListRecipient(OListRecipient rec) {
 		listRecipientId = rec.getListRecipientId();
 		recipient = rec.getRecipient();
 		recipientType = rec.getRecipientType();

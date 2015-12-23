@@ -37,6 +37,7 @@ import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import java.util.HashSet;
+import org.joda.time.LocalTime;
 
 /**
  *
@@ -55,15 +56,23 @@ public class ContactsUserSettings extends BaseUserSettings {
 	 * Contacts grid view (w:work, h:home)
 	 */
 	public static final String VIEW = "view";
+	public static final String VIEW_WORK = "w";
+	public static final String VIEW_HOME = "h";
 	
 	/**
 	 * [string]
-	 * Set anniversary notifications delivery mode
+	 * Anniversary reminder notification time
 	 */
-	public static final String ANNIVERSARY_NOTIFICATION = "notification.anniversary";
-	public static final String ANNIVERSARY_NOTIFICATION_OFF = "off";
-	public static final String ANNIVERSARY_NOTIFICATION_DEFAULT = "default";
-	public static final String ANNIVERSARY_NOTIFICATION_EMAIL = "email";
+	public static final String ANNIVERSARY_REMINDER_TIME = "anniversary.reminder.time";
+	
+	/**
+	 * [string][default]
+	 * Set anniversary reminder delivery mode
+	 */
+	public static final String ANNIVERSARY_REMINDER_DELIVERY = "anniversary.reminder.delivery";
+	public static final String ANNIVERSARY_REMINDER_DELIVERY_NONE = "none";
+	public static final String ANNIVERSARY_REMINDER_DELIVERY_APP = "app";
+	public static final String ANNIVERSARY_REMINDER_DELIVERY_EMAIL = "email";
 	
 	/**
 	 * [string]
@@ -93,12 +102,24 @@ public class ContactsUserSettings extends BaseUserSettings {
 		return setString(VIEW, value);
 	}
 	
-	public String getAnniversaryNotification() {
-		return getString(ANNIVERSARY_NOTIFICATION, ANNIVERSARY_NOTIFICATION_OFF);
+	public LocalTime getAnniversaryReminderTime() {
+		LocalTime value = getTime(ANNIVERSARY_REMINDER_TIME, (LocalTime)null, "HH:mm");
+		if(value != null) return value;
+		return new LocalTime(0, 0, 0, 0);
 	}
 	
-	public boolean setAnniversaryNotification(String value) {
-		return setString(ANNIVERSARY_NOTIFICATION, value);
+	public boolean setAnniversaryReminderTime(LocalTime value) {
+		return setTime(ANNIVERSARY_REMINDER_TIME, value, "HH:mm");
+	}
+	
+	public String getAnniversaryReminderDelivery() {
+		String value = getString(ANNIVERSARY_REMINDER_DELIVERY, null);
+		if(value != null) return value;
+		return css.getDefaultAnniversaryReminderDelivery();
+	}
+	
+	public boolean setAnniversaryReminderDelivery(String value) {
+		return setString(ANNIVERSARY_REMINDER_DELIVERY, value);
 	}
 	
 	public String getSelectedRoot() {

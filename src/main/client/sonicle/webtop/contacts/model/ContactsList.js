@@ -40,14 +40,15 @@ Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
 		}
 	}),
 	
-	identifier: 'negative',
-	idProperty: 'uid',
+	identifier: 'negativestring',
+	idProperty: 'id',
 	fields: [
-		WTF.field('uid', 'string', false),
-		WTF.field('contactId', 'string', true),
-		WTF.field('categoryId', 'string', false),
+		WTF.field('id', 'string', false),
+		WTF.field('contactId', 'int', true),
+		WTF.field('categoryId', 'int', false),
 		WTF.field('listId', 'int', true),
-		WTF.field('name', 'string', false)
+		WTF.field('name', 'string', false),
+		WTF.field('_profileId', 'string', false)
 	]
 /*
 	hasMany: [{

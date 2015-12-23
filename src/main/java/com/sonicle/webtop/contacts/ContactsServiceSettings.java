@@ -47,7 +47,11 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 	}
 	
 	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, "w");
+		return getString(DEFAULT_PREFIX + ContactsUserSettings.VIEW, ContactsUserSettings.VIEW_WORK);
+	}
+	
+	public String getDefaultAnniversaryReminderDelivery() {
+		return getString(DEFAULT_PREFIX + ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY, ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP);
 	}
 	
 	public String getDirectory(int index) {

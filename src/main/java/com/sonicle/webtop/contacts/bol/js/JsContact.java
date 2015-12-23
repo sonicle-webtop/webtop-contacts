@@ -42,7 +42,7 @@ import org.apache.commons.lang.StringUtils;
  * @author malbinola
  */
 public class JsContact {
-	public String uid;
+	public String id;
 	public Integer contactId;
 	public Integer categoryId;
 	public String title;
@@ -97,7 +97,7 @@ public class JsContact {
 	public JsContact() {}
 	
 	public JsContact(UserProfile.Id ownerId, Contact contact) {
-		uid = contact.getUid();
+		id = contact.getContactId().toString();
 		contactId = contact.getContactId();
 		categoryId = contact.getCategoryId();
 		title = contact.getTitle();
@@ -146,14 +146,12 @@ public class JsContact {
 		//anniversary = contact.getAnniversary();
 		url = contact.getUrl();
 		notes = contact.getNotes();
-		picture = contact.getHasPicture() ? uid : null;
+		picture = contact.getHasPicture() ? id : null;
 		_profileId = ownerId.toString();
 	}
 	
 	public static Contact buildContact(JsContact js) {
-		Contact item = new Contact(js.uid);
-		item.setContactId(js.contactId);
-		item.setCategoryId(js.categoryId);
+		Contact item = new Contact(js.contactId, js.categoryId);
 		item.setTitle(js.title);
 		item.setFirstName(js.firstName);
 		item.setLastName(js.lastName);

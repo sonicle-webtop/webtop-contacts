@@ -40,29 +40,29 @@ import com.sonicle.webtop.contacts.bol.OContactPicture;
  * @author malbinola
  */
 public class ContactPicture {
-	protected String mimeType;
+	protected String mediaType;
 	protected byte[] bytes;
 	protected int width;
 	protected int height;
 	
-	public ContactPicture(String mimeType, byte[] bytes) {
-		this.mimeType = mimeType;
+	public ContactPicture(String mediaType, byte[] bytes) {
+		this.mediaType = mediaType;
 		this.bytes = bytes;
 	}
 	
 	public ContactPicture(OContactPicture pic) {
 		width = pic.getWidth();
 		height = pic.getHeight();
-		mimeType = pic.getMimeType();
+		mediaType = pic.getMediaType();
 		bytes = pic.getBytes();
 	}
 
-	public String getMimeType() {
-		return mimeType;
+	public String getMediaType() {
+		return mediaType;
 	}
 
-	public void setMimeType(String mimeType) {
-		this.mimeType = mimeType;
+	public void setMediaType(String mediaType) {
+		this.mediaType = mediaType;
 	}
 
 	public byte[] getBytes() {

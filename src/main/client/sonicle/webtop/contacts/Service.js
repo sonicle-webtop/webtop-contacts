@@ -42,6 +42,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.view.Category',
 		'Sonicle.webtop.calendar.view.Sharing'
 	],
+	mixins: [
+		'WT.mixin.FoldersTree'
+	],
 	
 	activeView: null,
 	
@@ -58,7 +61,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			xtype: 'toolbar',
 			
 			items: [
-				
 				'->',
 				me.getAction('workview'),
 				me.getAction('homeview'),
@@ -116,7 +118,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					hideHeaders: true,
 					listeners: {
 						checkchange: function(n, ck) {
-							me._showHideFolder(n, ck);
+							me.showHideFolder(n, ck);
 						},
 						itemcontextmenu: function(vw, rec, itm, i, e) {
 							if(rec.get('_type') === 'root') {
@@ -135,7 +137,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iitems.push({
 				text: ies[i],
 				handler: function(s) {
-					me.refreshContacts((s.getText() === '*') ? '%' : s.getText()+'%');
+					me.refreshContacts(s.getText(), null);
 				}
 			});
 		}
@@ -227,9 +229,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					rowdblclick: function(s, rec) {
 						//TODO: handle edit permission
 						if(rec.get('listId') > 0) {
-							me.editContactsList(rec.get('_profileId'), rec.get('uid'));
+							me.editContactsList(rec.get('id'));
 						} else {
-							me.editContact(rec.get('_profileId'), rec.get('uid'));
+							me.editContact(rec.get('id'));
 						}
 					}
 				}
@@ -276,78 +278,77 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			text: WT.res('sharing.tit'),
 			iconCls: WTF.cssIconCls(WT.XID, 'sharing', 'xs'),
 			handler: function() {
-				var node = me.getSelectedNode();
+				var node = me.getSelectedNode(me.getRef('folderstree'));
 				if(node) me.editShare(node.getId());
 			}
 		});
 		me.addAction('addCategory', {
 			handler: function() {
-				var node = me.getSelectedFolder();
+				var node = me.getSelectedFolder(me.getRef('folderstree'));
 				if(node) me.addCategory(node.get('_domainId'), node.get('_userId'));
 			}
 		});
 		me.addAction('editCategory', {
 			handler: function() {
-				var node = me.getSelectedFolder();
+				var node = me.getSelectedFolder(me.getRef('folderstree'));
 				if(node) me.editCategory(node.get('_catId'));
 			}
 		});
 		me.addAction('deleteCategory', {
 			handler: function() {
-				var node = me.getSelectedFolder();
+				var node = me.getSelectedFolder(me.getRef('folderstree'));
 				if(node) me.deleteCategory(node);
 			}
 		});
 		me.addRef('uploaders', 'importContacts', Ext.create('Sonicle.upload.Item', {
 			text: WT.res(me.ID, 'act-importContacts.lbl'),
 			iconCls: WTF.cssIconCls(me.XID, 'importContacts', 'xs'),
-			uploaderConfig: WTF.uploader(me.ID, 'VCardImport', {
-				extraParams: {
-					categoryId: null // Depends on selected node...
-				},
+			uploaderConfig: WTF.uploader(me.ID, 'VCardUpload', {
 				mimeTypes: [
 					{title: 'vCard files', extensions: 'vcf,vcard'}
-				]
-			}),
-			handler: function(s) {
-				var node = me.getSelectedFolder();
-				if(node) {
-					s.uploader.mergeExtraParams({
-						categoryId: node.get('_catId')
-					});
+				],
+				listeners: {
+					uploadstarted: function(up) {
+						//TODO: caricamento
+						//me.wait();
+					},
+					uploadcomplete: function(up) {
+						//TODO: caricamento
+						//me.unwait();
+					},
+					uploaderror: function(up) {
+						//TODO: caricamento
+						//me.unwait();
+					},
+					fileuploaded: function(up, file) {
+						var node = me.getSelectedFolder(me.getRef('folderstree'));
+						if(node) me.importVCard(node.get('_catId'), file.uploadId);
+					}
 				}
-			}
+			})
 		}));
-		me.addAction('viewAllCategories', {
+		me.addAction('viewAllFolders', {
 			iconCls: 'wt-icon-select-all-xs',
 			handler: function() {
-				me._showHideAllFolders(me.getSelectedRootFolder(), true);
+				me.showHideAllFolders(me.getSelectedRootFolder(me.getRef('folderstree')), true);
 			}
 		});
-		me.addAction('viewNoneCategories', {
+		me.addAction('viewNoneFolders', {
 			iconCls: 'wt-icon-select-none-xs',
 			handler: function() {
-				me._showHideAllFolders(me.getSelectedRootFolder(), false);
+				me.showHideAllFolders(me.getSelectedRootFolder(me.getRef('folderstree')), false);
 			}
 		});
 		me.addAction('addContact', {
 			handler: function() {
-				var cat = me.getSelectedFolder();
-				//if(cat) me.addContact(cat.get('_pid'), cat.get('_catId'));
+				var cat = me.getSelectedFolder(me.getRef('folderstree'));
+				if(cat) me.addContact(cat.get('_pid'), cat.get('_catId'));
 			}
 		});
 		me.addAction('addContactsList', {
 			handler: function() {
-				var cat = me.getSelectedFolder();
+				var cat = me.getSelectedFolder(me.getRef('folderstree'));
 				if(cat) me.addContactsList(cat.get('_pid'), cat.get('_catId'));
-			}
-		});
-		
-		me.addAction('dummyEdit', {
-			handler: function() {
-				//var node = me.getSelectedFolder();
-				//if(node) me.addContact('matteo.albinola@sonicleldap', 1);
-				me.editContact('matteo.albinola@sonicleldap', 1);
 			}
 		});
 	},
@@ -360,8 +361,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			items: [
 				me.getAction('addCategory'),
 				'-',
-				me.getAction('editSharing'),
-				me.getAction('dummyEdit')
+				me.getAction('editSharing')
 				//TODO: azioni altri servizi?
 			],
 			listeners: {
@@ -387,8 +387,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAction('viewNoneFolders'),
 				'-',
 				me.getAction('addContact'),
-				me.getRef('uploaders', 'importContacts'),
-				me.getAction('addContactsList')
+				me.getAction('addContactsList'),
+				me.getRef('uploaders', 'importContacts')
 				//TODO: azioni altri servizi?
 			],
 			listeners: {
@@ -431,26 +431,19 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	queryContacts: function(txt) {
-		this.refreshContacts('%'+txt+'%');
+		this.refreshContacts(null, txt);
 	},
 	
-	refreshContacts: function(query) {
+	refreshContacts: function(letter, query) {
 		var me = this,
 				sto = me.gpContacts().getStore(), params = {};
 		
-		Ext.apply(params, {view: me.activeView});
-		if(query) Ext.apply(params, {query: query});
-		WTU.loadExtraParams(sto, params);
-		sto.load();
-		/*
-		if(query) {
-			WTU.loadExtraParams(sto, {
-				query: query
-			});
-		} else {
-			sto.load();
-		}
-		*/
+		Ext.apply(params, {
+			view: me.activeView
+		});
+		if(letter !== undefined) Ext.apply(params, {letter: letter});
+		if(query !== undefined) Ext.apply(params, {query: query});
+		WTU.loadWithExtraParams(sto, params);
 	},
 	
 	editShare: function(id) {
@@ -501,57 +494,76 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}, this);
 	},
 	
-	editContact: function(profileId, uid) {
+	addContact: function(ownerId, categoryId) {
 		var me = this,
-				vwc = WT.createView(me.ID, 'view.Contact', {
-					viewCfg: {
-						profileId: profileId
-					}
-				});
+				vw = WT.createView(me.ID, 'view.Contact');
 		
-		vwc.getView().on('viewsave', me.onContactViewSave, me);
-		vwc.show(false, function() {
-			vwc.getView().beginEdit({
-				data: {
-					uid: uid
-				}
-			});
-		});
-	},
-	
-	addContactsList: function(profileId, categoryId) {
-		var me = this,
-				vw = WT.createView(me.ID, 'view.ContactsList', {
-					viewCfg: {
-						profileId: profileId
-					}
-				});
-		
-		vw.getComponent(0).on('viewsave', me.onContactListViewSave, me);
+		vw.getComponent(0).on('viewsave', me.onContactViewSave, me);
 		vw.show(false, function() {
 			vw.getComponent(0).beginNew({
 				data: {
+					_profileId: ownerId,
 					categoryId: categoryId
 				}
 			});
 		});
 	},
 	
-	editContactsList: function(profileId, uid) {
+	editContact: function(id) {
 		var me = this,
-				vwc = WT.createView(me.ID, 'view.ContactsList', {
-					viewCfg: {
-						profileId: profileId
-					}
-				});
+				vwc = WT.createView(me.ID, 'view.Contact');
+		
+		vwc.getView().on('viewsave', me.onContactViewSave, me);
+		vwc.show(false, function() {
+			vwc.getView().beginEdit({
+				data: {
+					id: id
+				}
+			});
+		});
+	},
+	
+	addContactsList: function(ownerId, categoryId) {
+		var me = this,
+				vw = WT.createView(me.ID, 'view.ContactsList');
+		
+		vw.getComponent(0).on('viewsave', me.onContactListViewSave, me);
+		vw.show(false, function() {
+			vw.getComponent(0).beginNew({
+				data: {
+					_profileId: ownerId,
+					categoryId: categoryId
+				}
+			});
+		});
+	},
+	
+	editContactsList: function(id) {
+		var me = this,
+				vwc = WT.createView(me.ID, 'view.ContactsList');
 		
 		vwc.getView().on('viewsave', me.onContactListViewSave, me);
 		vwc.show(false, function() {
 			vwc.getView().beginEdit({
 				data: {
-					uid: uid
+					id: id
 				}
 			});
+		});
+	},
+	
+	importVCard: function(categoryId, uploadId) {
+		var me = this;
+		WT.ajaxReq(me.ID, 'ImportVCard', {
+			params: {
+				categoryId: categoryId,
+				uploadId: uploadId
+			},
+			callback: function(success, json) {
+				if(success) {
+					me.refreshContacts();
+				}
+			}
 		});
 	},
 	
@@ -563,126 +575,5 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	onContactListViewSave: function(s, success, model) {
 		if(!success) return;
 		this.refreshContacts();
-	},
-	
-	/**
-	 * @private
-	 */
-	toRightsObj: function(rights) {
-		var iof = function(s,v) { return s.indexOf(v)!==-1; },
-				obj = {};
-		obj['CREATE'] = iof(rights, 'c');
-		obj['READ'] = iof(rights, 'r');
-		obj['UPDATE'] = iof(rights, 'u');
-		obj['DELETE'] = iof(rights, 'd');
-		obj['MANAGE'] = iof(rights, 'm');
-		return obj;
-	},
-	
-	/**
-	 * @private
-	 * Returns selected tree node.
-	 */
-	getSelectedNode: function() {
-		var tree = this.getRef('folderstree'),
-				sel = tree.getSelection();
-		return (sel.length === 0) ? null : sel[0];
-	},
-	
-	/**
-	 * @private
-	 * Returns selected root folder. If force param is 'true', this method 
-	 * returns a default value if no selection is available.
-	 * @param {Boolean} [force=false] 'true' to always return a value.
-	 * @returns {Ext.data.NodeInterface}
-	 */
-	getSelectedRootFolder: function(force) {
-		var tree = this.getRef('folderstree'),
-				sel = tree.getSelection();
-		
-		if(sel.length === 0) {
-			if(!force) return null;
-			// As default returns myFolder, which have id equals to principal option
-			return tree.getStore().findNode('_pid', WT.getOption('profileId'), false);
-		}
-		return (sel[0].get('_type') === 'root') ? sel[0] : sel[0].parentNode;
-	},
-	
-	/*
-	 * @private
-	 * Returns selected folder (calendar). If no selection is available, 
-	 * this method tries to return the default folder and then the built-in one.
-	 * @returns {Ext.data.NodeInterface}
-	 */
-	getSelectedFolder: function() {
-		var me = this,
-				tree = me.getRef('folderstree'),
-				sel = tree.getSelection(),
-				node;
-		
-		if(sel.length > 0) {
-			if(sel[0].get('_type') === 'root') {
-				return me.getFolderByRoot(sel[0]);
-			} else {
-				return sel[0];
-			}
-		} else {
-			node = tree.getStore().findNode('_pid', WT.getOption('profileId'), false);
-			if(node) return me.getFolderByRoot(node);
-		}
-		return null;
-	},
-	
-	/*
-	 * @private
-	 */
-	getFolderByRoot: function(rootNode) {
-		var cal = this.getDefaultFolder(rootNode);
-		return (cal) ? cal : this.getBuiltInFolder(rootNode);
-	},
-	
-	/*
-	 * @private
-	 */
-	getDefaultFolder: function(rootNode) {
-		return rootNode.findChildBy(function(n) {
-			return (n.get('_default') === true);
-		});
-	},
-	
-	/*
-	 * @private
-	 */
-	getBuiltInFolder: function(rootNode) {
-		return rootNode.findChildBy(function(n) {
-			return (n.get('_builtIn') === true);
-		});
-	},
-	
-	/*
-	 * @private
-	 */
-	_showHideFolder: function(node, show) {
-		node.beginEdit();
-		node.set('_visible', show);
-		node.endEdit();
-	},
-	
-	/*
-	 * @private
-	 */
-	_showHideAllFolders: function(parent, show) {
-		var me = this,
-				store = parent.getTreeStore();
-		
-		store.suspendAutoSync();
-		parent.cascadeBy(function(n) {
-			if(n !== parent) {
-				n.set('checked', show);
-				me._showHideFolder(n, show);
-			}
-		});
-		store.resumeAutoSync();
-		store.sync();
 	}
 });

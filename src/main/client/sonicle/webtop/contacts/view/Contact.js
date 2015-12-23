@@ -60,8 +60,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	*/
 	
-	profileId: null,
-	
 	initComponent: function() {
 		var me = this, main, work, more, home, other, notes;
 		Ext.apply(me, {
@@ -77,6 +75,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				'->',
 				WTF.localCombo('id', 'desc', {
 					reference: 'fldowner',
+					bind: '{record._profileId}',
 					store: {
 						autoLoad: true,
 						model: 'WT.ux.data.SimpleModel',
@@ -86,11 +85,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					labelWidth: 75,
 					listeners: {
 						select: function(s, rec) {
-							//me.updateCalendarFilters();
-							//me.updateActivityParams(true);
+							me.updateCategoryFilters();
 						}
-					},
-					value: me.profileId
+					}
 				})
 			]
 		});
@@ -112,15 +109,16 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				},
 				items: [
 				WTF.lookupCombo('categoryId', 'name', {
-						xtype: 'soiconcombo',
-						bind: '{record.categoryId}',
-						store: {
-							autoLoad: true,
-							model: 'Sonicle.webtop.contacts.model.CategoryLkp',
-							proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
-						},
-						iconClsField: 'colorCls',
-						fieldLabel: me.mys.res('contact.fld-category.lbl')
+					xtype: 'soiconcombo',
+					reference: 'fldcategory',
+					bind: '{record.categoryId}',
+					store: {
+						autoLoad: true,
+						model: 'Sonicle.webtop.contacts.model.CategoryLkp',
+						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
+					},
+					iconClsField: 'colorCls',
+					fieldLabel: me.mys.res('contact.fld-category.lbl')
 				}), {
 					xtype: 'textfield',
 					bind: '{record.title}',
@@ -451,7 +449,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	onViewLoad: function(s, success) {
 		if(!success) return;
 		var me = this,
-				//model = me.getModel(),
 				owner = me.lref('fldowner');
 		
 		if(me.isMode(me.MODE_NEW)) {
@@ -461,5 +458,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		}
 		
 		me.lref('fldfirstname').focus(true);
+	},
+	
+	updateCategoryFilters: function() {
+		var me = this;
+		me.lref('fldcategory').getStore().addFilter({
+			property: '_profileId',
+			value: me.lref('fldowner').getValue()
+		});
 	}
 });

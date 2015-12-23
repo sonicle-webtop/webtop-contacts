@@ -33,14 +33,15 @@
  */
 package com.sonicle.webtop.contacts.bol.model;
 
-import org.joda.time.DateTime;
+import com.sonicle.commons.web.json.CompositeId;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDate;
 
 /**
  *
  * @author malbinola
  */
 public class Contact {
-	protected String uid;
 	protected Integer contactId;
 	protected Integer categoryId;
 	protected Integer listId;
@@ -87,22 +88,18 @@ public class Contact {
 	protected String assistant;
 	protected String assistantTelephone;
 	protected String partner;
-	protected DateTime birthday;
-	protected DateTime anniversary;
+	protected LocalDate birthday;
+	protected LocalDate anniversary;
 	protected String url;
 	protected String notes;
+	protected String publicUid;
 	protected boolean hasPicture;
 	
-	public Contact(String uid) {
-		this.uid = uid;
-	}
+	public Contact() {}
 	
-	public String getUid() {
-		return uid;
-	}
-
-	public void setUid(String uid) {
-		this.uid = uid;
+	public Contact(int contactId, int categoryId) {
+		this.contactId = contactId;
+		this.categoryId = categoryId;
 	}
 
 	public Integer getContactId() {
@@ -473,19 +470,19 @@ public class Contact {
 		this.partner = partner;
 	}
 
-	public DateTime getBirthday() {
+	public LocalDate getBirthday() {
 		return birthday;
 	}
 
-	public void setBirthday(DateTime birthday) {
+	public void setBirthday(LocalDate birthday) {
 		this.birthday = birthday;
 	}
 
-	public DateTime getAnniversary() {
+	public LocalDate getAnniversary() {
 		return anniversary;
 	}
 
-	public void setAnniversary(DateTime anniversary) {
+	public void setAnniversary(LocalDate anniversary) {
 		this.anniversary = anniversary;
 	}
 
@@ -505,11 +502,79 @@ public class Contact {
 		this.notes = notes;
 	}
 	
+	public String getPublicUid() {
+		return publicUid;
+	}
+
+	public void setPublicUid(String publicUid) {
+		this.publicUid = publicUid;
+	}
+	
 	public boolean getHasPicture() {
 		return hasPicture;
 	}
 
 	public void setHasPicture(boolean hasPicture) {
 		this.hasPicture = hasPicture;
+	}
+	
+	public boolean isNameEmpty() {
+		return StringUtils.isEmpty(getFirstName())
+				&& StringUtils.isEmpty(getLastName());
+	}
+	
+	public boolean isWorkAddressEmpty() {
+		return StringUtils.isEmpty(getWorkAddress())
+				&& StringUtils.isEmpty(getWorkPostalCode())
+				&& StringUtils.isEmpty(getWorkCity())
+				&& StringUtils.isEmpty(getWorkState())
+				&& StringUtils.isEmpty(getWorkCountry());
+	}
+	
+	public boolean isHomeAddressEmpty() {
+		return StringUtils.isEmpty(getHomeAddress())
+				&& StringUtils.isEmpty(getHomePostalCode())
+				&& StringUtils.isEmpty(getHomeCity())
+				&& StringUtils.isEmpty(getHomeState())
+				&& StringUtils.isEmpty(getHomeCountry());
+	}
+	
+	public boolean isOtherAddressEmpty() {
+		return StringUtils.isEmpty(getOtherAddress())
+				&& StringUtils.isEmpty(getOtherPostalCode())
+				&& StringUtils.isEmpty(getOtherCity())
+				&& StringUtils.isEmpty(getOtherState())
+				&& StringUtils.isEmpty(getOtherCountry());
+	}
+	
+	public static String buildUid(Object contactId) {
+		return contactId.toString();
+	}
+	
+	/*
+	public static String buildUid(Object categoryId, Object contactId) {
+		return new CompositeId(categoryId, contactId).toString();
+	}
+	*/
+	
+	public static enum Gender {
+		MALE {
+			@Override
+			public String toString() {
+				return "male";
+			}
+		},
+		FEMALE {
+			@Override
+			public String toString() {
+				return "female";
+			}
+		},
+		OTHER {
+			@Override
+			public String toString() {
+				return "other";
+			}
+		}
 	}
 }

@@ -51,6 +51,7 @@ import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
+import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
@@ -220,7 +221,7 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error executing action ManageFoldersTree", ex);
+			logger.error("Error in action ManageFoldersTree", ex);
 		}
 	}
 	
@@ -243,8 +244,8 @@ public class Service extends BaseService {
 			new JsonResult("roots", items, items.size()).printTo(out);
 			
 		} catch(Exception ex) {
-			logger.error("Error executing action LookupRootFolders", ex);
-			new JsonResult(false, "Error").printTo(out);	
+			logger.error("Error in action LookupRootFolders", ex);
+			new JsonResult(false, "Error").printTo(out);
 		}
 	}
 	
@@ -403,19 +404,37 @@ public class Service extends BaseService {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String view = ServletUtils.getStringParameter(request, "view", "w");
-				String query = ServletUtils.getStringParameter(request, "query", "%");
-				String pattern = StringUtils.replace(query, " ", "%");
+				String letter = ServletUtils.getStringParameter(request, "letter", null);
+				String query = ServletUtils.getStringParameter(request, "query", null);
+				
+				String searchMode = null, pattern = null;
+				if(!StringUtils.isEmpty(letter)) {
+					searchMode = "lastname";
+					if(letter.equals("*")) {
+						pattern = "^.*";
+					} else if(letter.equals("#")) {
+						pattern = "^[0-9]";
+					} else {
+						pattern = "^[" + letter.toLowerCase() + "]";
+					}
+				} else if(query != null) {
+					searchMode = (view.equals("w")) ? "work" : "home";
+					pattern = "%" + query.toLowerCase() + "%";
+				} else {
+					searchMode = "lastname";
+					pattern = "^[a]";
+				}
 				
 				// Get contacts for each visible folder
 				Integer[] checked = getCheckedFolders();
 				List<ContactsManager.CategoryContacts> foldContacts = null;
 				for(CategoryRoot root : getCheckedRoots()) {
-					foldContacts = manager.listContacts(root, checked, pattern);
+					foldContacts = manager.listContacts(root, checked, searchMode, pattern);
 					
 					for(ContactsManager.CategoryContacts foldContact : foldContacts) {
 						for(VContact vc : foldContact.contacts) {
 							item = new MapItem();
-							item.put("uid", manager.buildContactUid(foldContact.folder.getCategoryId(), vc.getContactId()));
+							item.put("id", Contact.buildUid(vc.getContactId()));
 							item.put("contactId", vc.getContactId());
 							item.put("listId", vc.getListId());
 							if(view.equals("w")) item.put("title", vc.getTitle());
@@ -452,7 +471,7 @@ public class Service extends BaseService {
 			}
 		
 		} catch(Exception ex) {
-			logger.error("Error executing action ManageGridContacts", ex);
+			logger.error("Error in action ManageGridContacts", ex);
 			new JsonResult(false, "Error").printTo(out);
 			
 		}
@@ -465,11 +484,10 @@ public class Service extends BaseService {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
-				CompositeId cid = new CompositeId().parse(id);
 				
-				int categoryId = Integer.valueOf(cid.getToken(0));
-				UserProfile.Id ownerId = manager.getCategoryOwner(categoryId);
-				Contact contact = manager.getContact(id);
+				int contactId = Integer.parseInt(id);
+				Contact contact = manager.getContact(contactId);
+				UserProfile.Id ownerId = manager.getCategoryOwner(contact.getCategoryId());
 				item = new JsContact(ownerId, contact);
 				
 				new JsonResult(item).printTo(out);
@@ -510,34 +528,37 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error executing action ManageContacts", ex);
+			logger.error("Error in action ManageContacts", ex);
 			new JsonResult(false, "Error").printTo(out);	
 		}
 	}
 	
 	public void processManageContactsLists(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		ContactsList item = null;
+		JsContactsList item = null;
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
-				item = manager.getContactsList(id);
+				int contactId = Integer.parseInt(id);
+				ContactsList list = manager.getContactsList(contactId);
+				UserProfile.Id ownerId = manager.getCategoryOwner(list.getCategoryId());
+				item = new JsContactsList(ownerId, list);
+				
 				new JsonResult(item).printTo(out);
 				
 			} else if(crud.equals(Crud.CREATE)) {
-				Payload<MapItem, ContactsList> pl = ServletUtils.getPayload(request, ContactsList.class);
+				Payload<MapItem, ContactsList> pl = ServletUtils.getPayload(request, JsContactsList.class);
 				
 				manager.addContactsList(pl.data);
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
-				Payload<MapItem, ContactsList> pl = ServletUtils.getPayload(request, ContactsList.class);
+				Payload<MapItem, ContactsList> pl = ServletUtils.getPayload(request, JsContactsList.class);
 				
 				manager.updateContactsList(pl.data);
 				new JsonResult().printTo(out);
-				
 			}
 			
 		} catch(Exception ex) {
@@ -546,6 +567,7 @@ public class Service extends BaseService {
 		}
 	}
 	
+	/*
 	public void processManageGridContacts2(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<MapItem> items = new ArrayList<>();
 		MapItem item = null;
@@ -568,7 +590,7 @@ public class Service extends BaseService {
 				DirectoryManager dm = null;
 				DirectoryElement de = null;
 				for(CategoryRoot root : getCheckedRoots()) {
-					foldContacts = manager.listContacts(root, checked, pattern);
+					foldContacts = manager.listContacts(root, checked, "w", pattern);
 					
 					for(ContactsManager.CategoryContacts foldContact : foldContacts) {
 						for(int i=0; i<foldContact.result.getElementsCount(); i++) {
@@ -612,7 +634,7 @@ public class Service extends BaseService {
 							
 							fields.add(new ExtFieldMeta("uid").setType("string"));
 							colsInfo.add(new ExtGridColumnMeta("uid").setHidden(true));
-							item.put("uid", manager.buildContactUid(foldContact.folder.getCategoryId(), item.get("contactId")));
+							item.put("id", Contact.buildUid(foldContact.folder.getCategoryId(), item.get("contactId")));
 							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
 							items.add(item);
 						}
@@ -626,27 +648,28 @@ public class Service extends BaseService {
 			}
 		
 		} catch(Exception ex) {
-			logger.error("Error executing action ManageGridContacts", ex);
+			logger.error("Error in action ManageGridContacts", ex);
 			new JsonResult(false, "Error").printTo(out);
-			
 		}
 	}
+	*/
 	
 	public void processGetContactPicture(HttpServletRequest request, HttpServletResponse response) {
 		
 		try {
 			String id = ServletUtils.getStringParameter(request, "id", true);
 			
+			int contactId = Integer.parseInt(id);
 			ContactPicture picture = null;
 			if(hasUploadedFile(id)) {
 				picture = getUploadedContactPicture(id);
 			} else {
-				picture = manager.getContactPicture(id);
+				picture = manager.getContactPicture(contactId);
 			}
 			
 			if(picture != null) {
 				try(ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
-					ServletUtils.writeContent(response, bais, picture.getMimeType());
+					ServletUtils.writeContent(response, bais, picture.getMediaType());
 				}
 			}
 			
@@ -705,22 +728,43 @@ public class Service extends BaseService {
 	}
 	
 	/*
-	public void processVCardImportUploadStream(HttpServletRequest request, InputStream uploadStream) throws Exception {
-		UserProfile up = getEnv().getProfile();
+	public void processUploadStreamVCardImport(HttpServletRequest request, InputStream uploadStream) throws Exception {
 		Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
-		//manager.importVCard(categoryId, uploadStream, up.getTimeZone());
+		manager.importVCard(categoryId, uploadStream);
 	}
 	*/
 	
+	public void processImportVCard(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		FileInputStream fis = null;
+		
+		try {
+			Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			
+			UploadedFile upl = getUploadedFile(uploadId);
+			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			
+			fis = new FileInputStream(new File(WT.getTempFolder(), upl.id));
+			manager.importVCard(categoryId, fis);
+			
+			new JsonResult().printTo(out);
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ImportVCard", ex);
+			new JsonResult(false, ex.getMessage()).printTo(out);
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+	}
+	
 	private ContactPicture getUploadedContactPicture(String id) throws WTException {
 		UploadedFile upl = getUploadedFile(id);
-		if(upl == null) throw new WTException();
+		if(upl == null) throw new WTException("Uploaded file not found [{0}]", id);
 		
 		ContactPicture pic = null;
 		FileInputStream fis = null;
 		try {
-			File uplFile = new File(WT.getTempFolder(), upl.id);
-			fis = new FileInputStream(uplFile);
+			fis = new FileInputStream(new File(WT.getTempFolder(), upl.id));
 			pic = new ContactPicture("image/png", IOUtils.toByteArray(fis));
 		} catch (FileNotFoundException ex) {
 			throw new WTException(ex, "File not found {0}");

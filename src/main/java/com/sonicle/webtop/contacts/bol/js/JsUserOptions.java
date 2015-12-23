@@ -1,5 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+ * webtop-calendar is a WebTop Service developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -31,70 +31,22 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.bol.model;
+package com.sonicle.webtop.contacts.bol.js;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.sonicle.webtop.core.sdk.JsUserOptionsBase;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsList {
-	protected Integer contactId;
-	protected Integer categoryId;
-	protected Integer listId;
-	protected String name;
-	protected List<ContactsListRecipient> recipients = new ArrayList<>();
+public class JsUserOptions extends JsUserOptionsBase {
+	public String view;
+	public String anniversaryReminderDelivery;
+	public String anniversaryReminderTime;
 	
-	public ContactsList() {}
+	public JsUserOptions() {}
 	
-	public ContactsList(int contactId, int categoryId) {
-		this.contactId = contactId;
-		this.categoryId = categoryId;
-	}
-
-	public Integer getContactId() {
-		return contactId;
-	}
-
-	public void setContactId(Integer contactId) {
-		this.contactId = contactId;
-	}
-
-	public Integer getCategoryId() {
-		return categoryId;
-	}
-
-	public void setCategoryId(Integer categoryId) {
-		this.categoryId = categoryId;
-	}
-
-	public Integer getListId() {
-		return listId;
-	}
-
-	public void setListId(Integer listId) {
-		this.listId = listId;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public List<ContactsListRecipient> getRecipients() {
-		return recipients;
-	}
-
-	public void setRecipients(List<ContactsListRecipient> recipients) {
-		this.recipients = recipients;
-	}
-	
-	public void addRecipient(ContactsListRecipient recipient) {
-		recipients.add(recipient);
+	public JsUserOptions(String id) {
+		super(id);
 	}
 }

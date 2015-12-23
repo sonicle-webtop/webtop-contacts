@@ -50,8 +50,6 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.ContactsList',
 	
-	profileId: null,
-	
 	initComponent: function() {
 		var me = this;
 		Ext.apply(me, {
@@ -67,6 +65,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				'->',
 				WTF.localCombo('id', 'desc', {
 					reference: 'fldowner',
+					bind: '{record._profileId}',
 					store: {
 						autoLoad: true,
 						model: 'WT.ux.data.SimpleModel',
@@ -78,8 +77,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 						select: function(s, rec) {
 							me.updateCategoryFilters();
 						}
-					},
-					value: me.profileId
+					}
 				})
 			]
 		});
@@ -92,6 +90,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			items: [
 			WTF.lookupCombo('categoryId', 'name', {
 				xtype: 'soiconcombo',
+				reference: 'fldcategory',
 				bind: '{record.categoryId}',
 				store: {
 					autoLoad: true,
