@@ -36,7 +36,6 @@ package com.sonicle.webtop.contacts.bol;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.jooq.tables.pojos.Contacts;
 import com.sonicle.webtop.core.dal.BaseDAO;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *

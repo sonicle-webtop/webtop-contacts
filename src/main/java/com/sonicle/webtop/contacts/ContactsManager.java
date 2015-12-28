@@ -50,10 +50,7 @@ import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
-import com.sonicle.webtop.contacts.directory.DBDirectoryManager;
-import com.sonicle.webtop.contacts.directory.DirectoryManager;
 import com.sonicle.webtop.contacts.directory.DirectoryResult;
-import com.sonicle.webtop.contacts.directory.LDAPDirectoryManager;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.bol.OShare;
@@ -69,9 +66,9 @@ import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.sdk.AuthException;
-import com.sonicle.webtop.core.sdk.ReminderAlert;
-import com.sonicle.webtop.core.sdk.ReminderAlertEmail;
-import com.sonicle.webtop.core.sdk.ReminderAlertWeb;
+import com.sonicle.webtop.core.sdk.BaseReminder;
+import com.sonicle.webtop.core.sdk.ReminderEmail;
+import com.sonicle.webtop.core.sdk.ReminderInApp;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
@@ -80,11 +77,15 @@ import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
 import eu.medsea.mimeutil.MimeType;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -96,9 +97,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.StringTokenizer;
+import java.util.Map;
 import javax.imageio.ImageIO;
-import javax.sql.DataSource;
+import javax.mail.internet.InternetAddress;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.imgscalr.Scalr;
@@ -158,8 +159,8 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	}
 	
 	@Override
-	public List<ReminderAlert> returnReminderAlerts(DateTime now) {
-		ArrayList<ReminderAlert> alerts = new ArrayList<>();
+	public List<BaseReminder> returnReminders(DateTime now) {
+		ArrayList<BaseReminder> alerts = new ArrayList<>();
 		HashMap<UserProfile.Id, Boolean> okCache = new HashMap<>();
 		HashMap<UserProfile.Id, DateTime> dateTimeCache = new HashMap<>();
 		HashMap<UserProfile.Id, String> deliveryCache = new HashMap<>();
@@ -187,9 +188,9 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
 
 						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryReminderAlertEmail(ud.getLocale(), true, cont, dateTime));
+							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), true, cont, dateTime));
 						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryReminderAlertWeb(ud.getLocale(), true, cont, dateTime));
+							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), true, cont, dateTime));
 						}
 					}
 				}
@@ -208,9 +209,9 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
 
 						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryReminderAlertEmail(ud.getLocale(), false, cont, dateTime));
+							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), false, cont, dateTime));
 						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryReminderAlertWeb(ud.getLocale(), false, cont, dateTime));
+							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), false, cont, dateTime));
 						}
 					}
 				}
@@ -1561,25 +1562,29 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, getRunProfileId().toString());
 	}
 	
-	private ReminderAlertWeb createAnniversaryReminderAlertWeb(Locale locale, boolean birthday, VContact contact, DateTime date) {
+	private ReminderInApp createAnniversaryInAppReminder(Locale locale, boolean birthday, VContact contact, DateTime date) {
 		String type = (birthday) ? "birthday" : "anniversary";
-		String resKey = (birthday) ? ContactsLocale.FIELDS_BIRTHDAY : ContactsLocale.FIELDS_ANNIVERSARY;
+		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
 		String fullName = StringUtils.defaultString(contact.getFirstname()) + " " + StringUtils.defaultString(contact.getLastname());
-		String title = MessageFormat.format("{0}: {1}", lookupResource(locale, resKey), StringUtils.trim(fullName));
+		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
 		
-		ReminderAlertWeb alert = new ReminderAlertWeb(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
+		ReminderInApp alert = new ReminderInApp(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
 		alert.setTitle(title);
 		alert.setDate(date);
 		alert.setTimezone(date.getZone().getID());
 		return alert;
 	}
 	
-	private ReminderAlertEmail createAnniversaryReminderAlertEmail(Locale locale, boolean birthday, VContact contact, DateTime date) {
+	private ReminderEmail createAnniversaryEmailReminder(Locale locale, InternetAddress recipient, boolean birthday, VContact contact, DateTime date) {
 		String type = (birthday) ? "birthday" : "anniversary";
-		String resKey = (birthday) ? ContactsLocale.FIELDS_BIRTHDAY : ContactsLocale.FIELDS_ANNIVERSARY;
+		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
+		String fullName = StringUtils.defaultString(contact.getFirstname()) + " " + StringUtils.defaultString(contact.getLastname());
+		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
+		String body = buildReminderEmailBody(locale, birthday, recipient.toString(), fullName);
 		
-		ReminderAlertEmail alert = new ReminderAlertEmail(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
-		//TODO: completare email
+		ReminderEmail alert = new ReminderEmail(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
+		alert.setSubject(title);
+		alert.setBody(body);
 		return alert;
 	}
 	
@@ -1603,6 +1608,31 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			this.contacts = contacts;
 			this.result = result;
 		}
+	}
+	
+	private String buildReminderEmailBody(Locale locale, boolean birthday, String recipientAddress, String subjectDisplayName) {
+		try {
+			Map tplMap = new HashMap();
+			tplMap.put("email", recipientAddress);
+			tplMap.put("i18n", buildAnniversaryEmailTplStrings(locale, birthday, subjectDisplayName));
+
+			Template tpl = WT.loadTemplate(SERVICE_ID, "tpl_email-anniversary");
+			Writer writer = new StringWriter();
+			tpl.process(tplMap, writer);
+			return writer.toString();
+		} catch(IOException | TemplateException ex) {
+			return null;
+		}
+	}
+	
+	private Map<String, String> buildAnniversaryEmailTplStrings(Locale locale, boolean birthday, String name) {
+		HashMap<String, String> map = new HashMap<>();
+		String resKey = (birthday) ? ContactsLocale.TPL_EMAIL_ANNIVERSARY_HEADER_BIRTHDAY : ContactsLocale.TPL_EMAIL_ANNIVERSARY_HEADER_ANNIVERSARY;
+		map.put("tplEmailAnniversaryHeader", MessageFormat.format(lookupResource(locale, resKey), name));
+		map.put("tplEmailAnniversaryFooterHeader", lookupResource(locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_HEADER));
+		map.put("tplEmailAnniversaryFooterWhy1", lookupResource(locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_WHY1));
+		map.put("tplEmailAnniversaryFooterWhy2", lookupResource(locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_WHY2));
+		return map;
 	}
 	
 	

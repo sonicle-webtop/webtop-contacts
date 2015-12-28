@@ -97,7 +97,7 @@ public class Contact {
 	
 	public Contact() {}
 	
-	public Contact(int contactId, int categoryId) {
+	public Contact(Integer contactId, Integer categoryId) {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
 	}

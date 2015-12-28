@@ -108,4 +108,12 @@ public class ContactsLocale {
 	
 	//public static final String REMINDERFROM = "fields.reminderfrom";
 	//public static final String WEBTOPCONTACTS = "fields.webtopcontacts";
+	
+	public static final String REMINDER_TITLE_ANNIVERSARY = "reminder.title.anniversary";
+	public static final String REMINDER_TITLE_BIRTHDAY = "reminder.title.birthday";
+	public static final String TPL_EMAIL_ANNIVERSARY_HEADER_ANNIVERSARY = "tpl.emailAnniversary.header.anniversary";
+	public static final String TPL_EMAIL_ANNIVERSARY_HEADER_BIRTHDAY = "tpl.emailAnniversary.header.birthday";
+	public static final String TPL_EMAIL_ANNIVERSARY_FOOTER_HEADER = "tpl.emailAnniversary.footer.header";
+	public static final String TPL_EMAIL_ANNIVERSARY_FOOTER_WHY1 = "tpl.emailAnniversary.footer.why1";
+	public static final String TPL_EMAIL_ANNIVERSARY_FOOTER_WHY2 = "tpl.emailAnniversary.footer.why2";
 }
