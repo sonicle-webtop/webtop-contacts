@@ -75,7 +75,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					labelWidth: 75,
 					listeners: {
 						select: function(s, rec) {
-							me.updateCategoryFilters();
+							me.updateCategoryFilters(true);
 						}
 					}
 				})
@@ -185,8 +185,12 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		var me = this,
 				owner = me.lref('fldowner');
 		
+		me.updateCategoryFilters();
 		if(me.isMode(me.MODE_NEW)) {
 			owner.setDisabled(false);
+		} else if(me.isMode(me.MODE_VIEW)) {
+			me.getAction('saveClose').setDisabled(true);
+			owner.setDisabled(true);
 		} else if(me.isMode(me.MODE_EDIT)) {
 			owner.setDisabled(true);
 		}
@@ -194,9 +198,11 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		me.lref('fldname').focus(true);
 	},
 	
-	updateCategoryFilters: function() {
-		var me = this;
-		me.lref('fldcategory').getStore().addFilter({
+	updateCategoryFilters: function(clear) {
+		var me = this,
+				fld = me.lref('fldcategory');
+		if(clear) fld.setValue(null);
+		fld.getStore().addFilter({
 			property: '_profileId',
 			value: me.lref('fldowner').getValue()
 		});

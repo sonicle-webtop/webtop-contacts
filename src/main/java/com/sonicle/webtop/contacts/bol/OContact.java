@@ -100,7 +100,7 @@ public class OContact extends Contacts {
 		setCtelephoneassistant(cnt.getAssistantTelephone());
 		setHpartner(cnt.getPartner());
 		setHbirthday(cnt.getBirthday());
-		setHbirthday(cnt.getAnniversary());
+		setHanniversary(cnt.getAnniversary());
 		setUrl(cnt.getUrl());
 		setNotes(cnt.getNotes());
 	}
@@ -109,5 +109,10 @@ public class OContact extends Contacts {
 		setLastModified(revision.lastModified);
 		setUpdateDevice(revision.lastDevice);
 		setUpdateUser(revision.lastUser);
+	}
+	
+	public boolean isList() {
+		if(getListId() == null) return false;
+		return getListId() > 0;
 	}
 }

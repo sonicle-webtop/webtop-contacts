@@ -42,8 +42,8 @@ import java.text.MessageFormat;
  */
 public class ContactsServiceSettings extends BaseServiceSettings {
 	
-	public ContactsServiceSettings(String serviceId) {
-		super(serviceId, "*");
+	public ContactsServiceSettings(String serviceId, String domainId) {
+		super(serviceId, domainId);
 	}
 	
 	public String getDefaultView() {

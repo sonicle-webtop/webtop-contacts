@@ -33,9 +33,12 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
 
 /**
  *
@@ -97,6 +100,8 @@ public class JsContact {
 	public JsContact() {}
 	
 	public JsContact(UserProfile.Id ownerId, Contact contact) {
+		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
+		
 		id = contact.getContactId().toString();
 		contactId = contact.getContactId();
 		categoryId = contact.getCategoryId();
@@ -142,8 +147,8 @@ public class JsContact {
 		assistant = contact.getAssistant();
 		assistantTelephone = contact.getAssistantTelephone();
 		partner = contact.getPartner();
-		//birthday = contact.getBirthday();
-		//anniversary = contact.getAnniversary();
+		birthday = (contact.getBirthday() != null) ? ymdFmt.print(contact.getBirthday()) : null;
+		anniversary = (contact.getAnniversary() != null) ? ymdFmt.print(contact.getAnniversary()) : null;
 		url = contact.getUrl();
 		notes = contact.getNotes();
 		picture = contact.getHasPicture() ? id : null;
@@ -151,6 +156,8 @@ public class JsContact {
 	}
 	
 	public static Contact buildContact(JsContact js) {
+		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
+		
 		Contact item = new Contact(js.contactId, js.categoryId);
 		item.setTitle(js.title);
 		item.setFirstName(js.firstName);
@@ -194,8 +201,8 @@ public class JsContact {
 		item.setAssistant(js.assistant);
 		item.setAssistantTelephone(js.assistantTelephone);
 		item.setPartner(js.partner);
-		//item.setBirthday(js.birthday);
-		//item.setAnniversary(js.anniversary);
+		if(!StringUtils.isEmpty(js.birthday)) item.setBirthday(ymdFmt.parseLocalDate(js.birthday));
+		if(!StringUtils.isEmpty(js.anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(js.anniversary));
 		item.setUrl(js.url);
 		item.setNotes(js.notes);
 		item.setHasPicture(!StringUtils.isEmpty(js.picture));

@@ -85,7 +85,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					labelWidth: 75,
 					listeners: {
 						select: function(s, rec) {
-							me.updateCategoryFilters();
+							me.updateCategoryFilters(rec.get('id'));
 						}
 					}
 				})
@@ -179,7 +179,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				margin: '20 0 0 30',
 				items: [{
 					xtype: 'soimagefield',
-					//reference: 'fldpic',
+					reference: 'fldpic',
 					bind: '{record.picture}',
 					imageWidth: 150,
 					imageHeight: 150,
@@ -451,8 +451,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		var me = this,
 				owner = me.lref('fldowner');
 		
+		me.updateCategoryFilters(owner.getValue());
 		if(me.isMode(me.MODE_NEW)) {
 			owner.setDisabled(false);
+		} else if(me.isMode(me.MODE_VIEW)) {
+			me.getAction('saveClose').setDisabled(true);
+			owner.setDisabled(true);
+			me.lref('fldpic').setDisabled(true);
 		} else if(me.isMode(me.MODE_EDIT)) {
 			owner.setDisabled(true);
 		}
@@ -460,11 +465,15 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.lref('fldfirstname').focus(true);
 	},
 	
-	updateCategoryFilters: function() {
-		var me = this;
-		me.lref('fldcategory').getStore().addFilter({
+	updateCategoryFilters: function(owner) {
+		var me = this,
+				fld = me.lref('fldcategory'),
+				sto = fld.getStore();
+		
+		sto.clearFilter();
+		sto.addFilter({
 			property: '_profileId',
-			value: me.lref('fldowner').getValue()
+			value: owner
 		});
 	}
 });

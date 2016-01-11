@@ -33,67 +33,20 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.bol.model.Contact;
-import com.sonicle.webtop.contacts.bol.model.ContactsList;
-import com.sonicle.webtop.contacts.bol.model.ContactsListRecipient;
-import com.sonicle.webtop.core.sdk.UserProfile;
 import java.util.ArrayList;
 
 /**
  *
  * @author malbinola
  */
-public class JsContactsList {
+public class JsGridContact {
 	public String id;
-	public Integer contactId;
-	public Integer categoryId;
-	public Integer listId;
-	public String name;
-	public ArrayList<Recipient> recipients;
-	public String _profileId;
 	
-	public JsContactsList() {}
+	public JsGridContact() {}
 	
-	public JsContactsList(UserProfile.Id ownerId, ContactsList cl) {
-		id = cl.getContactId().toString();
-		contactId = cl.getContactId();
-		categoryId = cl.getCategoryId();
-		listId = cl.getListId();
-		name = cl.getName();
-		recipients = new ArrayList<>();
-		for(ContactsListRecipient rcpt : cl.getRecipients()) {
-			recipients.add(new Recipient(id, rcpt));
+	public static class JsGridContactList extends ArrayList<JsGridContact> {
+		public JsGridContactList() {
+			super();
 		}
-		_profileId = ownerId.toString();
-	}
-	
-	public static class Recipient {
-		public String _fk;
-		public Integer listRecipientId;
-		public String recipient;
-		public String recipientType;
-		
-		public Recipient() {}
-		
-		public Recipient(String _fk, ContactsListRecipient rcpt) {
-			this._fk = _fk;
-			listRecipientId = rcpt.getListRecipientId();
-			recipient = rcpt.getRecipient();
-			recipientType = rcpt.getRecipientType();
-		}
-	}
-	
-	public static ContactsList buildContactsList(JsContactsList js) {
-		ContactsList cl = new ContactsList(js.contactId, js.categoryId);
-		cl.setListId(js.listId);
-		cl.setName(js.name);
-		for(Recipient jsRcpt : js.recipients) {
-			ContactsListRecipient rcpt = new ContactsListRecipient();
-			rcpt.setListRecipientId(jsRcpt.listRecipientId);
-			rcpt.setRecipient(jsRcpt.recipient);
-			rcpt.setRecipientType(jsRcpt.recipientType);
-			cl.getRecipients().add(rcpt);
-		}
-		return cl;
 	}
 }

@@ -33,7 +33,6 @@
  */
 package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.commons.web.json.CompositeId;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 
@@ -551,11 +550,9 @@ public class Contact {
 		return contactId.toString();
 	}
 	
-	/*
-	public static String buildUid(Object categoryId, Object contactId) {
-		return new CompositeId(categoryId, contactId).toString();
+	public static String buildFullName(String firstName, String lastName) {
+		return StringUtils.trim(StringUtils.defaultString(firstName) + " " + StringUtils.defaultString(lastName));
 	}
-	*/
 	
 	public static enum Gender {
 		MALE {

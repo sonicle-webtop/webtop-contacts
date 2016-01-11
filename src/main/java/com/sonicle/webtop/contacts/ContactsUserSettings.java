@@ -34,8 +34,11 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.web.json.JsonResult;
+import com.sonicle.commons.web.json.extjs.GroupMeta;
+import com.sonicle.commons.web.json.extjs.SortMeta;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import java.text.MessageFormat;
 import java.util.HashSet;
 import org.joda.time.LocalTime;
 
@@ -44,11 +47,11 @@ import org.joda.time.LocalTime;
  * @author malbinola
  */
 public class ContactsUserSettings extends BaseUserSettings {
-	private ContactsServiceSettings css;
+	private ContactsServiceSettings ss;
 	
 	public ContactsUserSettings(String serviceId, UserProfile.Id profileId) {
 		super(serviceId, profileId);
-		css = new ContactsServiceSettings(serviceId);
+		ss = new ContactsServiceSettings(serviceId, profileId.getDomainId());
 	}
 	
 	/**
@@ -92,10 +95,22 @@ public class ContactsUserSettings extends BaseUserSettings {
 	 */
 	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
 	
+	/**
+	 * [object]
+	 * JSON value for sortInfo.
+	 */
+	public static final String GRID_CONTACTS_SORTINFO_ROOT = "grid.contacts.{0}.sortinfo";
+	
+	/**
+	 * [object]
+	 * JSON value for sortInfo.
+	 */
+	public static final String GRID_CONTACTS_GROUPINFO_ROOT = "grid.contacts.{0}.groupinfo";
+	
 	public String getView() {
 		String value = getString(VIEW, null);
 		if(value != null) return value;
-		return css.getDefaultView();
+		return ss.getDefaultView();
 	}
 	
 	public boolean setView(String value) {
@@ -115,7 +130,7 @@ public class ContactsUserSettings extends BaseUserSettings {
 	public String getAnniversaryReminderDelivery() {
 		String value = getString(ANNIVERSARY_REMINDER_DELIVERY, null);
 		if(value != null) return value;
-		return css.getDefaultAnniversaryReminderDelivery();
+		return ss.getDefaultAnniversaryReminderDelivery();
 	}
 	
 	public boolean setAnniversaryReminderDelivery(String value) {
@@ -144,6 +159,34 @@ public class ContactsUserSettings extends BaseUserSettings {
 	
 	public boolean setCheckedCategoryFolders(CheckedFolders value) {
 		return setObject(CHECKED_CATEGORY_FOLDERS, value, CheckedFolders.class);
+	}
+	
+	public GroupMeta getGridContactsGroupInfo(String view) {
+		String key = MessageFormat.format(GRID_CONTACTS_GROUPINFO_ROOT, view);
+		return getObject(key, null, GroupMeta.class);
+	}
+	
+	public boolean setGridContactsGroupInfo(String view, GroupMeta groupInfo) {
+		String key = MessageFormat.format(GRID_CONTACTS_GROUPINFO_ROOT, view);
+		if(groupInfo == null) {
+			return clear(key);
+		} else {
+			return setObject(key, groupInfo, GroupMeta.class);
+		}
+	}
+	
+	public SortMeta getGridContactsSortInfo(String view) {
+		String key = MessageFormat.format(GRID_CONTACTS_SORTINFO_ROOT, view);
+		return getObject(key, null, SortMeta.class);
+	}
+	
+	public boolean setGridContactsSortInfo(String view, SortMeta sortInfo) {
+		String key = MessageFormat.format(GRID_CONTACTS_SORTINFO_ROOT, view);
+		if(sortInfo == null) {
+			return clear(key);
+		} else {
+			return setObject(key, sortInfo, SortMeta.class);
+		}
 	}
 	
 	public static class CheckedRoots extends HashSet<String> {

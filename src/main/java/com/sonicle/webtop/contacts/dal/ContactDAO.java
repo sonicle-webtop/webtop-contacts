@@ -128,13 +128,14 @@ public class ContactDAO extends BaseDAO {
 			.fetchInto(VContact.class);
 	}
 	
-	public List<VContact> viewByCategoryQuery(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
+	public List<VContact> viewByCategoryPattern(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		Condition searchCndt = null;
 		if(searchMode.equals("lastname")) {
 			//searchCndt = CONTACTS.LASTNAME.lower().like(query);
 			searchCndt = CONTACTS.LASTNAME.lower().likeRegex(pattern);
+			if(pattern.equals("^.*")) searchCndt = searchCndt.or(CONTACTS.LASTNAME.isNull());
 		} else {
 			searchCndt = CONTACTS.CEMAIL.likeIgnoreCase(pattern)
 					.or(CONTACTS.HEMAIL.likeIgnoreCase(pattern))
