@@ -102,7 +102,6 @@ public class Service extends BaseService {
 	private ContactsManager manager;
 	private ContactsUserSettings us;
 	
-	
 	public static final String EVENTS_EXPORT_FILENAME = "events_{0}-{1}-{2}.{3}";
 	
 	private final LinkedHashMap<String, CategoryRoot> roots = new LinkedHashMap<>();
