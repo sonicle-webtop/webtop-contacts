@@ -744,7 +744,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	doCopyContact: function(isList, move, id, ownerId, catId) {
 		var me = this,
 				action = isList === true ? 'ManageContactsList' : 'ManageContacts',
-				vwc = WT.createView(me.ID, 'view.CategoryChooser', {
+				vw = WT.createView(me.ID, 'view.CategoryChooser', {
 					viewCfg: {
 						dockableConfig: {
 							title: me.res(move ? 'act-moveContact.lbl' : 'act-copyContact.lbl')
@@ -755,7 +755,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}),
 				data;
 		
-		vwc.getView().on('viewok', function(s) {
+		vw.getView().on('viewok', function(s) {
 			data = s.getVMData();
 			WT.ajaxReq(me.ID, action, {
 				params: {
@@ -771,7 +771,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		});
-		vwc.show();
+		vw.show();
 	},
 	
 	importVCard: function(categoryId, uploadId) {
