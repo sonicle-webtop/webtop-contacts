@@ -180,12 +180,14 @@ public class VCardHelper {
 				} else if(types.contains(TelephoneType.HOME)) {
 					if(types.contains(TelephoneType.VOICE)) {
 						contact.setHomeTelephone(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.CELL)) {
-						contact.setHomeMobile(deflt(te.getText()));
 					} else if(types.contains(TelephoneType.FAX)) {
 						contact.setHomeFax(deflt(te.getText()));
 					} else if(types.contains(TelephoneType.PAGER)) {
 						contact.setHomePager(deflt(te.getText()));
+					} else if(types.contains(TelephoneType.CELL)) {
+						contact.setHomeTelephone2(deflt(te.getText()));
+					} else if(types.contains(TelephoneType.TEXT)) {
+						contact.setHomeTelephone2(deflt(te.getText()));
 					}
 				}
 			}
@@ -487,10 +489,10 @@ public class VCardHelper {
 			tel.getTypes().add(TelephoneType.VOICE);
 			props.add(tel);
 		}
-		if(!StringUtils.isEmpty(contact.getHomeMobile())) {
-			Telephone tel = new Telephone(contact.getHomeMobile());
+		if(!StringUtils.isEmpty(contact.getHomeTelephone2())) {
+			Telephone tel = new Telephone(contact.getHomeTelephone2());
 			tel.getTypes().add(TelephoneType.HOME);
-			tel.getTypes().add(TelephoneType.CELL);
+			tel.getTypes().add(TelephoneType.TEXT);
 			props.add(tel);
 		}
 		if(!StringUtils.isEmpty(contact.getHomeFax())) {

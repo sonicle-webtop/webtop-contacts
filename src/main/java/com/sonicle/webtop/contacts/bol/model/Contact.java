@@ -68,7 +68,7 @@ public class Contact {
 	protected String homeState;
 	protected String homeCountry;
 	protected String homeTelephone;
-	protected String homeMobile;
+	protected String homeTelephone2;
 	protected String homeFax;
 	protected String homePager;
 	protected String homeEmail;
@@ -317,12 +317,12 @@ public class Contact {
 		this.homeTelephone = homeTelephone;
 	}
 
-	public String getHomeMobile() {
-		return homeMobile;
+	public String getHomeTelephone2() {
+		return homeTelephone2;
 	}
 
-	public void setHomeMobile(String homeMobile) {
-		this.homeMobile = homeMobile;
+	public void setHomeTelephone2(String homeTelephone2) {
+		this.homeTelephone2 = homeTelephone2;
 	}
 
 	public String getHomeFax() {

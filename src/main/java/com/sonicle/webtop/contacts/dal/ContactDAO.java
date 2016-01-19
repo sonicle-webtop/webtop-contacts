@@ -85,7 +85,7 @@ public class ContactDAO extends BaseDAO {
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.HBIRTHDAY.equal(date)
+				CONTACTS.BIRTHDAY.equal(date)
 				.and(
 					CONTACTS.STATUS.equal("N")
 					.or(CONTACTS.STATUS.equal("M"))
@@ -115,7 +115,7 @@ public class ContactDAO extends BaseDAO {
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.HANNIVERSARY.equal(date)
+				CONTACTS.ANNIVERSARY.equal(date)
 				.and(
 					CONTACTS.STATUS.equal("N")
 					.or(CONTACTS.STATUS.equal("M"))
@@ -137,9 +137,9 @@ public class ContactDAO extends BaseDAO {
 			searchCndt = CONTACTS.LASTNAME.lower().likeRegex(pattern);
 			if(pattern.equals("^.*")) searchCndt = searchCndt.or(CONTACTS.LASTNAME.isNull());
 		} else {
-			searchCndt = CONTACTS.CEMAIL.likeIgnoreCase(pattern)
-					.or(CONTACTS.HEMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.OEMAIL.likeIgnoreCase(pattern))
+			searchCndt = CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
+					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
 					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
 					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
 		}
@@ -156,14 +156,14 @@ public class ContactDAO extends BaseDAO {
 				CONTACTS.NICKNAME,
 				CONTACTS.COMPANY,
 				CONTACTS.FUNCTION,
-				CONTACTS.CADDRESS,
-				CONTACTS.CCITY,
-				CONTACTS.CTELEPHONE,
-				CONTACTS.CMOBILE,
-				CONTACTS.CEMAIL,
-				CONTACTS.HTELEPHONE,
-				CONTACTS.HEMAIL,
-				CONTACTS.HBIRTHDAY
+				CONTACTS.WORK_ADDRESS,
+				CONTACTS.WORK_CITY,
+				CONTACTS.WORK_TELEPHONE,
+				CONTACTS.WORK_MOBILE,
+				CONTACTS.WORK_EMAIL,
+				CONTACTS.HOME_TELEPHONE,
+				CONTACTS.HOME_EMAIL,
+				CONTACTS.BIRTHDAY
 			)
 			.select(
 				CUSTOMERS_DESCRIPTION.as("company_as_customer"),

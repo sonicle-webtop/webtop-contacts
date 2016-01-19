@@ -384,16 +384,16 @@ public class Service extends BaseService {
 		if(view.equals(WORK_VIEW)) {
 			fields.add(new FieldMeta("company").setType("string"));
 			fields.add(new FieldMeta("function").setType("string"));
-			//fields.add(new ExtFieldMeta("caddress").setType("string"));
-			//fields.add(new ExtFieldMeta("ccity").setType("string"));
-			fields.add(new FieldMeta("ctelephone").setType("string"));
-			fields.add(new FieldMeta("cmobile").setType("string"));
-			fields.add(new FieldMeta("cemail").setType("string"));
+			//fields.add(new ExtFieldMeta("workAddress").setType("string"));
+			//fields.add(new ExtFieldMeta("workCity").setType("string"));
+			fields.add(new FieldMeta("workTelephone").setType("string"));
+			fields.add(new FieldMeta("workMobile").setType("string"));
+			fields.add(new FieldMeta("workEmail").setType("string"));
 		}
 		if(view.equals(HOME_VIEW)) {
-			fields.add(new FieldMeta("htelephone").setType("string"));
-			fields.add(new FieldMeta("hemail").setType("string"));
-			fields.add(new FieldMeta("hbirthday").setType("date").set("dateFormat", "Y-m-d"));
+			fields.add(new FieldMeta("homeTelephone").setType("string"));
+			fields.add(new FieldMeta("homeEmail").setType("string"));
+			fields.add(new FieldMeta("birthday").setType("date").set("dateFormat", "Y-m-d"));
 		}
 		
 		fields.add(new FieldMeta("_profileId"));
@@ -416,16 +416,16 @@ public class Service extends BaseService {
 		if(view.equals(WORK_VIEW)) {
 			colsInfo.add(new GridColumnMeta("company").setGroupable(true));
 			colsInfo.add(new GridColumnMeta("function").setGroupable(false));
-			//colsInfo.add(new GridColumnMeta("caddress"));
-			//colsInfo.add(new GridColumnMeta("ccity"));
-			colsInfo.add(new GridColumnMeta("ctelephone").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("cmobile").setGroupable(false));
-			colsInfo.add(new GridColumnMeta("cemail").setGroupable(true));
+			//colsInfo.add(new GridColumnMeta("workAddress"));
+			//colsInfo.add(new GridColumnMeta("workCity"));
+			colsInfo.add(new GridColumnMeta("workTelephone").setGroupable(true));
+			colsInfo.add(new GridColumnMeta("workMobile").setGroupable(false));
+			colsInfo.add(new GridColumnMeta("workEmail").setGroupable(true));
 		}
 		if(view.equals(HOME_VIEW)) {
-			colsInfo.add(new GridColumnMeta("htelephone").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("hemail").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("hbirthday").setXType("datecolumn").setGroupable(false));
+			colsInfo.add(new GridColumnMeta("homeTelephone").setGroupable(true));
+			colsInfo.add(new GridColumnMeta("homeEmail").setGroupable(true));
+			colsInfo.add(new GridColumnMeta("birthday").setXType("datecolumn").setGroupable(false));
 		}
 		
 		return colsInfo;
@@ -483,16 +483,16 @@ public class Service extends BaseService {
 							if(view.equals(WORK_VIEW)) {
 								item.put("company", StringUtils.defaultIfEmpty(vc.getCompanyAsCustomer(), vc.getCompany()));
 								item.put("function", vc.getFunction());
-								//item.put("caddress", vc.getCaddress());
-								//item.put("ccity", vc.getCcity());
-								item.put("ctelephone", vc.getCtelephone());
-								item.put("cmobile", vc.getCmobile());
-								item.put("cemail", vc.getCemail());
+								//item.put("workAddress", vc.getCaddress());
+								//item.put("workCity", vc.getCcity());
+								item.put("workTelephone", vc.getWorkTelephone());
+								item.put("workMobile", vc.getWorkMobile());
+								item.put("workEmail", vc.getWorkEmail());
 							}
 							if(view.equals(HOME_VIEW)) {
-								item.put("htelephone", vc.getHtelephone());
-								item.put("hemail", vc.getHemail());
-								item.put("hbirthday", (vc.getHbirthday() != null) ? ymdFmt.print(vc.getHbirthday()) : null);
+								item.put("homeTelephone", vc.getHomeTelephone());
+								item.put("homeEmail", vc.getHomeEmail());
+								item.put("birthday", (vc.getBirthday() != null) ? ymdFmt.print(vc.getBirthday()) : null);
 							}
 							item.put("categoryId", foldContact.folder.getCategoryId());
 							item.put("categoryName", foldContact.folder.getName());

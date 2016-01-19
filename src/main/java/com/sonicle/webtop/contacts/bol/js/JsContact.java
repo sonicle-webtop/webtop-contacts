@@ -37,7 +37,6 @@ import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -71,7 +70,7 @@ public class JsContact {
 	public String homeState;
 	public String homeCountry;
 	public String homeTelephone;
-	public String homeMobile;
+	public String homeTelephone2;
 	public String homeFax;
 	public String homePager;
 	public String homeEmail;
@@ -128,7 +127,7 @@ public class JsContact {
 		homeState = contact.getHomeState();
 		homeCountry = contact.getHomeCountry();
 		homeTelephone = contact.getHomeTelephone();
-		homeMobile = contact.getHomeMobile();
+		homeTelephone2 = contact.getHomeTelephone2();
 		homeFax = contact.getHomeFax();
 		homePager = contact.getHomePager();
 		homeEmail = contact.getHomeEmail();
@@ -182,7 +181,7 @@ public class JsContact {
 		item.setHomeState(js.homeState);
 		item.setHomeCountry(js.homeCountry);
 		item.setHomeTelephone(js.homeTelephone);
-		item.setHomeMobile(js.homeMobile);
+		item.setHomeTelephone2(js.homeTelephone2);
 		item.setHomeFax(js.homeFax);
 		item.setHomePager(js.homePager);
 		item.setHomeEmail(js.homeEmail);

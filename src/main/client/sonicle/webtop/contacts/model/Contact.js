@@ -64,7 +64,7 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('homeState', 'string', true),
 		WTF.field('homeCountry', 'string', true),
 		WTF.field('homeTelephone', 'string', true),
-		WTF.field('homeMobile', 'string', true),
+		WTF.field('homeTelephone2', 'string', true),
 		WTF.field('homeFax', 'string', true),
 		WTF.field('homePager', 'string', true),
 		WTF.field('homeEmail', 'string', true),
