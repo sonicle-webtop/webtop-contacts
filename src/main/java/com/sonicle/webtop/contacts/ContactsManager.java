@@ -511,7 +511,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con = WT.getConnection(SERVICE_ID);
 			
 			OContact cont = cntdao.selectById(con, contactId);
-			if(cont == null || cont.isList()) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
 			boolean hasPicture = picdao.hasPicture(con, contactId);
@@ -539,7 +539,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			
-			doInsertContact(con, contact, picture);
+			doInsertContact(con, false, contact, picture);
 			DbUtils.commitQuietly(con);
 			
 		} catch(SQLException | DAOException ex) {
@@ -566,7 +566,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			
-			doUpdateContact(con, contact, picture);
+			doUpdateContact(con, false, contact, picture);
 			DbUtils.commitQuietly(con);
 			
 		} catch(SQLException | DAOException ex) {
@@ -589,7 +589,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con = WT.getConnection(SERVICE_ID);
 			
 			OContact cont = cntdao.selectById(con, contactId);
-			if(cont == null) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			if(cont == null) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
 			OContactPicture pic = dao.select(con, contactId);
@@ -611,7 +611,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con.setAutoCommit(false);
 			
 			OContact cont = cntdao.selectById(con, contactId);
-			if(cont == null || cont.isList()) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryElements(cont.getCategoryId(), "UPDATE"); // Rights check!
 			
 			cntdao.updateRevision(con, contactId, createRevisionInfo());
@@ -637,7 +637,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con = WT.getConnection(SERVICE_ID);
 			
 			OContact cont = cdao.selectById(con, contactId);
-			if(cont == null || cont.isList()) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE"); // Rights check!
 			
 			con.setAutoCommit(false);
@@ -666,7 +666,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			checkRightsOnCategoryElements(targetCategoryId, "UPDATE"); // Rights check!
 			
 			OContact cont = cdao.selectById(con, contactId);
-			if(cont == null || cont.isList()) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
 			boolean hasPicture = pdao.hasPicture(con, contactId);
@@ -696,10 +696,10 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			con = WT.getConnection(SERVICE_ID);
 			
 			OContact cont = cdao.selectById(con, contactId);
-			if(cont == null || !cont.isList()) throw new WTException("Unable to retrieve contact [{}]", contactId);
+			if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
-			List<OListRecipient> recipients = lrdao.selectByList(con, cont.getListId());
+			List<OListRecipient> recipients = lrdao.selectByContact(con, contactId);
 			return createContactsList(cont, recipients);
 		
 		} catch(SQLException | DAOException ex) {
@@ -758,7 +758,29 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	}
 	
 	public void deleteContactsList(int contactsListId) throws WTException {
-		deleteContact(contactsListId);
+		ContactDAO cdao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			
+			OContact cont = cdao.selectById(con, contactsListId);
+			if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
+			checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE"); // Rights check!
+			
+			con.setAutoCommit(false);
+			doDeleteContact(con, contactsListId);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
 	}
 	
 	public void copyContactsList(boolean move, int contactsListId, int targetCategoryId) throws WTException {
@@ -772,10 +794,10 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			checkRightsOnCategoryElements(targetCategoryId, "UPDATE"); // Rights check!
 			
 			OContact cont = cdao.selectById(con, contactsListId);
-			if(cont == null || !cont.isList()) throw new WTException("Unable to retrieve contactsList [{}]", contactsListId);
+			if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
-			List<OListRecipient> recipients = lrdao.selectByList(con, cont.getListId());
+			List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
 			ContactsList clist = createContactsList(cont, recipients);
 			
 			con.setAutoCommit(false);
@@ -818,7 +840,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			for(ParseResult parse : parsed) {
 				parse.contact.setCategoryId(categoryId);
 				try {
-					doInsertContact(con, parse.contact, parse.picture);
+					doInsertContact(con, false, parse.contact, parse.picture);
 					DbUtils.commitQuietly(con);
 					count++;
 				} catch(Exception ex) {
@@ -890,11 +912,12 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	
 	
 	
-	private void doInsertContact(Connection con, Contact contact, ContactPicture picture) throws WTException {
+	private OContact doInsertContact(Connection con, boolean isList, Contact contact, ContactPicture picture) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		
 		try {
 			OContact item = new OContact(contact);
+			item.setIsList(isList);
 			if(StringUtils.isEmpty(contact.getPublicUid())) contact.setPublicUid(WT.generateUUID());
 			item.setStatus(OContact.STATUS_NEW);
 			item.setRevisionInfo(createRevisionInfo());
@@ -908,16 +931,19 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 				}
 			}
 			
+			return item;
+			
 		} catch(WTException ex) {
 			throw ex;
 		}
 	}
 	
-	private void doUpdateContact(Connection con, Contact contact, ContactPicture picture) throws WTException {
+	private void doUpdateContact(Connection con, boolean isList, Contact contact, ContactPicture picture) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		
 		try {
 			OContact item = new OContact(contact);
+			item.setIsList(isList); // This is necessary because update method in dao writes all fields!!!
 			item.setStatus(OContact.STATUS_MODIFIED);
 			item.setRevisionInfo(createRevisionInfo());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
@@ -946,13 +972,13 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		
 		contact.setCategoryId(targetCategoryId);
 		if(move) {
-			doUpdateContact(con, contact, null);
+			doUpdateContact(con, false, contact, null);
 		} else {
 			if(contact.getHasPicture()) {
 				OContactPicture pic = pdao.select(con, contact.getContactId());
-				doInsertContact(con, contact, new ContactPicture(pic));
+				doInsertContact(con, false, contact, new ContactPicture(pic));
 			} else {
-				doInsertContact(con, contact, null);
+				doInsertContact(con, false, contact, null);
 			}
 		}
 	}
@@ -1008,11 +1034,10 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
 		
 		try {
-			doInsertContact(con, createContact(list), null);
-			
+			OContact cont = doInsertContact(con, true, createContact(list), null);
 			for(ContactsListRecipient rcpt : list.getRecipients()) {
 				OListRecipient item = new OListRecipient(rcpt);
-				item.setListId(list.getListId());
+				item.setContactId(cont.getContactId());
 				item.setListRecipientId(lrdao.getSequence(con).intValue());
 				lrdao.insert(con, item);
 			}
@@ -1026,12 +1051,12 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
 		
 		try {
-			doUpdateContact(con, createContact(list), null);
+			doUpdateContact(con, true, createContact(list), null);
 			//TODO: gestire la modifica determinando gli eliminati e gli aggiunti?
-			lrdao.deleteByList(con, list.getListId());
+			lrdao.deleteByContact(con, list.getContactId());
 			for(ContactsListRecipient rcpt : list.getRecipients()) {
 				OListRecipient item = new OListRecipient(rcpt);
-				item.setListId(list.getListId());
+				item.setContactId(list.getContactId());
 				item.setListRecipientId(lrdao.getSequence(con).intValue());
 				lrdao.insert(con, item);
 			}
@@ -1485,7 +1510,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	
 	private ContactsList createContactsList(OContact clist, List<OListRecipient> rcpts) {
 		ContactsList item = new ContactsList(clist.getContactId(), clist.getCategoryId());
-		item.setListId(clist.getListId());
 		item.setName(clist.getLastname());
 		for(OListRecipient rcpt : rcpts) {
 			item.addRecipient(new ContactsListRecipient(rcpt));
@@ -1496,7 +1520,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	private Contact createContact(ContactsList cont) {
 		Contact item = new Contact(cont.getContactId(), cont.getCategoryId());
 		item.setCategoryId(cont.getCategoryId());
-		item.setListId(cont.getListId());
 		item.setLastName(cont.getName());
 		item.setHasPicture(false);
 		return item;
@@ -1504,7 +1527,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	
 	private Contact createContact(OContact cont, boolean hasPicture) {
 		Contact item = new Contact(cont.getContactId(), cont.getCategoryId());
-		item.setListId(cont.getListId());
 		item.setStatus(cont.getStatus());
 		item.setTitle(cont.getTitle());
 		item.setFirstName(cont.getFirstname());

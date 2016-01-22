@@ -62,6 +62,14 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					}
 				}),
 				'-',
+				me.addAction('delete', {
+					text: null,
+					tooltip: WT.res('act-delete.lbl'),
+					iconCls: 'wt-icon-delete-xs',
+					handler: function() {
+						me.deleteMe();
+					}
+				}),
 				'->',
 				WTF.localCombo('id', 'desc', {
 					reference: 'fldowner',
@@ -190,6 +198,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			owner.setDisabled(false);
 		} else if(me.isMode(me.MODE_VIEW)) {
 			me.getAction('saveClose').setDisabled(true);
+			me.getAction('delete').setDisabled(true);
 			owner.setDisabled(true);
 		} else if(me.isMode(me.MODE_EDIT)) {
 			owner.setDisabled(true);
@@ -206,6 +215,30 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			property: '_profileId',
 			value: me.lref('fldowner').getValue()
 		});
+	},
+	
+	deleteMe: function() {
+		var me = this,
+				rec = me.getModel();
+		
+		WT.confirm(WT.res('confirm.delete'), function(bid) {
+			if(bid === 'yes') {
+				me.wait();
+				WT.ajaxReq(me.mys.ID, 'ManageContactsLists', {
+					params: {
+						crud: 'delete',
+						id: rec.get('id')
+					},
+					callback: function(success) {
+						me.unwait();
+						if(success) {
+							me.fireEvent('viewsave', me, true, rec);
+							me.closeView(false);
+						}
+					}
+				});
+			}
+		}, me);
 	},
 	
 	addRecipient: function() {

@@ -31,27 +31,27 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.dal;
-
-import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_LISTS;
-import com.sonicle.webtop.core.dal.BaseDAO;
-import com.sonicle.webtop.core.dal.DAOException;
-import java.sql.Connection;
-import org.jooq.DSLContext;
-
-/**
- *
- * @author malbinola
- */
-public class ListDAO extends BaseDAO {
-	private final static ListDAO INSTANCE = new ListDAO();
-	public static ListDAO getInstance() {
-		return INSTANCE;
+Ext.define('Sonicle.webtop.contacts.store.Group', {
+	extend: 'Ext.data.ArrayStore',
+	
+	model: 'WT.model.Simple',
+	data: [],
+	
+	initComponent: function() {
+		this.callParent(arguments);
+		this.on('load', function(s) {
+			s.insert(0, {id: '-', desc: WT.res('word.no')});
+		});
 	}
-
-	public Long getSequence(Connection con) throws DAOException {
-		DSLContext dsl = getDSL(con);
-		Long nextID = dsl.nextval(SEQ_LISTS);
-		return nextID;
+	
+	/*
+	loadRecords: function(records, options) {
+		var me = this,
+				session = me.getSession(),
+				Model = me.getModel();
+		records.unshift(new Model({id: '-', desc: WT.res('word.no')}, session));
+		//records.unshift(Ext.create('WT.model.Simple', {id: '-', desc: WT.res('word.no')}));
+		me.callParent(arguments);
 	}
-}
+	*/
+});

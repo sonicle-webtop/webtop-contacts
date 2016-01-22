@@ -33,10 +33,10 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.ContactsListRecipient;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.bol.js.JsFkModel;
 import java.util.ArrayList;
 
 /**
@@ -47,7 +47,6 @@ public class JsContactsList {
 	public String id;
 	public Integer contactId;
 	public Integer categoryId;
-	public Integer listId;
 	public String name;
 	public ArrayList<Recipient> recipients;
 	public String _profileId;
@@ -58,7 +57,6 @@ public class JsContactsList {
 		id = cl.getContactId().toString();
 		contactId = cl.getContactId();
 		categoryId = cl.getCategoryId();
-		listId = cl.getListId();
 		name = cl.getName();
 		recipients = new ArrayList<>();
 		for(ContactsListRecipient rcpt : cl.getRecipients()) {
@@ -67,16 +65,15 @@ public class JsContactsList {
 		_profileId = ownerId.toString();
 	}
 	
-	public static class Recipient {
-		public String _fk;
+	public static class Recipient extends JsFkModel {
 		public Integer listRecipientId;
 		public String recipient;
 		public String recipientType;
 		
 		public Recipient() {}
 		
-		public Recipient(String _fk, ContactsListRecipient rcpt) {
-			this._fk = _fk;
+		public Recipient(String fk, ContactsListRecipient rcpt) {
+			super(fk);
 			listRecipientId = rcpt.getListRecipientId();
 			recipient = rcpt.getRecipient();
 			recipientType = rcpt.getRecipientType();
@@ -85,7 +82,6 @@ public class JsContactsList {
 	
 	public static ContactsList buildContactsList(JsContactsList js) {
 		ContactsList cl = new ContactsList(js.contactId, js.categoryId);
-		cl.setListId(js.listId);
 		cl.setName(js.name);
 		for(Recipient jsRcpt : js.recipients) {
 			ContactsListRecipient rcpt = new ContactsListRecipient();

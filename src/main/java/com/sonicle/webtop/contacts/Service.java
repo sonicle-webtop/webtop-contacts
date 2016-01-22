@@ -376,7 +376,7 @@ public class Service extends BaseService {
 		fields.add(new FieldMeta("categoryId"));
 		fields.add(new FieldMeta("categoryName"));
 		fields.add(new FieldMeta("categoryColor"));
-		fields.add(new FieldMeta("listId").setType("int"));
+		fields.add(new FieldMeta("isList").setType("boolean"));
 		if(view.equals(WORK_VIEW)) fields.add(new FieldMeta("title").setType("string"));
 		fields.add(new FieldMeta("firstName").setType("string"));
 		fields.add(new FieldMeta("lastName").setType("string"));
@@ -475,7 +475,7 @@ public class Service extends BaseService {
 							item = new MapItem();
 							item.put("id", Contact.buildUid(vc.getContactId()));
 							item.put("contactId", vc.getContactId());
-							item.put("listId", vc.getListId());
+							item.put("isList", vc.getIsList());
 							if(view.equals(WORK_VIEW)) item.put("title", vc.getTitle());
 							item.put("firstName", vc.getFirstname());
 							item.put("lastName", vc.getLastname());

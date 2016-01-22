@@ -43,13 +43,12 @@ import java.util.List;
 public class ContactsList {
 	protected Integer contactId;
 	protected Integer categoryId;
-	protected Integer listId;
 	protected String name;
 	protected List<ContactsListRecipient> recipients = new ArrayList<>();
 	
 	public ContactsList() {}
 	
-	public ContactsList(int contactId, int categoryId) {
+	public ContactsList(Integer contactId, Integer categoryId) {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
 	}
@@ -68,14 +67,6 @@ public class ContactsList {
 
 	public void setCategoryId(Integer categoryId) {
 		this.categoryId = categoryId;
-	}
-
-	public Integer getListId() {
-		return listId;
-	}
-
-	public void setListId(Integer listId) {
-		this.listId = listId;
 	}
 
 	public String getName() {

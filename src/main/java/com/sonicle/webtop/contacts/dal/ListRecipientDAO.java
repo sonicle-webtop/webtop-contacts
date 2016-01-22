@@ -70,13 +70,13 @@ public class ListRecipientDAO extends BaseDAO {
 			.fetchOneInto(OListRecipient.class);
 	}
 	
-	public List<OListRecipient> selectByList(Connection con, Integer listId) throws DAOException {
+	public List<OListRecipient> selectByContact(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 				.select()
 				.from(LIST_RECIPIENTS)
 				.where(
-						LIST_RECIPIENTS.LIST_ID.equal(listId)
+						LIST_RECIPIENTS.CONTACT_ID.equal(contactId)
 				)
 				.orderBy(
 						LIST_RECIPIENTS.RECIPIENT.asc()
@@ -105,7 +105,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int delete(Connection con, Integer listRecipientId) throws DAOException {
+	public int delete(Connection con, int listRecipientId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 				.delete(LIST_RECIPIENTS)
@@ -113,11 +113,11 @@ public class ListRecipientDAO extends BaseDAO {
 				.execute();
 	}
 	
-	public int deleteByList(Connection con, Integer listId) throws DAOException {
+	public int deleteByContact(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 				.delete(LIST_RECIPIENTS)
-				.where(LIST_RECIPIENTS.LIST_ID.equal(listId))
+				.where(LIST_RECIPIENTS.CONTACT_ID.equal(contactId))
 				.execute();
 	}
 }

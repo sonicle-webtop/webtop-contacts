@@ -46,30 +46,24 @@ Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
 		WTF.field('id', 'string', false),
 		WTF.field('contactId', 'int', true),
 		WTF.field('categoryId', 'int', false),
-		WTF.field('listId', 'int', true),
 		WTF.field('name', 'string', false),
 		WTF.field('_profileId', 'string', false)
 	]
-/*
+	/*
 	hasMany: [{
 		name: 'recipients',
 		model: 'Sonicle.webtop.contacts.model.ContactsListRecipients'
 	}]
-*/
+	*/
 });
 Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipients', {
 	extend: 'WT.ux.data.BaseModel',
 	
 	identifier: 'negative',
-	idProperty: 'contactListId',
+	idProperty: 'listRecipientId',
 	fields: [
-		WTF.field('fk', 'string', true, {
-			reference: {
-				parent: 'Sonicle.webtop.contacts.model.ContactsList',
-				inverse: 'recipients'
-			}
-		}),
-		WTF.field('contactListId', 'int', false),
+		WTF.fkField('string', 'Sonicle.webtop.contacts.model.ContactsList', 'recipients'),
+		WTF.field('listRecipientId', 'int', false),
 		WTF.field('recipientType', 'string', false),
 		WTF.field('recipient', 'string', false)
 	]

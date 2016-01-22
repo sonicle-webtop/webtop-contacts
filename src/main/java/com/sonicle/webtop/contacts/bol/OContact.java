@@ -54,7 +54,7 @@ public class OContact extends Contacts {
 	public OContact(Contact cnt) {
 		setContactId(cnt.getContactId());
 		setCategoryId(cnt.getCategoryId());
-		setListId(cnt.getListId());
+		setIsList(false);
 		setStatus(cnt.getStatus());
 		setTitle(cnt.getTitle());
 		setFirstname(cnt.getFirstName());
@@ -108,10 +108,5 @@ public class OContact extends Contacts {
 		setLastModified(revision.lastModified);
 		setUpdateDevice(revision.lastDevice);
 		setUpdateUser(revision.lastUser);
-	}
-	
-	public boolean isList() {
-		if(getListId() == null) return false;
-		return getListId() > 0;
 	}
 }
