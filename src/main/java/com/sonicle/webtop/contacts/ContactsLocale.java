@@ -39,6 +39,13 @@ package com.sonicle.webtop.contacts;
  */
 public class ContactsLocale {
 	public static final String CATEGORIES_MY = "categories.my";
+	public static final String REMINDER_TITLE_ANNIVERSARY = "reminder.title.anniversary";
+	public static final String REMINDER_TITLE_BIRTHDAY = "reminder.title.birthday";
+	public static final String TPL_ANNIVERSARY_HEADER_ANNIVERSARY = "tpl.anniversary.header.anniversary";
+	public static final String TPL_ANNIVERSARY_HEADER_BIRTHDAY = "tpl.anniversary.header.birthday";
+	public static final String TPL_ANNIVERSARY_FOOTER_HEADER = "tpl.anniversary.footer.header";
+	public static final String TPL_ANNIVERSARY_FOOTER_WHY = "tpl.anniversary.footer.why";
+	
 	public static final String FIELDS_GROUPMAIN = "fields.groupmain";
 	public static final String FIELDS_GROUPWORK = "fields.groupwork";
 	public static final String FIELDS_GROUPHOME = "fields.grouphome";
@@ -70,50 +77,8 @@ public class ContactsLocale {
 	public static final String FIELDS_EMAIL = "fields.email";
 	public static final String FIELDS_INSTANT_MSG = "fields.instantmsg";
 	public static final String FIELDS_FOLDER = "fields.category";
-	//public static final String FIELDS_STATUS = "fields.status";
-
 	public static final String FIELDS_PARTNER = "fields.partner";
 	public static final String FIELDS_BIRTHDAY = "fields.birthday";
 	public static final String FIELDS_ANNIVERSARY = "fields.anniversary";
 	public static final String FIELDS_DEPARTMENT = "fields.department";
-	
-	
-	/*
-	public static final String FIELDS_GENERAL = "fields.general";
-	public static final String FIELDS_OFFICE = "fields.office";
-	public static final String FIELDS_HOME = "fields.home";
-	
-	public static final String FIELDS_CITYG = "fields.cityg";
-	public static final String FIELDS_X_MOBILE = "fields.hmobile";
-	public static final String FIELDS_SHTELEPHONE = "fields.shtelephone";
-	public static final String FIELDS_SCTELEPHONE = "fields.sctelephone";
-	public static final String FIELDS_SHMOBILE = "fields.shmobile";
-	public static final String FIELDS_SCMOBILE = "fields.scmobile";
-	public static final String FIELDS_SHEMAIL = "fields.shemail";
-	public static final String FIELDS_SCEMAIL = "fields.scemail";
-	
-	
-	public static final String FIELDS_CINSTANT_MSG = "fields.cinstant_msg";
-	public static final String FIELDS_HINSTANT_MSG = "fields.hinstant_msg";
-	public static final String FIELDS_OEMAIL = "fields.oemail";
-	public static final String FIELDS_OADDRESS = "fields.oaddress";
-	public static final String FIELDS_OTHER = "fields.other";
-	
-	public static final String FIELDS_OCITY = "fields.city";
-	public static final String FIELDS_OSTATE = "fields.state";
-	public static final String FIELDS_OPOSTALCODE = "fields.postalcode";
-	public static final String FIELDS_OCOUNTRY = "fields.country";
-	*/
-	
-	
-	//public static final String REMINDERFROM = "fields.reminderfrom";
-	//public static final String WEBTOPCONTACTS = "fields.webtopcontacts";
-	
-	public static final String REMINDER_TITLE_ANNIVERSARY = "reminder.title.anniversary";
-	public static final String REMINDER_TITLE_BIRTHDAY = "reminder.title.birthday";
-	public static final String TPL_EMAIL_ANNIVERSARY_HEADER_ANNIVERSARY = "tpl.emailAnniversary.header.anniversary";
-	public static final String TPL_EMAIL_ANNIVERSARY_HEADER_BIRTHDAY = "tpl.emailAnniversary.header.birthday";
-	public static final String TPL_EMAIL_ANNIVERSARY_FOOTER_HEADER = "tpl.emailAnniversary.footer.header";
-	public static final String TPL_EMAIL_ANNIVERSARY_FOOTER_WHY1 = "tpl.emailAnniversary.footer.why1";
-	public static final String TPL_EMAIL_ANNIVERSARY_FOOTER_WHY2 = "tpl.emailAnniversary.footer.why2";
 }

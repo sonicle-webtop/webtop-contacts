@@ -41,6 +41,8 @@ import java.util.ArrayList;
  */
 public class JsGridContact {
 	public String id;
+	public String contactId;
+	public boolean isList;
 	
 	public JsGridContact() {}
 	

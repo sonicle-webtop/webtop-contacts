@@ -44,8 +44,7 @@ import org.joda.time.format.DateTimeFormatter;
  * @author malbinola
  */
 public class JsContact {
-	public String id;
-	public Integer contactId;
+	public Integer id;
 	public Integer categoryId;
 	public String title;
 	public String firstName;
@@ -101,8 +100,7 @@ public class JsContact {
 	public JsContact(UserProfile.Id ownerId, Contact contact) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
-		id = contact.getContactId().toString();
-		contactId = contact.getContactId();
+		id = contact.getContactId();
 		categoryId = contact.getCategoryId();
 		title = contact.getTitle();
 		firstName = contact.getFirstName();
@@ -150,14 +148,14 @@ public class JsContact {
 		anniversary = (contact.getAnniversary() != null) ? ymdFmt.print(contact.getAnniversary()) : null;
 		url = contact.getUrl();
 		notes = contact.getNotes();
-		picture = contact.getHasPicture() ? id : null;
+		picture = contact.getHasPicture() ? String.valueOf(id) : null;
 		_profileId = ownerId.toString();
 	}
 	
 	public static Contact buildContact(JsContact js) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
-		Contact item = new Contact(js.contactId, js.categoryId);
+		Contact item = new Contact(js.id, js.categoryId);
 		item.setTitle(js.title);
 		item.setFirstName(js.firstName);
 		item.setLastName(js.lastName);

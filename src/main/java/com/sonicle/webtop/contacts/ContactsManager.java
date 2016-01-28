@@ -76,6 +76,7 @@ import com.sonicle.webtop.core.sdk.interfaces.IManagerUsesReminders;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
+import com.sonicle.webtop.core.util.NotificationHelper;
 import eu.medsea.mimeutil.MimeType;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -642,6 +643,36 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			
 			con.setAutoCommit(false);
 			doDeleteContact(con, contactId);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void deleteContact(ArrayList<Integer> contactIds) throws WTException {
+		ContactDAO cdao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			for(Integer contactId : contactIds) {
+				if(contactId == null) continue;
+				OContact cont = cdao.selectById(con, contactId);
+				if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
+				checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE"); // Rights check!
+				
+				doDeleteContact(con, contactId);
+			}
+			
 			DbUtils.commitQuietly(con);
 			
 		} catch(SQLException | DAOException ex) {
@@ -1728,12 +1759,28 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
 		String fullName = Contact.buildFullName(contact.getFirstname(), contact.getLastname());
 		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
-		String body = buildReminderEmailBody(locale, birthday, recipient.toString(), fullName);
+		String subject = NotificationHelper.buildSubject(locale, SERVICE_ID, title);
+		String body = buildReminderEmailBody(locale, birthday, recipient.getAddress(), fullName);
 		
 		ReminderEmail alert = new ReminderEmail(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
-		alert.setSubject(title);
+		alert.setSubject(subject);
 		alert.setBody(body);
 		return alert;
+	}
+	
+	private String buildReminderEmailBody(Locale locale, boolean birthday, String recipientEmail, String contactFullName) {
+		String resKey = (birthday) ? ContactsLocale.TPL_ANNIVERSARY_HEADER_BIRTHDAY : ContactsLocale.TPL_ANNIVERSARY_HEADER_ANNIVERSARY;
+		
+		try {
+			String source = NotificationHelper.buildSource(locale, SERVICE_ID);
+			String bodyHeader = MessageFormat.format(lookupResource(locale, resKey), contactFullName);
+			String why = lookupResource(locale, ContactsLocale.TPL_ANNIVERSARY_FOOTER_WHY);
+			Map map = NotificationHelper.generateNotificationTplStrings(locale, source, recipientEmail, bodyHeader, null, why);
+			return WT.buildTemplate(SERVICE_ID, "tpl_anniversary.html", map);
+		} catch(IOException | TemplateException ex) {
+			logger.error("Error generating reminder body", ex);
+			return null;
+		}
 	}
 	
 	private RevisionInfo createRevisionInfo() {
@@ -1757,34 +1804,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			this.result = result;
 		}
 	}
-	
-	private String buildReminderEmailBody(Locale locale, boolean birthday, String recipientAddress, String subjectDisplayName) {
-		try {
-			Map tplMap = new HashMap();
-			tplMap.put("email", recipientAddress);
-			tplMap.put("i18n", buildAnniversaryEmailTplStrings(locale, birthday, subjectDisplayName));
-
-			Template tpl = WT.loadTemplate(SERVICE_ID, "tpl_email-anniversary");
-			Writer writer = new StringWriter();
-			tpl.process(tplMap, writer);
-			return writer.toString();
-		} catch(IOException | TemplateException ex) {
-			return null;
-		}
-	}
-	
-	private Map<String, String> buildAnniversaryEmailTplStrings(Locale locale, boolean birthday, String name) {
-		HashMap<String, String> map = new HashMap<>();
-		String resKey = (birthday) ? ContactsLocale.TPL_EMAIL_ANNIVERSARY_HEADER_BIRTHDAY : ContactsLocale.TPL_EMAIL_ANNIVERSARY_HEADER_ANNIVERSARY;
-		map.put("tplEmailAnniversaryHeader", MessageFormat.format(lookupResource(locale, resKey), name));
-		map.put("tplEmailAnniversaryFooterHeader", lookupResource(locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_HEADER));
-		map.put("tplEmailAnniversaryFooterWhy1", lookupResource(locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_WHY1));
-		map.put("tplEmailAnniversaryFooterWhy2", lookupResource(locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_WHY2));
-		return map;
-	}
-	
-	
-	
 	
 	/*
 	public Contact getContact999(String uid) throws WTException {

@@ -35,11 +35,10 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 	extend: 'WT.ux.data.BaseModel',
 	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContacts'),
 	
-	identifier: 'negativestring',
+	identifier: 'negative',
 	idProperty: 'id',
 	fields: [
-		WTF.field('id', 'string', false),
-		WTF.field('contactId', 'int', true),
+		WTF.field('id', 'int', false),
 		WTF.field('categoryId', 'int', false),
 		WTF.field('title', 'string', true),
 		WTF.field('firstName', 'string', true),

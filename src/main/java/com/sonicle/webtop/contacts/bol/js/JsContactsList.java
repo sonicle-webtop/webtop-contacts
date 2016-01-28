@@ -36,7 +36,7 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.ContactsListRecipient;
 import com.sonicle.webtop.core.sdk.UserProfile;
-import com.sonicle.webtop.core.sdk.bol.js.JsFkModel;
+import com.sonicle.webtop.core.bol.js.JsFkModel;
 import java.util.ArrayList;
 
 /**

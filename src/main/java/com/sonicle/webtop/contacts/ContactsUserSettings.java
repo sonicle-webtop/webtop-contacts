@@ -63,7 +63,7 @@ public class ContactsUserSettings extends BaseUserSettings {
 	public static final String VIEW_HOME = "h";
 	
 	/**
-	 * [string]
+	 * [time(hh:mm)]
 	 * Anniversary reminder notification time
 	 */
 	public static final String ANNIVERSARY_REMINDER_TIME = "anniversary.reminder.time";

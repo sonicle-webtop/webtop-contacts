@@ -36,6 +36,8 @@ package com.sonicle.webtop.contacts;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
+import com.sonicle.commons.web.ServletUtils.IntegerArray;
+import com.sonicle.commons.web.ServletUtils.StringArray;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.commons.web.json.PayloadAsList;
 import com.sonicle.commons.web.json.JsonResult;
@@ -57,6 +59,8 @@ import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
+import com.sonicle.webtop.contacts.bol.js.JsGridContact;
+import com.sonicle.webtop.contacts.bol.js.JsGridContact.JsGridContactList;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
@@ -516,6 +520,14 @@ public class Service extends BaseService {
 				
 				new JsonResult(items, meta, items.size()).printTo(out);
 				
+			} else if(crud.equals(Crud.DELETE)) {
+				PayloadAsList<JsGridContactList> pl = ServletUtils.getPayloadAsList(request, JsGridContactList.class);
+				
+				for(JsGridContact row : pl.data) {
+					logger.debug("deleting {} {}", row.id, row.contactId);
+				}
+				new JsonResult().printTo(out);
+				
 			} else if(crud.equals(Crud.SAVE)) {
 				String view = ServletUtils.getStringParameter(request, "view", true);
 				String context = ServletUtils.getStringParameter(request, "context", true);
@@ -622,10 +634,9 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				String id = ServletUtils.getStringParameter(request, "id", true);
+				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 				
-				int contactId = Integer.parseInt(id);
-				manager.deleteContact(contactId);
+				manager.deleteContact(ids);
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.COPY)) {
