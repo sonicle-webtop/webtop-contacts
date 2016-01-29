@@ -35,6 +35,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WT.sdk.ModelView',
 	requires: [
 		'Ext.ux.form.trigger.Clear',
+		'WT.ux.field.SuggestCombo',
 		'Sonicle.form.Separator',
 		'Sonicle.form.field.IconComboBox',
 		'Sonicle.form.field.Image',
@@ -46,7 +47,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		title: '{contact.tit}',
 		iconCls: 'wtcon-icon-contact-xs',
 		width: 650,
-		height: 530
+		height: 550
 	},
 	confirm: 'yn',
 	autoToolbar: false,
@@ -157,12 +158,16 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						fieldLabel: me.mys.res('contact.fld-company.lbl')
 					})
 				), {
-					xtype: 'textfield',
+					xtype: 'wtsuggestcombo',
 					bind: '{record.function}',
+					sid: me.mys.ID,
+					suggestionContext: 'function',
 					fieldLabel: me.mys.res('contact.fld-function.lbl')
 				}, {
-					xtype: 'textfield',
+					xtype: 'wtsuggestcombo',
 					bind: '{record.department}',
+					sid: me.mys.ID,
+					suggestionContext: 'department',
 					fieldLabel: me.mys.res('contact.fld-department.lbl')
 				}, {
 					xtype: 'formseparator'

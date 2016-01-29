@@ -47,6 +47,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'WT.mixin.FoldersTree'
 	],
 	
+	needsRefresh: true,
 	activeView: null,
 	
 	init: function() {
@@ -643,8 +644,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	onActivate: function() {
 		var me = this,
 				gp = me.gpContacts();
-		if(gp.getStore().loadCount === 0) {
-			me.refreshContacts('A');
+		
+		if(me.needsRefresh) {
+			me.needsRefresh = false;
+			if(gp.getStore().loadCount === 0) { // The first time...
+				// ...sets startup letter!
+				me.refreshContacts('A');
+			} else {
+				me.refreshContacts();
+			}
 		}
 		
 		me.updateDisabled('showContact');
@@ -690,14 +698,17 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	refreshContacts: function(letter, query) {
-		var me = this,
-				sto = me.gpContacts().getStore(), pars = {};
-		Ext.apply(pars, {
-			view: me.activeView
-		});
-		if(letter !== undefined) Ext.apply(pars, {letter: letter});
-		if(query !== undefined) Ext.apply(pars, {query: query});
-		WTU.loadWithExtraParams(sto, pars);
+		var me = this, sto, pars;
+		
+		if(me.isActive()) {
+			sto = me.gpContacts().getStore();
+			pars = {view: me.activeView};
+			if(letter !== undefined) Ext.apply(pars, {letter: letter});
+			if(query !== undefined) Ext.apply(pars, {query: query});
+			WTU.loadWithExtraParams(sto, pars);
+		} else {
+			me.needsRefresh = true;
+		}
 	},
 	
 	getSelectedContact: function(forceSingle) {
@@ -1023,18 +1034,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					er = me.toRightsObj(sel[0].get('_erights'));
 					return !er.DELETE;
 				} else {
-					/*
-					fn = function() {
-						var isl = null;
-						for(var i=0; i<sel.length; i++) {
-							if(isl == null) isl = sel[i].get('isList') === true;
-							if(sel[i].get('isList') !== isl) return true;
-							if(!me.toRightsObj(sel[i].get('_erights')).DELETE) return true;
-						}
-						return false;
-					};
-					return fn();
-					*/
 					var isl = sel[0].get('isList') === true;
 					for(var i=0; i<sel.length; i++) {
 						if(sel[i].get('isList') !== isl) return true;
@@ -1044,11 +1043,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			case 'addContactsListFromSel':
 				sel = me.gpContacts().getSelection();
-				var isl = sel[0].get('isList') === true;
-				for(var i=0; i<sel.length; i++) {
-					if(sel[i].get('isList') !== isl) return true;
+				if(sel.length === 0) {
+					return true;
+				} else {
+					var isl = sel[0].get('isList') === true;
+					for(var i=0; i<sel.length; i++) {
+						if(sel[i].get('isList') !== isl) return true;
+					}
+					return false;
 				}
-				return false;
 		}
 	},
 	
