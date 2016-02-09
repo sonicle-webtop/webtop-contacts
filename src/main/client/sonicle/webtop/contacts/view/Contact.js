@@ -103,7 +103,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.callParent(arguments);
 		
 		main = Ext.create({
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			layout: 'column',
 			title: me.mys.res('contact.main.tit'),
 			defaults: {
@@ -229,7 +229,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		work = Ext.create({
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.work.tit'),
 			defaults: {
@@ -300,7 +300,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		home = Ext.create({
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.home.tit'),
 			bodyPadding: 5,
@@ -360,7 +360,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		other = Ext.create({
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.other.tit'),
 			defaults: {
@@ -399,7 +399,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		more = Ext.create({
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.more.tit'),
 			bodyPadding: 5,
@@ -445,7 +445,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		notes = Ext.create({
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			layout: 'fit',
 			modelValidation: true,
 			title: me.mys.res('contact.notes.tit'),

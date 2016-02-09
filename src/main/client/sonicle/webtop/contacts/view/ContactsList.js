@@ -36,8 +36,8 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	requires: [
 		'Sonicle.form.field.IconComboBox',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
-		'Sonicle.webtop.core.store.RcptType',
-		'Sonicle.webtop.contacts.model.ContactsList'
+		'Sonicle.webtop.contacts.model.ContactsList',
+		'Sonicle.webtop.core.store.RcptType'
 	],
 	
 	dockableConfig: {
@@ -93,7 +93,8 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		
 		me.add({
 			region: 'north',
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
+			modelValidation: true,
 			height: 60,
 			items: [
 			WTF.lookupCombo('categoryId', 'name', {

@@ -65,7 +65,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		
 		me.add({
 			region: 'center',
-			xtype: 'wtfieldspanel',
+			xtype: 'wtform',
 			modelValidation: true,
 			defaults: {
 				labelWidth: 100
