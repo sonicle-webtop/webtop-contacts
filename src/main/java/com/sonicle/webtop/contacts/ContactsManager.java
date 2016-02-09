@@ -34,7 +34,6 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.db.DbUtils;
-import com.sonicle.webtop.contacts.VCardHelper.ParseResult;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
@@ -51,6 +50,8 @@ import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.directory.DirectoryResult;
+import com.sonicle.webtop.contacts.io.ContactFileReader;
+import com.sonicle.webtop.contacts.io.ContactReadResult;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.bol.OShare;
@@ -78,21 +79,17 @@ import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
 import com.sonicle.webtop.core.util.NotificationHelper;
 import eu.medsea.mimeutil.MimeType;
-import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -630,6 +627,28 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
+	public void deleteContactsByCategory(int categoryId) throws WTException {
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			doDeleteContactsByCategory(con, categoryId, false);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
 	public void deleteContact(int contactId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		Connection con = null;
@@ -814,6 +833,28 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
+	public void deleteContactsListsByCategory(int categoryId) throws WTException {
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			doDeleteContactsByCategory(con, categoryId, true);
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
 	public void copyContactsList(boolean move, int contactsListId, int targetCategoryId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
@@ -846,15 +887,77 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	public void importVCard(int categoryId, InputStream is) throws WTException {
+	
+	
+	public LogEntries importEvents(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
 		
 		try {
 			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
+			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
 			
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Parsing vCard file..."));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Reading source file..."));
+			ArrayList<ContactReadResult> parsed = null;
+			try {
+				parsed = rea.listEvents(log, file);
+			} catch(IOException ex) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete parsing. Reason: {0}", ex.getMessage()));
+				throw new WTException(ex);
+			}
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s found!", parsed.size()));
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			
+			if(mode.equals("copy")) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning previous contacts..."));
+				int del = doDeleteContactsByCategory(con, categoryId, false);
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
+			}
+			
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
+			int count = 0;
+			for(ContactReadResult parse : parsed) {
+				parse.contact.setCategoryId(categoryId);
+				try {
+					doInsertContact(con, false, parse.contact, parse.picture);
+					DbUtils.commitQuietly(con);
+					count++;
+				} catch(Exception ex) {
+					logger.trace("Error inserting contact", ex);
+					DbUtils.rollbackQuietly(con);
+					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
+				}
+			}
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", count));
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+		}
+		return log;
+	}
+	
+	
+	
+	
+	/*
+	public LogEntries importVCard(int categoryId, InputStream is, String mode) throws WTException {
+		LogEntries log = new LogEntries();
+		Connection con = null;
+		
+		try {
+			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
+			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
+			
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Reading vCard file..."));
 			ArrayList<ParseResult> parsed = null;
 			try {
 				parsed = VCardHelper.parseVCard(log, is);
@@ -864,9 +967,16 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			}
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contacts/s found!", parsed.size()));
 			
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
+			
+			if(mode.equals("copy")) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning previous contacts..."));
+				int del = doDeleteContactsByCategory(con, categoryId, false);
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
+			}
+			
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
 			int count = 0;
 			for(ParseResult parse : parsed) {
 				parse.contact.setCategoryId(categoryId);
@@ -880,7 +990,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
 				}
 			}
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contacts/s imported!", count));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", count));
 			
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -890,11 +1000,13 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			DbUtils.closeQuietly(con);
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
 			//TODO: inviare email report
-			for(LogEntry entry : log) {
-				logger.trace("{}", ((MessageLogEntry)entry).getMessage());
-			}
+			//for(LogEntry entry : log) {
+			//	logger.trace("{}", ((MessageLogEntry)entry).getMessage());
+			//}
 		}
+		return log;
 	}
+	*/
 	
 	
 	
@@ -993,9 +1105,14 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	private void doDeleteContact(Connection con, int contactId) throws WTException {
+	private int doDeleteContact(Connection con, int contactId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
-		cdao.logicDeleteById(con, contactId, createRevisionInfo());
+		return cdao.logicDeleteById(con, contactId, createRevisionInfo());
+	}
+	
+	private int doDeleteContactsByCategory(Connection con, int categoryId, boolean list) throws WTException {
+		ContactDAO cdao = ContactDAO.getInstance();
+		return cdao.logicDeleteByCategoryId(con, categoryId, list, createRevisionInfo());
 	}
 	
 	private void doCopyContact(Connection con, boolean move, Contact contact, int targetCategoryId) throws WTException {
@@ -1134,410 +1251,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			DbUtils.closeQuietly(con);
 		}
 	}
-	
-	/*
-	private String ofGroup(String group) {
-		return MessageFormat.format("_{0}", group);
-	}
-	
-	private String lookupHeader(Locale locale, String key) {
-		return StringUtils.defaultIfBlank(lookupResource(locale, key), StringUtils.removeStart(key, "fields.")).toUpperCase();
-	}
-	
-	private DBDirectoryManager createDBDManager(UserProfile.Id pid, Locale locale, int categoryId) throws SQLException {
-		String groupwork = lookupHeader(locale, ContactsLocale.FIELDS_GROUPWORK);
-		String grouphome = lookupHeader(locale, ContactsLocale.FIELDS_GROUPHOME);
-		String groupother = lookupHeader(locale, ContactsLocale.FIELDS_GROUPOTHER);
-		String clickfields = lookupHeader(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-				+ lookupHeader(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-				+ lookupHeader(locale, ContactsLocale.FIELDS_COMPANY);
-		String searchfields = "searchfield,cemail,company";
-		String mailfield = lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupwork);
-		String faxfield = lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ofGroup(groupwork);
-		String firstnamefield = lookupHeader(locale, ContactsLocale.FIELDS_FIRSTNAME);
-		String lastnamefield = lookupHeader(locale, ContactsLocale.FIELDS_LASTNAME);
-		String companyfield = lookupHeader(locale, ContactsLocale.FIELDS_COMPANY);
-		
-		DBDirectoryManager dbdm = new DBDirectoryManager(
-				DirectoryManager.DirectoryType.USER,
-				"privatedb: " + pid.toString(), pid.toString(),
-				WT.getDataSource(SERVICE_ID),
-				"contacts.contacts",
-				lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"		
-				+ "+TITLE " + lookupHeader(locale, ContactsLocale.FIELDS_TITLE) + ","
-				+ "+FIRSTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-				+ "+LASTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-				+ "+NICKNAME " + lookupHeader(locale, ContactsLocale.FIELDS_NICKNAME) + ","
-				+ "GENDER " + lookupHeader(locale, ContactsLocale.FIELDS_GENDER) + ","
-				+ "+COMPANY " + lookupHeader(locale, ContactsLocale.FIELDS_COMPANY) + ","
-				+ "FUNCTION " + lookupHeader(locale, ContactsLocale.FIELDS_FUNCTION) + ","
-				+ "PHOTO " + lookupHeader(locale, ContactsLocale.FIELDS_PHOTO) + ","
-				+ "URL " + lookupHeader(locale, ContactsLocale.FIELDS_URL) + ","
-				+ "NOTES " + lookupHeader(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-				+ groupwork + "{"
-				+ "CADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ofGroup(groupwork) + ","
-				+ "+CCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ofGroup(groupwork) + ","
-				+ "CSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ofGroup(groupwork) + ","
-				+ "CPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ofGroup(groupwork) + ","
-				+ "CCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ofGroup(groupwork) + ","
-				+ "+CTELEPHONE " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE) + ofGroup(groupwork) + ","
-				+ "CTELEPHONE2 " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE2) + ofGroup(groupwork) + ","
-				+ "CFAX " + lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ofGroup(groupwork) + ","
-				+ "+CMOBILE " + lookupHeader(locale, ContactsLocale.FIELDS_MOBILE) + ofGroup(groupwork) + ","
-				+ "CPAGER " + lookupHeader(locale, ContactsLocale.FIELDS_PAGER) + ofGroup(groupwork) + ","
-				+ "+CEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupwork) + ","	
-				+ "CINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupwork) + ","
-				+ "CDEPARTMENT " + lookupHeader(locale, ContactsLocale.FIELDS_DEPARTMENT) + ofGroup(groupwork) + ","
-				+ "CMANAGER " + lookupHeader(locale, ContactsLocale.FIELDS_MANAGER) + ","
-				+ "CASSISTANT " + lookupHeader(locale, ContactsLocale.FIELDS_ASSISTANT) + ","
-				+ "CTELEPHONEASSISTANT " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONEASSISTANT) + "}|"
-				+ grouphome + "{"
-				+ "HADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ofGroup(grouphome) + ","
-				+ "HCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ofGroup(grouphome) + ","
-				+ "HSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ofGroup(grouphome) + ","
-				+ "HPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ofGroup(grouphome) + ","
-				+ "HCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ofGroup(grouphome) + ","
-				+ "+HTELEPHONE " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE) + ofGroup(grouphome) + ","
-				+ "HTELEPHONE2 " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE2) + ofGroup(grouphome) + ","
-				+ "HFAX " + lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ofGroup(grouphome) + ","
-				+ "HMOBILE " + lookupHeader(locale, ContactsLocale.FIELDS_MOBILE) + ofGroup(grouphome) + ","
-				+ "HPAGER " + lookupHeader(locale, ContactsLocale.FIELDS_PAGER) + ofGroup(grouphome) + ","
-				+ "+HEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(grouphome) + ","	
-				+ "HINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(grouphome) + ","
-				+ "HPARTNER " + lookupHeader(locale, ContactsLocale.FIELDS_PARTNER) + ","
-				+ "+HBIRTHDAY " + lookupHeader(locale, ContactsLocale.FIELDS_BIRTHDAY) + ","
-				+ "HANNIVERSARY " + lookupHeader(locale, ContactsLocale.FIELDS_ANNIVERSARY) + "}|"
-				+ groupother + "{"
-				+ "OADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ofGroup(groupother) + ","
-				+ "OCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ofGroup(groupother) + ","
-				+ "OSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ofGroup(groupother) + ","
-				+ "OPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ofGroup(groupother) + ","
-				+ "OCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ofGroup(groupother) + ","
-				+ "OEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupother) + ","
-				+ "OINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupother) + "}|"
-				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				//+ "+category_id category_id,"
-				+ "STATUS STATUS,"
-				+ "LIST_ID LIST_ID }",
-				null,
-				clickfields, null, searchfields, mailfield, faxfield, firstnamefield, lastnamefield, companyfield,
-				"contact_id",
-				"(status is null or status!='D') and (category_id=" + categoryId + ")",
-				"lastname,firstname,company",
-				"contact_id=nextval('contacts.seq_contacts'),category_id=" + categoryId
-		);
-		dbdm.setWritable(true);
-		dbdm.setIsContact(true);
-		return dbdm;
-	}
-	
-	
-	
-	/*
-	+ "+TITLE " + lookupHeader(locale, ContactsLocale.FIELDS_TITLE) + ","
-				+ "+FIRSTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-				+ "+LASTNAME " + lookupHeader(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-				+ "+NICKNAME " + lookupHeader(locale, ContactsLocale.FIELDS_NICKNAME) + ","
-				+ "GENDER " + lookupHeader(locale, ContactsLocale.FIELDS_GENDER) + ","
-				+ "+COMPANY " + lookupHeader(locale, ContactsLocale.FIELDS_COMPANY) + ","
-				+ "FUNCTION " + lookupHeader(locale, ContactsLocale.FIELDS_FUNCTION) + ","
-				+ "PHOTO " + lookupHeader(locale, ContactsLocale.FIELDS_PHOTO) + ","
-				+ "URL " + lookupHeader(locale, ContactsLocale.FIELDS_URL) + ","
-				+ "NOTES " + lookupHeader(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-				+ groupwork + "{"
-				+ "CADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ofGroup(groupwork) + ","
-				+ "+CCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ofGroup(groupwork) + ","
-				+ "CSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ofGroup(groupwork) + ","
-				+ "CPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ofGroup(groupwork) + ","
-				+ "CCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ofGroup(groupwork) + ","
-				+ "+CTELEPHONE " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE) + ofGroup(groupwork) + ","
-				+ "CTELEPHONE2 " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE2) + ofGroup(groupwork) + ","
-				+ "CFAX " + lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ofGroup(groupwork) + ","
-				+ "+CMOBILE " + lookupHeader(locale, ContactsLocale.FIELDS_MOBILE) + ofGroup(groupwork) + ","
-				+ "CPAGER " + lookupHeader(locale, ContactsLocale.FIELDS_PAGER) + ofGroup(groupwork) + ","
-				+ "+CEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupwork) + ","	
-				+ "CINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupwork) + ","
-				+ "CDEPARTMENT " + lookupHeader(locale, ContactsLocale.FIELDS_DEPARTMENT) + ofGroup(groupwork) + ","
-				+ "CMANAGER " + lookupHeader(locale, ContactsLocale.FIELDS_MANAGER) + ","
-				+ "CASSISTANT " + lookupHeader(locale, ContactsLocale.FIELDS_ASSISTANT) + ","
-				+ "CTELEPHONEASSISTANT" + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONEASSISTANT) + "}|"
-				+ grouphome + "{"
-				+ "HADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ofGroup(grouphome) + ","
-				+ "HCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ofGroup(grouphome) + ","
-				+ "HSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ofGroup(grouphome) + ","
-				+ "HPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ofGroup(grouphome) + ","
-				+ "HCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ofGroup(grouphome) + ","
-				+ "+HTELEPHONE " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE) + ofGroup(grouphome) + ","
-				+ "HTELEPHONE2 " + lookupHeader(locale, ContactsLocale.FIELDS_TELEPHONE2) + ofGroup(grouphome) + ","
-				+ "HFAX " + lookupHeader(locale, ContactsLocale.FIELDS_FAX) + ofGroup(grouphome) + ","
-				+ "HMOBILE " + lookupHeader(locale, ContactsLocale.FIELDS_MOBILE) + ofGroup(grouphome) + ","
-				+ "HPAGER " + lookupHeader(locale, ContactsLocale.FIELDS_PAGER) + ofGroup(grouphome) + ","
-				+ "+HEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(grouphome) + ","	
-				+ "HINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(grouphome) + ","
-				+ "HPARTNER " + lookupHeader(locale, ContactsLocale.FIELDS_PARTNER) + ","
-				+ "+HBIRTHDAY " + lookupHeader(locale, ContactsLocale.FIELDS_BIRTHDAY) + ","
-				+ "HANNIVERSARY " + lookupHeader(locale, ContactsLocale.FIELDS_ANNIVERSARY) + "}|"
-				+ groupother + "{"
-				+ "OADDRESS " + lookupHeader(locale, ContactsLocale.FIELDS_ADDRESS) + ofGroup(groupother) + ","
-				+ "OCITY " + lookupHeader(locale, ContactsLocale.FIELDS_CITY) + ofGroup(groupother) + ","
-				+ "OSTATE " + lookupHeader(locale, ContactsLocale.FIELDS_STATE) + ofGroup(groupother) + ","
-				+ "OPOSTALCODE " + lookupHeader(locale, ContactsLocale.FIELDS_POSTALCODE) + ofGroup(groupother) + ","
-				+ "OCOUNTRY " + lookupHeader(locale, ContactsLocale.FIELDS_COUNTRY) + ofGroup(groupother) + ","
-				+ "OEMAIL " + lookupHeader(locale, ContactsLocale.FIELDS_EMAIL) + ofGroup(groupother) + ","
-				+ "OINSTANT_MSG " + lookupHeader(locale, ContactsLocale.FIELDS_INSTANT_MSG) + ofGroup(groupother) + "}|"
-				+ "!" + lookupHeader(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "+CATEGORY_ID CATEGORY_ID,"
-				+ "STATUS STATUS,"
-				+ "LIST_ID LIST_ID }",
-	*/
-	
-	/*
-	private void initUserDirectories(UserProfile profile) throws SQLException {
-		Locale locale = profile.getLocale();
-		String domainId = profile.getDomainId();
-		String clickfields = lookupResource(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-				+ lookupResource(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-				+ lookupResource(locale, ContactsLocale.FIELDS_COMPANY);
-		String searchfields = "searchfield,cemail,company";
-		String mailfield = lookupResource(locale, ContactsLocale.FIELDS_CEMAIL);
-		String faxfield = lookupResource(locale, ContactsLocale.FIELDS_FAX);
-		String firstnamefield = lookupResource(locale, ContactsLocale.FIELDS_FIRSTNAME);
-		String lastnamefield = lookupResource(locale, ContactsLocale.FIELDS_LASTNAME);
-		String companyfield = lookupResource(locale, ContactsLocale.FIELDS_COMPANY);
-		
-		DBDirectoryManager dbdm = new DBDirectoryManager(
-				DirectoryManager.DirectoryType.USER,
-				"privatedb: " + profile.getUserId(), profile.getDisplayName(),
-				WT.getDataSource(SERVICE_ID),
-				"contacts",
-				lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"
-				+ "+TITLE " + lookupResource(locale, ContactsLocale.FIELDS_TITLE) + ","
-				+ "+LASTNAME " + lookupResource(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-				+ "+FIRSTNAME " + lookupResource(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-				+ "+COMPANY " + lookupResource(locale, ContactsLocale.FIELDS_COMPANY) + "}|"
-				+ lookupResource(locale, ContactsLocale.FIELDS_GROUPCOMPANY) + "{"
-				+ "FUNCTION " + lookupResource(locale, ContactsLocale.FIELDS_FUNCTION) + ","
-				+ "PHOTO " + lookupResource(locale, ContactsLocale.FIELDS_PHOTO) + ","
-				+ "+CEMAIL " + lookupResource(locale, ContactsLocale.FIELDS_CEMAIL) + ","
-				+ "CDEPARTMENT " + lookupResource(locale, ContactsLocale.FIELDS_DEPARTMENT) + ","
-				+ "CADDRESS " + lookupResource(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-				+ "+CCITY " + lookupResource(locale, ContactsLocale.FIELDS_CITY) + ","
-				+ "CSTATE " + lookupResource(locale, ContactsLocale.FIELDS_STATE) + ","
-				+ "CPOSTALCODE " + lookupResource(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-				+ "CCOUNTRY " + lookupResource(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-				+ "+CTELEPHONE " + lookupResource(locale, ContactsLocale.FIELDS_CTELEPHONE) + ","
-				+ "+CMOBILE " + lookupResource(locale, ContactsLocale.FIELDS_CMOBILE) + ","
-				+ "CTELEXTENSION " + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-				+ "CFAX " + lookupResource(locale, ContactsLocale.FIELDS_FAX) + ","
-				+ "CFAXEXTENSION X_" + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-				+ "CTELEPHONE2 " + lookupResource(locale, ContactsLocale.FIELDS_TELEPHONE2) + ","
-				+ "CTEL2EXTENSION X__" + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-				+ "CPAGER " + lookupResource(locale, ContactsLocale.FIELDS_PAGER) + ","
-				+ "CPAGEREXTENSION X___" + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-				+ "CASSISTANT " + lookupResource(locale, ContactsLocale.FIELDS_ASSISTANT) + ","
-				+ "CTELEPHONEASSISTANT X__" + lookupResource(locale, ContactsLocale.FIELDS_TELEPHONEASSISTANT) + ","
-				+ "URL " + lookupResource(locale, ContactsLocale.FIELDS_URL) + ","
-				+ "CMANAGER " + lookupResource(locale, ContactsLocale.FIELDS_MANAGER) + ","
-				+ "HINSTANT_MSG " + lookupResource(locale, ContactsLocale.FIELDS_HINSTANT_MSG) + ","
-				+ "CINSTANT_MSG X_" + lookupResource(locale, ContactsLocale.FIELDS_CINSTANT_MSG) + ","
-				+ "OINSTANT_MSG X__" + lookupResource(locale, ContactsLocale.FIELDS_OINSTANT_MSG) + ","
-				+ "OEMAIL X__" + lookupResource(locale, ContactsLocale.FIELDS_OEMAIL) + ","
-				+ "OADDRESS X__" + lookupResource(locale, ContactsLocale.FIELDS_OADDRESS) + ","
-				+ "OCITY X__" + lookupResource(locale, ContactsLocale.FIELDS_OCITY) + ","
-				+ "OSTATE X__" + lookupResource(locale, ContactsLocale.FIELDS_OSTATE) + ","
-				+ "OPOSTALCODE X__" + lookupResource(locale, ContactsLocale.FIELDS_OPOSTALCODE) + ","
-				+ "OCOUNTRY X__" + lookupResource(locale, ContactsLocale.FIELDS_OCOUNTRY) + ","
-				+ "CNOTES " + lookupResource(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-				+ lookupResource(locale, ContactsLocale.FIELDS_GROUPHOME) + "{"
-				+ "HADDRESS X_" + lookupResource(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-				+ "HCITY X_" + lookupResource(locale, ContactsLocale.FIELDS_CITY) + ","
-				+ "HSTATE X_" + lookupResource(locale, ContactsLocale.FIELDS_STATE) + ","
-				+ "HPOSTALCODE X_" + lookupResource(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-				+ "HCOUNTRY X_" + lookupResource(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-				+ "+HEMAIL " + lookupResource(locale, ContactsLocale.FIELDS_HEMAIL) + ","
-				+ "+HTELEPHONE " + lookupResource(locale, ContactsLocale.FIELDS_HTELEPHONE) + ","
-				+ "HTELEPHONE2 X_" + lookupResource(locale, ContactsLocale.FIELDS_TELEPHONE2) + ","
-				+ "HFAX X_" + lookupResource(locale, ContactsLocale.FIELDS_FAX) + ","
-				+ "HMOBILE X__" + lookupResource(locale, ContactsLocale.FIELDS_HMOBILE) + ","
-				+ "HPAGER X_" + lookupResource(locale, ContactsLocale.FIELDS_PAGER) + ","
-				+ "HPARTNER " + lookupResource(locale, ContactsLocale.FIELDS_PARTNER) + ","
-				+ "+HBIRTHDAY " + lookupResource(locale, ContactsLocale.FIELDS_BIRTHDAY) + ","
-				+ "HANNIVERSARY " + lookupResource(locale, ContactsLocale.FIELDS_ANNIVERSARY) + ","
-				+ "+CATEGORY " + lookupResource(locale, ContactsLocale.FIELDS_CATEGORY) + ","
-				+ "HNOTES X_" + lookupResource(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-				+ "!" + lookupResource(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-				+ "STATUS " + lookupResource(locale, ContactsLocale.FIELDS_STATUS) + ","
-				+ "IDLIST IDLIST }",
-				null,
-				clickfields, null, searchfields, mailfield, faxfield, firstnamefield, lastnamefield, companyfield,
-				"contact_id",
-				"(status is null or status!='D')",
-				"lastname,firstname,company",
-				"contact_id=nextval('seq_contacts'),user_id='" + profile.getUserId() + "',domain_id='" + profile.getDomainId() + "'"
-		);
-		dbdm.setWritable(true);
-		dbdm.setIsContact(true);
-		directories.put(dbdm.getId(), dbdm);
-		
-		
-		CoreManager core = WT.getCoreManager(getRunContext());
-		List<IncomingShare> shares = core.listIncomingSharesForUser(SERVICE_ID, profile.getId(), SHARE_RESOURCE_CONTACTS);
-		String resource = AuthResourceShareInstance.buildName("GROUP");
-		for(IncomingShare share : shares) {
-			if(!WT.isPermitted(SERVICE_ID, resource, AuthResourceShareInstance.ACTION_READ, share.getShareId())) continue;
-			dbdm = new DBDirectoryManager(
-					DirectoryManager.DirectoryType.GROUP,
-					"privatedb: " + share.getUserId(), wg.getDescription(),
-					WT.getDataSource(SERVICE_ID),
-					"contacts",
-					lookupResource(locale, ContactsLocale.FIELDS_GROUPMAIN) + "{"
-					+ "+TITLE " + lookupResource(locale, ContactsLocale.FIELDS_TITLE) + ","
-					+ "+LASTNAME " + lookupResource(locale, ContactsLocale.FIELDS_LASTNAME) + ","
-					+ "+FIRSTNAME " + lookupResource(locale, ContactsLocale.FIELDS_FIRSTNAME) + ","
-					+ "+COMPANY " + lookupResource(locale, ContactsLocale.FIELDS_COMPANY) + "}|"
-					+ lookupResource(locale, ContactsLocale.FIELDS_GROUPCOMPANY) + "{"
-					+ "FUNCTION " + lookupResource(locale, ContactsLocale.FIELDS_FUNCTION) + ","
-					+ "PHOTO " + lookupResource(locale, ContactsLocale.FIELDS_PHOTO) + ","
-					+ "+CEMAIL " + lookupResource(locale, ContactsLocale.FIELDS_CEMAIL) + ","
-					+ "CDEPARTMENT " + lookupResource(locale, ContactsLocale.FIELDS_DEPARTMENT) + ","
-					+ "CADDRESS " + lookupResource(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-					+ "+CCITY " + lookupResource(locale, ContactsLocale.FIELDS_CITY) + ","
-					+ "CSTATE " + lookupResource(locale, ContactsLocale.FIELDS_STATE) + ","
-					+ "CPOSTALCODE " + lookupResource(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-					+ "CCOUNTRY " + lookupResource(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-					+ "+CTELEPHONE " + lookupResource(locale, ContactsLocale.FIELDS_CTELEPHONE) + ","
-					+ "+CMOBILE " + lookupResource(locale, ContactsLocale.FIELDS_CMOBILE) + ","
-					+ "CTELEXTENSION " + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-					+ "CFAX " + lookupResource(locale, ContactsLocale.FIELDS_FAX) + ","
-					+ "CFAXEXTENSION X_" + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-					+ "CTELEPHONE2 " + lookupResource(locale, ContactsLocale.FIELDS_TELEPHONE2) + ","
-					+ "CTEL2EXTENSION X__" + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-					+ "CPAGER " + lookupResource(locale, ContactsLocale.FIELDS_PAGER) + ","
-					+ "CPAGEREXTENSION X___" + lookupResource(locale, ContactsLocale.FIELDS_EXTENSION) + ","
-					+ "CASSISTANT " + lookupResource(locale, ContactsLocale.FIELDS_ASSISTANT) + ","
-					+ "CTELEPHONEASSISTANT X__" + lookupResource(locale, ContactsLocale.FIELDS_TELEPHONEASSISTANT) + ","
-					+ "URL " + lookupResource(locale, ContactsLocale.FIELDS_URL) + ","
-					+ "CMANAGER " + lookupResource(locale, ContactsLocale.FIELDS_MANAGER) + ","
-					+ "HINSTANT_MSG " + lookupResource(locale, ContactsLocale.FIELDS_HINSTANT_MSG) + ","
-					+ "CINSTANT_MSG X_" + lookupResource(locale, ContactsLocale.FIELDS_CINSTANT_MSG) + ","
-					+ "OINSTANT_MSG X__" + lookupResource(locale, ContactsLocale.FIELDS_OINSTANT_MSG) + ","
-					+ "OEMAIL X__" + lookupResource(locale, ContactsLocale.FIELDS_OEMAIL) + ","
-					+ "OADDRESS X__" + lookupResource(locale, ContactsLocale.FIELDS_OADDRESS) + ","
-					+ "OCITY X__" + lookupResource(locale, ContactsLocale.FIELDS_OCITY) + ","
-					+ "OSTATE X__" + lookupResource(locale, ContactsLocale.FIELDS_OSTATE) + ","
-					+ "OPOSTALCODE X__" + lookupResource(locale, ContactsLocale.FIELDS_OPOSTALCODE) + ","
-					+ "OCOUNTRY X__" + lookupResource(locale, ContactsLocale.FIELDS_OCOUNTRY) + ","
-					+ "CNOTES " + lookupResource(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-					+ lookupResource(locale, ContactsLocale.FIELDS_GROUPHOME) + "{"
-					+ "HADDRESS X_" + lookupResource(locale, ContactsLocale.FIELDS_ADDRESS) + ","
-					+ "HCITY X_" + lookupResource(locale, ContactsLocale.FIELDS_CITY) + ","
-					+ "HSTATE X_" + lookupResource(locale, ContactsLocale.FIELDS_STATE) + ","
-					+ "HPOSTALCODE X_" + lookupResource(locale, ContactsLocale.FIELDS_POSTALCODE) + ","
-					+ "HCOUNTRY X_" + lookupResource(locale, ContactsLocale.FIELDS_COUNTRY) + ","
-					+ "+HEMAIL " + lookupResource(locale, ContactsLocale.FIELDS_HEMAIL) + ","
-					+ "+HTELEPHONE " + lookupResource(locale, ContactsLocale.FIELDS_HTELEPHONE) + ","
-					+ "HTELEPHONE2 X_" + lookupResource(locale, ContactsLocale.FIELDS_TELEPHONE2) + ","
-					+ "HFAX X_" + lookupResource(locale, ContactsLocale.FIELDS_FAX) + ","
-					+ "HMOBILE X__" + lookupResource(locale, ContactsLocale.FIELDS_HMOBILE) + ","
-					+ "HPAGER X_" + lookupResource(locale, ContactsLocale.FIELDS_PAGER) + ","
-					+ "HPARTNER " + lookupResource(locale, ContactsLocale.FIELDS_PARTNER) + ","
-					+ "+HBIRTHDAY " + lookupResource(locale, ContactsLocale.FIELDS_BIRTHDAY) + ","
-					+ "+CATEGORY " + lookupResource(locale, ContactsLocale.FIELDS_CATEGORY) + ","
-					+ "HANNIVERSARY " + lookupResource(locale, ContactsLocale.FIELDS_ANNIVERSARY) + ","
-					+ "HNOTES X_" + lookupResource(locale, ContactsLocale.FIELDS_NOTES) + "}|"
-					+ "!" + lookupResource(locale, ContactsLocale.FIELDS_GROUPSTATUS) + "{"
-					+ "STATUS " + lookupResource(locale, ContactsLocale.FIELDS_STATUS) + ","
-					+ "IDLIST IDLIST }",
-					null,
-					clickfields, null, searchfields, mailfield, faxfield, firstnamefield, lastnamefield, companyfield,
-					"contact_id",
-					"' and (status is null or status!='D')",
-					"lastname,firstname,company",
-					"contact_id=nextval('SEQ_CONTACTS'),user_id='" + share.getUserId() + "',domain_id='" + domainId + "'",
-					share.getUserId(),
-					domainId
-			);
-			dbdm.setWritable(wg.isWriteable("contacts"));
-			dbdm.setIsContact(true);
-			directories.put(dbdm.getId(), dbdm);
-		}
-	}
-	
-	private synchronized void initGlobalDirectories(UserProfile.Id pid) throws SQLException {
-		ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID);
-		
-		int index = 0;
-		while (true) {
-			String value = css.getDirectory(index);
-			if (value == null) break;
-			
-			if (value.startsWith("db:")) {
-				StringTokenizer st = new StringTokenizer(value, ";");
-				String sid = st.nextToken().trim();
-				String sdescription = st.nextToken().trim();
-				String sname = st.nextToken().trim();
-				boolean iswebtop = sname.equalsIgnoreCase("webtop");
-				String stable = st.nextToken().trim();
-				String sfields = st.nextToken().trim();
-				String sclickfields = st.nextToken().trim();
-				String ssearchfields = st.nextToken().trim();
-				String smailfield = st.nextToken().trim();
-				String sfirstnamefield = st.nextToken().trim();
-				String slastnamefield = st.nextToken().trim();
-				String sorderfields = st.nextToken().trim();
-				
-				DBDirectoryManager dm = null;
-				if (!iswebtop) {
-					DataSource ds = null;
-					try {
-						ds = WT.getDataSource(SERVICE_ID, sname);
-					} catch (Exception ex) {
-						logger.error("Unable to get DataSouce [{}, {}]", ex, SERVICE_ID, sname);
-						++index;
-						continue;
-					}
-					
-					dm = new DBDirectoryManager(
-						DirectoryManager.DirectoryType.GLOBAL,
-						sid, sdescription,
-						ds,
-						stable, sfields, null, sclickfields, null, ssearchfields,
-						smailfield, null, sfirstnamefield, slastnamefield, null, null, null,
-						sorderfields, null
-					);
-				} else {
-					dm = new DBDirectoryManager(
-							DirectoryManager.DirectoryType.GLOBAL,
-							sid, sdescription,
-							WT.getDataSource(SERVICE_ID),
-							stable, sfields, null, sclickfields, null, ssearchfields,
-							smailfield, null, sfirstnamefield, slastnamefield, null, null, null,
-							sorderfields, null
-					);
-				}
-				cacheGlobalDirectories.put(sid, dm);
-				
-			} else if (value.startsWith("ldap:")) {
-				StringTokenizer st = new StringTokenizer(value, ";");
-				String sid = st.nextToken().trim();
-				String sdescription = st.nextToken().trim();
-				String sserver = st.nextToken().trim();
-				String sport = st.nextToken().trim();
-				String sbase = "";
-				if (st.hasMoreTokens()) {
-					sbase = st.nextToken().trim();
-				}
-				LDAPDirectoryManager dm = new LDAPDirectoryManager(
-						sid, sdescription,
-						sserver, Integer.parseInt(sport), sbase
-				);
-				cacheGlobalDirectories.put(sid, dm);
-			}
-			
-			++index;
-		}
-	}
-	*/
 	
 	private ContactsList createContactsList(OContact clist, List<OListRecipient> rcpts) {
 		ContactsList item = new ContactsList(clist.getContactId(), clist.getCategoryId());
@@ -1804,287 +1517,4 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			this.result = result;
 		}
 	}
-	
-	/*
-	public Contact getContact999(String uid) throws WTException {
-		ContactPictureDAO dao = ContactPictureDAO.getInstance();
-		Connection con = null;
-		Contact item = null;
-		
-		try {
-			CompositeId cuid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cuid.getToken(0));
-			String contactId = cuid.getToken(1);
-			
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getLocale(), true, true, false);
-			DirectoryElement de = dr.elementAt(0);
-			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
-			
-			con = WT.getConnection(SERVICE_ID);
-			boolean hasPicture = dao.hasPicture(con, Integer.valueOf(contactId));
-			
-			item = new Contact(uid);
-			item.setContactId(contactId);
-			item.setCategoryId(String.valueOf(categoryId));
-			item.setListId(StringUtils.defaultIfEmpty(de.getField("LIST_ID"), null));
-			item.setStatus(de.getField("STATUS"));
-			item.setTitle(de.getField(dm.getAliasField("TITLE")));
-			item.setFirstName(de.getField(dm.getAliasField("FIRSTNAME")));
-			item.setLastName(de.getField(dm.getAliasField("LASTNAME")));
-			item.setNickname(de.getField(dm.getAliasField("NICKNAME")));
-			item.setGender(de.getField(dm.getAliasField("GENDER")));
-			item.setWorkAddress(de.getField(dm.getAliasField("CADDRESS")));
-			item.setWorkPostalCode(de.getField(dm.getAliasField("CPOSTALCODE")));
-			item.setWorkCity(de.getField(dm.getAliasField("CCITY")));
-			item.setWorkState(de.getField(dm.getAliasField("CSTATE")));
-			item.setWorkCountry(de.getField(dm.getAliasField("CCOUNTRY")));
-			item.setWorkTelephone(de.getField(dm.getAliasField("CTELEPHONE")));
-			item.setWorkTelephone2(de.getField(dm.getAliasField("CTELEPHONE2")));
-			item.setWorkMobile(de.getField(dm.getAliasField("CMOBILE")));
-			item.setWorkFax(de.getField(dm.getAliasField("CFAX")));
-			item.setWorkPager(de.getField(dm.getAliasField("CPAGER")));
-			item.setWorkEmail(de.getField(dm.getAliasField("CEMAIL")));
-			item.setWorkInstantMsg(de.getField(dm.getAliasField("CINSTANT_MSG")));
-			item.setHomeAddress(de.getField(dm.getAliasField("HADDRESS")));
-			item.setHomePostalCode(de.getField(dm.getAliasField("HPOSTALCODE")));
-			item.setHomeCity(de.getField(dm.getAliasField("HCITY")));
-			item.setHomeState(de.getField(dm.getAliasField("HSTATE")));
-			item.setHomeCountry(de.getField(dm.getAliasField("HCOUNTRY")));
-			item.setHomeTelephone(de.getField(dm.getAliasField("HTELEPHONE")));
-			item.setHomeMobile(de.getField(dm.getAliasField("HMOBILE")));
-			item.setHomeFax(de.getField(dm.getAliasField("HFAX")));
-			item.setHomePager(de.getField(dm.getAliasField("HPAGER")));
-			item.setHomeEmail(de.getField(dm.getAliasField("HEMAIL")));
-			item.setHomeInstantMsg(de.getField(dm.getAliasField("HINSTANT_MSG")));
-			item.setOtherAddress(de.getField(dm.getAliasField("OADDRESS")));
-			item.setOtherPostalCode(de.getField(dm.getAliasField("OPOSTALCODE")));
-			item.setOtherCity(de.getField(dm.getAliasField("OCITY")));
-			item.setOtherState(de.getField(dm.getAliasField("OSTATE")));
-			item.setOtherCountry(de.getField(dm.getAliasField("OCOUNTRY")));
-			item.setOtherEmail(de.getField(dm.getAliasField("OEMAIL")));
-			item.setOtherInstantMsg(de.getField(dm.getAliasField("OINSTANT_MSG")));
-			item.setCompany(de.getField(dm.getAliasField("COMPANY")));
-			item.setFunction(de.getField(dm.getAliasField("FUNCTION")));
-			item.setDepartment(de.getField(dm.getAliasField("CDEPARTMENT")));
-			item.setManager(de.getField(dm.getAliasField("CMANAGER")));
-			item.setAssistant(de.getField(dm.getAliasField("CASSISTANT")));
-			item.setAssistantTelephone(de.getField(dm.getAliasField("CTELEPHONEASSISTANT")));
-			item.setPartner(de.getField(dm.getAliasField("HPARTNER")));
-			item.setBirthday(de.getField(dm.getAliasField("HBIRTHDAY")));
-			item.setAnniversary(de.getField(dm.getAliasField("HANNIVERSARY")));
-			item.setUrl(de.getField(dm.getAliasField("URL")));
-			item.setNotes(de.getField(dm.getAliasField("NOTES")));
-			item.setHasPicture(hasPicture);
-			return item;
-		
-		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
-		} catch(WTException ex) {
-			throw ex;
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
-	
-	/* con DirectoryManager
-	public ContactsList getContactsList999(String uid) throws WTException {
-		ListRecipientDAO dao = ListRecipientDAO.getInstance();
-		Connection con = null;
-		ContactsList item = null;
-		
-		try {
-			CompositeId cuid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cuid.getToken(0));
-			String contactId = cuid.getToken(1);
-			
-			checkRightsOnCategoryFolder(categoryId, "READ"); // Rights check!
-			
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getLocale(), true, true, false);
-			DirectoryElement de = dr.elementAt(0);
-			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
-			
-			int listId = Integer.valueOf(de.getField("LIST_ID"));
-			con = WT.getConnection(SERVICE_ID);
-			List<OListRecipient> recipients = dao.selectByList(con, listId);
-			
-			item = new ContactsList(uid);
-			item.setContactId(contactId);
-			item.setCategoryId(categoryId);
-			item.setListId(LangUtils.value(de.getField("LIST_ID"), (Integer)null));
-			item.setName(de.getField(dm.getAliasField("LASTNAME")));
-			for(OListRecipient recipient : recipients) {
-				item.addRecipient(new ContactsListRecipient(recipient));
-			}
-			
-			return item;
-			
-		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
-		} catch(WTException ex) {
-			throw ex;
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
-	
-	/*
-	private void privateAddContactsList999(int categoryId, ContactsList contactsList) throws WTException {
-		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
-		ListDAO ldao = ListDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
-			
-			int listId = ldao.getSequence(con).intValue();
-			
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryElement de = dm.createEmptyElement(getLocale());
-			//de.setField("CATEGORY_ID", String.valueOf(categoryId));
-			de.setField("LIST_ID", String.valueOf(listId));
-			de.setField(dm.getLastNameField(), contactsList.getName());
-			//de.setField(dm.getMailField(), cl.getName());
-			de.setField("STATUS", "N");
-			dm.insert(de);
-			
-			for(ContactsListRecipient recipient : contactsList.getRecipients()) {
-				OListRecipient lr = new OListRecipient(recipient);
-				lr.setListId(listId);
-				lr.setListRecipientId(lrdao.getSequence(con).intValue());
-				lrdao.insert(con, lr);
-			}
-			
-			DbUtils.commitQuietly(con);
-			
-		} catch(SQLException | DAOException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(WTException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
-		} catch(Exception ex) {
-			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex);
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
-	
-	/*
-	private void privateUpdateContactsList999(int categoryId, ContactsList contactsList) throws WTException {
-		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactsList.getContactId()), getLocale(), true, true, false);
-			DirectoryElement de = dr.elementAt(0);
-			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactsList.getContactId());
-			
-			de.updateField("CATEGORY_ID", String.valueOf(contactsList.getCategoryId()));
-			de.updateField(dm.getLastNameField(), contactsList.getName());
-			de.updateField("STATUS", "M");
-			dm.update(de);
-			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
-			
-			lrdao.deleteByList(con, contactsList.getListId());
-			for(ContactsListRecipient recipient : contactsList.getRecipients()) {
-				OListRecipient lr = new OListRecipient(recipient);
-				lr.setListId(contactsList.getListId());
-				lr.setListRecipientId(lrdao.getSequence(con).intValue());
-				lrdao.insert(con, lr);
-			}
-			
-			DbUtils.commitQuietly(con);
-			
-		} catch(SQLException | DAOException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(WTException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
-		} catch(Exception ex) {
-			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex);
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
-	
-	/*
-	public void copyContactsList999(String sourceContactListUid, int destCategoryId) throws WTException {
-		try {
-			ContactsList scl = getContactsList(sourceContactListUid);
-			
-			//TODO: controllo autorizzatione scrittura
-			
-			privateAddContactsList999(destCategoryId, scl);
-		} catch(WTException ex) {
-			throw ex;
-		}
-	}
-	
-	public void deleteContactList999(String contactListUid) throws WTException {
-		
-		try {
-			CompositeId cuid = new CompositeId().parse(contactListUid, 2);
-			int categoryId = Integer.valueOf(cuid.getToken(0));
-			String contactId = cuid.getToken(1);
-			
-			//TODO: controllo autorizzatione
-			
-			DirectoryManager dm = getDirectoryManager(categoryId);
-			DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getLocale(), true, true, false);
-			DirectoryElement de = dr.elementAt(0);
-			if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
-			
-			de.updateField("STATUS", "D");
-			dm.update(de);
-			
-		} catch(Exception ex) {
-			throw new WTException(ex);
-		}
-	}
-	*/
-	
-	/*
-	public byte[] getContactPhoto(String uid) throws WTException {
-		ContactDAO dao = ContactDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			CompositeId cid = new CompositeId().parse(uid, 2);
-			int categoryId = Integer.parseInt(cid.getToken(0));
-			String contactId = cid.getToken(1);
-			
-			//DirectoryManager dm = getDirectoryManager(categoryId);
-			//DirectoryResult dr = dm.lookup(Arrays.asList("CONTACT_ID"), Arrays.asList(contactId), getRunContext().getLocale(), true, true, false);
-			//DirectoryElement de = dr.elementAt(0);
-			//if(de == null) throw new WTException("Contact not found [{0}, {1}]", categoryId, contactId);
-			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
-			byte[] bytes = dao.readPhoto(con, Integer.valueOf(contactId));
-			DbUtils.commitQuietly(con);
-			return bytes;
-		
-		} catch(SQLException | DAOException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(IOException ex) {
-			throw new WTException(ex, "Error reading bytes");
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
 }

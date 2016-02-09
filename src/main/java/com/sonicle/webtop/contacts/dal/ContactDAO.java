@@ -262,7 +262,20 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	
+	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean isList, RevisionInfo updateInfo) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CONTACTS)
+			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
+			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
+			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
+			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.where(
+				CONTACTS.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS.IS_LIST.equal(isList))
+			)
+			.execute();
+	}
 	
 	
 	

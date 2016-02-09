@@ -428,6 +428,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if(node) me.deleteCategory(node);
 			}
 		});
+		me.addAction('importContacts', {
+			handler: function() {
+				var node = me.getSelectedFolder(me.getRef('folderstree'));
+				if(node) me.importContacts(node.get('_catId'));
+			}
+		});
+		/*
 		me.addRef('uploaders', 'importContacts', Ext.create('Sonicle.upload.Item', {
 			text: WT.res(me.ID, 'act-importContacts.lbl'),
 			iconCls: me.cssIconCls('importContacts', 'xs'),
@@ -455,6 +462,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			})
 		}));
+		*/
 		me.addAction('viewAllFolders', {
 			iconCls: 'wt-icon-select-all-xs',
 			handler: function() {
@@ -599,7 +607,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				'-',
 				me.getAction('addContact'),
 				me.getAction('addContactsList'),
-				me.getRef('uploaders', 'importContacts')
+				//me.getRef('uploaders', 'importContacts'), //TODO: rimuovere
+				me.getAction('importContacts')
 				//TODO: azioni altri servizi?
 			],
 			listeners: {
@@ -614,7 +623,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					me.getAction('editSharing').setDisabled(!rr.MANAGE);
 					me.getAction('addContact').setDisabled(!er.CREATE);
 					me.getAction('addContactsList').setDisabled(!er.CREATE);
-					me.getRef('uploaders', 'importContacts').setDisabled(!er.CREATE);
+					//me.getRef('uploaders', 'importContacts').setDisabled(!er.CREATE); //TODO: rimuovere
+					me.getAction('importContacts').setDisabled(!er.CREATE);
 				}
 			}
 		}));
@@ -901,21 +911,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	importVCard: function(categoryId, uploadId) {
-		var me = this;
-		WT.ajaxReq(me.ID, 'ImportVCard', {
-			params: {
-				categoryId: categoryId,
-				uploadId: uploadId
-			},
-			callback: function(success, json) {
-				if(success) {
-					me.refreshContacts();
-				}
-			}
-		});
-	},
-	
 	deleteContacts: function(ids, opts) {
 		opts = opts || {};
 		var me = this;
@@ -982,6 +977,35 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			});
 		});
 		vw.show();
+	},
+	
+	importContacts: function(categoryId) {
+		var me = this,
+				vwc = WT.createView(me.ID, 'view.ImportContacts', {
+					viewCfg: {
+						categoryId: categoryId
+					}
+				});
+		
+		vwc.getView().on('dosuccess', function() {
+			me.refreshContacts();
+		});
+		vwc.show();
+	},
+	
+	importVCard: function(categoryId, uploadId) {
+		var me = this;
+		WT.ajaxReq(me.ID, 'ImportVCard', {
+			params: {
+				categoryId: categoryId,
+				uploadId: uploadId
+			},
+			callback: function(success, json) {
+				if(success) {
+					me.refreshContacts();
+				}
+			}
+		});
 	},
 	
 	/**

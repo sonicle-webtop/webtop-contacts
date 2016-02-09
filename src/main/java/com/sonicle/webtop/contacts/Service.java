@@ -33,11 +33,11 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.webtop.contacts.io.ContactTextFileReader;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.ServletUtils.IntegerArray;
-import com.sonicle.commons.web.ServletUtils.StringArray;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.commons.web.json.PayloadAsList;
 import com.sonicle.commons.web.json.JsonResult;
@@ -62,6 +62,7 @@ import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
 import com.sonicle.webtop.contacts.bol.js.JsGridContact;
 import com.sonicle.webtop.contacts.bol.js.JsGridContact.JsGridContactList;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
+import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.Contact;
@@ -69,14 +70,21 @@ import com.sonicle.webtop.contacts.bol.model.ContactPicture;
 import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
+import com.sonicle.webtop.contacts.io.ContactExcelFileReader;
+import com.sonicle.webtop.contacts.io.ContactVCardFileReader;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.WebTopSession.UploadedFile;
 import com.sonicle.webtop.core.bol.js.JsSimple;
+import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
+import com.sonicle.webtop.core.io.ExcelFileReader;
+import com.sonicle.webtop.core.io.FileRowsReader;
+import com.sonicle.webtop.core.io.TextFileReader;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
+import com.sonicle.webtop.core.util.LogEntries;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -93,6 +101,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
+import org.supercsv.prefs.CsvPreference;
 
 /**
  *
@@ -126,7 +135,6 @@ public class Service extends BaseService {
 	public void initialize() throws Exception {
 		UserProfile profile = getEnv().getProfile();
 		manager = new ContactsManager(getRunContext());
-		//manager.initializeDirectories(profile);
 		us = new ContactsUserSettings(SERVICE_ID, profile.getId());
 		initFolders();
 		gridFieldsW = buildFields(WORK_VIEW);
@@ -141,8 +149,10 @@ public class Service extends BaseService {
 		checkedFolders = null;
 		checkedRoots.clear();
 		checkedRoots = null;
+		folders.clear();
+		foldersByRoot.clear();
+		roots.clear();
 		us = null;
-		//manager.cleanupDirectories();
 		manager = null;
 	}
 	
@@ -153,6 +163,55 @@ public class Service extends BaseService {
 		return co;
 	}
 	
+	private void updateRootFoldersCache() throws WTException {
+		UserProfile.Id pid = getEnv().getProfile().getId();
+		synchronized(roots) {
+			roots.clear();
+			roots.put(MyCategoryRoot.SHARE_ID, new MyCategoryRoot(pid));
+			for(CategoryRoot root : manager.listIncomingCategoryRoots()) {
+				roots.put(root.getShareId(), root);
+			}
+		}
+	}
+	
+	private void updateFoldersCache() throws WTException {
+		synchronized(roots) {
+			foldersByRoot.clear();
+			folders.clear();
+			for(CategoryRoot root : roots.values()) {
+				foldersByRoot.put(root.getShareId(), new ArrayList<CategoryFolder>());
+				if(root instanceof MyCategoryRoot) {
+					for(OCategory cat : manager.listCategories()) {
+						MyCategoryFolder fold = new MyCategoryFolder(root.getShareId(), cat);
+						foldersByRoot.get(root.getShareId()).add(fold);
+						folders.put(cat.getCategoryId(), fold);
+					}
+				} else {
+					for(CategoryFolder fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
+						foldersByRoot.get(root.getShareId()).add(fold);
+						folders.put(fold.getCategory().getCategoryId(), fold);
+					}
+				}
+			}
+		}
+	}
+	
+	private void initFolders() throws WTException {
+		synchronized(roots) {
+			updateRootFoldersCache();
+			updateFoldersCache();
+			
+			checkedRoots = us.getCheckedCategoryRoots();
+			// If empty, adds MyNode checked by default!
+			if(checkedRoots.isEmpty()) {
+				checkedRoots.add(MyCategoryRoot.SHARE_ID);
+				us.setCheckedCategoryRoots(checkedRoots);
+			}
+			checkedFolders = us.getCheckedCategoryFolders();
+		}
+	}
+	
+	/*
 	private void initFolders() throws Exception {
 		UserProfile.Id pid = getEnv().getProfile().getId();
 		synchronized(roots) {
@@ -185,6 +244,7 @@ public class Service extends BaseService {
 			checkedFolders = us.getCheckedCategoryFolders();
 		}
 	}
+	*/
 	
 	public void processManageFoldersTree(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<ExtTreeNode> children = new ArrayList<>();
@@ -350,6 +410,7 @@ public class Service extends BaseService {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
 				item = manager.addCategory(JsCategory.buildFolder(pl.data));
+				updateFoldersCache();
 				toggleCheckedFolder(item.getCategoryId(), true);
 				new JsonResult().printTo(out);
 				
@@ -363,6 +424,7 @@ public class Service extends BaseService {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
 				manager.deleteCategory(pl.data.categoryId);
+				updateFoldersCache();
 				new JsonResult().printTo(out);
 			}
 			
@@ -709,93 +771,6 @@ public class Service extends BaseService {
 		}
 	}
 	
-	/*
-	public void processManageGridContacts2(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		ArrayList<MapItem> items = new ArrayList<>();
-		MapItem item = null;
-		CoreManager corem = WT.getCoreManager(getRunContext());
-		
-		try {
-			String crud = ServletUtils.getStringParameter(request, "crud", true);
-			if(crud.equals(Crud.READ)) {
-				
-				String query = ServletUtils.getStringParameter(request, "query", "%");
-				String pattern = StringUtils.replace(query, " ", "%");
-				
-				// Generates fields and columnsInfo dynamically
-				ArrayList<ExtFieldMeta> fields = new ArrayList<>();
-				ArrayList<ExtGridColumnMeta> colsInfo = new ArrayList<>();
-				
-				// Get contacts for each visible folder
-				Integer[] checked = getCheckedFolders();
-				List<ContactsManager.CategoryContacts> foldContacts = null;
-				DirectoryManager dm = null;
-				DirectoryElement de = null;
-				for(CategoryRoot root : getCheckedRoots()) {
-					foldContacts = manager.listContacts(root, checked, WORK_VIEW, pattern);
-					
-					for(ContactsManager.CategoryContacts foldContact : foldContacts) {
-						for(int i=0; i<foldContact.result.getElementsCount(); i++) {
-							dm = foldContact.result.getDirectoryManager();
-							de = foldContact.result.elementAt(i);
-							item = new MapItem();
-							
-							
-							fields.add(new ExtFieldMeta("contactId").setType("int"));
-							colsInfo.add(new ExtGridColumnMeta("contactId").setHidden(true));
-							item.put("contactId", Integer.parseInt(de.getField("CONTACT_ID")));
-							fields.add(new ExtFieldMeta("listId").setType("int"));
-							colsInfo.add(new ExtGridColumnMeta("listId").setHidden(true));
-							item.put("listId", Integer.parseInt(de.getField("LIST_ID")));
-							
-							for(int j=0; j < foldContact.result.getColumnCount(); j++) {
-								if(dm.isListField(j)) {
-									String col = foldContact.result.getColumn(j);
-									if(dm.getAliasField("COMPANY").equals(col)) {
-										OCustomer customer = corem.getCustomer(de.getField(col));
-										fields.add(new ExtFieldMeta(col));
-										colsInfo.add(new ExtGridColumnMeta(col, col));
-										item.put(col, (customer != null) ? customer.getDescription() : de.getField(col));
-									} else {
-										fields.add(new ExtFieldMeta(col));
-										colsInfo.add(new ExtGridColumnMeta(col, col));
-										item.put(col, de.getField(col));
-									}
-								}
-							}
-							
-							fields.add(new ExtFieldMeta("categoryId"));
-							colsInfo.add(new ExtGridColumnMeta("categoryId").setHidden(true));
-							item.put("categoryId", foldContact.folder.getCategoryId());
-							fields.add(new ExtFieldMeta("categoryName"));
-							colsInfo.add(new ExtGridColumnMeta("categoryName").setHidden(true));
-							item.put("categoryName", foldContact.folder.getName());
-							fields.add(new ExtFieldMeta("categoryColor"));
-							colsInfo.add(new ExtGridColumnMeta("categoryColor").setHidden(true));
-							item.put("categoryColor", foldContact.folder.getColor());
-							
-							fields.add(new ExtFieldMeta("uid").setType("string"));
-							colsInfo.add(new ExtGridColumnMeta("uid").setHidden(true));
-							item.put("id", Contact.buildUid(foldContact.folder.getCategoryId(), item.get("contactId")));
-							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
-							items.add(item);
-						}
-					}
-				}
-				
-				ExtGridMetaData meta = new ExtGridMetaData(true);
-				meta.setFields(fields);
-				meta.setColumnsInfo(colsInfo);
-				new JsonResult(items, meta, items.size()).printTo(out);
-			}
-		
-		} catch(Exception ex) {
-			logger.error("Error in action ManageGridContacts", ex);
-			new JsonResult(false, "Error").printTo(out);
-		}
-	}
-	*/
-	
 	public void processGetContactPicture(HttpServletRequest request, HttpServletResponse response) {
 		
 		try {
@@ -869,33 +844,142 @@ public class Service extends BaseService {
 		}
 	}
 	
-	/*
-	public void processUploadStreamVCardImport(HttpServletRequest request, InputStream uploadStream) throws Exception {
-		Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
-		manager.importVCard(categoryId, uploadStream);
-	}
-	*/
-	
-	public void processImportVCard(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		FileInputStream fis = null;
+	public void processImportContactsFromText(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		
 		try {
-			Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			String op = ServletUtils.getStringParameter(request, "op", true);
+			String encoding = ServletUtils.getStringParameter(request, "encoding", true);
+			String delimiter = ServletUtils.getStringParameter(request, "delimiter", true);
+			String lineSeparator = ServletUtils.getStringParameter(request, "lineSeparator", true);
+			String textQualifier = ServletUtils.getStringParameter(request, "textQualifier", null);
+			Integer hr = ServletUtils.getIntParameter(request, "headersRow", true);
+			Integer fdr = ServletUtils.getIntParameter(request, "firstDataRow", true);
+			Integer ldr = ServletUtils.getIntParameter(request, "lastDataRow", -1);
 			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			File file = new File(WT.getTempFolder(), upl.id);
 			
-			fis = new FileInputStream(new File(WT.getTempFolder(), upl.id));
-			manager.importVCard(categoryId, fis);
+			CsvPreference pref = TextFileReader.buildCsvPreference(delimiter, lineSeparator, textQualifier);
+			ContactTextFileReader rea = new ContactTextFileReader(pref, encoding);
+			rea.setHeadersRow(hr);
+			rea.setFirstDataRow(fdr);
+			if(ldr != null) rea.setLastDataRow(ldr);
 			
-			new JsonResult().printTo(out);
+			if(op.equals("columns")) {
+				ArrayList<JsValue> items = new ArrayList<>();
+				for(String sheet : rea.listColumnNames(file).values()) {
+					items.add(new JsValue(sheet));
+				}
+				new JsonResult("columns", items).printTo(out);
+				
+			} else if(op.equals("mappings")) {
+				List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, ContactTextFileReader.MAPPING_TARGETS);
+				new JsonResult("mappings", items).printTo(out);
+				
+			} else if(op.equals("do")) {
+				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
+				
+				rea.setMappings(mappings);
+				LogEntries log = manager.importEvents(categoryId, rea, file, mode);
+				clearUploadedFile(uploadId);
+				new JsonResult(log.print()).printTo(out);
+			}
 			
 		} catch(Exception ex) {
-			logger.error("Error in action ImportVCard", ex);
+			logger.error("Error in action ImportContactsFromText", ex);
 			new JsonResult(false, ex.getMessage()).printTo(out);
-		} finally {
-			IOUtils.closeQuietly(fis);
+		}
+	}
+	
+	public void processImportContactsFromExcel(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			Boolean binary = ServletUtils.getBooleanParameter(request, "binary", false);
+			String op = ServletUtils.getStringParameter(request, "op", true);
+			
+			UploadedFile upl = getUploadedFile(uploadId);
+			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			File file = new File(WT.getTempFolder(), upl.id);
+			
+			if(op.equals("sheets")) {
+				ArrayList<JsValue> items = new ArrayList<>();				
+				ExcelFileReader rea = new ExcelFileReader(binary);
+				List<String> sheets = rea.listSheets(file);
+				for(String sheet : sheets) {
+					items.add(new JsValue(sheet));
+				}
+				new JsonResult("sheets", items).printTo(out);
+				
+			} else {
+				String sheet = ServletUtils.getStringParameter(request, "sheet", true);
+				Integer hr = ServletUtils.getIntParameter(request, "headersRow", true);
+				Integer fdr = ServletUtils.getIntParameter(request, "firstDataRow", true);
+				Integer ldr = ServletUtils.getIntParameter(request, "lastDataRow", -1);
+				
+				ContactExcelFileReader rea = new ContactExcelFileReader(binary);
+				rea.setHeadersRow(hr);
+				rea.setFirstDataRow(fdr);
+				if(ldr != null) rea.setLastDataRow(ldr);
+				rea.setSheet(sheet);
+				
+				if(op.equals("columns")) {
+					ArrayList<JsValue> items = new ArrayList<>();
+					for(String col : rea.listColumnNames(file).values()) {
+						items.add(new JsValue(col));
+					}
+					new JsonResult("columns", items).printTo(out);
+					
+				} else if(op.equals("mappings")) {
+					List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, ContactTextFileReader.MAPPING_TARGETS);
+					new JsonResult("mappings", items).printTo(out);
+					
+				} else if(op.equals("do")) {
+					Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+					String mode = ServletUtils.getStringParameter(request, "importMode", true);
+					ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
+				
+					rea.setMappings(mappings);
+					LogEntries log = manager.importEvents(categoryId, rea, file, mode);
+					clearUploadedFile(uploadId);
+					new JsonResult(log.print()).printTo(out);
+				}
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ImportContactsFromExcel", ex);
+			new JsonResult(false, ex.getMessage()).printTo(out);
+		}
+	}
+	
+	public void processImportContactsFromVCard(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			String op = ServletUtils.getStringParameter(request, "op", true);
+			
+			UploadedFile upl = getUploadedFile(uploadId);
+			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			File file = new File(WT.getTempFolder(), upl.id);
+			
+			ContactVCardFileReader rea = new ContactVCardFileReader();
+			
+			if(op.equals("do")) {
+				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				
+				LogEntries log = manager.importEvents(categoryId, rea, file, mode);
+				clearUploadedFile(uploadId);
+				new JsonResult(log.print()).printTo(out);
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ImportContactsFromVCard", ex);
+			new JsonResult(false, ex.getMessage()).printTo(out);
 		}
 	}
 	
@@ -1025,4 +1109,39 @@ public class Service extends BaseService {
 		node.setChecked(visible);
 		return node;
 	}
+	
+	
+	
+	
+	
+	/*
+	public void processUploadStreamVCardImport(HttpServletRequest request, InputStream uploadStream) throws Exception {
+		Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+		manager.importVCard(categoryId, uploadStream);
+	}
+	*/
+	/*
+	public void processImportVCard(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		FileInputStream fis = null;
+		
+		try {
+			Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			
+			UploadedFile upl = getUploadedFile(uploadId);
+			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			
+			fis = new FileInputStream(new File(WT.getTempFolder(), upl.id));
+			manager.importVCard(categoryId, fis, "append");
+			
+			new JsonResult().printTo(out);
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ImportVCard", ex);
+			new JsonResult(false, ex.getMessage()).printTo(out);
+		} finally {
+			IOUtils.closeQuietly(fis);
+		}
+	}
+	*/
 }
