@@ -40,7 +40,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	
 	dockableConfig: {
 		width: 300,
-		height: 130,
+		height: 150,
 		modal: true,
 		minimizable: false,
 		maximizable: false
@@ -115,7 +115,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 					bind: '{categoryId}',
 					store: {
 						autoLoad: true,
-						model: 'Sonicle.webtop.contacts.model.CategoryLkp',
+						model: me.mys.preNs('model.CategoryLkp'),
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 					},
 					iconClsField: 'colorCls',
@@ -149,4 +149,3 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 		});
 	}
 });
-

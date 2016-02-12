@@ -163,6 +163,21 @@ public class Service extends BaseService {
 		return co;
 	}
 	
+	private void initFolders() throws WTException {
+		synchronized(roots) {
+			updateRootFoldersCache();
+			updateFoldersCache();
+			
+			checkedRoots = us.getCheckedCategoryRoots();
+			// If empty, adds MyNode checked by default!
+			if(checkedRoots.isEmpty()) {
+				checkedRoots.add(MyCategoryRoot.SHARE_ID);
+				us.setCheckedCategoryRoots(checkedRoots);
+			}
+			checkedFolders = us.getCheckedCategoryFolders();
+		}
+	}
+	
 	private void updateRootFoldersCache() throws WTException {
 		UserProfile.Id pid = getEnv().getProfile().getId();
 		synchronized(roots) {
@@ -193,21 +208,6 @@ public class Service extends BaseService {
 					}
 				}
 			}
-		}
-	}
-	
-	private void initFolders() throws WTException {
-		synchronized(roots) {
-			updateRootFoldersCache();
-			updateFoldersCache();
-			
-			checkedRoots = us.getCheckedCategoryRoots();
-			// If empty, adds MyNode checked by default!
-			if(checkedRoots.isEmpty()) {
-				checkedRoots.add(MyCategoryRoot.SHARE_ID);
-				us.setCheckedCategoryRoots(checkedRoots);
-			}
-			checkedFolders = us.getCheckedCategoryFolders();
 		}
 	}
 	
@@ -701,13 +701,13 @@ public class Service extends BaseService {
 				manager.deleteContact(ids);
 				new JsonResult().printTo(out);
 				
-			} else if(crud.equals(Crud.COPY)) {
+			} else if(crud.equals(Crud.MOVE)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
-				boolean move = ServletUtils.getBooleanParameter(request, "move", false);
+				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
 				
 				int contactId = Integer.parseInt(id);
-				manager.copyContact(move, contactId, categoryId);
+				manager.moveContact(copy, contactId, categoryId);
 				
 				new JsonResult().printTo(out);
 			}
@@ -754,13 +754,13 @@ public class Service extends BaseService {
 				manager.deleteContactsList(contactId);
 				new JsonResult().printTo(out);
 				
-			} else if(crud.equals(Crud.COPY)) {
+			} else if(crud.equals(Crud.MOVE)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
-				boolean move = ServletUtils.getBooleanParameter(request, "move", false);
+				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
 				
 				int contactId = Integer.parseInt(id);
-				manager.copyContactsList(move, contactId, categoryId);
+				manager.moveContactsList(copy, contactId, categoryId);
 				
 				new JsonResult().printTo(out);
 			}

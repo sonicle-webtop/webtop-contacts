@@ -36,8 +36,16 @@ Ext.define('Sonicle.webtop.contacts.store.ReminderDelivery', {
 	
 	model: 'WT.model.Simple',
 	data: [
-		['off', WT.res('com.sonicle.webtop.contacts', 'store.reminderDelivery.off')],
-		['app', WT.res('com.sonicle.webtop.contacts', 'store.reminderDelivery.app')],
-		['email', WT.res('com.sonicle.webtop.contacts', 'store.reminderDelivery.email')]
-	]
+		['off',''],
+		['app',''],
+		['email','']
+	],
+	
+	constructor: function(cfg) {
+		var me = this;
+		Ext.each(me.config.data, function(row) {
+			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.reminderDelivery.'+row[0]);
+		});
+		me.callParent([cfg]);
+	}
 });

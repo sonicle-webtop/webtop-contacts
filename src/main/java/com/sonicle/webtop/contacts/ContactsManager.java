@@ -55,7 +55,7 @@ import com.sonicle.webtop.contacts.io.ContactReadResult;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.bol.OShare;
-import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
+import com.sonicle.webtop.core.dal.BaseDAO.CrudInfo;
 import com.sonicle.webtop.core.sdk.BaseManager;
 import com.sonicle.webtop.core.RunContext;
 import com.sonicle.webtop.core.bol.Owner;
@@ -705,26 +705,27 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	public void copyContact(boolean move, int contactId, int targetCategoryId) throws WTException {
+	public void moveContact(boolean copy, int contactId, int targetCategoryId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		ContactPictureDAO pdao = ContactPictureDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			
-			checkRightsOnCategoryElements(targetCategoryId, "UPDATE"); // Rights check!
-			
 			OContact cont = cdao.selectById(con, contactId);
 			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
-			boolean hasPicture = pdao.hasPicture(con, contactId);
-			Contact contact = createContact(cont, hasPicture);
-			
-			con.setAutoCommit(false);
-			doCopyContact(con, move, contact, targetCategoryId);
-			DbUtils.commitQuietly(con);
+			if(copy || (targetCategoryId != cont.getCategoryId())) {
+				checkRightsOnCategoryElements(targetCategoryId, "CREATE"); // Rights check!
+				
+				boolean hasPicture = pdao.hasPicture(con, contactId);
+				Contact contact = createContact(cont, hasPicture);
+
+				con.setAutoCommit(false);
+				doMoveContact(con, copy, contact, targetCategoryId);
+				DbUtils.commitQuietly(con);
+			}
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -855,7 +856,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	public void copyContactsList(boolean move, int contactsListId, int targetCategoryId) throws WTException {
+	public void moveContactsList(boolean copy, int contactsListId, int targetCategoryId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
 		Connection con = null;
@@ -873,7 +874,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			ContactsList clist = createContactsList(cont, recipients);
 			
 			con.setAutoCommit(false);
-			doCopyContactsList(con, move, clist, targetCategoryId);
+			doMoveContactsList(con, copy, clist, targetCategoryId);
 			DbUtils.commitQuietly(con);
 			
 		} catch(SQLException | DAOException ex) {
@@ -1062,11 +1063,9 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			OContact item = new OContact(contact);
 			item.setIsList(isList);
 			if(StringUtils.isEmpty(contact.getPublicUid())) contact.setPublicUid(WT.generateUUID());
-			item.setStatus(OContact.STATUS_NEW);
-			item.setRevisionInfo(createRevisionInfo());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
 			item.setContactId(cdao.getSequence(con).intValue());
-			cdao.insert(con, item);
+			cdao.insert(con, item, createRevisionInfo());
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
@@ -1087,10 +1086,8 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		try {
 			OContact item = new OContact(contact);
 			item.setIsList(isList); // This is necessary because update method in dao writes all fields!!!
-			item.setStatus(OContact.STATUS_MODIFIED);
-			item.setRevisionInfo(createRevisionInfo());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
-			cdao.update(con, item);
+			cdao.update(con, item, createRevisionInfo());
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
@@ -1115,19 +1112,20 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		return cdao.logicDeleteByCategoryId(con, categoryId, list, createRevisionInfo());
 	}
 	
-	private void doCopyContact(Connection con, boolean move, Contact contact, int targetCategoryId) throws WTException {
+	private void doMoveContact(Connection con, boolean copy, Contact contact, int targetCategoryId) throws WTException {
 		ContactPictureDAO pdao = ContactPictureDAO.getInstance();
 		
-		contact.setCategoryId(targetCategoryId);
-		if(move) {
-			doUpdateContact(con, false, contact, null);
-		} else {
+		if(copy) {
+			contact.setCategoryId(targetCategoryId);
 			if(contact.getHasPicture()) {
 				OContactPicture pic = pdao.select(con, contact.getContactId());
 				doInsertContact(con, false, contact, new ContactPicture(pic));
 			} else {
 				doInsertContact(con, false, contact, null);
 			}
+		} else {
+			ContactDAO cdao = ContactDAO.getInstance();
+			cdao.updateCategory(con, contact.getContactId(), targetCategoryId, createRevisionInfo());
 		}
 	}
 	
@@ -1214,12 +1212,12 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	private void doCopyContactsList(Connection con, boolean move, ContactsList clist, int targetCategoryId) throws WTException {
+	private void doMoveContactsList(Connection con, boolean copy, ContactsList clist, int targetCategoryId) throws WTException {
 		clist.setCategoryId(targetCategoryId);
-		if(move) {
-			doUpdateContactsList(con, clist);
-		} else {
+		if(copy) {
 			doInsertContactsList(con, clist);
+		} else {
+			doUpdateContactsList(con, clist);
 		}
 	}
 	
@@ -1496,8 +1494,8 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	private RevisionInfo createRevisionInfo() {
-		return new RevisionInfo("WT", getRunContext().getProfileId().toString());
+	private CrudInfo createRevisionInfo() {
+		return new CrudInfo("WT", getRunContext().getProfileId().toString());
 	}
 	
 	private Integer[] toIntArray(String[] in) {

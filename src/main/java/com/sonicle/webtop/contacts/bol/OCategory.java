@@ -34,7 +34,7 @@
 package com.sonicle.webtop.contacts.bol;
 
 import com.sonicle.webtop.contacts.jooq.tables.pojos.Categories;
-import com.sonicle.webtop.core.dal.BaseDAO.RevisionInfo;
+import com.sonicle.webtop.core.dal.BaseDAO.CrudInfo;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,7 +53,7 @@ public class OCategory extends Categories {
 		return (StringUtils.indexOf(color, "#") == 0) ? StringUtils.substring(color, 1) : color;
 	}
 	
-	public void setRevisionInfo(RevisionInfo revision) {
-		setLastModified(revision.lastModified);
+	public void setRevisionInfo(CrudInfo revision) {
+		setLastModified(revision.timestamp);
 	}
 }

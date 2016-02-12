@@ -123,7 +123,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					bind: '{record.categoryId}',
 					store: {
 						autoLoad: true,
-						model: 'Sonicle.webtop.contacts.model.CategoryLkp',
+						model: me.mys.preNs('model.CategoryLkp'),
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 					},
 					iconClsField: 'colorCls',

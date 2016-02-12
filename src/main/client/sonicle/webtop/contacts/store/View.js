@@ -36,7 +36,15 @@ Ext.define('Sonicle.webtop.contacts.store.View', {
 	
 	model: 'WT.model.Simple',
 	data: [
-		['w', WT.res('com.sonicle.webtop.contacts', 'store.view.w')],
-		['h', WT.res('com.sonicle.webtop.contacts', 'store.view.h')]
-	]
+		['w',''],
+		['h','']
+	],
+	
+	constructor: function(cfg) {
+		var me = this;
+		Ext.each(me.config.data, function(row) {
+			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.view.'+row[0]);
+		});
+		me.callParent([cfg]);
+	}
 });

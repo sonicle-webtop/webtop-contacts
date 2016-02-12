@@ -36,6 +36,7 @@ package com.sonicle.webtop.contacts.bol;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.jooq.tables.pojos.Contacts;
 import com.sonicle.webtop.core.dal.BaseDAO;
+import com.sonicle.webtop.core.dal.BaseDAO.CrudInfo;
 
 /**
  *
@@ -104,9 +105,14 @@ public class OContact extends Contacts {
 		setNotes(cnt.getNotes());
 	}
 	
-	public void setRevisionInfo(BaseDAO.RevisionInfo revision) {
-		setLastModified(revision.lastModified);
-		setUpdateDevice(revision.lastDevice);
-		setUpdateUser(revision.lastUser);
+	public void setInsertionInfo(CrudInfo insertionInfo) {
+		//TODO: impostare i valori...
+		setRevisionInfo(insertionInfo);
+	}
+	
+	public void setRevisionInfo(CrudInfo revision) {
+		setLastModified(revision.timestamp);
+		setUpdateDevice(revision.device);
+		setUpdateUser(revision.user);
 	}
 }

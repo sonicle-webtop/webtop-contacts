@@ -200,8 +200,10 @@ public class ContactDAO extends BaseDAO {
 			.fetchOneInto(OContact.class);
 	}
 	
-	public int insert(Connection con, OContact item) throws DAOException {
+	public int insert(Connection con, OContact item, CrudInfo insertionInfo) throws DAOException {
 		DSLContext dsl = getDSL(con);
+		item.setStatus(OContact.STATUS_NEW);
+		item.setInsertionInfo(insertionInfo);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.insertInto(CONTACTS)
@@ -209,8 +211,10 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int update(Connection con, OContact item) throws DAOException {
+	public int update(Connection con, OContact item, CrudInfo revisionInfo) throws DAOException {
 		DSLContext dsl = getDSL(con);
+		item.setStatus(OContact.STATUS_MODIFIED);
+		item.setRevisionInfo(revisionInfo);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.update(CONTACTS)
@@ -221,55 +225,70 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int updateRevision(Connection con, int contactId, RevisionInfo updateInfo) throws DAOException {
+	public int updateCategory(Connection con, int contactId, int categoryId, CrudInfo revisionInfo) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
-			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.set(CONTACTS.CATEGORY_ID, categoryId)
+			.set(CONTACTS.STATUS, OContact.STATUS_MODIFIED)
+			.set(CONTACTS.LAST_MODIFIED, revisionInfo.timestamp)
+			.set(CONTACTS.UPDATE_DEVICE, revisionInfo.device)
+			.set(CONTACTS.UPDATE_USER, revisionInfo.user)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int updateStatus(Connection con, int contactId, String status, RevisionInfo updateInfo) throws DAOException {
+	public int updateRevision(Connection con, int contactId, CrudInfo insertionInfo) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CONTACTS)
+			.set(CONTACTS.LAST_MODIFIED, insertionInfo.timestamp)
+			.set(CONTACTS.UPDATE_DEVICE, insertionInfo.device)
+			.set(CONTACTS.UPDATE_USER, insertionInfo.user)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+			)
+			.execute();
+	}
+	
+	public int updateStatus(Connection con, int contactId, String status, CrudInfo insertionInfo) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.STATUS, status)
-			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
-			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.set(CONTACTS.LAST_MODIFIED, insertionInfo.timestamp)
+			.set(CONTACTS.UPDATE_DEVICE, insertionInfo.device)
+			.set(CONTACTS.UPDATE_USER, insertionInfo.user)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int logicDeleteById(Connection con, int contactId, RevisionInfo updateInfo) throws DAOException {
+	public int logicDeleteById(Connection con, int contactId, CrudInfo insertionInfo) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
-			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
-			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.set(CONTACTS.LAST_MODIFIED, insertionInfo.timestamp)
+			.set(CONTACTS.UPDATE_DEVICE, insertionInfo.device)
+			.set(CONTACTS.UPDATE_USER, insertionInfo.user)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean isList, RevisionInfo updateInfo) throws DAOException {
+	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean isList, CrudInfo insertionInfo) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
-			.set(CONTACTS.LAST_MODIFIED, updateInfo.lastModified)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.lastDevice)
-			.set(CONTACTS.UPDATE_USER, updateInfo.lastUser)
+			.set(CONTACTS.LAST_MODIFIED, insertionInfo.timestamp)
+			.set(CONTACTS.UPDATE_DEVICE, insertionInfo.device)
+			.set(CONTACTS.UPDATE_USER, insertionInfo.user)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(isList))
