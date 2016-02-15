@@ -371,8 +371,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			item.setCategoryId(dao.getSequence(con).intValue());
 			item.setBuiltIn(false);
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
-			item.setRevisionInfo(createRevisionInfo());
-			dao.insert(con, item);
+			dao.insert(con, item, createUpdateInfo());
 			DbUtils.commitQuietly(con);
 			return item;
 			
@@ -397,8 +396,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			CategoryDAO dao = CategoryDAO.getInstance();
 			
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
-			item.setRevisionInfo(createRevisionInfo());
-			dao.update(con, item);
+			dao.update(con, item, createUpdateInfo());
 			DbUtils.commitQuietly(con);
 			return item;
 			
@@ -612,7 +610,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryElements(cont.getCategoryId(), "UPDATE"); // Rights check!
 			
-			cntdao.updateRevision(con, contactId, createRevisionInfo());
+			cntdao.updateRevision(con, contactId, createUpdateInfo());
 			doUpdateContactPicture(con, contactId, picture);
 			DbUtils.commitQuietly(con);
 			
@@ -1065,7 +1063,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			if(StringUtils.isEmpty(contact.getPublicUid())) contact.setPublicUid(WT.generateUUID());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
 			item.setContactId(cdao.getSequence(con).intValue());
-			cdao.insert(con, item, createRevisionInfo());
+			cdao.insert(con, item, createUpdateInfo());
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
@@ -1087,7 +1085,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			OContact item = new OContact(contact);
 			item.setIsList(isList); // This is necessary because update method in dao writes all fields!!!
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
-			cdao.update(con, item, createRevisionInfo());
+			cdao.update(con, item, createUpdateInfo());
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
@@ -1104,12 +1102,12 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	
 	private int doDeleteContact(Connection con, int contactId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
-		return cdao.logicDeleteById(con, contactId, createRevisionInfo());
+		return cdao.logicDeleteById(con, contactId, createUpdateInfo());
 	}
 	
 	private int doDeleteContactsByCategory(Connection con, int categoryId, boolean list) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
-		return cdao.logicDeleteByCategoryId(con, categoryId, list, createRevisionInfo());
+		return cdao.logicDeleteByCategoryId(con, categoryId, list, createUpdateInfo());
 	}
 	
 	private void doMoveContact(Connection con, boolean copy, Contact contact, int targetCategoryId) throws WTException {
@@ -1125,7 +1123,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			}
 		} else {
 			ContactDAO cdao = ContactDAO.getInstance();
-			cdao.updateCategory(con, contact.getContactId(), targetCategoryId, createRevisionInfo());
+			cdao.updateCategory(con, contact.getContactId(), targetCategoryId, createUpdateInfo());
 		}
 	}
 	
@@ -1494,7 +1492,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	private CrudInfo createRevisionInfo() {
+	private CrudInfo createUpdateInfo() {
 		return new CrudInfo("WT", getRunContext().getProfileId().toString());
 	}
 	

@@ -746,7 +746,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		
 		if(sel.length === 1) {
 			name = Sonicle.String.join(' ', sel[0].get('firstName'), sel[0].get('lastName'));
-			msg = me.res('contact.confirm.delete', name);
+			msg = me.res('contact.confirm.delete', Ext.String.ellipsis(name, 40));
 		} else {
 			msg = me.res('gpcontacts.confirm.delete.selection');
 		}
@@ -796,7 +796,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	confirmDeleteCategory: function(rec) {
-		WT.confirm(this.res('category.confirm.delete', rec.get('text')), function(bid) {
+		WT.confirm(this.res('category.confirm.delete', Ext.String.ellipsis(rec.get('text'), 40)), function(bid) {
 			if(bid === 'yes') rec.drop();
 		}, this);
 	},

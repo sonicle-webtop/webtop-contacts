@@ -105,14 +105,16 @@ public class OContact extends Contacts {
 		setNotes(cnt.getNotes());
 	}
 	
-	public void setInsertionInfo(CrudInfo insertionInfo) {
-		//TODO: impostare i valori...
-		setRevisionInfo(insertionInfo);
+	public void setInsertInfo(CrudInfo insertInfo) {
+		setInsertTimestamp(insertInfo.timestamp);
+		setInsertDevice(insertInfo.device);
+		setInsertUser(insertInfo.user);
+		setUpdateInfo(insertInfo);
 	}
 	
-	public void setRevisionInfo(CrudInfo revision) {
-		setLastModified(revision.timestamp);
-		setUpdateDevice(revision.device);
-		setUpdateUser(revision.user);
+	public void setUpdateInfo(CrudInfo updateInfo) {
+		setUpdateTimestamp(updateInfo.timestamp);
+		setUpdateDevice(updateInfo.device);
+		setUpdateUser(updateInfo.user);
 	}
 }

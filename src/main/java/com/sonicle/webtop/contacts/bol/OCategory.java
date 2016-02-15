@@ -53,7 +53,11 @@ public class OCategory extends Categories {
 		return (StringUtils.indexOf(color, "#") == 0) ? StringUtils.substring(color, 1) : color;
 	}
 	
-	public void setRevisionInfo(CrudInfo revision) {
-		setLastModified(revision.timestamp);
+	public void setInsertInfo(CrudInfo insertInfo) {
+		setUpdateInfo(insertInfo);
+	}
+	
+	public void setUpdateInfo(CrudInfo updateInfo) {
+		setUpdateTimestamp(updateInfo.timestamp);
 	}
 }
