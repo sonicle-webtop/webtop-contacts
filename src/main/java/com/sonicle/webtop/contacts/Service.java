@@ -884,7 +884,7 @@ public class Service extends BaseService {
 				ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
 				
 				rea.setMappings(mappings);
-				LogEntries log = manager.importEvents(categoryId, rea, file, mode);
+				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
 				clearUploadedFile(uploadId);
 				new JsonResult(log.print()).printTo(out);
 			}
@@ -944,7 +944,7 @@ public class Service extends BaseService {
 					ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
 				
 					rea.setMappings(mappings);
-					LogEntries log = manager.importEvents(categoryId, rea, file, mode);
+					LogEntries log = manager.importContacts(categoryId, rea, file, mode);
 					clearUploadedFile(uploadId);
 					new JsonResult(log.print()).printTo(out);
 				}
@@ -972,7 +972,7 @@ public class Service extends BaseService {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 				String mode = ServletUtils.getStringParameter(request, "importMode", true);
 				
-				LogEntries log = manager.importEvents(categoryId, rea, file, mode);
+				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
 				clearUploadedFile(uploadId);
 				new JsonResult(log.print()).printTo(out);
 			}

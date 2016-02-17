@@ -888,7 +888,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	
 	
 	
-	public LogEntries importEvents(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
+	public LogEntries importContacts(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
 		
@@ -900,9 +900,9 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Reading source file..."));
 			ArrayList<ContactReadResult> parsed = null;
 			try {
-				parsed = rea.listEvents(log, file);
-			} catch(IOException ex) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete parsing. Reason: {0}", ex.getMessage()));
+				parsed = rea.listContacts(log, file);
+			} catch(IOException | UnsupportedOperationException ex) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete reading. Reason: {0}", ex.getMessage()));
 				throw new WTException(ex);
 			}
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s found!", parsed.size()));

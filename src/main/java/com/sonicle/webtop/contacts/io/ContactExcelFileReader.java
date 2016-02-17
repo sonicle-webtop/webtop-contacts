@@ -82,7 +82,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 	}
 
 	@Override
-	public ArrayList<ContactReadResult> listEvents(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
 		ArrayList<ContactReadResult> results = new ArrayList<>();
 		HashMap<String, Integer> headersIndexes = listColumnIndexes(file);
 		

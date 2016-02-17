@@ -92,6 +92,25 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 		}
 	},
 	
+	onBeforeNavigate: function(s, dir, np, pp) {
+		if(dir === -1) return;
+		var me = this,
+				ret = true,
+				vm = me.getVM(),
+				path = vm.get('path'),
+				ppcmp = me.getPageCmp(pp);
+		
+		if(me.callParent(arguments) === false) return false;
+		
+		if(path === 'vcf') {
+			if(pp === 'upload') {
+				ret = ppcmp.down('wtform').isValid();
+			}
+			if(!ret) return false;
+		}
+		return;
+	},
+	
 	buildDoParams: function(path) {
 		var vm = this.getVM();
 		if(path === 'vcf') {

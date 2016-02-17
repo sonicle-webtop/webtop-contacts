@@ -43,5 +43,5 @@ import java.util.ArrayList;
  * @author malbinola
  */
 public interface ContactFileReader {
-	public ArrayList<ContactReadResult> listEvents(LogEntries log, File file) throws IOException, UnsupportedOperationException;
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
 }

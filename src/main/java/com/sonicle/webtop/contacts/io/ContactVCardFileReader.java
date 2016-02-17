@@ -76,17 +76,17 @@ import org.joda.time.LocalDate;
 public class ContactVCardFileReader implements ContactFileReader {
 
 	@Override
-	public ArrayList<ContactReadResult> listEvents(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
-			return listEvents(log, fis);
+			return listContacts(log, fis);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
 	}
 	
-	public ArrayList<ContactReadResult> listEvents(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
 		// See https://tools.ietf.org/html/rfc6350
 		// See http://www.w3.org/TR/vcard-rdf/
 		ArrayList<ContactReadResult> results = new ArrayList<>();

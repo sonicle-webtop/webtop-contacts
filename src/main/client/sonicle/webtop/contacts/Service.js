@@ -209,7 +209,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 									colsInfo = [],
 									data = [];
 							
-							gp.isReconfiguring = true;
+							s.isReconfiguring = true;
 							if(meta.colsInfo) {
 								colsInfo.push({
 									xtype: 'soiconcolumn',
@@ -264,7 +264,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								}));
 							}
 							
-							gp.isReconfiguring = false;
+							s.isReconfiguring = false;
 						}
 					}
 				},
@@ -295,7 +295,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						});
 					},
 					groupchange: function(sto, group) {
-						if(me.gpContacts().isReconfiguring) return;
+						if(sto.isReconfiguring) return;
 						if(group == null) {
 							me.getRef('cbogroup').setValue('-');
 							me.saveGroupInfo(null, null);
@@ -305,7 +305,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						}
 					},
 					sortchange: function(ct, col, dir) {
-						if(me.gpContacts().isReconfiguring) return;
+						if(me.gpContacts().getStore().isReconfiguring) return;
 						me.saveSortInfo(col.dataIndex, dir);
 					}
 				}
