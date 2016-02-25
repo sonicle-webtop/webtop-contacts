@@ -553,8 +553,8 @@ public class Service extends BaseService {
 				}
 			}
 			
-			ReportConfig config = buildBaseReportConfig();
-			Addressbook rpt = new Addressbook(config);
+			ReportConfig.Builder builder = reportConfigBuilder();
+			Addressbook rpt = new Addressbook(builder.build());
 			rpt.setDataSource(new JRBeanCollectionDataSource(items));
 			
 			baos = new ByteArrayOutputStream();
@@ -577,10 +577,10 @@ public class Service extends BaseService {
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
 			
-					
 			
-			ReportConfig config = buildBaseReportConfig();
-			Addressbook rpt = new Addressbook(config);
+			
+			ReportConfig.Builder builder = reportConfigBuilder();
+			Addressbook rpt = new Addressbook(builder.build());
 			rpt.setDataSource(new JRBeanCollectionDataSource(items));
 			
 			baos = new ByteArrayOutputStream();
@@ -596,14 +596,14 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private ReportConfig buildBaseReportConfig() {
+	private ReportConfig.Builder reportConfigBuilder() {
 		UserProfile.Data ud = getEnv().getProfile().getData();
-		return new ReportConfig()
-				.setLocale(ud.getLocale())
-				.setTimeZone(ud.getTimeZone().toTimeZone())
-				.setHasResourceBundle(true)
-				.setGeneratedBy("WebTop " + lookupResource(ContactsLocale.SERVICE_NAME)) // TODO: supportare rebranding
-				.setPrintedBy(ud.getDisplayName());
+		return new ReportConfig.Builder()
+				.useLocale(ud.getLocale())
+				.useTimeZone(ud.getTimeZone().toTimeZone())
+				.haveResourceBundle(true)
+				.generatedBy("WebTop " + lookupResource(ContactsLocale.SERVICE_NAME)) // TODO: supportare rebranding
+				.printedBy(ud.getDisplayName());
 	}
 	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
