@@ -408,7 +408,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAction('editSharing', {
 			text: WT.res('sharing.tit'),
-			iconCls: me.cssIconCls('sharing', 'xs'),
+			iconCls: WTF.cssIconCls(WT.XID, 'sharing', 'xs'),
 			handler: function() {
 				var node = me.getSelectedNode(me.getRef('folderstree'));
 				if(node) me.editShare(node.getId());
@@ -590,8 +590,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				//TODO: azioni altri servizi?
 			],
 			listeners: {
-				beforeshow: function(e) {
-					var rec = e.tag.folder,
+				beforeshow: function(s) {
+					var rec = s.menuData.folder,
 							rr = me.toRightsObj(rec.get('_rrights'));
 					me.getAction('addCategory').setDisabled(!rr.MANAGE);
 					me.getAction('editSharing').setDisabled(!rr.MANAGE);
@@ -617,8 +617,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				//TODO: azioni altri servizi?
 			],
 			listeners: {
-				beforeshow: function(e) {
-					var rec = e.tag.folder,
+				beforeshow: function(s) {
+					var rec = s.menuData.folder,
 							rr = me.toRightsObj(rec.get('_rrights')),
 							fr = me.toRightsObj(rec.get('_frights')),
 							er = me.toRightsObj(rec.get('_erights'));
