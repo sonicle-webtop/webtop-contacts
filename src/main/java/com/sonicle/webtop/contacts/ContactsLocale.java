@@ -38,6 +38,8 @@ package com.sonicle.webtop.contacts;
  * @author malbinola
  */
 public class ContactsLocale {
+	public static final String SERVICE_NAME = "service.name";
+	public static final String SERVICE_DESCRIPTION = "service.description";
 	public static final String CATEGORIES_MY = "categories.my";
 	public static final String REMINDER_TITLE_ANNIVERSARY = "reminder.title.anniversary";
 	public static final String REMINDER_TITLE_BIRTHDAY = "reminder.title.birthday";

@@ -70,22 +70,27 @@ import com.sonicle.webtop.contacts.bol.model.ContactPicture;
 import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
+import com.sonicle.webtop.contacts.bol.model.AddressbookBean;
 import com.sonicle.webtop.contacts.io.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.ContactVCardFileReader;
+import com.sonicle.webtop.contacts.rpt.Addressbook;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.WebTopSession.UploadedFile;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
+import com.sonicle.webtop.core.io.AbstractReport;
 import com.sonicle.webtop.core.io.ExcelFileReader;
 import com.sonicle.webtop.core.io.FileRowsReader;
+import com.sonicle.webtop.core.io.ReportConfig;
 import com.sonicle.webtop.core.io.TextFileReader;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.LogEntries;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -97,6 +102,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
@@ -133,9 +139,9 @@ public class Service extends BaseService {
 	
 	@Override
 	public void initialize() throws Exception {
-		UserProfile profile = getEnv().getProfile();
+		UserProfile up = getEnv().getProfile();
 		manager = new ContactsManager(getRunContext());
-		us = new ContactsUserSettings(SERVICE_ID, profile.getId());
+		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
 		gridFieldsW = buildFields(WORK_VIEW);
 		gridFieldsH = buildFields(HOME_VIEW);
@@ -497,6 +503,109 @@ public class Service extends BaseService {
 		return colsInfo;
 	}
 	
+	private String[] buildQueryParameters(String view, String letter, String query) {
+		String searchMode = null, pattern = null;
+		if(!StringUtils.isEmpty(letter)) {
+			searchMode = "lastname";
+			if(letter.equals("*")) {
+				pattern = "^.*";
+			} else if(letter.equals("#")) {
+				pattern = "^[0-9]";
+			} else {
+				pattern = "^[" + letter.toLowerCase() + "]";
+			}
+		} else if(query != null) {
+			searchMode = (view.equals(WORK_VIEW)) ? "work" : "home";
+			pattern = "%" + query.toLowerCase() + "%";
+		} else {
+			searchMode = "lastname";
+			pattern = "^[a]";
+		}
+		return new String[]{searchMode, pattern};
+	}
+	
+	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
+		ArrayList<AddressbookBean> items = new ArrayList<>();
+		ByteArrayOutputStream baos = null;
+		
+		try {
+			String filename = ServletUtils.getStringParameter(request, "filename", "print");
+			String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
+			String letter = ServletUtils.getStringParameter(request, "letter", null);
+			String query = ServletUtils.getStringParameter(request, "query", null);
+			
+			String[] parameters = buildQueryParameters(view, letter, query);
+			String searchMode = parameters[0], pattern = parameters[1];
+			
+			// Get contacts for each visible folder
+			Integer[] checked = getCheckedFolders();
+			List<ContactsManager.CategoryContacts> foldContacts = null;
+			for(CategoryRoot root : getCheckedRoots()) {
+				foldContacts = manager.listContacts(root, checked, searchMode, pattern);
+				
+				for(ContactsManager.CategoryContacts foldContact : foldContacts) {
+					CategoryFolder fold = folders.get(foldContact.folder.getCategoryId());
+					if(fold == null) continue;
+
+					for(VContact vc : foldContact.contacts) {
+						items.add(new AddressbookBean(fold.getCategory(), vc));
+					}
+				}
+			}
+			
+			ReportConfig config = buildBaseReportConfig();
+			Addressbook rpt = new Addressbook(config);
+			rpt.setDataSource(new JRBeanCollectionDataSource(items));
+			
+			baos = new ByteArrayOutputStream();
+			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
+			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
+			ServletUtils.writeContent(response, baos, "application/pdf");
+			
+		} catch(Exception ex) {
+			logger.error("Error in action PrintAddressbook", ex);
+			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		} finally {
+			IOUtils.closeQuietly(baos);
+		}
+	}
+	
+	public void processPrintContact(HttpServletRequest request, HttpServletResponse response) {
+		ArrayList<AddressbookBean> items = new ArrayList<>();
+		ByteArrayOutputStream baos = null;
+		
+		try {
+			String filename = ServletUtils.getStringParameter(request, "filename", "print");
+			
+					
+			
+			ReportConfig config = buildBaseReportConfig();
+			Addressbook rpt = new Addressbook(config);
+			rpt.setDataSource(new JRBeanCollectionDataSource(items));
+			
+			baos = new ByteArrayOutputStream();
+			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
+			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
+			ServletUtils.writeContent(response, baos, "application/pdf");
+			
+		} catch(Exception ex) {
+			logger.error("Error in action PrintContact", ex);
+			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		} finally {
+			IOUtils.closeQuietly(baos);
+		}
+	}
+	
+	private ReportConfig buildBaseReportConfig() {
+		UserProfile.Data ud = getEnv().getProfile().getData();
+		return new ReportConfig()
+				.setLocale(ud.getLocale())
+				.setTimeZone(ud.getTimeZone().toTimeZone())
+				.setHasResourceBundle(true)
+				.setGeneratedBy("WebTop " + lookupResource(ContactsLocale.SERVICE_NAME)) // TODO: supportare rebranding
+				.setPrintedBy(ud.getDisplayName());
+	}
+	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<MapItem> items = new ArrayList<>();
 		MapItem item = null;
@@ -508,23 +617,8 @@ public class Service extends BaseService {
 				String letter = ServletUtils.getStringParameter(request, "letter", null);
 				String query = ServletUtils.getStringParameter(request, "query", null);
 				
-				String searchMode = null, pattern = null;
-				if(!StringUtils.isEmpty(letter)) {
-					searchMode = "lastname";
-					if(letter.equals("*")) {
-						pattern = "^.*";
-					} else if(letter.equals("#")) {
-						pattern = "^[0-9]";
-					} else {
-						pattern = "^[" + letter.toLowerCase() + "]";
-					}
-				} else if(query != null) {
-					searchMode = (view.equals(WORK_VIEW)) ? "work" : "home";
-					pattern = "%" + query.toLowerCase() + "%";
-				} else {
-					searchMode = "lastname";
-					pattern = "^[a]";
-				}
+				String[] parameters = buildQueryParameters(view, letter, query);
+				String searchMode = parameters[0], pattern = parameters[1];
 				
 				// Get contacts for each visible folder
 				DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();

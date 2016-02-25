@@ -148,7 +148,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			LocalTime time = new ContactsUserSettings(SERVICE_ID, pid).getAnniversaryReminderTime();
 			//TODO: valutare se uniformare i minuti a quelli consentiti (ai min 0 e 30), se errato non verrà mai preso in considerazione
 			UserProfile.Data ud = WT.getUserData(pid);
-			DateTime value = new DateTime(ud.getTimezone()).withDate(date).withTime(time);
+			DateTime value = new DateTime(ud.getTimeZone()).withDate(date).withTime(time);
 			cache.put(pid, value);
 			return value;
 		} else {
@@ -454,7 +454,7 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			for(OCategory cat : cats) {
 				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
 				vcs = condao.viewByCategoryPattern(con, cat.getCategoryId(), searchMode, pattern);
-				catContacts.add(new CategoryContacts(cat, vcs, null));
+				catContacts.add(new CategoryContacts(cat, vcs));
 			}
 			return catContacts;
 		
@@ -1505,12 +1505,10 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	public static class CategoryContacts {
 		public final OCategory folder;
 		public final List<VContact> contacts;
-		public final DirectoryResult result;
 		
-		public CategoryContacts(OCategory folder, List<VContact> contacts, DirectoryResult result) {
+		public CategoryContacts(OCategory folder, List<VContact> contacts) {
 			this.folder = folder;
 			this.contacts = contacts;
-			this.result = result;
 		}
 	}
 }

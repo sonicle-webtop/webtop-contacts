@@ -67,7 +67,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			
 			items: [
 				'-',
-				me.getAction('printContact2'),
+				//me.getAction('printContact2'),
+				me.getAction('printAddressbook'),
 				me.getAction('deleteContact2'),
 				'-',
 				me.getAction('addContact2'),
@@ -541,12 +542,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		
 		
-		me.addAction('printContact2', {
+		me.addAction('printAddressbook', {
 			text: null,
-			tooltip: WT.res('act-print.tip'),
+			tooltip: me.res('act-printAddressbook.tip'),
 			iconCls: 'wt-icon-print-xs',
 			handler: function() {
-				me.getAction('printContact').execute();
+				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
+				var url = WTF.processBinUrl(me.ID, 'PrintAddressbook', params);
+				Sonicle.URLMgr.openFile(url, {filename: 'addressbook'});
 			}
 		});
 		me.addAction('deleteContact2', {
@@ -1032,7 +1035,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		
 		if(action === 'printContact') {
 			me.setActionDisabled(action, dis);
-			me.setActionDisabled('printContact2', dis);
+			//me.setActionDisabled('printContact2', dis);
 		} else if(action === 'deleteContact') {
 			me.setActionDisabled(action, dis);
 			me.setActionDisabled('deleteContact2', dis);
