@@ -67,7 +67,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			
 			items: [
 				'-',
-				//me.getAction('printContact2'),
 				me.getAction('printAddressbook'),
 				me.getAction('deleteContact2'),
 				'-',
@@ -519,7 +518,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iconCls: 'wt-icon-delete-xs',
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if(sel.length > 0) me.deleteContactsSel(sel);
+				if(sel.length > 0) me.deleteSelContacts(sel);
 			}
 		});
 		me.addAction('copyContact', {
@@ -536,12 +535,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			text: WT.res('act-print.lbl'),
 			iconCls: 'wt-icon-print-xs',
 			handler: function() {
-				//TODO: implementare stampa contatto/i
-				WT.warn('TODO');
+				var sel = me.getSelectedContacts();
+				if(sel.length > 0) me.printSelContacts(sel);
 			}
 		});
-		
-		
 		me.addAction('printAddressbook', {
 			text: null,
 			tooltip: me.res('act-printAddressbook.tip'),
@@ -549,7 +546,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			handler: function() {
 				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
 				var url = WTF.processBinUrl(me.ID, 'PrintAddressbook', params);
-				Sonicle.URLMgr.openFile(url, {filename: 'addressbook'});
+				Sonicle.URLMgr.openFile(url, {filename: 'addressbook', newWindow: true});
 			}
 		});
 		me.addAction('deleteContact2', {
@@ -736,16 +733,28 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		return this.gpContacts().getSelection();
 	},
 	
-	deleteContactsSel: function(sel) {
+	printSelContacts: function(sel) {
+		var me = this,
+			ids = me.selectionIds(sel);
+		
+		var url = WTF.processBinUrl(me.ID, 'PrintContactDetails', {ids: WTU.arrayAsParam(ids)});
+		Sonicle.URLMgr.openFile(url, {filename: 'contact-details', newWindow: true});
+	},
+	
+	selectionIds: function(sel) {
+		var ids = [];
+		Ext.iterate(sel, function(rec) {
+			ids.push(rec.getId());
+		});
+		return ids;
+	},
+	
+	deleteSelContacts: function(sel) {
 		var me = this,
 			sto = me.gpContacts().getStore(),
 			isl = sel[0].get('isList') === true,
-			ids = [],
+			ids = me.selectionIds(sel),
 			msg, name;
-		
-		Ext.iterate(sel, function(rec) {
-			ids.push(rec.get('contactId'));
-		});
 		
 		if(sel.length === 1) {
 			name = Sonicle.String.join(' ', sel[0].get('firstName'), sel[0].get('lastName'));
@@ -1035,7 +1044,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		
 		if(action === 'printContact') {
 			me.setActionDisabled(action, dis);
-			//me.setActionDisabled('printContact2', dis);
 		} else if(action === 'deleteContact') {
 			me.setActionDisabled(action, dis);
 			me.setActionDisabled('deleteContact2', dis);

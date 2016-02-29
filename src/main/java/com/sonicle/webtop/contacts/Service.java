@@ -71,11 +71,16 @@ import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.AddressbookBean;
+import com.sonicle.webtop.contacts.bol.model.ContactDetailsBean;
 import com.sonicle.webtop.contacts.io.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.ContactVCardFileReader;
-import com.sonicle.webtop.contacts.rpt.Addressbook;
+import com.sonicle.webtop.contacts.rpt.RptAddressbook;
+import com.sonicle.webtop.contacts.rpt.RptContactDetails;
+import com.sonicle.webtop.core.CoreManager;
+import com.sonicle.webtop.core.CoreUserSettings;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.WebTopSession.UploadedFile;
+import com.sonicle.webtop.core.bol.OCustomer;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
@@ -554,7 +559,7 @@ public class Service extends BaseService {
 			}
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
-			Addressbook rpt = new Addressbook(builder.build());
+			RptAddressbook rpt = new RptAddressbook(builder.build());
 			rpt.setDataSource(new JRBeanCollectionDataSource(items));
 			
 			baos = new ByteArrayOutputStream();
@@ -570,17 +575,26 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processPrintContact(HttpServletRequest request, HttpServletResponse response) {
-		ArrayList<AddressbookBean> items = new ArrayList<>();
+	public void processPrintContactDetails(HttpServletRequest request, HttpServletResponse response) {
+		ArrayList<ContactDetailsBean> items = new ArrayList<>();
 		ByteArrayOutputStream baos = null;
+		CoreManager core = WT.getCoreManager(getRunContext());
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
+			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
-			
+			Contact contact = null;
+			OCategory category = null;
+			for(Integer id : ids) {
+				contact = manager.getContact(id);
+				category = manager.getCategory(contact.getCategoryId());
+				OCustomer customer = core.getCustomer(contact.getCompany());
+				items.add(new ContactDetailsBean(category, contact, customer.getDescription()));
+			}
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
-			Addressbook rpt = new Addressbook(builder.build());
+			RptContactDetails rpt = new RptContactDetails(builder.build());
 			rpt.setDataSource(new JRBeanCollectionDataSource(items));
 			
 			baos = new ByteArrayOutputStream();
@@ -594,16 +608,6 @@ public class Service extends BaseService {
 		} finally {
 			IOUtils.closeQuietly(baos);
 		}
-	}
-	
-	private ReportConfig.Builder reportConfigBuilder() {
-		UserProfile.Data ud = getEnv().getProfile().getData();
-		return new ReportConfig.Builder()
-				.useLocale(ud.getLocale())
-				.useTimeZone(ud.getTimeZone().toTimeZone())
-				.haveResourceBundle(true)
-				.generatedBy("WebTop " + lookupResource(ContactsLocale.SERVICE_NAME)) // TODO: supportare rebranding
-				.printedBy(ud.getDisplayName());
 	}
 	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
@@ -676,7 +680,7 @@ public class Service extends BaseService {
 				
 				new JsonResult(items, meta, items.size()).printTo(out);
 				
-			} else if(crud.equals(Crud.DELETE)) {
+			} /*else if(crud.equals(Crud.DELETE)) {
 				PayloadAsList<JsGridContactList> pl = ServletUtils.getPayloadAsList(request, JsGridContactList.class);
 				
 				for(JsGridContact row : pl.data) {
@@ -684,7 +688,7 @@ public class Service extends BaseService {
 				}
 				new JsonResult().printTo(out);
 				
-			} else if(crud.equals(Crud.SAVE)) {
+			}*/ else if(crud.equals(Crud.SAVE)) {
 				String view = ServletUtils.getStringParameter(request, "view", true);
 				String context = ServletUtils.getStringParameter(request, "context", true);
 				String field = ServletUtils.getStringParameter(request, "field", null);
@@ -1094,6 +1098,21 @@ public class Service extends BaseService {
 			IOUtils.closeQuietly(fis);
 		}
 		return pic;
+	}
+	
+	private ReportConfig.Builder reportConfigBuilder() {
+		UserProfile.Data ud = getEnv().getProfile().getData();
+		CoreUserSettings cus = getEnv().getCoreUserSettings();
+		return new ReportConfig.Builder()
+				.useLocale(ud.getLocale())
+				.useTimeZone(ud.getTimeZone().toTimeZone())
+				.dateFormatShort(cus.getShortDateFormat())
+				.dateFormatLong(cus.getLongDateFormat())
+				.timeFormatShort(cus.getShortTimeFormat())
+				.timeFormatLong(cus.getLongTimeFormat())
+				.haveResourceBundle(true)
+				.generatedBy(WT.getSoftwareName() + " " + lookupResource(ContactsLocale.SERVICE_NAME))
+				.printedBy(ud.getDisplayName());
 	}
 	
 	private String buildSharingPath(Sharing sharing) throws WTException {

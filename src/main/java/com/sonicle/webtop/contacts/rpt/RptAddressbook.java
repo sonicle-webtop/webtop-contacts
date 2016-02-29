@@ -40,9 +40,9 @@ import com.sonicle.webtop.core.io.ReportConfig;
  *
  * @author malbinola
  */
-public class Addressbook extends AbstractReport {
+public class RptAddressbook extends AbstractReport {
 
-	public Addressbook(ReportConfig config) {
+	public RptAddressbook(ReportConfig config) {
 		super(config);
 		this.name = "addressbook";
 	}

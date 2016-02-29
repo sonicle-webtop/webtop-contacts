@@ -34,13 +34,20 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.bol.OCategory;
-import com.sonicle.webtop.contacts.bol.OContact;
+import com.sonicle.webtop.contacts.bol.VContact;
+import com.sonicle.webtop.core.util.JRHelper;
+import java.awt.Image;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author malbinola
  */
 public class AddressbookBean {
+	public Integer categoryId;
+	public String categoryName;
+	public String categoryColor;
+	public Image categoryColorImage;
 	public Integer contactId;
 	public String title;
 	public String firstName;
@@ -51,24 +58,38 @@ public class AddressbookBean {
 	public String homeTelephone;
 	public String homeEmail;
 	public String company;
-	public Integer categoryId;
-	public String categoryName;
-	public String categoryColor;
 	
-	public AddressbookBean(OCategory category, OContact contact) {
+	public AddressbookBean(OCategory category, VContact contact) {
+		this.categoryId = contact.getCategoryId();
+		this.categoryName = category.getName();
+		this.categoryColor = category.getHexColor();
+		this.categoryColorImage = JRHelper.colorAsImage(category.getHexColor());
 		this.contactId = contact.getContactId();
 		this.title = contact.getTitle();
 		this.firstName = contact.getFirstname();
 		this.lastName = contact.getLastname();
+		this.company = StringUtils.defaultIfEmpty(contact.getCompanyAsCustomer(), contact.getCompany());
 		this.workTelephone = contact.getWorkTelephone();
 		this.workMobile = contact.getWorkMobile();
 		this.workEmail = contact.getWorkEmail();
 		this.homeTelephone = contact.getHomeTelephone();
 		this.homeEmail = contact.getHomeEmail();
-		this.company = contact.getCompany();
-		this.categoryId = contact.getCategoryId();
-		this.categoryName = category.getName();
-		this.categoryColor = category.getHexColor();
+	}
+	
+	public Integer getCategoryId() {
+		return categoryId;
+	}
+
+	public String getCategoryName() {
+		return categoryName;
+	}
+
+	public String getCategoryColor() {
+		return categoryColor;
+	}
+	
+	public Image getCategoryColorImage() {
+		return categoryColorImage;
 	}
 
 	public Integer getContactId() {
@@ -85,6 +106,10 @@ public class AddressbookBean {
 
 	public String getLastName() {
 		return lastName;
+	}
+	
+	public String getCompany() {
+		return company;
 	}
 
 	public String getWorkTelephone() {
@@ -105,21 +130,5 @@ public class AddressbookBean {
 
 	public String getHomeEmail() {
 		return homeEmail;
-	}
-
-	public String getCompany() {
-		return company;
-	}
-
-	public Integer getCategoryId() {
-		return categoryId;
-	}
-
-	public String getCategoryName() {
-		return categoryName;
-	}
-
-	public String getCategoryColor() {
-		return categoryColor;
 	}
 }
