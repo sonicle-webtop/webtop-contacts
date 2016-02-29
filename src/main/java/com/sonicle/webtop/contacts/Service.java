@@ -1111,7 +1111,7 @@ public class Service extends BaseService {
 				.timeFormatShort(cus.getShortTimeFormat())
 				.timeFormatLong(cus.getLongTimeFormat())
 				.haveResourceBundle(true)
-				.generatedBy(WT.getSoftwareName() + " " + lookupResource(ContactsLocale.SERVICE_NAME))
+				.generatedBy(WT.getPlatformName() + " " + lookupResource(ContactsLocale.SERVICE_NAME))
 				.printedBy(ud.getDisplayName());
 	}
 	
