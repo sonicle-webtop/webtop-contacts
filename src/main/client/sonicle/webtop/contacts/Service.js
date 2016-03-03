@@ -734,11 +734,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	printSelContacts: function(sel) {
-		var me = this,
-			ids = me.selectionIds(sel);
-		
-		var url = WTF.processBinUrl(me.ID, 'PrintContactDetails', {ids: WTU.arrayAsParam(ids)});
-		Sonicle.URLMgr.openFile(url, {filename: 'contact-details', newWindow: true});
+		var me = this;
+		me.printContactsDetail(me.selectionIds(sel));
 	},
 	
 	selectionIds: function(sel) {
@@ -1035,6 +1032,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	printContactsDetail: function(ids) {
+		var me = this, url;
+		url = WTF.processBinUrl(me.ID, 'PrintContactsDetail', {ids: WTU.arrayAsParam(ids)});
+		Sonicle.URLMgr.openFile(url, {filename: 'contacts-detail', newWindow: true});
+	},
+	
 	/**
 	 * @private
 	 */
@@ -1061,15 +1064,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		switch(action) {
 			case 'showContact':
 			case 'copyContact':
-			case 'printContact':
-				sel = me.gpContacts().getSelection();
+				sel = me.getSelectedContacts();
 				if(sel.length === 1) {
 					return false;
 				} else {
 					return true;
 				}
+			case 'printContact':
+				sel = me.getSelectedContacts();
+				if(sel.length === 1 && (sel[0].get('isList') === false)) {
+					return false;
+				} else {
+					return true;
+				}
+				break;
 			case 'moveContact':
-				sel = me.gpContacts().getSelection();
+				sel = me.getSelectedContacts();
 				if(sel.length === 1) {
 					er = me.toRightsObj(sel[0].get('_erights'));
 					return !er.UPDATE;
@@ -1077,7 +1087,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					return true;
 				}
 			case 'deleteContact':
-				sel = me.gpContacts().getSelection();
+				sel = me.getSelectedContacts();
 				if(sel.length === 0) {
 					return true;
 				} else if(sel.length === 1) {
@@ -1092,7 +1102,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					return false;
 				}
 			case 'addContactsListFromSel':
-				sel = me.gpContacts().getSelection();
+				sel = me.getSelectedContacts();
 				if(sel.length === 0) {
 					return true;
 				} else {

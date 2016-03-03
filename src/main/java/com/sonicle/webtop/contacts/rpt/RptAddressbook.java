@@ -33,8 +33,14 @@
  */
 package com.sonicle.webtop.contacts.rpt;
 
+import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.core.io.AbstractReport;
 import com.sonicle.webtop.core.io.ReportConfig;
+import com.sonicle.webtop.core.sdk.WTRuntimeException;
+import java.io.IOException;
+import java.io.InputStream;
+import javax.imageio.ImageIO;
+import org.apache.commons.io.IOUtils;
 
 /**
  *
@@ -45,5 +51,32 @@ public class RptAddressbook extends AbstractReport {
 	public RptAddressbook(ReportConfig config) {
 		super(config);
 		this.name = "addressbook";
+	}
+	
+	@Override
+	protected void fillBuiltInParams() {
+		super.fillBuiltInParams();
+		
+		String pkgName = LangUtils.getClassPackageName(this.getClass());
+		String basepath = LangUtils.packageToPath(pkgName);
+		ClassLoader cl = LangUtils.findClassLoader(this.getClass());
+		
+		InputStream is = null;
+		try {
+			is = cl.getResourceAsStream(basepath + "/img-contact.png");
+			params.put("CONTACT_IMAGE", ImageIO.read(is));
+		} catch (IOException ex) {
+			throw new WTRuntimeException("Unable to read image", ex);
+		} finally {
+			IOUtils.closeQuietly(is);
+		}
+		try {
+			is = cl.getResourceAsStream(basepath + "/img-contacts-list.png");
+			params.put("CONTACTS_LIST_IMAGE", ImageIO.read(is));
+		} catch (IOException ex) {
+			throw new WTRuntimeException("Unable to read image", ex);
+		} finally {
+			IOUtils.closeQuietly(is);
+		}
 	}
 }

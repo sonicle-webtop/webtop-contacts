@@ -44,6 +44,7 @@ import org.apache.commons.lang3.StringUtils;
  * @author malbinola
  */
 public class AddressbookBean {
+	public Boolean isList;
 	public Integer categoryId;
 	public String categoryName;
 	public String categoryColor;
@@ -60,6 +61,7 @@ public class AddressbookBean {
 	public String company;
 	
 	public AddressbookBean(OCategory category, VContact contact) {
+		this.isList = contact.getIsList();
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
 		this.categoryColor = category.getHexColor();
@@ -74,6 +76,10 @@ public class AddressbookBean {
 		this.workEmail = contact.getWorkEmail();
 		this.homeTelephone = contact.getHomeTelephone();
 		this.homeEmail = contact.getHomeEmail();
+	}
+	
+	public Boolean getIsList() {
+		return isList;
 	}
 	
 	public Integer getCategoryId() {

@@ -6,30 +6,20 @@
     <version>1.0</version>
     <packaging>jar</packaging>
 	<name>webtop-contacts</name>
+	
+	<parent>
+		<groupId>com.sonicle.webtop</groupId>
+		<artifactId>webtop-sdk-service-project</artifactId>
+		<version>1.0</version>
+	</parent>
+	
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
+	
 	<dependencies>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>webtop-core</artifactId>
-			<version>5.0.0-SNAPSHOT</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.6</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.servlet</groupId>
-			<artifactId>javax.servlet-api</artifactId>
-			<version>3.1.0</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.imgscalr</groupId>
 			<artifactId>imgscalr-lib</artifactId>
@@ -41,16 +31,73 @@
 			<version>0.9.8</version>
 		</dependency>
 	</dependencies>
+	
 	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-			</resource>
-			<resource>
-				<directory>src/main/client</directory>
-			</resource>
-		</resources>
 		<plugins>
+			<plugin>
+				<groupId>com.sonicle.maven</groupId>
+				<artifactId>jasperreports-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>process-sources</phase>
+						<goals>
+							<goal>jasper</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.sonicle.maven</groupId>
+				<artifactId>minify-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>minify-debug</id>
+						<goals>
+							<goal>minify</goal>
+						</goals>
+						<configuration>
+							<suffix>.debug</suffix>
+							<jsEngine>CLEANER</jsEngine>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jooq</groupId>
+				<artifactId>jooq-codegen-maven</artifactId>
+				<configuration>
+					<jdbc>
+						<driver>org.postgresql.Driver</driver>
+						<url>jdbc:postgresql://www.sonicle.com/webtop5</url>
+						<user>sonicle</user>
+						<password>sonicle</password>
+					</jdbc>
+					<generator>
+						<database>
+							<inputSchema>contacts</inputSchema>
+						</database>
+						<target>
+							<packageName>com.sonicle.webtop.contacts.jooq</packageName>
+						</target>
+					</generator>
+				</configuration>
+				<executions>
+					<execution>
+						<goals><!-- the plugin should hook into the generate goal --></goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			<!--
 			<plugin>
 				<groupId>com.sonicle.maven</groupId>
 				<artifactId>minify-maven-plugin</artifactId>
@@ -82,12 +129,12 @@
 					</execution>
 				</executions>
 			</plugin>
+			-->
+			<!--
 			<plugin>
-				<!-- Specify the maven code generator plugin -->
 				<groupId>org.jooq</groupId>
 				<artifactId>jooq-codegen-maven</artifactId>
 				<version>3.5.3</version>
-				<!-- Manage the plugin's dependency. In this example, we'll use a PostgreSQL database -->
 				<dependencies>
 					<dependency>
 						<groupId>org.postgresql</groupId>
@@ -95,17 +142,13 @@
 						<version>9.3-1102-jdbc4</version>
 					</dependency>
 				</dependencies>
-				<!-- Specify the plugin configuration.
-				The configuration format is the same as for the standalone code generator -->
 				<configuration>
-					<!-- JDBC connection parameters -->
 					<jdbc>
 						<driver>org.postgresql.Driver</driver>
 						<url>jdbc:postgresql://www.sonicle.com/webtop5</url>
 						<user>sonicle</user>
 						<password>sonicle</password>
 					</jdbc>
-					<!-- Generator parameters -->
 					<generator>
 						<name>org.jooq.util.DefaultGenerator</name>
 						<database>
@@ -148,13 +191,13 @@
 						</generate>
 					</generator>
 				</configuration>
-				<!-- The plugin should hook into the generate goal -->
 				<executions>
 					<execution>
 						<goals></goals>
 					</execution>
 				</executions>
 			</plugin>
+			-->
 		</plugins>
 	</build>
 </project>

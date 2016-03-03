@@ -40,10 +40,10 @@ import com.sonicle.webtop.core.io.ReportConfig;
  *
  * @author malbinola
  */
-public class RptContactDetails extends AbstractReport {
+public class RptContactsDetail extends AbstractReport {
 
-	public RptContactDetails(ReportConfig config) {
+	public RptContactsDetail(ReportConfig config) {
 		super(config);
-		this.name = "contact-details";
+		this.name = "contactsdetail";
 	}
 }

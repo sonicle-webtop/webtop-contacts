@@ -34,6 +34,9 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.core.CoreManager;
+import com.sonicle.webtop.core.bol.OCustomer;
+import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.JRHelper;
 import java.awt.Image;
 import java.util.Date;
@@ -43,7 +46,7 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author malbinola
  */
-public class ContactDetailsBean {
+public class ContactDetailBean {
 	public Integer categoryId;
 	public String categoryName;
 	public String categoryColor;
@@ -95,8 +98,9 @@ public class ContactDetailsBean {
 	public Date anniversary;
 	public String url;
 	public String notes;
+	public Image picture;
 		
-	public ContactDetailsBean(OCategory category, Contact contact, String companyAsCustomer) {
+	public ContactDetailBean(CoreManager core, OCategory category, Contact contact, ContactPicture picture) throws WTException {
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
 		this.categoryColor = category.getHexColor();
@@ -137,7 +141,7 @@ public class ContactDetailsBean {
 		this.otherCountry = contact.getOtherCountry();
 		this.otherEmail = contact.getOtherEmail();
 		this.otherInstantMsg = contact.getOtherInstantMsg();
-		this.company = StringUtils.defaultIfEmpty(companyAsCustomer, contact.getCompany());
+		this.company = StringUtils.defaultIfBlank(lookupCustomer(core, contact.getCompany()), contact.getCompany());	
 		this.function = contact.getFunction();
 		this.department = contact.getDepartment();
 		this.manager = contact.getManager();
@@ -148,6 +152,24 @@ public class ContactDetailsBean {
 		if(contact.getAnniversary() != null) this.anniversary = contact.getAnniversary().toDate();
 		this.url = contact.getUrl();
 		this.notes = contact.getNotes();
+		this.picture = null;
+		
+		//TODO: riempire l'immagine del contatto (sembra che le due immagini facciano interferenza)
+		/*
+		if(picture != null) {
+			try {
+				try(ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
+					this.picture = ImageIO.read(bais);
+				}
+			} catch (IOException ex) {}
+		}
+		*/
+	}
+	
+	private String lookupCustomer(CoreManager core, String customerId) throws WTException {
+		if(customerId == null) return null;
+		OCustomer customer = core.getCustomer(customerId);
+		return (customer != null) ? customer.getDescription() : null;
 	}
 	
 	public Integer getCategoryId() {
@@ -352,5 +374,9 @@ public class ContactDetailsBean {
 
 	public String getNotes() {
 		return notes;
+	}
+	
+	public Image getPicture() {
+		return categoryColorImage;
 	}
 }

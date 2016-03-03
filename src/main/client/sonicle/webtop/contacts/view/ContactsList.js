@@ -67,7 +67,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					tooltip: WT.res('act-delete.lbl'),
 					iconCls: 'wt-icon-delete-xs',
 					handler: function() {
-						me.deleteMe();
+						me.delectContactsList();
 					}
 				}),
 				'->',
@@ -218,7 +218,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		});
 	},
 	
-	deleteMe: function() {
+	delectContactsList: function() {
 		var me = this,
 				rec = me.getModel();
 		

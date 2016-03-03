@@ -52,14 +52,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	confirm: 'yn',
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.Contact',
-	/*
-	viewModel: {
-		formulas: {
-			isDefault: WTF.checkboxBind('record', 'isDefault'),
-			sync: WTF.checkboxBind('record', 'sync')
-		}
-	},
-	*/
 	
 	initComponent: function() {
 		var me = this, main, work, more, home, other, notes;
@@ -78,7 +70,17 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					tooltip: WT.res('act-delete.lbl'),
 					iconCls: 'wt-icon-delete-xs',
 					handler: function() {
-						me.deleteMe();
+						me.deleteContact();
+					}
+				}),
+				'-',
+				me.addAction('print', {
+					text: null,
+					tooltip: WT.res('act-print.lbl'),
+					iconCls: 'wt-icon-print-xs',
+					handler: function() {
+						//TODO: aggiungere l'azione 'salva' permettendo così la stampa senza chiudere la form
+						me.printContact(me.getModel().getId());
 					}
 				}),
 				'->',
@@ -499,7 +501,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 	},
 	
-	deleteMe: function() {
+	deleteContact: function() {
 		var me = this,
 				rec = me.getModel();
 		
@@ -521,31 +523,14 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				});
 			}
 		}, me);
-	}
+	},
 	
-	/*
-	deleteMe: function() {
-		var me = this,
-				id = me.getModel().get('id');
-		
-		WT.confirm(WT.res('confirm.delete'), function(bid) {
-			if(bid === 'yes') {
-				me.wait();
-				WT.ajaxReq(me.mys.ID, 'ManageContacts', {
-					params: {
-						crud: 'delete',
-						id: id
-					},
-					callback: function(success) {
-						me.unwait();
-						if(success) {
-							me.closeView(false);
-							me.mys.refreshContacts();
-						}
-					}
-				});
-			}
-		}, me);
+	printContact: function(contactId) {
+		var me = this;
+		if(me.getModel().isDirty()) {
+			WT.warn(WT.res('warn.print.notsaved'));
+		} else {
+			me.mys.printContactsDetail([contactId]);
+		}
 	}
-	*/
 });

@@ -59,8 +59,6 @@ import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
-import com.sonicle.webtop.contacts.bol.js.JsGridContact;
-import com.sonicle.webtop.contacts.bol.js.JsGridContact.JsGridContactList;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
@@ -71,16 +69,15 @@ import com.sonicle.webtop.contacts.bol.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.AddressbookBean;
-import com.sonicle.webtop.contacts.bol.model.ContactDetailsBean;
+import com.sonicle.webtop.contacts.bol.model.ContactDetailBean;
 import com.sonicle.webtop.contacts.io.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
-import com.sonicle.webtop.contacts.rpt.RptContactDetails;
+import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.CoreUserSettings;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.WebTopSession.UploadedFile;
-import com.sonicle.webtop.core.bol.OCustomer;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
@@ -527,87 +524,6 @@ public class Service extends BaseService {
 			pattern = "^[a]";
 		}
 		return new String[]{searchMode, pattern};
-	}
-	
-	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
-		ArrayList<AddressbookBean> items = new ArrayList<>();
-		ByteArrayOutputStream baos = null;
-		
-		try {
-			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
-			String letter = ServletUtils.getStringParameter(request, "letter", null);
-			String query = ServletUtils.getStringParameter(request, "query", null);
-			
-			String[] parameters = buildQueryParameters(view, letter, query);
-			String searchMode = parameters[0], pattern = parameters[1];
-			
-			// Get contacts for each visible folder
-			Integer[] checked = getCheckedFolders();
-			List<ContactsManager.CategoryContacts> foldContacts = null;
-			for(CategoryRoot root : getCheckedRoots()) {
-				foldContacts = manager.listContacts(root, checked, searchMode, pattern);
-				
-				for(ContactsManager.CategoryContacts foldContact : foldContacts) {
-					CategoryFolder fold = folders.get(foldContact.folder.getCategoryId());
-					if(fold == null) continue;
-
-					for(VContact vc : foldContact.contacts) {
-						items.add(new AddressbookBean(fold.getCategory(), vc));
-					}
-				}
-			}
-			
-			ReportConfig.Builder builder = reportConfigBuilder();
-			RptAddressbook rpt = new RptAddressbook(builder.build());
-			rpt.setDataSource(new JRBeanCollectionDataSource(items));
-			
-			baos = new ByteArrayOutputStream();
-			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
-			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
-			ServletUtils.writeContent(response, baos, "application/pdf");
-			
-		} catch(Exception ex) {
-			logger.error("Error in action PrintAddressbook", ex);
-			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
-		} finally {
-			IOUtils.closeQuietly(baos);
-		}
-	}
-	
-	public void processPrintContactDetails(HttpServletRequest request, HttpServletResponse response) {
-		ArrayList<ContactDetailsBean> items = new ArrayList<>();
-		ByteArrayOutputStream baos = null;
-		CoreManager core = WT.getCoreManager(getRunContext());
-		
-		try {
-			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
-			
-			Contact contact = null;
-			OCategory category = null;
-			for(Integer id : ids) {
-				contact = manager.getContact(id);
-				category = manager.getCategory(contact.getCategoryId());
-				OCustomer customer = core.getCustomer(contact.getCompany());
-				items.add(new ContactDetailsBean(category, contact, customer.getDescription()));
-			}
-			
-			ReportConfig.Builder builder = reportConfigBuilder();
-			RptContactDetails rpt = new RptContactDetails(builder.build());
-			rpt.setDataSource(new JRBeanCollectionDataSource(items));
-			
-			baos = new ByteArrayOutputStream();
-			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
-			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
-			ServletUtils.writeContent(response, baos, "application/pdf");
-			
-		} catch(Exception ex) {
-			logger.error("Error in action PrintContact", ex);
-			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
-		} finally {
-			IOUtils.closeQuietly(baos);
-		}
 	}
 	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
@@ -1078,6 +994,89 @@ public class Service extends BaseService {
 		} catch(Exception ex) {
 			logger.error("Error in action ImportContactsFromVCard", ex);
 			new JsonResult(false, ex.getMessage()).printTo(out);
+		}
+	}
+	
+	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
+		ArrayList<AddressbookBean> items = new ArrayList<>();
+		ByteArrayOutputStream baos = null;
+		
+		try {
+			String filename = ServletUtils.getStringParameter(request, "filename", "print");
+			String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
+			String letter = ServletUtils.getStringParameter(request, "letter", null);
+			String query = ServletUtils.getStringParameter(request, "query", null);
+			
+			String[] parameters = buildQueryParameters(view, letter, query);
+			String searchMode = parameters[0], pattern = parameters[1];
+			
+			// Get contacts for each visible folder
+			Integer[] checked = getCheckedFolders();
+			List<ContactsManager.CategoryContacts> foldContacts = null;
+			for(CategoryRoot root : getCheckedRoots()) {
+				foldContacts = manager.listContacts(root, checked, searchMode, pattern);
+				
+				for(ContactsManager.CategoryContacts foldContact : foldContacts) {
+					CategoryFolder fold = folders.get(foldContact.folder.getCategoryId());
+					if(fold == null) continue;
+
+					for(VContact vc : foldContact.contacts) {
+						items.add(new AddressbookBean(fold.getCategory(), vc));
+					}
+				}
+			}
+			
+			ReportConfig.Builder builder = reportConfigBuilder();
+			RptAddressbook rpt = new RptAddressbook(builder.build());
+			rpt.setDataSource(new JRBeanCollectionDataSource(items));
+			
+			baos = new ByteArrayOutputStream();
+			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
+			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
+			ServletUtils.writeContent(response, baos, "application/pdf");
+			
+		} catch(Exception ex) {
+			logger.error("Error in action PrintAddressbook", ex);
+			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		} finally {
+			IOUtils.closeQuietly(baos);
+		}
+	}
+	
+	public void processPrintContactsDetail(HttpServletRequest request, HttpServletResponse response) {
+		ArrayList<ContactDetailBean> items = new ArrayList<>();
+		ByteArrayOutputStream baos = null;
+		CoreManager core = WT.getCoreManager(getRunContext());
+		
+		try {
+			String filename = ServletUtils.getStringParameter(request, "filename", "print");
+			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+			
+			Contact contact = null;
+			ContactPicture picture = null;
+			OCategory category = null;
+			for(Integer id : ids) {
+				picture = null;
+				contact = manager.getContact(id);
+				category = manager.getCategory(contact.getCategoryId());
+				if(contact.getHasPicture()) picture = manager.getContactPicture(id);
+				items.add(new ContactDetailBean(core, category, contact, picture));
+			}
+			
+			ReportConfig.Builder builder = reportConfigBuilder();
+			RptContactsDetail rpt = new RptContactsDetail(builder.build());
+			rpt.setDataSource(new JRBeanCollectionDataSource(items));
+			
+			baos = new ByteArrayOutputStream();
+			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
+			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
+			ServletUtils.writeContent(response, baos, "application/pdf");
+			
+		} catch(Exception ex) {
+			logger.error("Error in action PrintContact", ex);
+			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		} finally {
+			IOUtils.closeQuietly(baos);
 		}
 	}
 	

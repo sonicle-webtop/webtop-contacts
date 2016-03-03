@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
-<!-- 2016-02-29T12:43:32 -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contact-details" pageWidth="595" pageHeight="842" columnWidth="557" leftMargin="19" rightMargin="19" topMargin="19" bottomMargin="19" resourceBundle="contact-details" uuid="47fa44bf-1a8e-4a18-a0df-8b26982ff32e">
+<!-- 2016-03-03T10:14:37 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contactsdetail" pageWidth="595" pageHeight="842" columnWidth="557" leftMargin="19" rightMargin="19" topMargin="19" bottomMargin="19" resourceBundle="contactsdetail" uuid="47fa44bf-1a8e-4a18-a0df-8b26982ff32e">
 	<property name="com.jaspersoft.studio.unit." value="cm"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="cm"/>
 	<property name="com.jaspersoft.studio.unit.pageWidth" value="cm"/>
@@ -113,6 +113,7 @@
 	<field name="notes" class="java.lang.String"/>
 	<field name="categoryName" class="java.lang.String"/>
 	<field name="categoryColorImage" class="java.awt.Image"/>
+	<field name="picture" class="java.awt.Image"/>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -131,6 +132,12 @@
 	<detail>
 		<band height="150" splitType="Stretch">
 			<property name="com.jaspersoft.studio.layout" value="com.jaspersoft.studio.editor.layout.FreeLayout"/>
+			<image hAlign="Center" vAlign="Middle" isUsingCache="false" onErrorType="Blank">
+				<reportElement x="473" y="35" width="75" height="90" uuid="20cb956a-f41d-4a4a-9a1e-42348bc425be">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+			</image>
 			<textField>
 				<reportElement style="FieldCaption" x="0" y="39" width="90" height="14" uuid="f41f89d5-63ae-4a91-87d0-d347ec9f868c"/>
 				<textFieldExpression><![CDATA[$R{fld.firstName}]]></textFieldExpression>
@@ -144,15 +151,15 @@
 				<textFieldExpression><![CDATA[$R{fld.company}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="90" y="39" width="468" height="14" uuid="a5a98111-3f1f-42bd-92fe-ebb9269aaf9c"/>
+				<reportElement style="FieldValue" x="90" y="39" width="370" height="14" uuid="a5a98111-3f1f-42bd-92fe-ebb9269aaf9c"/>
 				<textFieldExpression><![CDATA[$F{firstName}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="90" y="53" width="468" height="14" uuid="c01d57a1-8661-45e2-8a28-503f822a057c"/>
+				<reportElement style="FieldValue" x="90" y="53" width="370" height="14" uuid="c01d57a1-8661-45e2-8a28-503f822a057c"/>
 				<textFieldExpression><![CDATA[$F{lastName}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="90" y="71" width="468" height="14" uuid="82d1d184-569b-4e79-af9d-fd9874f41779"/>
+				<reportElement style="FieldValue" x="90" y="71" width="370" height="14" uuid="82d1d184-569b-4e79-af9d-fd9874f41779"/>
 				<textFieldExpression><![CDATA[$F{company}]]></textFieldExpression>
 			</textField>
 			<textField>
@@ -160,7 +167,7 @@
 				<textFieldExpression><![CDATA[$R{fld.function}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="90" y="85" width="468" height="14" uuid="844fc8ea-2c0e-4c32-80c1-9372e1da5ab4"/>
+				<reportElement style="FieldValue" x="90" y="85" width="370" height="14" uuid="844fc8ea-2c0e-4c32-80c1-9372e1da5ab4"/>
 				<textFieldExpression><![CDATA[$F{function}]]></textFieldExpression>
 			</textField>
 			<textField>
@@ -168,7 +175,7 @@
 				<textFieldExpression><![CDATA[$R{fld.department}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="90" y="99" width="468" height="14" uuid="26d56707-9c9e-48a1-bd3e-21a84aeda6d2"/>
+				<reportElement style="FieldValue" x="90" y="99" width="370" height="14" uuid="26d56707-9c9e-48a1-bd3e-21a84aeda6d2"/>
 				<textFieldExpression><![CDATA[$F{department}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
@@ -182,7 +189,7 @@
 				<textFieldExpression><![CDATA[$R{fld.mobile}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="90" y="117" width="468" height="14" uuid="81856fc1-f096-482d-96e1-9480e541d851"/>
+				<reportElement style="FieldValue" x="90" y="117" width="370" height="14" uuid="81856fc1-f096-482d-96e1-9480e541d851"/>
 				<textFieldExpression><![CDATA[$F{workMobile}]]></textFieldExpression>
 			</textField>
 			<textField>
@@ -190,10 +197,10 @@
 				<textFieldExpression><![CDATA[$R{fld.category}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement style="FieldValue" x="107" y="21" width="451" height="14" uuid="9687e128-f3cb-4c1e-afd7-bd62a5c5b2b6"/>
+				<reportElement style="FieldValue" x="107" y="21" width="353" height="14" uuid="9687e128-f3cb-4c1e-afd7-bd62a5c5b2b6"/>
 				<textFieldExpression><![CDATA[$F{categoryName}]]></textFieldExpression>
 			</textField>
-			<image>
+			<image isUsingCache="false">
 				<reportElement x="92" y="23" width="11" height="11" uuid="8081876c-6ffb-4d1c-a988-162c95f73743">
 					<property name="com.jaspersoft.studio.unit.height" value="cm"/>
 				</reportElement>
@@ -423,7 +430,7 @@
 			</textField>
 			<textField>
 				<reportElement style="FieldValue" x="90" y="32" width="468" height="14" uuid="b897021b-4798-46a4-a405-8293c41673e7"/>
-				<textFieldExpression><![CDATA[str("gender."+$F{gender})]]></textFieldExpression>
+				<textFieldExpression><![CDATA[IF(EQUALS($F{gender},null),null,str("gender."+$F{gender}))]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement style="FieldCaption" x="0" y="46" width="90" height="14" uuid="55ba7736-9ebe-4aca-b03c-9236ca842b89"/>
