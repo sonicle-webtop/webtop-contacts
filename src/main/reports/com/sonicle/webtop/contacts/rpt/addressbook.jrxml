@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
-<!-- 2016-03-14T14:49:51 -->
+<!-- 2016-03-14T15:33:53 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="addressbook" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="814" leftMargin="14" rightMargin="14" topMargin="19" bottomMargin="19" resourceBundle="addressbook" uuid="47fa44bf-1a8e-4a18-a0df-8b26982ff32e">
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
@@ -12,7 +12,7 @@
 	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
 	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
-	<style name="PageTitle" fontName="Verdana" fontSize="14"/>
+	<style name="PageTitle" fontName="Verdana" fontSize="12"/>
 	<style name="PageFooter" forecolor="#666666" fontName="Arial" fontSize="8"/>
 	<style name="MemoTitle" fontName="Verdana" fontSize="12" isBold="true">
 		<box>
@@ -85,8 +85,8 @@
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="12" splitType="Stretch">
-			<property name="com.jaspersoft.studio.unit.height" value="cm"/>
+		<band height="19" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isBlankWhenNull="true">
 				<reportElement style="PageFooter" x="496" y="0" width="312" height="12" uuid="cf53f968-4370-4a8e-ae40-f0ca7213fab3"/>
 				<textElement textAlignment="Right"/>

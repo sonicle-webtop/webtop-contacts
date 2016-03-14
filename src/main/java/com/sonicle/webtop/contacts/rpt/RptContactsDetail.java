@@ -45,6 +45,6 @@ public class RptContactsDetail extends AbstractReport {
 	public RptContactsDetail(ReportConfig config) {
 		super(config);
 		this.name = "contactsdetail";
-		this.hasResourceBundle = true;
+		this.resourceBundleName = this.name;
 	}
 }

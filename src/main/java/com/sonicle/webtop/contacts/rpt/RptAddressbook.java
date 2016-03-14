@@ -51,7 +51,7 @@ public class RptAddressbook extends AbstractReport {
 	public RptAddressbook(ReportConfig config) {
 		super(config);
 		this.name = "addressbook";
-		this.hasResourceBundle = true;
+		this.resourceBundleName = this.name;
 	}
 	
 	@Override
