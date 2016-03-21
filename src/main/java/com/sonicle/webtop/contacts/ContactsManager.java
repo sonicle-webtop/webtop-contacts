@@ -49,7 +49,6 @@ import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
-import com.sonicle.webtop.contacts.directory.DirectoryResult;
 import com.sonicle.webtop.contacts.io.ContactFileReader;
 import com.sonicle.webtop.contacts.io.ContactReadResult;
 import com.sonicle.webtop.core.CoreManager;
@@ -72,8 +71,8 @@ import com.sonicle.webtop.core.sdk.ReminderEmail;
 import com.sonicle.webtop.core.sdk.ReminderInApp;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
+import com.sonicle.webtop.core.sdk.WTOperationException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
-import com.sonicle.webtop.core.sdk.interfaces.IManagerUsesReminders;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
@@ -111,12 +110,9 @@ import org.slf4j.Logger;
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseManager implements IManagerUsesReminders {
+public class ContactsManager extends BaseManager {
 	public static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String RESOURCE_CATEGORY = "CATEGORY";
-	
-	//private final LinkedHashMap<String, DirectoryManager> cacheGlobalDirectories = new LinkedHashMap<>();
-	//private final LinkedHashMap<Integer, DirectoryManager> cacheDirectories = new LinkedHashMap<>();
 	
 	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
 	private final Object shareCacheLock = new Object();
@@ -155,101 +151,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			return cache.get(pid);
 		}
 	}
-	
-	@Override
-	public List<BaseReminder> returnReminders(DateTime now) {
-		ArrayList<BaseReminder> alerts = new ArrayList<>();
-		HashMap<UserProfile.Id, Boolean> okCache = new HashMap<>();
-		HashMap<UserProfile.Id, DateTime> dateTimeCache = new HashMap<>();
-		HashMap<UserProfile.Id, String> deliveryCache = new HashMap<>();
-		ContactDAO cdao = ContactDAO.getInstance();
-		Connection con = null;
-		
-		// Valid reminder times (see getAnniversaryReminderTime in options) 
-		// are only at 0 and 30 min of each hour. So skip unuseful runs...
-		if((now.getMinuteOfHour() == 0) || (now.getMinuteOfHour() == 30)) {
-			try {
-				con = WT.getConnection(SERVICE_ID);
-				LocalDate date = now.toLocalDate();
-
-				List<VContact> bdays = cdao.viewOnBirthdayByDate(con, date);
-				for(VContact cont : bdays) {
-					boolean ok = false;
-					if(!okCache.containsKey(cont.getCategoryProfileId())) {
-						ok = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date).withZone(DateTimeZone.UTC).equals(now);
-						okCache.put(cont.getCategoryProfileId(), ok);
-					}
-
-					if(ok) {
-						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
-						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
-						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
-
-						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), true, cont, dateTime));
-						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), true, cont, dateTime));
-						}
-					}
-				}
-
-				List<VContact> anns = cdao.viewOnAnniversaryByDate(con, date);
-				for(VContact cont : anns) {
-					boolean ok = false;
-					if(!okCache.containsKey(cont.getCategoryProfileId())) {
-						ok = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date).withZone(DateTimeZone.UTC).equals(now);
-						okCache.put(cont.getCategoryProfileId(), ok);
-					}
-
-					if(ok) {
-						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
-						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
-						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
-
-						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), false, cont, dateTime));
-						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), false, cont, dateTime));
-						}
-					}
-				}
-
-			} catch(Exception ex) {
-				logger.error("Error collecting reminder alerts", ex);
-			} finally {
-				DbUtils.closeQuietly(con);
-			}
-		} 
-		return alerts;
-	}
-	
-	/*
-	private DirectoryManager getDirectoryManager(int categoryId) throws WTException {
-		try {
-			synchronized(cacheDirectories) {
-				if(!cacheDirectories.containsKey(categoryId)) {
-					cacheDirectories.put(categoryId, createDBDManager(getTargetProfileId(), getLocale(), categoryId));
-				}
-				return cacheDirectories.get(categoryId);
-			}
-		} catch(SQLException ex) {
-			throw new WTException(ex, "DB error");
-		}
-	}
-	
-	public void initializeDirectories(UserProfile profile) throws SQLException {
-		initGlobalDirectories(profile.getId());
-		// Adds global DMs to the sessions
-		for (DirectoryManager dm : cacheGlobalDirectories.values()) {
-			cacheDirectories.put(dm.getId(), dm);
-		}
-	}
-	
-	public void cleanupDirectories() {
-		cacheGlobalDirectories.clear();
-		cacheDirectories.clear();
-	};
-	*/
 	
 	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
 		CoreManager core = WT.getCoreManager(getRunContext());
@@ -359,6 +260,24 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
+	public OCategory getBuiltInCategory() throws WTException {
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			CategoryDAO dao = CategoryDAO.getInstance();
+			OCategory cat = dao.selectBuiltInByDomainUser(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
+			if(cat == null) return null;
+			checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
+			return cat;
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
 	public OCategory addCategory(OCategory item) throws WTException {
 		Connection con = null;
 		
@@ -366,12 +285,57 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			checkRightsOnCategoryRoot(item.getProfileId(), "MANAGE");
 			con = WT.getConnection(getManifest());
 			con.setAutoCommit(false);
+			
+			item.setBuiltIn(false);
+			item = doInsertCategory(con, item);
+			DbUtils.commitQuietly(con);
+			return item;
+			
+			/*
 			CategoryDAO dao = CategoryDAO.getInstance();
 			
 			item.setCategoryId(dao.getSequence(con).intValue());
 			item.setBuiltIn(false);
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			dao.insert(con, item, createUpdateInfo());
+			DbUtils.commitQuietly(con);
+			return item;
+			*/
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public OCategory addBuiltInCategory() throws WTException {
+		Connection con = null;
+		OCategory item = null;
+		
+		try {
+			checkRightsOnCategoryRoot(getTargetProfileId(), "MANAGE");
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			CategoryDAO dao = CategoryDAO.getInstance();
+			
+			item = dao.selectBuiltInByDomainUser(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
+			if(item != null) throw new WTOperationException("Built-in category already present");
+			
+			item = new OCategory();
+			item.setDomainId(getTargetProfileId().getDomainId());
+			item.setUserId(getTargetProfileId().getUserId());
+			item.setBuiltIn(true);
+			item.setName(WT.getPlatformName());
+			item.setDescription("");
+			item.setColor("#FFFFFF");
+			item.setSync(true);
+			item.setIsDefault(true);
+			item = doInsertCategory(con, item);
 			DbUtils.commitQuietly(con);
 			return item;
 			
@@ -464,39 +428,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			DbUtils.closeQuietly(con);
 		}
 	}
-	
-	/*
-	public List<CategoryContacts> listContacts999(UserProfile.Id pid, String[] categoryFolders, String pattern) throws Exception {
-		CategoryDAO datdao = CategoryDAO.getInstance();
-		ArrayList<CategoryContacts> foldContacts = new ArrayList<>();
-		Connection con = null;
-		
-		try {
-			con = WT.getConnection(getManifest());
-			
-			// Lists desired groups (tipically visibles) coming from passed list
-			// Passed ids should belong to referenced folder(group), 
-			// this is ensured using domainId and userId parameters in below query.
-			Integer[] categories = toIntArray(categoryFolders);
-			List<OCategory> cats = datdao.selectByDomainUserIn(con, pid.getDomainId(), pid.getUserId(), categories);
-			DirectoryManager dm = null;
-			DirectoryResult dr = null;
-			for(OCategory cat : cats) {
-				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ"); // Rights check!
-				
-				dm = getDirectoryManager(cat.getCategoryId());
-				dr = dm.lookup(pattern, getLocale(), false, false);
-				foldContacts.add(new CategoryContacts(cat, null, dr));
-			}
-			return foldContacts;
-		
-		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
 	
 	public Contact getContact(int contactId) throws WTException {
 		ContactDAO cntdao = ContactDAO.getInstance();
@@ -886,8 +817,6 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 		}
 	}
 	
-	
-	
 	public LogEntries importContacts(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
@@ -941,6 +870,72 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
 		}
 		return log;
+	}
+	
+	public List<BaseReminder> getRemindersToBeNotified(DateTime now) {
+		ArrayList<BaseReminder> alerts = new ArrayList<>();
+		HashMap<UserProfile.Id, Boolean> okCache = new HashMap<>();
+		HashMap<UserProfile.Id, DateTime> dateTimeCache = new HashMap<>();
+		HashMap<UserProfile.Id, String> deliveryCache = new HashMap<>();
+		ContactDAO cdao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		// Valid reminder times (see getAnniversaryReminderTime in options) 
+		// are only at 0 and 30 min of each hour. So skip unuseful runs...
+		if((now.getMinuteOfHour() == 0) || (now.getMinuteOfHour() == 30)) {
+			try {
+				con = WT.getConnection(SERVICE_ID);
+				LocalDate date = now.toLocalDate();
+
+				List<VContact> bdays = cdao.viewOnBirthdayByDate(con, date);
+				for(VContact cont : bdays) {
+					boolean ok = false;
+					if(!okCache.containsKey(cont.getCategoryProfileId())) {
+						ok = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date).withZone(DateTimeZone.UTC).equals(now);
+						okCache.put(cont.getCategoryProfileId(), ok);
+					}
+
+					if(ok) {
+						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
+						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
+						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+
+						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
+							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), true, cont, dateTime));
+						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
+							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), true, cont, dateTime));
+						}
+					}
+				}
+
+				List<VContact> anns = cdao.viewOnAnniversaryByDate(con, date);
+				for(VContact cont : anns) {
+					boolean ok = false;
+					if(!okCache.containsKey(cont.getCategoryProfileId())) {
+						ok = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date).withZone(DateTimeZone.UTC).equals(now);
+						okCache.put(cont.getCategoryProfileId(), ok);
+					}
+
+					if(ok) {
+						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
+						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
+						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+
+						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
+							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), false, cont, dateTime));
+						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
+							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), false, cont, dateTime));
+						}
+					}
+				}
+
+			} catch(Exception ex) {
+				logger.error("Error collecting reminder alerts", ex);
+			} finally {
+				DbUtils.closeQuietly(con);
+			}
+		} 
+		return alerts;
 	}
 	
 	
@@ -1008,51 +1003,13 @@ public class ContactsManager extends BaseManager implements IManagerUsesReminder
 	*/
 	
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	private OCategory doInsertCategory(Connection con, OCategory item) throws WTException {
+		CategoryDAO dao = CategoryDAO.getInstance();
+		item.setCategoryId(dao.getSequence(con).intValue());
+		if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
+		dao.insert(con, item, createUpdateInfo());
+		return item;
+	}
 	
 	private OContact doInsertContact(Connection con, boolean isList, Contact contact, ContactPicture picture) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
