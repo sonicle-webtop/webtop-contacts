@@ -35,8 +35,6 @@ package com.sonicle.webtop.contacts.io;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.bol.model.ContactPicture;
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
-import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
@@ -75,45 +73,39 @@ import org.joda.time.LocalDate;
  *
  * @author malbinola
  */
-public class ContactVCardFileReader implements ContactFileReader {
+public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 
 	@Override
-	public void readContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
-			readContacts(fis, beanHandler);
+			return listContacts(log, fis);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
 	}
 	
-	public void readContacts(InputStream is, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
 		// See https://tools.ietf.org/html/rfc6350
 		// See http://www.w3.org/TR/vcard-rdf/
+		ArrayList<ContactReadResult> results = new ArrayList<>();
 		
 		List<VCard> vcs = Ezvcard.parse(is).all();
+		LogEntries vclog = null;
 		for(VCard vc : vcs) {
-			LogEntries log = new LogEntries();
-			ContactReadResult result = null;
+			vclog = new LogEntries();
 			try {
-				LogEntries vclog = new LogEntries();
-				result = readVCard(vclog, vc);
+				results.add(readVCard(vclog, vc));
 				if(!vclog.isEmpty()) {
 					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "VCARD [{0}]", vc.getUid()));
 					log.addAll(vclog);
 				}
-				
 			} catch(Throwable t) {
 				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
-			} finally {
-				try {
-					beanHandler.handle(result, log);
-				} catch(Exception ex) {
-					throw new FileReaderException(ex);
-				}
 			}
 		}
+		return results;
 	}
 	
 	public ContactReadResult readVCard(LogEntries log, VCard vc) throws Exception {

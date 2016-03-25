@@ -49,6 +49,7 @@ import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
+import com.sonicle.webtop.contacts.io.MemoryContactFileReader;
 import com.sonicle.webtop.contacts.io.ContactFileReader;
 import com.sonicle.webtop.contacts.io.ContactReadResult;
 import com.sonicle.webtop.core.CoreManager;
@@ -65,6 +66,8 @@ import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
+import com.sonicle.webtop.core.io.DefaultBeanHandler;
+import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.BaseReminder;
 import com.sonicle.webtop.core.sdk.ReminderEmail;
@@ -817,6 +820,22 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
+	private static class ContactResultBeanHandler extends DefaultBeanHandler<ContactReadResult> {
+		private LogEntries log;
+		public ArrayList<ContactReadResult> parsed;
+		
+		public ContactResultBeanHandler(LogEntries log) {
+			this.log = log;
+			parsed = new ArrayList<>();
+		}
+		
+		@Override
+		public void handle(ContactReadResult bean, LogEntries log) throws Exception {
+			parsed.add(bean);
+			log.addAll(log);
+		}
+	}
+	
 	public LogEntries importContacts(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
@@ -827,14 +846,15 @@ public class ContactsManager extends BaseManager {
 			
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Reading source file..."));
-			ArrayList<ContactReadResult> parsed = null;
+			
+			ContactResultBeanHandler handler = new ContactResultBeanHandler(log);
 			try {
-				parsed = rea.listContacts(log, file);
-			} catch(IOException | UnsupportedOperationException ex) {
+				rea.readContacts(file, handler);
+			} catch(IOException | FileReaderException ex) {
 				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete reading. Reason: {0}", ex.getMessage()));
 				throw new WTException(ex);
 			}
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s found!", parsed.size()));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s found!", handler.parsed.size()));
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
@@ -847,7 +867,7 @@ public class ContactsManager extends BaseManager {
 			
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
 			int count = 0;
-			for(ContactReadResult parse : parsed) {
+			for(ContactReadResult parse : handler.parsed) {
 				parse.contact.setCategoryId(categoryId);
 				try {
 					doInsertContact(con, false, parse.contact, parse.picture);

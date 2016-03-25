@@ -31,28 +31,17 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.Sharing', {
-	extend: 'WT.sdk.model.Sharing',
-	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageSharing', 'data', {
-		writer: {
-			type: 'sojson',
-			writeAssociations: true
-		}
-	}),
-	
-	field:[
-		WTF.roField('description', 'string')
-	]
-});
-Ext.define('Sonicle.webtop.contacts.model.SharingRights', {
-	extend: 'WT.sdk.model.SharingRights',
-	
-	fields: [
-		WTF.field('_fk', 'string', true, {
-			reference: {
-				parent: 'Sonicle.webtop.contacts.model.Sharing',
-				inverse: 'rights'
-			}
-		})
-	]
-});
+package com.sonicle.webtop.contacts.io;
+
+import com.sonicle.webtop.core.util.LogEntries;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+
+/**
+ *
+ * @author malbinola
+ */
+public interface MemoryContactFileReader {
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
+}

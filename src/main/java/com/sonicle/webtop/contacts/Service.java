@@ -33,7 +33,7 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.sonicle.webtop.contacts.io.ContactTextFileReader;
+import com.sonicle.webtop.contacts.io.MemoryContactTextFileReader;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
@@ -71,6 +71,7 @@ import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.AddressbookBean;
 import com.sonicle.webtop.contacts.bol.model.ContactDetailBean;
 import com.sonicle.webtop.contacts.io.ContactExcelFileReader;
+import com.sonicle.webtop.contacts.io.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
@@ -82,11 +83,11 @@ import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
-import com.sonicle.webtop.core.io.AbstractReport;
-import com.sonicle.webtop.core.io.ExcelFileReader;
-import com.sonicle.webtop.core.io.FileRowsReader;
-import com.sonicle.webtop.core.io.ReportConfig;
-import com.sonicle.webtop.core.io.TextFileReader;
+import com.sonicle.webtop.core.io.output.AbstractReport;
+import com.sonicle.webtop.core.io.input.ExcelFileReader;
+import com.sonicle.webtop.core.io.input.FileRowsReader;
+import com.sonicle.webtop.core.io.output.ReportConfig;
+import com.sonicle.webtop.core.io.input.TextFileReader;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -879,7 +880,7 @@ public class Service extends BaseService {
 			ContactTextFileReader rea = new ContactTextFileReader(pref, encoding);
 			rea.setHeadersRow(hr);
 			rea.setFirstDataRow(fdr);
-			if(ldr != null) rea.setLastDataRow(ldr);
+			if(ldr != -1) rea.setLastDataRow(ldr);
 			
 			if(op.equals("columns")) {
 				ArrayList<JsValue> items = new ArrayList<>();
@@ -889,7 +890,7 @@ public class Service extends BaseService {
 				new JsonResult("columns", items).printTo(out);
 				
 			} else if(op.equals("mappings")) {
-				List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, ContactTextFileReader.MAPPING_TARGETS);
+				List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, MemoryContactTextFileReader.MAPPING_TARGETS);
 				new JsonResult("mappings", items).printTo(out);
 				
 			} else if(op.equals("do")) {
@@ -921,7 +922,7 @@ public class Service extends BaseService {
 			File file = new File(WT.getTempFolder(), upl.id);
 			
 			if(op.equals("sheets")) {
-				ArrayList<JsValue> items = new ArrayList<>();				
+				ArrayList<JsValue> items = new ArrayList<>();
 				ExcelFileReader rea = new ExcelFileReader(binary);
 				List<String> sheets = rea.listSheets(file);
 				for(String sheet : sheets) {
@@ -938,7 +939,7 @@ public class Service extends BaseService {
 				ContactExcelFileReader rea = new ContactExcelFileReader(binary);
 				rea.setHeadersRow(hr);
 				rea.setFirstDataRow(fdr);
-				if(ldr != null) rea.setLastDataRow(ldr);
+				if(ldr != -1) rea.setLastDataRow(ldr);
 				rea.setSheet(sheet);
 				
 				if(op.equals("columns")) {
@@ -949,7 +950,7 @@ public class Service extends BaseService {
 					new JsonResult("columns", items).printTo(out);
 					
 				} else if(op.equals("mappings")) {
-					List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, ContactTextFileReader.MAPPING_TARGETS);
+					List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, MemoryContactTextFileReader.MAPPING_TARGETS);
 					new JsonResult("mappings", items).printTo(out);
 					
 				} else if(op.equals("do")) {

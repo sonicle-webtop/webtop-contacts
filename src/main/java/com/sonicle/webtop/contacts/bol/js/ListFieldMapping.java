@@ -34,7 +34,7 @@
 package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.web.json.JsonResult;
-import com.sonicle.webtop.core.io.FileRowsReader;
+import com.sonicle.webtop.core.io.input.FileRowsReader;
 import java.util.ArrayList;
 
 /**

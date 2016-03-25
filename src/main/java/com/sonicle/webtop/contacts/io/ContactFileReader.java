@@ -33,15 +33,15 @@
  */
 package com.sonicle.webtop.contacts.io;
 
-import com.sonicle.webtop.core.util.LogEntries;
+import com.sonicle.webtop.core.io.DefaultBeanHandler;
+import com.sonicle.webtop.core.io.input.FileReaderException;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 
 /**
  *
  * @author malbinola
  */
 public interface ContactFileReader {
-	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
+	public void readContacts(File file, DefaultBeanHandler handler) throws IOException, FileReaderException;
 }

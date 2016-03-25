@@ -34,8 +34,6 @@
 package com.sonicle.webtop.contacts.io;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
-import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.input.TextFileReader;
 import com.sonicle.webtop.core.util.LogEntries;
@@ -45,6 +43,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
@@ -56,7 +55,7 @@ import org.supercsv.prefs.CsvPreference;
  *
  * @author malbinola
  */
-public class ContactTextFileReader extends TextFileReader implements ContactFileReader {
+public class MemoryContactTextFileReader extends TextFileReader implements MemoryContactFileReader {
 	
 	public static final String[] MAPPING_TARGETS = new String[]{
 		"Title","FirstName","LastName","Nickname",/*"Gender",*/
@@ -73,7 +72,7 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 	
 	protected List<FileRowsReader.FieldMapping> mappings = null;
 	
-	public ContactTextFileReader(CsvPreference pref, String charsetName) {
+	public MemoryContactTextFileReader(CsvPreference pref, String charsetName) {
 		super(pref, charsetName);
 	}
 	
@@ -82,51 +81,47 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 	}
 	
 	@Override
-	public void readContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
-		HashMap<String, Integer> columnsIndexes = listColumnIndexes(file);
+	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+		ArrayList<ContactReadResult> results = new ArrayList<>();
+		HashMap<String, Integer> headersIndexes = listColumnIndexes(file);
 		
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
 			CsvListReader lr = new CsvListReader(new InputStreamReader(fis, charset), pref);
-			
+
+			LogEntries rowlog = null;
 			List<String> line = null;
 			while((line = lr.read()) != null) {
 				if(lr.getLineNumber() < firstDataRow) continue;
 				if((lastDataRow != -1) && (lr.getLineNumber() > lastDataRow)) break;
+
+				rowlog = new LogEntries();
 				try {
-					readRow(columnsIndexes, beanHandler, lr.getLineNumber(), line);
-				} catch(Exception ex) {
-					break;
+					results.add(readRow(rowlog, headersIndexes, line));
+					if(!rowlog.isEmpty()) {
+						log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "ROW [{0}]", lr.getLineNumber()));
+						log.addAll(rowlog);
+					}
+				} catch(Throwable t) {
+					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", lr.getLineNumber(), t.getMessage()));
 				}
 			}
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
+		return results;
 	}
 	
-	protected void readRow(HashMap<String, Integer> columnIndexes, DefaultBeanHandler beanHandler, int row, List<String> rowValues) throws Exception {
-		LogEntries log = new LogEntries();
-		Contact contact = null;
-		try {
-			LogEntries rowlog = new LogEntries();
-			contact = new Contact();
-			contact.setHasPicture(false);
-			for(FileRowsReader.FieldMapping mapping : mappings) {
-				if(StringUtils.isBlank(mapping.source)) continue;
-				if(!columnIndexes.containsKey(mapping.source)) throw new Exception("Index not found");
-				Integer index = columnIndexes.get(mapping.source);
-				fillContactByMapping(contact, mapping.target, rowValues.get(index));
-			}
-			if(!rowlog.isEmpty()) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "ROW [{0}]", row+1));
-				log.addAll(rowlog);
-			}
-		} catch(Throwable t) {
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
-		} finally {
-			beanHandler.handle(new ContactReadResult(contact, null), log);
+	private ContactReadResult readRow(LogEntries log, HashMap<String, Integer> headersIndexes, List<String> line) throws Exception {
+		Contact contact = new Contact();
+		contact.setHasPicture(false);
+		for(FileRowsReader.FieldMapping mapping : mappings) {
+			if(StringUtils.isBlank(mapping.source)) continue;
+			Integer index = headersIndexes.get(mapping.source);
+			fillContactByMapping(contact, mapping.target, line.get(index));
 		}
+		return new ContactReadResult(contact, null);
 	}
 	
 	private void fillContactByMapping(Contact contact, String target, String value) {

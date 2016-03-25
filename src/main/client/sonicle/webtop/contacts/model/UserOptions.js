@@ -1,5 +1,5 @@
 /*
- * webtop-calendar is a WebTop Service developed by Sonicle S.r.l.
+ * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under

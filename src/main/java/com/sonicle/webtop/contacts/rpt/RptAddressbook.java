@@ -34,8 +34,8 @@
 package com.sonicle.webtop.contacts.rpt;
 
 import com.sonicle.commons.LangUtils;
-import com.sonicle.webtop.core.io.AbstractReport;
-import com.sonicle.webtop.core.io.ReportConfig;
+import com.sonicle.webtop.core.io.output.AbstractReport;
+import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
 import java.io.IOException;
 import java.io.InputStream;
