@@ -34,7 +34,6 @@
 package com.sonicle.webtop.contacts.bol;
 
 import com.sonicle.webtop.contacts.jooq.tables.pojos.Categories;
-import com.sonicle.webtop.core.dal.BaseDAO.CrudInfo;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import org.apache.commons.lang3.StringUtils;
 
@@ -51,13 +50,5 @@ public class OCategory extends Categories {
 	public String getHexColor() {
 		String color = getColor();
 		return (StringUtils.indexOf(color, "#") == 0) ? StringUtils.substring(color, 1) : color;
-	}
-	
-	public void setInsertInfo(CrudInfo insertInfo) {
-		setUpdateInfo(insertInfo);
-	}
-	
-	public void setUpdateInfo(CrudInfo updateInfo) {
-		setUpdateTimestamp(updateInfo.timestamp);
 	}
 }

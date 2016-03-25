@@ -363,7 +363,8 @@ public class ContactsManager extends BaseManager {
 			CategoryDAO dao = CategoryDAO.getInstance();
 			
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
-			dao.update(con, item, createUpdateInfo());
+			dao.update(con, item);
+			//TODO: log update operation
 			DbUtils.commitQuietly(con);
 			return item;
 			
@@ -1027,7 +1028,8 @@ public class ContactsManager extends BaseManager {
 		CategoryDAO dao = CategoryDAO.getInstance();
 		item.setCategoryId(dao.getSequence(con).intValue());
 		if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
-		dao.insert(con, item, createUpdateInfo());
+		dao.insert(con, item);
+		//TODO: log update operation
 		return item;
 	}
 	

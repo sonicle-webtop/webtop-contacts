@@ -157,9 +157,8 @@ public class CategoryDAO extends BaseDAO {
 				.fetchInto(OCategory.class);
 	}
 	
-	public int insert(Connection con, OCategory item, CrudInfo insertInfo) throws DAOException {
+	public int insert(Connection con, OCategory item) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setInsertInfo(insertInfo);
 		CategoriesRecord record = dsl.newRecord(CATEGORIES, item);
 		return dsl
 			.insertInto(CATEGORIES)
@@ -167,8 +166,7 @@ public class CategoryDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int update(Connection con, OCategory item, CrudInfo updateInfo) throws DAOException {
-		item.setUpdateInfo(updateInfo);
+	public int update(Connection con, OCategory item) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CATEGORIES)
