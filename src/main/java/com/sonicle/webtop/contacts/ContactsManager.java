@@ -719,7 +719,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			OContact result = doInsertContactsList(con, list);
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACT-LIST_INSERT", String.valueOf(result.getContactId()));
+			writeLog("CONTACTLIST_INSERT", String.valueOf(result.getContactId()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -742,7 +742,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doUpdateContactsList(con, list);
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACT-LIST_UPDATE", String.valueOf(list.getContactId()));
+			writeLog("CONTACTLIST_UPDATE", String.valueOf(list.getContactId()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -769,7 +769,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doDeleteContact(con, contactsListId);
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACT-LIST_DELETE", String.valueOf(contactsListId));
+			writeLog("CONTACTLIST_DELETE", String.valueOf(contactsListId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -792,7 +792,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doDeleteContactsByCategory(con, categoryId, true);
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACT-LIST_DELETE", "*");
+			writeLog("CONTACTLIST_DELETE", "*");
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -825,7 +825,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doMoveContactsList(con, copy, clist, targetCategoryId);
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACT-LIST_UPDATE", String.valueOf(contactsListId));
+			writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1088,8 +1088,6 @@ public class ContactsManager extends BaseManager {
 			} else {
 				doDeleteContactPicture(con, item.getContactId());
 			}
-			
-			writeLog("CONTACT_UPDATE", item.getContactId().toString());
 		
 		} catch(WTException ex) {
 			throw ex;
@@ -1120,7 +1118,6 @@ public class ContactsManager extends BaseManager {
 		} else {
 			ContactDAO cdao = ContactDAO.getInstance();
 			cdao.updateCategory(con, contact.getContactId(), targetCategoryId, createRevisionTimestamp());
-			writeLog("CONTACT_UPDATE", contact.getContactId().toString());
 		}
 	}
 	
