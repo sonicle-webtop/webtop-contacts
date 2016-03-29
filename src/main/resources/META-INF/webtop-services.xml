@@ -66,8 +66,12 @@
 		<version>1.0.0</version>
 		<buildDate>15/07/2015</buildDate>
 		
-		<controllerClassName>ContactsController</controllerClassName>
+		<company>Sonicle S.r.l.</company>
+		<companyEmail>sonicle@sonicle.com</companyEmail>
+		<companyWebSite>http://www.sonicle.com</companyWebSite>
+		<supportEmail>sonicle@sonicle.com</supportEmail>
 		
+		<controllerClassName>ContactsController</controllerClassName>
 		<serviceClassName>Service</serviceClassName>
 		<clientOptionsModelJsClassName>model.ClientOptions</clientOptionsModelJsClassName>
 		<userOptions>
@@ -75,10 +79,7 @@
 			<viewJsClassName>view.UserOptions</viewJsClassName>
 			<modelJsClassName>model.UserOptions</modelJsClassName>
 		</userOptions>
-		<company>Sonicle S.r.l.</company>
-		<companyEmail>sonicle@sonicle.com</companyEmail>
-		<companyWebSite>http://www.sonicle.com</companyWebSite>
-		<supportEmail>sonicle@sonicle.com</supportEmail>
+		
 		<resources>
 			<resource name="GROUP" type="share" />
 		</resources>

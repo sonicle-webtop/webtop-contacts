@@ -35,8 +35,6 @@ package com.sonicle.webtop.contacts.bol;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.jooq.tables.pojos.Contacts;
-import com.sonicle.webtop.core.dal.BaseDAO;
-import com.sonicle.webtop.core.dal.BaseDAO.CrudInfo;
 
 /**
  *
@@ -103,18 +101,5 @@ public class OContact extends Contacts {
 		setAnniversary(cnt.getAnniversary());
 		setUrl(cnt.getUrl());
 		setNotes(cnt.getNotes());
-	}
-	
-	public void setInsertInfo(CrudInfo insertInfo) {
-		setInsertTimestamp(insertInfo.timestamp);
-		setInsertDevice(insertInfo.device);
-		setInsertUser(insertInfo.user);
-		setUpdateInfo(insertInfo);
-	}
-	
-	public void setUpdateInfo(CrudInfo updateInfo) {
-		setUpdateTimestamp(updateInfo.timestamp);
-		setUpdateDevice(updateInfo.device);
-		setUpdateUser(updateInfo.user);
 	}
 }

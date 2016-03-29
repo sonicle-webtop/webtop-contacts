@@ -49,13 +49,11 @@ import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
-import com.sonicle.webtop.contacts.io.MemoryContactFileReader;
 import com.sonicle.webtop.contacts.io.ContactFileReader;
 import com.sonicle.webtop.contacts.io.ContactReadResult;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.WT;
 import com.sonicle.webtop.core.bol.OShare;
-import com.sonicle.webtop.core.dal.BaseDAO.CrudInfo;
 import com.sonicle.webtop.core.sdk.BaseManager;
 import com.sonicle.webtop.core.RunContext;
 import com.sonicle.webtop.core.bol.Owner;
@@ -129,6 +127,12 @@ public class ContactsManager extends BaseManager {
 	
 	public ContactsManager(RunContext context, UserProfile.Id targetProfileId) {
 		super(context, targetProfileId);
+	}
+	
+	private void writeLog(String action, String data) {
+		CoreManager core = WT.getCoreManager(getRunContext());
+		core.setSoftwareName(getSoftwareName());
+		core.writeLog(action, data);
 	}
 	
 	private String getAnniversaryReminderDelivery(HashMap<UserProfile.Id, String> cache, UserProfile.Id pid) {
@@ -364,8 +368,8 @@ public class ContactsManager extends BaseManager {
 			
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			dao.update(con, item);
-			//TODO: log update operation
 			DbUtils.commitQuietly(con);
+			writeLog("CATEGORY_UPDATE", item.getCategoryId().toString());
 			return item;
 			
 		} catch(SQLException | DAOException ex) {
@@ -545,7 +549,7 @@ public class ContactsManager extends BaseManager {
 			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 			checkRightsOnCategoryElements(cont.getCategoryId(), "UPDATE"); // Rights check!
 			
-			cntdao.updateRevision(con, contactId, createUpdateInfo());
+			cntdao.updateRevision(con, contactId, createRevisionTimestamp());
 			doUpdateContactPicture(con, contactId, picture);
 			DbUtils.commitQuietly(con);
 			
@@ -1029,7 +1033,7 @@ public class ContactsManager extends BaseManager {
 		item.setCategoryId(dao.getSequence(con).intValue());
 		if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 		dao.insert(con, item);
-		//TODO: log update operation
+		writeLog("CATEGORY_INSERT", item.getCategoryId().toString());
 		return item;
 	}
 	
@@ -1042,7 +1046,7 @@ public class ContactsManager extends BaseManager {
 			if(StringUtils.isEmpty(contact.getPublicUid())) contact.setPublicUid(WT.generateUUID());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
 			item.setContactId(cdao.getSequence(con).intValue());
-			cdao.insert(con, item, createUpdateInfo());
+			cdao.insert(con, item, createRevisionTimestamp());
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
@@ -1050,6 +1054,7 @@ public class ContactsManager extends BaseManager {
 				}
 			}
 			
+			writeLog("CONTACT_INSERT", item.getContactId().toString());
 			return item;
 			
 		} catch(WTException ex) {
@@ -1064,7 +1069,7 @@ public class ContactsManager extends BaseManager {
 			OContact item = new OContact(contact);
 			item.setIsList(isList); // This is necessary because update method in dao writes all fields!!!
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
-			cdao.update(con, item, createUpdateInfo());
+			cdao.update(con, item, createRevisionTimestamp());
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
@@ -1073,6 +1078,8 @@ public class ContactsManager extends BaseManager {
 			} else {
 				doDeleteContactPicture(con, item.getContactId());
 			}
+			
+			writeLog("CONTACT_UPDATE", item.getContactId().toString());
 		
 		} catch(WTException ex) {
 			throw ex;
@@ -1081,12 +1088,12 @@ public class ContactsManager extends BaseManager {
 	
 	private int doDeleteContact(Connection con, int contactId) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
-		return cdao.logicDeleteById(con, contactId, createUpdateInfo());
+		return cdao.logicDeleteById(con, contactId, createRevisionTimestamp());
 	}
 	
 	private int doDeleteContactsByCategory(Connection con, int categoryId, boolean list) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
-		return cdao.logicDeleteByCategoryId(con, categoryId, list, createUpdateInfo());
+		return cdao.logicDeleteByCategoryId(con, categoryId, list, createRevisionTimestamp());
 	}
 	
 	private void doMoveContact(Connection con, boolean copy, Contact contact, int targetCategoryId) throws WTException {
@@ -1102,7 +1109,8 @@ public class ContactsManager extends BaseManager {
 			}
 		} else {
 			ContactDAO cdao = ContactDAO.getInstance();
-			cdao.updateCategory(con, contact.getContactId(), targetCategoryId, createUpdateInfo());
+			cdao.updateCategory(con, contact.getContactId(), targetCategoryId, createRevisionTimestamp());
+			writeLog("CONTACT_UPDATE", contact.getContactId().toString());
 		}
 	}
 	
@@ -1471,8 +1479,8 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	private CrudInfo createUpdateInfo() {
-		return new CrudInfo("WT", getRunContext().getProfileId().toString());
+	private DateTime createRevisionTimestamp() {
+		return DateTime.now(DateTimeZone.UTC);
 	}
 	
 	private Integer[] toIntArray(String[] in) {

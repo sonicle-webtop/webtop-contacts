@@ -43,7 +43,7 @@ import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -200,10 +200,10 @@ public class ContactDAO extends BaseDAO {
 			.fetchOneInto(OContact.class);
 	}
 	
-	public int insert(Connection con, OContact item, CrudInfo insertInfo) throws DAOException {
+	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		item.setStatus(OContact.STATUS_NEW);
-		item.setInsertInfo(insertInfo);
+		item.setRevisionTimestamp(revisionTimestamp);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.insertInto(CONTACTS)
@@ -211,10 +211,10 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int update(Connection con, OContact item, CrudInfo updateInfo) throws DAOException {
+	public int update(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		item.setStatus(OContact.STATUS_MODIFIED);
-		item.setUpdateInfo(updateInfo);
+		item.setRevisionTimestamp(revisionTimestamp);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.update(CONTACTS)
@@ -225,70 +225,60 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int updateCategory(Connection con, int contactId, int categoryId, CrudInfo updateInfo) throws DAOException {
+	public int updateCategory(Connection con, int contactId, int categoryId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.CATEGORY_ID, categoryId)
 			.set(CONTACTS.STATUS, OContact.STATUS_MODIFIED)
-			.set(CONTACTS.UPDATE_TIMESTAMP, updateInfo.timestamp)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.device)
-			.set(CONTACTS.UPDATE_USER, updateInfo.user)
+			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int updateRevision(Connection con, int contactId, CrudInfo updateInfo) throws DAOException {
+	public int updateRevision(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.UPDATE_TIMESTAMP, updateInfo.timestamp)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.device)
-			.set(CONTACTS.UPDATE_USER, updateInfo.user)
+			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int updateStatus(Connection con, int contactId, String status, CrudInfo updateInfo) throws DAOException {
+	public int updateStatus(Connection con, int contactId, String status, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.STATUS, status)
-			.set(CONTACTS.UPDATE_TIMESTAMP, updateInfo.timestamp)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.device)
-			.set(CONTACTS.UPDATE_USER, updateInfo.user)
+			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int logicDeleteById(Connection con, int contactId, CrudInfo updateInfo) throws DAOException {
+	public int logicDeleteById(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
-			.set(CONTACTS.UPDATE_TIMESTAMP, updateInfo.timestamp)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.device)
-			.set(CONTACTS.UPDATE_USER, updateInfo.user)
+			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean isList, CrudInfo updateInfo) throws DAOException {
+	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean isList, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
-			.set(CONTACTS.UPDATE_TIMESTAMP, updateInfo.timestamp)
-			.set(CONTACTS.UPDATE_DEVICE, updateInfo.device)
-			.set(CONTACTS.UPDATE_USER, updateInfo.user)
+			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(isList))
