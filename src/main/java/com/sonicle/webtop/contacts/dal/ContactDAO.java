@@ -87,8 +87,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.BIRTHDAY.equal(date)
 				.and(
-					CONTACTS.STATUS.equal("N")
-					.or(CONTACTS.STATUS.equal("M"))
+					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
+					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
 				)
 			)
 			.orderBy(
@@ -117,8 +117,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.ANNIVERSARY.equal(date)
 				.and(
-					CONTACTS.STATUS.equal("N")
-					.or(CONTACTS.STATUS.equal("M"))
+					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
+					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
 				)
 			)
 			.orderBy(
@@ -176,8 +176,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(
-					CONTACTS.STATUS.equal("N")
-					.or(CONTACTS.STATUS.equal("M"))
+					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
+					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
 				)
 				.and(
 					searchCndt
@@ -202,7 +202,7 @@ public class ContactDAO extends BaseDAO {
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setStatus(OContact.STATUS_NEW);
+		item.setRevisionStatus(OContact.REV_STATUS_NEW);
 		item.setRevisionTimestamp(revisionTimestamp);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
@@ -213,7 +213,7 @@ public class ContactDAO extends BaseDAO {
 	
 	public int update(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setStatus(OContact.STATUS_MODIFIED);
+		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
 		item.setRevisionTimestamp(revisionTimestamp);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
@@ -230,7 +230,7 @@ public class ContactDAO extends BaseDAO {
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.CATEGORY_ID, categoryId)
-			.set(CONTACTS.STATUS, OContact.STATUS_MODIFIED)
+			.set(CONTACTS.REVISION_STATUS, OContact.REV_STATUS_MODIFIED)
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
@@ -249,11 +249,11 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int updateStatus(Connection con, int contactId, String status, DateTime revisionTimestamp) throws DAOException {
+	public int updateRevisionStatus(Connection con, int contactId, String revisionStatus, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.STATUS, status)
+			.set(CONTACTS.REVISION_STATUS, revisionStatus)
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
@@ -265,7 +265,7 @@ public class ContactDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
+			.set(CONTACTS.REVISION_STATUS, OContact.REV_STATUS_DELETED)
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
@@ -277,7 +277,7 @@ public class ContactDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.STATUS, OContact.STATUS_DELETED)
+			.set(CONTACTS.REVISION_STATUS, OContact.REV_STATUS_DELETED)
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)

@@ -41,20 +41,20 @@ import com.sonicle.webtop.contacts.jooq.tables.pojos.Contacts;
  * @author malbinola
  */
 public class OContact extends Contacts {
-	public final static String STATUS_NEW = "N";
-	public final static String STATUS_MODIFIED = "M";
-	public final static String STATUS_DELETED = "D";
+	public final static String REV_STATUS_NEW = "N";
+	public final static String REV_STATUS_MODIFIED = "M";
+	public final static String REV_STATUS_DELETED = "D";
 	
 	public OContact() {
 		super();
-		setStatus(STATUS_NEW);
+		setRevisionStatus(REV_STATUS_NEW);
 	}
 	
 	public OContact(Contact cnt) {
 		setContactId(cnt.getContactId());
 		setCategoryId(cnt.getCategoryId());
 		setIsList(false);
-		setStatus(cnt.getStatus());
+		setRevisionStatus(cnt.getRevisionStatus());
 		setTitle(cnt.getTitle());
 		setFirstname(cnt.getFirstName());
 		setLastname(cnt.getLastName());

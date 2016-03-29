@@ -43,7 +43,7 @@ import org.joda.time.LocalDate;
 public class Contact {
 	protected Integer contactId;
 	protected Integer categoryId;
-	protected String status;
+	protected String revisionStatus;
 	protected String title;
 	protected String firstName;
 	protected String lastName;
@@ -116,12 +116,12 @@ public class Contact {
 		this.categoryId = categoryId;
 	}
 
-	public String getStatus() {
-		return status;
+	public String getRevisionStatus() {
+		return revisionStatus;
 	}
 
-	public void setStatus(String status) {
-		this.status = status;
+	public void setRevisionStatus(String revisionStatus) {
+		this.revisionStatus = revisionStatus;
 	}
 
 	public String getTitle() {

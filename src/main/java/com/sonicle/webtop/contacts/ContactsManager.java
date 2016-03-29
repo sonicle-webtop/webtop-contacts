@@ -1254,7 +1254,7 @@ public class ContactsManager extends BaseManager {
 	
 	private Contact createContact(OContact cont, boolean hasPicture) {
 		Contact item = new Contact(cont.getContactId(), cont.getCategoryId());
-		item.setStatus(cont.getStatus());
+		item.setRevisionStatus(cont.getRevisionStatus());
 		item.setTitle(cont.getTitle());
 		item.setFirstName(cont.getFirstname());
 		item.setLastName(cont.getLastname());
