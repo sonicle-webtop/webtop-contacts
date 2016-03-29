@@ -292,10 +292,10 @@ public class ContactsManager extends BaseManager {
 			checkRightsOnCategoryRoot(item.getProfileId(), "MANAGE");
 			con = WT.getConnection(getManifest());
 			con.setAutoCommit(false);
-			
 			item.setBuiltIn(false);
 			item = doInsertCategory(con, item);
 			DbUtils.commitQuietly(con);
+			writeLog("CATEGORY_INSERT", item.getCategoryId().toString());
 			return item;
 			
 			/*
@@ -321,6 +321,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	public OCategory addBuiltInCategory() throws WTException {
+		CategoryDAO dao = CategoryDAO.getInstance();
 		Connection con = null;
 		OCategory item = null;
 		
@@ -328,7 +329,6 @@ public class ContactsManager extends BaseManager {
 			checkRightsOnCategoryRoot(getTargetProfileId(), "MANAGE");
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
-			CategoryDAO dao = CategoryDAO.getInstance();
 			
 			item = dao.selectBuiltInByDomainUser(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
 			if(item != null) throw new WTOperationException("Built-in category already present");
@@ -343,7 +343,9 @@ public class ContactsManager extends BaseManager {
 			item.setSync(true);
 			item.setIsDefault(true);
 			item = doInsertCategory(con, item);
+			
 			DbUtils.commitQuietly(con);
+			writeLog("CATEGORY_INSERT", item.getCategoryId().toString());
 			return item;
 			
 		} catch(SQLException | DAOException ex) {
@@ -358,18 +360,18 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	public OCategory updateCategory(OCategory item) throws Exception {
+		CategoryDAO dao = CategoryDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			checkRightsOnCategoryFolder(item.getCategoryId(), "UPDATE");
+			
 			con = WT.getConnection(getManifest());
 			con.setAutoCommit(false);
-			CategoryDAO dao = CategoryDAO.getInstance();
-			
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			dao.update(con, item);
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_UPDATE", item.getCategoryId().toString());
+			writeLog("CATEGORY_UPDATE", String.valueOf(item.getCategoryId()));
 			return item;
 			
 		} catch(SQLException | DAOException ex) {
@@ -384,15 +386,18 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	public void deleteCategory(int categoryId) throws WTException {
+		CategoryDAO dao = CategoryDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			checkRightsOnCategoryFolder(categoryId, "DELETE");
-			con = WT.getConnection(getManifest());
 			
-			CategoryDAO dao = CategoryDAO.getInstance();
+			con = WT.getConnection(getManifest());
+			con.setAutoCommit(false);
 			dao.deleteById(con, categoryId);
 			//TODO: cancellare contatti collegati
+			DbUtils.commitQuietly(con);
+			writeLog("CATEGORY_DELETE", String.valueOf(categoryId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -473,9 +478,9 @@ public class ContactsManager extends BaseManager {
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
-			
-			doInsertContact(con, false, contact, picture);
+			OContact result = doInsertContact(con, false, contact, picture);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT_INSERT", String.valueOf(result.getContactId()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -500,9 +505,9 @@ public class ContactsManager extends BaseManager {
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
-			
 			doUpdateContact(con, false, contact, picture);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -552,6 +557,7 @@ public class ContactsManager extends BaseManager {
 			cntdao.updateRevision(con, contactId, createRevisionTimestamp());
 			doUpdateContactPicture(con, contactId, picture);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT_UPDATE", String.valueOf(contactId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -574,6 +580,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doDeleteContactsByCategory(con, categoryId, false);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT_DELETE", "*");
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -600,6 +607,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doDeleteContact(con, contactId);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT_DELETE", String.valueOf(contactId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -630,6 +638,7 @@ public class ContactsManager extends BaseManager {
 			}
 			
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT_DELETE", "*");
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -662,6 +671,7 @@ public class ContactsManager extends BaseManager {
 				con.setAutoCommit(false);
 				doMoveContact(con, copy, contact, targetCategoryId);
 				DbUtils.commitQuietly(con);
+				writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
 			}
 			
 		} catch(SQLException | DAOException ex) {
@@ -707,9 +717,9 @@ public class ContactsManager extends BaseManager {
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
-			
-			doInsertContactsList(con, list);
+			OContact result = doInsertContactsList(con, list);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT-LIST_INSERT", String.valueOf(result.getContactId()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -730,9 +740,9 @@ public class ContactsManager extends BaseManager {
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
-			
 			doUpdateContactsList(con, list);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT-LIST_UPDATE", String.valueOf(list.getContactId()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -759,6 +769,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doDeleteContact(con, contactsListId);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT-LIST_DELETE", String.valueOf(contactsListId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -781,6 +792,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doDeleteContactsByCategory(con, categoryId, true);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT-LIST_DELETE", "*");
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -813,6 +825,7 @@ public class ContactsManager extends BaseManager {
 			con.setAutoCommit(false);
 			doMoveContactsList(con, copy, clist, targetCategoryId);
 			DbUtils.commitQuietly(con);
+			writeLog("CONTACT-LIST_UPDATE", String.valueOf(contactsListId));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1033,7 +1046,6 @@ public class ContactsManager extends BaseManager {
 		item.setCategoryId(dao.getSequence(con).intValue());
 		if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 		dao.insert(con, item);
-		writeLog("CATEGORY_INSERT", item.getCategoryId().toString());
 		return item;
 	}
 	
@@ -1053,8 +1065,6 @@ public class ContactsManager extends BaseManager {
 					doInsertContactPicture(con, item.getContactId(), picture);
 				}
 			}
-			
-			writeLog("CONTACT_INSERT", item.getContactId().toString());
 			return item;
 			
 		} catch(WTException ex) {
@@ -1161,7 +1171,7 @@ public class ContactsManager extends BaseManager {
 		dao.delete(con, contactId);
 	}
 	
-	private void doInsertContactsList(Connection con, ContactsList list) throws WTException {
+	private OContact doInsertContactsList(Connection con, ContactsList list) throws WTException {
 		ListRecipientDAO lrdao = ListRecipientDAO.getInstance();
 		
 		try {
@@ -1172,6 +1182,7 @@ public class ContactsManager extends BaseManager {
 				item.setListRecipientId(lrdao.getSequence(con).intValue());
 				lrdao.insert(con, item);
 			}
+			return cont;
 			
 		} catch(WTException ex) {
 			throw ex;
