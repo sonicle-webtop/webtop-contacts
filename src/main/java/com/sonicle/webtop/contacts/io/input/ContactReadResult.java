@@ -31,17 +31,21 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.io;
+package com.sonicle.webtop.contacts.io.input;
 
-import com.sonicle.webtop.core.util.LogEntries;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import com.sonicle.webtop.contacts.bol.model.Contact;
+import com.sonicle.webtop.contacts.bol.model.ContactPicture;
 
 /**
  *
  * @author malbinola
  */
-public interface MemoryContactFileReader {
-	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
+public class ContactReadResult {
+	public Contact contact;
+	public ContactPicture picture;
+
+	public ContactReadResult(Contact contact, ContactPicture picture) {
+		this.contact = contact;
+		this.picture = picture;
+	}
 }

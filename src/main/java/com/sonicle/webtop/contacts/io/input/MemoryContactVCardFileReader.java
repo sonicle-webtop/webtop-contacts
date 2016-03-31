@@ -31,7 +31,7 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-package com.sonicle.webtop.contacts.io;
+package com.sonicle.webtop.contacts.io.input;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.bol.model.ContactPicture;

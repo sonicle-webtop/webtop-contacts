@@ -33,7 +33,7 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.sonicle.webtop.contacts.io.MemoryContactTextFileReader;
+import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
@@ -70,9 +70,9 @@ import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.AddressbookBean;
 import com.sonicle.webtop.contacts.bol.model.ContactDetailBean;
-import com.sonicle.webtop.contacts.io.ContactExcelFileReader;
-import com.sonicle.webtop.contacts.io.ContactTextFileReader;
-import com.sonicle.webtop.contacts.io.ContactVCardFileReader;
+import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
+import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
+import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
 import com.sonicle.webtop.core.CoreManager;
