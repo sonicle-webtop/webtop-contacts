@@ -42,9 +42,11 @@ import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.jooq.Batch;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -211,6 +213,18 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
+	public int batchInsert(Connection con, ArrayList<OContact> items, DateTime revisionTimestamp) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		ArrayList<ContactsRecord> records = new ArrayList<>();
+		for(OContact item : items) {
+			item.setRevisionStatus(OContact.REV_STATUS_NEW);
+			item.setRevisionTimestamp(revisionTimestamp);
+			records.add(dsl.newRecord(CONTACTS, item));
+		}
+		dsl.batchInsert(records).execute();
+		return items.size();
+	}
+	
 	public int update(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
@@ -269,6 +283,7 @@ public class ContactDAO extends BaseDAO {
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
+				.and(CONTACTS.REVISION_STATUS.notEqual(OContact.REV_STATUS_DELETED))
 			)
 			.execute();
 	}
@@ -282,6 +297,7 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(isList))
+				.and(CONTACTS.REVISION_STATUS.notEqual(OContact.REV_STATUS_DELETED))
 			)
 			.execute();
 	}

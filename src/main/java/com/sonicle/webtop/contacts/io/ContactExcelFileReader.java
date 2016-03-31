@@ -34,7 +34,7 @@
 package com.sonicle.webtop.contacts.io;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
+import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
@@ -96,7 +96,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 	}
 	
 	@Override
-	public void readContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	public void readContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
 		if(binary) {
 			readXlsContacts(file, beanHandler);
 		} else {
@@ -104,7 +104,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 		}
 	}
 	
-	private void readXlsxContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	private void readXlsxContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
 		OPCPackage opc = null;
 		HashMap<String, Integer> columnIndexes = listXlsxColumnIndexes(file);
 		XlsRowHandler rowHandler = new XlsRowHandler(this, columnIndexes, beanHandler);
@@ -145,7 +145,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 		}
 	}
 	
-	private void readXlsContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	private void readXlsContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
 		POIFSFileSystem pfs = null;
 		InputStream is = null;
 		HashMap<String, Integer> columnIndexes = listXlsColumnIndexes(file);
@@ -164,7 +164,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 	
 	
 	
-	protected void readRow(HashMap<String, Integer> columnIndexes, DefaultBeanHandler beanHandler, int row, RowValues rowBean) throws Exception {
+	protected void readRow(HashMap<String, Integer> columnIndexes, BeanHandler beanHandler, int row, RowValues rowBean) throws Exception {
 		LogEntries log = new LogEntries();
 		Contact contact = null;
 		try {
@@ -288,9 +288,9 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 	private class XlsRowHandler implements RowHandler<RowValues> {
 		private final ContactExcelFileReader excelReader;
 		private final HashMap<String, Integer> columnIndexes;
-		private final DefaultBeanHandler beanHandler;
+		private final BeanHandler beanHandler;
 		
-		public XlsRowHandler(ContactExcelFileReader excelReader, HashMap<String, Integer> columnIndexes, DefaultBeanHandler beanHandler) {
+		public XlsRowHandler(ContactExcelFileReader excelReader, HashMap<String, Integer> columnIndexes, BeanHandler beanHandler) {
 			this.excelReader = excelReader;
 			this.columnIndexes = columnIndexes;
 			this.beanHandler = beanHandler;

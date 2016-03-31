@@ -35,7 +35,7 @@ package com.sonicle.webtop.contacts.io;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.contacts.bol.model.ContactPicture;
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
+import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
@@ -64,7 +64,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
@@ -78,7 +77,7 @@ import org.joda.time.LocalDate;
 public class ContactVCardFileReader implements ContactFileReader {
 
 	@Override
-	public void readContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	public void readContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
@@ -88,7 +87,7 @@ public class ContactVCardFileReader implements ContactFileReader {
 		}
 	}
 	
-	public void readContacts(InputStream is, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	public void readContacts(InputStream is, BeanHandler beanHandler) throws IOException, FileReaderException {
 		// See https://tools.ietf.org/html/rfc6350
 		// See http://www.w3.org/TR/vcard-rdf/
 		

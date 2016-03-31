@@ -33,7 +33,7 @@
  */
 package com.sonicle.webtop.contacts.io;
 
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
+import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import java.io.File;
 import java.io.IOException;
@@ -43,5 +43,5 @@ import java.io.IOException;
  * @author malbinola
  */
 public interface ContactFileReader {
-	public void readContacts(File file, DefaultBeanHandler handler) throws IOException, FileReaderException;
+	public void readContacts(File file, BeanHandler handler) throws IOException, FileReaderException;
 }

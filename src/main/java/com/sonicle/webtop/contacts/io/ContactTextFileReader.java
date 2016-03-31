@@ -34,7 +34,7 @@
 package com.sonicle.webtop.contacts.io;
 
 import com.sonicle.webtop.contacts.bol.model.Contact;
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
+import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.input.TextFileReader;
@@ -82,7 +82,7 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 	}
 	
 	@Override
-	public void readContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
+	public void readContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
 		HashMap<String, Integer> columnsIndexes = listColumnIndexes(file);
 		
 		FileInputStream fis = null;
@@ -105,7 +105,7 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 		}
 	}
 	
-	protected void readRow(HashMap<String, Integer> columnIndexes, DefaultBeanHandler beanHandler, int row, List<String> rowValues) throws Exception {
+	protected void readRow(HashMap<String, Integer> columnIndexes, BeanHandler beanHandler, int row, List<String> rowValues) throws Exception {
 		LogEntries log = new LogEntries();
 		Contact contact = null;
 		try {

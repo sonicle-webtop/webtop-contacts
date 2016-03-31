@@ -64,6 +64,7 @@ import com.sonicle.webtop.core.bol.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
+import com.sonicle.webtop.core.io.BatchBeanHandler;
 import com.sonicle.webtop.core.io.DefaultBeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.sdk.AuthException;
@@ -838,6 +839,92 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
+	private class ContactBatchImportBeanHandler extends BatchBeanHandler<ContactReadResult> {
+		private ArrayList<Contact> contacts;
+		public Connection con;
+		public int categoryId;
+		public int insertedCount;
+		
+		public ContactBatchImportBeanHandler(LogEntries log, Connection con, int categoryId) {
+			super(log);
+			this.contacts = new ArrayList<>();
+			this.con = con;
+			this.categoryId = categoryId;
+			insertedCount = 0;
+		}
+
+		@Override
+		protected int getBeanStoreSize() {
+			return contacts.size();
+		}
+		
+		@Override
+		protected void clearBeanStore() {
+			contacts.clear();
+		}
+
+		@Override
+		protected void addBeanToStore(ContactReadResult bean) {
+			contacts.add(bean.contact);
+		}
+		
+		@Override
+		public void handleStoredBeans() throws Exception {
+			insertedCount = insertedCount + doBatchInsertContacts(con, categoryId, contacts);
+		}
+	}
+	
+	public LogEntries importContacts(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
+		LogEntries log = new LogEntries();
+		Connection con = null;
+		int readCount = 0;
+		int importedCount = 0;
+		
+		try {
+			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
+			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
+			
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
+			
+			if(mode.equals("copy")) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning contacts..."));
+				int del = doDeleteContactsByCategory(con, categoryId, false);
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
+			}
+			
+			con = WT.getConnection(SERVICE_ID);
+			con.setAutoCommit(false);
+			ContactBatchImportBeanHandler handler = new ContactBatchImportBeanHandler(log, con, categoryId);
+			try {
+				rea.readContacts(file, handler);
+				handler.flush();
+			} catch(IOException | FileReaderException ex) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex.getMessage()));
+				throw new WTException(ex);
+			} catch(Exception ex) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex.getMessage()));
+				throw new WTException(ex);
+			}
+			
+			readCount = handler.handledCount;
+			importedCount = handler.insertedCount;
+			DbUtils.commitQuietly(con);
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(WTException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s read!", readCount));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", importedCount));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+		}
+		return log;
+	}
+	
 	private static class ContactResultBeanHandler extends DefaultBeanHandler<ContactReadResult> {
 		private LogEntries log;
 		public ArrayList<ContactReadResult> parsed;
@@ -854,7 +941,7 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
-	public LogEntries importContacts(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
+	public LogEntries importContacts22(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
 		
@@ -1047,6 +1134,21 @@ public class ContactsManager extends BaseManager {
 		if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 		dao.insert(con, item);
 		return item;
+	}
+	
+	private int doBatchInsertContacts(Connection con, int categoryId, ArrayList<Contact> contacts) throws WTException {
+		ContactDAO cdao = ContactDAO.getInstance();
+		ArrayList<OContact> ocontacts = new ArrayList<>();
+		//TODO: eventualmente introdurre supporto alle immagini
+		for(Contact contact : contacts) {
+			OContact cont = new OContact(contact);
+			cont.setIsList(false);
+			cont.setSearchfield(StringUtils.lowerCase(buildSearchfield(cont)));
+			cont.setCategoryId(categoryId);
+			cont.setContactId(cdao.getSequence(con).intValue());
+			ocontacts.add(cont);
+		}
+		return cdao.batchInsert(con, ocontacts, createRevisionTimestamp());
 	}
 	
 	private OContact doInsertContact(Connection con, boolean isList, Contact contact, ContactPicture picture) throws WTException {
