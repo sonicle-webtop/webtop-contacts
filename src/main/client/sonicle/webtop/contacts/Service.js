@@ -541,7 +541,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAction('printAddressbook', {
 			text: null,
-			tooltip: me.res('act-printAddressbook.tip'),
+			tooltip: WT.res('act-print.lbl'),
 			iconCls: 'wt-icon-print-xs',
 			handler: function() {
 				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
