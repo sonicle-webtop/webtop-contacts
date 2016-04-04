@@ -34,6 +34,7 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.db.DbUtils;
+import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
@@ -1566,7 +1567,7 @@ public class ContactsManager extends BaseManager {
 		String fullName = Contact.buildFullName(contact.getFirstname(), contact.getLastname());
 		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
 		String subject = NotificationHelper.buildSubject(locale, SERVICE_ID, title);
-		String body = buildReminderEmailBody(locale, birthday, recipient.getAddress(), fullName);
+		String body = buildAnniversaryNotificationEmailBody(locale, birthday, recipient.getAddress(), fullName);
 		
 		ReminderEmail alert = new ReminderEmail(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
 		alert.setSubject(subject);
@@ -1574,17 +1575,22 @@ public class ContactsManager extends BaseManager {
 		return alert;
 	}
 	
-	private String buildReminderEmailBody(Locale locale, boolean birthday, String recipientEmail, String contactFullName) {
+	public String buildAnniversaryNotificationEmailBody(Locale locale, boolean birthday, String recipientEmail, String contactFullName) {
 		String resKey = (birthday) ? ContactsLocale.TPL_ANNIVERSARY_HEADER_BIRTHDAY : ContactsLocale.TPL_ANNIVERSARY_HEADER_ANNIVERSARY;
 		
 		try {
 			String source = NotificationHelper.buildSource(locale, SERVICE_ID);
 			String bodyHeader = MessageFormat.format(lookupResource(locale, resKey), contactFullName);
-			String why = lookupResource(locale, ContactsLocale.TPL_ANNIVERSARY_FOOTER_WHY);
-			Map map = NotificationHelper.generateNotificationTplStrings(locale, source, recipientEmail, bodyHeader, null, why);
-			return WT.buildTemplate(SERVICE_ID, "tpl_anniversary.html", map);
+			String because = lookupResource(locale, ContactsLocale.TPL_ANNIVERSARY_FOOTER_BECAUSE);
+			
+			MapItem i18nMap = new MapItem();
+			i18nMap.putAll(NotificationHelper.generateNotificationI18nTplStrings(locale, source, recipientEmail, bodyHeader, null, because));
+			MapItem map = new MapItem();
+			map.put("i18n", i18nMap);
+			map.put("recipientEmail", StringUtils.defaultString(recipientEmail));
+			return WT.buildTemplate(SERVICE_ID, "tpl/anniversary-notification.html", map);
 		} catch(IOException | TemplateException ex) {
-			logger.error("Error generating reminder body", ex);
+			logger.error("Error generating body", ex);
 			return null;
 		}
 	}

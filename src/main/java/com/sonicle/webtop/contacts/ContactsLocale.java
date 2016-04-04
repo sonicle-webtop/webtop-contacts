@@ -46,7 +46,7 @@ public class ContactsLocale {
 	public static final String TPL_ANNIVERSARY_HEADER_ANNIVERSARY = "tpl.anniversary.header.anniversary";
 	public static final String TPL_ANNIVERSARY_HEADER_BIRTHDAY = "tpl.anniversary.header.birthday";
 	public static final String TPL_ANNIVERSARY_FOOTER_HEADER = "tpl.anniversary.footer.header";
-	public static final String TPL_ANNIVERSARY_FOOTER_WHY = "tpl.anniversary.footer.why";
+	public static final String TPL_ANNIVERSARY_FOOTER_BECAUSE = "tpl.anniversary.footer.because";
 	
 	public static final String FIELDS_GROUPMAIN = "fields.groupmain";
 	public static final String FIELDS_GROUPWORK = "fields.groupwork";
