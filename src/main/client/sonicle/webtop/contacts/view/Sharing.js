@@ -39,5 +39,5 @@ Ext.define('Sonicle.webtop.contacts.view.Sharing', {
 	
 	modelName: 'Sonicle.webtop.contacts.model.Sharing',
 	fieldTitle: 'description',
-	rightsModelName: 'Sonicle.webtop.calendar.model.SharingRights'
+	rightsModelName: 'Sonicle.webtop.contacts.model.SharingRights'
 });
