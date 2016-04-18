@@ -36,7 +36,7 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.bol.model.Contact;
 import com.sonicle.webtop.core.sdk.UserProfile;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
 
 /**

@@ -76,6 +76,7 @@ import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTOperationException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
+import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
@@ -1158,7 +1159,7 @@ public class ContactsManager extends BaseManager {
 		try {
 			OContact item = new OContact(contact);
 			item.setIsList(isList);
-			if(StringUtils.isEmpty(contact.getPublicUid())) contact.setPublicUid(WT.generateUUID());
+			if(StringUtils.isBlank(contact.getPublicUid())) contact.setPublicUid(IdentifierUtils.getUUID());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
 			item.setContactId(cdao.getSequence(con).intValue());
 			cdao.insert(con, item, createRevisionTimestamp());

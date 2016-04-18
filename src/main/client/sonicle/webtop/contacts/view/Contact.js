@@ -34,11 +34,11 @@
 Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WT.sdk.ModelView',
 	requires: [
-		'WT.ux.field.SuggestCombo',
 		'Sonicle.form.Separator',
 		'Sonicle.form.field.IconComboBox',
 		'Sonicle.form.field.Image',
 		'Sonicle.form.trigger.Clear',
+		'WT.ux.field.SuggestCombo',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp'
 	],
@@ -163,13 +163,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					xtype: 'wtsuggestcombo',
 					bind: '{record.function}',
 					sid: me.mys.ID,
-					suggestionContext: 'function',
+					suggestionContext: 'contactFunction',
 					fieldLabel: me.mys.res('contact.fld-function.lbl')
 				}, {
 					xtype: 'wtsuggestcombo',
 					bind: '{record.department}',
 					sid: me.mys.ID,
-					suggestionContext: 'department',
+					suggestionContext: 'contactDepartment',
 					fieldLabel: me.mys.res('contact.fld-department.lbl')
 				}, {
 					xtype: 'formseparator'
@@ -477,6 +477,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.updateCategoryFilters(owner.getValue());
 		if(me.isMode(me.MODE_NEW)) {
 			owner.setDisabled(false);
+			me.getAction('delete').setDisabled(true);
 		} else if(me.isMode(me.MODE_VIEW)) {
 			me.getAction('saveClose').setDisabled(true);
 			me.getAction('delete').setDisabled(true);
