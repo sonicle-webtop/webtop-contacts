@@ -99,7 +99,7 @@ public class Contact {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
 	}
-
+	
 	public Integer getContactId() {
 		return contactId;
 	}

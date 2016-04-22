@@ -764,16 +764,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if(bid === 'yes') {
 				if(isl) {
 					me.deleteContactsLists(ids, {
-						cb: function(success) {
+						callback: function(success) {
 							if(success) sto.remove(sel);
-							//me.reloadContacts();
 						}
 					});
 				} else {
 					me.deleteContacts(ids, {
-						cb: function(success) {
+						callback: function(success) {
 							if(success) sto.remove(sel);
-							//me.reloadContacts();
 						}
 					});
 				}
@@ -789,15 +787,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				cat = sel[0].get('categoryId');
 		
 		if(isl) {
-			me.confirmMoveContactsList0(copy, id, pid, cat, {
-				cb: function() {
+			me.confirmMoveContactsList(copy, id, pid, cat, {
+				callback: function() {
 					me.reloadContacts();
 				}
 			});
 			
 		} else {
 			me.confirmMoveContact(copy, id, pid, cat, {
-				cb: function() {
+				callback: function() {
 					me.reloadContacts();
 				}
 			});
@@ -810,22 +808,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}, this);
 	},
 	
-	confirmMoveContact: function(copy, id, ownerId, catId) {
+	confirmMoveContact: function(copy, id, ownerId, catId, opts) {
 		var me = this,
 				vw = me.createCategoryChooser(copy, ownerId, catId);
 		
 		vw.getView().on('viewok', function(s) {
-			me.moveContact(copy, id, s.getVMData().categoryId);
+			me.moveContact(copy, id, s.getVMData().categoryId, opts);
 		});
 		vw.show();
 	},
 	
-	confirmMoveContactsList: function(copy, id, ownerId, catId) {
+	confirmMoveContactsList: function(copy, id, ownerId, catId, opts) {
 		var me = this,
 				vw = me.createCategoryChooser(copy, ownerId, catId);
 		
 		vw.getView().on('viewok', function(s) {
-			me.moveContactsList(copy, id, s.getVMData().categoryId);
+			me.moveContactsList(copy, id, s.getVMData().categoryId, opts);
 		});
 		vw.show();
 	},
@@ -950,7 +948,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				ids: WTU.arrayAsParam(ids)
 			},
 			callback: function(success, json) {
-				Ext.callback(opts.cb, opts.scope || me, [success, json]);
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
 			}
 		});
 	},
@@ -964,7 +962,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				ids: WTU.arrayAsParam(ids)
 			},
 			callback: function(success, json) {
-				Ext.callback(opts.cb, opts.scope || me, [success, json]);
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
 			}
 		});
 	},
@@ -981,7 +979,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				targetCategoryId: targetCategoryId
 			},
 			callback: function(success, json) {
-				Ext.callback(opts.cb, opts.scope || me, [success, json]);
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
 			}
 		});
 	},
@@ -998,7 +996,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				targetCategoryId: targetCategoryId
 			},
 			callback: function(success, json) {
-				Ext.callback(opts.cb, opts.scope || me, [success, json]);
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
 			}
 		});
 	},
