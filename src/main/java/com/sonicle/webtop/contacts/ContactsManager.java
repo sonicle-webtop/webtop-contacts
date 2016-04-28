@@ -243,7 +243,7 @@ public class ContactsManager extends BaseManager {
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			CategoryDAO dao = CategoryDAO.getInstance();
 			return dao.selectByDomainUser(con, pid.getDomainId(), pid.getUserId());
 			
@@ -259,7 +259,7 @@ public class ContactsManager extends BaseManager {
 		
 		try {
 			checkRightsOnCategoryFolder(categoryId, "READ");
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			CategoryDAO dao = CategoryDAO.getInstance();
 			return dao.selectById(con, categoryId);
 			
@@ -293,7 +293,7 @@ public class ContactsManager extends BaseManager {
 		
 		try {
 			checkRightsOnCategoryRoot(item.getProfileId(), "MANAGE");
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			item.setBuiltIn(false);
 			item = doInsertCategory(con, item);
@@ -369,7 +369,7 @@ public class ContactsManager extends BaseManager {
 		try {
 			checkRightsOnCategoryFolder(item.getCategoryId(), "UPDATE");
 			
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			dao.update(con, item);
@@ -395,7 +395,7 @@ public class ContactsManager extends BaseManager {
 		try {
 			checkRightsOnCategoryFolder(categoryId, "DELETE");
 			
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			dao.deleteById(con, categoryId);
 			//TODO: cancellare contatti collegati
@@ -424,7 +424,7 @@ public class ContactsManager extends BaseManager {
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			
 			// Lists desired groups (tipically visibles) coming from passed list
 			// Passed ids should belong to referenced folder(group), 
@@ -1481,7 +1481,7 @@ public class ContactsManager extends BaseManager {
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(getManifest());
+			con = WT.getConnection(SERVICE_ID);
 			CategoryDAO dao = CategoryDAO.getInstance();
 			Owner owner = dao.selectOwnerById(con, categoryId);
 			if(owner == null) throw new WTException("Category not found [{0}]", categoryId);
@@ -1495,7 +1495,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	private void checkRightsOnCategoryRoot(UserProfile.Id ownerPid, String action) throws WTException {
-		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		if(getRunContext().isWebTopAdmin()) return;
 		if(ownerPid.equals(getTargetProfileId())) return;
 		
 		String shareId = ownerToRootShareId(ownerPid);
@@ -1507,7 +1507,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
-		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		if(getRunContext().isWebTopAdmin()) return;
 		
 		// Skip rights check if running user is resource's owner
 		UserProfile.Id ownerPid = categoryToOwner(categoryId);
@@ -1529,7 +1529,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	private void checkRightsOnCategoryElements(int categoryId, String action) throws WTException {
-		if(WT.isWebTopAdmin(getRunProfileId())) return;
+		if(getRunContext().isWebTopAdmin()) return;
 		
 		// Skip rights check if running user is resource's owner
 		UserProfile.Id ownerPid = categoryToOwner(categoryId);

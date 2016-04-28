@@ -63,7 +63,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
-			ContactsUserSettings cus = new ContactsUserSettings(getServiceId(), getTargetProfileId());
+			ContactsUserSettings cus = new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
 			DateTimeFormatter hmf = DateTimeUtils.createHmFormatter();
 			
 			if(crud.equals(Crud.READ)) {
