@@ -1029,7 +1029,7 @@ public class Service extends BaseService {
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
 			RptAddressbook rpt = new RptAddressbook(builder.build());
-			rpt.setDataSource(new JRBeanCollectionDataSource(items));
+			rpt.setDataSource(items);
 			
 			baos = new ByteArrayOutputStream();
 			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
@@ -1066,7 +1066,7 @@ public class Service extends BaseService {
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
 			RptContactsDetail rpt = new RptContactsDetail(builder.build());
-			rpt.setDataSource(new JRBeanCollectionDataSource(items));
+			rpt.setDataSource(items);
 			
 			baos = new ByteArrayOutputStream();
 			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
