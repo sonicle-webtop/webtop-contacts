@@ -58,7 +58,6 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.bol.OShare;
 import com.sonicle.webtop.core.sdk.BaseManager;
-import com.sonicle.webtop.core.app.ServiceContext;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.bol.model.InternetRecipient;
 import com.sonicle.webtop.core.bol.model.IncomingShareRoot;
@@ -129,12 +128,12 @@ public class ContactsManager extends BaseManager {
 	private final HashMap<Integer, String> cacheCategoryToWildcardFolderShare = new HashMap<>();
 	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
 
-	public ContactsManager(ServiceContext context) {
-		super(context);
+	public ContactsManager() {
+		this(RunContext.getProfileId());
 	}
 	
-	public ContactsManager(ServiceContext context, UserProfile.Id targetProfileId) {
-		super(context, targetProfileId);
+	public ContactsManager(UserProfile.Id targetProfileId) {
+		super(targetProfileId);
 	}
 	
 	private boolean isCacheReady(String cacheName) {
@@ -142,7 +141,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	private void buildShareCache() {
-		CoreManager core = WT.getCoreManager(getServiceContext(), getTargetProfileId());
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		
 		try {
 			cacheOwnerToRootShare.clear();
@@ -173,7 +172,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	private void writeLog(String action, String data) {
-		CoreManager core = WT.getCoreManager(getServiceContext());
+		CoreManager core = WT.getCoreManager();
 		core.setSoftwareName(getSoftwareName());
 		core.writeLog(action, data);
 	}
@@ -283,7 +282,7 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
-		CoreManager core = WT.getCoreManager(getServiceContext(), getTargetProfileId());
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		ArrayList<CategoryRoot> roots = new ArrayList();
 		HashSet<String> hs = new HashSet<>();
 		
@@ -308,7 +307,7 @@ public class ContactsManager extends BaseManager {
 	*/
 	
 	public HashMap<Integer, CategoryFolder> listIncomingCategoryFolders(String rootShareId) throws WTException {
-		CoreManager core = WT.getCoreManager(getServiceContext(), getTargetProfileId());
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		LinkedHashMap<Integer, CategoryFolder> folders = new LinkedHashMap<>();
 		
 		// Retrieves incoming folders (from sharing). This lookup already 
@@ -341,12 +340,12 @@ public class ContactsManager extends BaseManager {
 	}
 	
 	public Sharing getSharing(String shareId) throws WTException {
-		CoreManager core = WT.getCoreManager(getServiceContext(), getTargetProfileId());
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		return core.getSharing(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, shareId);
 	}
 	
 	public void updateSharing(Sharing sharing) throws WTException {
-		CoreManager core = WT.getCoreManager(getServiceContext(), getTargetProfileId());
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		core.updateSharing(getTargetProfileId(), SERVICE_ID, RESOURCE_CATEGORY, sharing);
 	}
 	
@@ -1603,7 +1602,7 @@ public class ContactsManager extends BaseManager {
 		
 		String shareId = ownerToRootShareId(ownerPid);
 		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
-		CoreManager core = WT.getCoreManager(getServiceContext(), targetPid);
+		CoreManager core = WT.getCoreManager(targetPid);
 		if(core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, targetPid.toString());
@@ -1618,7 +1617,7 @@ public class ContactsManager extends BaseManager {
 		if(ownerPid.equals(getTargetProfileId())) return;
 		
 		// Checks rights on the wildcard instance (if present)
-		CoreManager core = WT.getCoreManager(getServiceContext(), targetPid);
+		CoreManager core = WT.getCoreManager(targetPid);
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
 		if(wildcardShareId != null) {
 			if(core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
@@ -1641,7 +1640,7 @@ public class ContactsManager extends BaseManager {
 		if(ownerPid.equals(targetPid)) return;
 		
 		// Checks rights on the wildcard instance (if present)
-		CoreManager core = WT.getCoreManager(getServiceContext(), targetPid);
+		CoreManager core = WT.getCoreManager(targetPid);
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
 		if(wildcardShareId != null) {
 			if(core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;

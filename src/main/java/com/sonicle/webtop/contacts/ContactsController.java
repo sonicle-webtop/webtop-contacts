@@ -59,7 +59,7 @@ public class ContactsController extends BaseController implements IControllerHan
 	
 	@Override
 	public void addProfile(UserProfile.Id profileId) throws WTException {
-		ContactsManager manager = new ContactsManager(getServiceContext(), profileId);
+		ContactsManager manager = new ContactsManager(profileId);
 		
 		// Adds built-in category
 		try {
@@ -79,7 +79,7 @@ public class ContactsController extends BaseController implements IControllerHan
 	
 	@Override
 	public List<BaseReminder> returnReminders(DateTime now) {
-		ContactsManager manager = new ContactsManager(getServiceContext());
+		ContactsManager manager = new ContactsManager();
 		return manager.getRemindersToBeNotified(now);
 	}
 }

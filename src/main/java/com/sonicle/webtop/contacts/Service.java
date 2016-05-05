@@ -105,7 +105,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
@@ -143,7 +142,7 @@ public class Service extends BaseService {
 	@Override
 	public void initialize() throws Exception {
 		UserProfile up = getEnv().getProfile();
-		manager = new ContactsManager(getServiceContext());
+		manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, up.getId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
 		gridFieldsW = buildFields(WORK_VIEW);
@@ -1047,7 +1046,7 @@ public class Service extends BaseService {
 	public void processPrintContactsDetail(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<ContactDetailBean> items = new ArrayList<>();
 		ByteArrayOutputStream baos = null;
-		CoreManager core = WT.getCoreManager(getServiceContext());
+		CoreManager core = WT.getCoreManager();
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
