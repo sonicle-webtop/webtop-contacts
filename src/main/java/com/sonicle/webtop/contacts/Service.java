@@ -143,7 +143,7 @@ public class Service extends BaseService {
 	@Override
 	public void initialize() throws Exception {
 		UserProfile up = getEnv().getProfile();
-		manager = new ContactsManager(getRunContext());
+		manager = new ContactsManager(getServiceContext());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
 		gridFieldsW = buildFields(WORK_VIEW);
@@ -1047,7 +1047,7 @@ public class Service extends BaseService {
 	public void processPrintContactsDetail(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<ContactDetailBean> items = new ArrayList<>();
 		ByteArrayOutputStream baos = null;
-		CoreManager core = WT.getCoreManager(getRunContext());
+		CoreManager core = WT.getCoreManager(getServiceContext());
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");

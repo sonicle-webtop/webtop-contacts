@@ -33,53 +33,53 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.db.DbUtils;
+import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.core.app.WT;
-import com.sonicle.webtop.core.sdk.BaseController;
-import com.sonicle.webtop.core.sdk.BaseReminder;
+import com.sonicle.webtop.core.app.provider.IProfileRecipientsProvider;
+import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
+import com.sonicle.webtop.core.bol.model.InternetRecipient;
+import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.sdk.UserProfile;
-import com.sonicle.webtop.core.sdk.WTException;
-import com.sonicle.webtop.core.sdk.WTOperationException;
-import com.sonicle.webtop.core.sdk.interfaces.IControllerHandlesProfiles;
-import com.sonicle.webtop.core.sdk.interfaces.IControllerHandlesReminders;
+import com.sonicle.webtop.core.sdk.interfaces.IConnectionProvider;
+import com.sonicle.webtop.core.sdk.interfaces.IServiceSettingReader;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsController extends BaseController implements IControllerHandlesProfiles, IControllerHandlesReminders {
-	public static final Logger logger = WT.getLogger(ContactsController.class);
-	
-	public ContactsController() {
-		super();
-		//registerComponent(RecipientsProvider.class);
+public class RecipientsProvider extends RecipientsProviderBase implements IProfileRecipientsProvider {
+	public final String SERVICE_ID;
+
+	public RecipientsProvider(IConnectionProvider conp, IServiceSettingReader setm) {
+		super(conp, setm);
+		SERVICE_ID = WT.findServiceId(this.getClass());
 	}
-	
+
 	@Override
-	public void addProfile(UserProfile.Id profileId) throws WTException {
-		ContactsManager manager = new ContactsManager(getServiceContext(), profileId);
+	public List<InternetRecipient> getRecipients(UserProfile.Id profileId, String text) {
+		ContactDAO dao = ContactDAO.getInstance();
+		Connection con = null;
 		
-		// Adds built-in category
+		/*
 		try {
-			manager.addBuiltInCategory();
-		} catch(WTOperationException ex) {
-			// Do nothing...
-		} catch(WTException ex) {
-			throw ex;
+			con = WT.getConnection(SERVICE_ID);
+			
+			dao.viewByCategoryPattern(con, categoryId, text, text)
+			
+			
+			return dao.selectByDomainUser(con, pid.getDomainId(), pid.getUserId());
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
 		}
-	}
-	
-	@Override
-	public void removeProfile(UserProfile.Id profileId, boolean deep) throws WTException {
-		//TODO: implementare cleanup utente
-		//ContactsManager manager = new ContactsManager(getRunContext(), profileId);
-	}
-	
-	@Override
-	public List<BaseReminder> returnReminders(DateTime now) {
-		ContactsManager manager = new ContactsManager(getServiceContext());
-		return manager.getRemindersToBeNotified(now);
+		*/
+		
+		return null;
 	}
 }
