@@ -54,7 +54,6 @@ public class ContactsController extends BaseController implements IControllerHan
 	
 	public ContactsController() {
 		super();
-		//registerComponent(RecipientsProvider.class);
 	}
 	
 	@Override

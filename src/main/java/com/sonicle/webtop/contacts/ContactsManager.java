@@ -56,6 +56,7 @@ import com.sonicle.webtop.contacts.io.input.ContactReadResult;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
 import com.sonicle.webtop.core.bol.OShare;
 import com.sonicle.webtop.core.sdk.BaseManager;
 import com.sonicle.webtop.core.bol.Owner;
@@ -78,6 +79,7 @@ import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTOperationException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
+import com.sonicle.webtop.core.sdk.interfaces.IRecipientsProvidersSource;
 import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
@@ -116,8 +118,8 @@ import org.slf4j.Logger;
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseManager {
-	public static final Logger logger = WT.getLogger(ContactsManager.class);
+public class ContactsManager extends BaseManager implements IRecipientsProvidersSource {
+	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String RESOURCE_CATEGORY = "CATEGORY";
 	
 	private final HashSet<String> cacheReady = new HashSet<>();
@@ -134,10 +136,6 @@ public class ContactsManager extends BaseManager {
 	
 	public ContactsManager(UserProfile.Id targetProfileId) {
 		super(targetProfileId);
-	}
-	
-	private boolean isCacheReady(String cacheName) {
-		return cacheReady.contains(cacheName);
 	}
 	
 	private void buildShareCache() {
@@ -171,6 +169,55 @@ public class ContactsManager extends BaseManager {
 		}
 	}
 	
+	private List<CategoryRoot> getCategoryRoots() {
+		synchronized(cacheReady) {
+			if(!cacheReady.contains("shareCache")) buildShareCache();
+			return new ArrayList<>(cacheOwnerToRootShare.values());
+		}
+	}
+	
+	private CategoryRoot ownerToRootShare(UserProfile.Id owner) {
+		synchronized(cacheReady) {
+			if(!cacheReady.contains("shareCache") || !cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
+			return cacheOwnerToRootShare.get(owner);
+		}
+	}
+	
+	private String ownerToRootShareId(UserProfile.Id owner) {
+		CategoryRoot root = ownerToRootShare(owner);
+		return (root != null) ? root.getShareId() : null;
+	}
+	
+	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
+		synchronized(cacheReady) {
+			if(!cacheReady.contains("shareCache") || (!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty())) buildShareCache();
+			return cacheOwnerToWildcardFolderShare.get(ownerPid);
+		}
+	}
+	
+	private String categoryToFolderShareId(int category) {
+		synchronized(cacheReady) {
+			if(!cacheReady.contains("shareCache") || !cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
+			return cacheCategoryToFolderShare.get(category);
+		}
+	}
+	
+	private UserProfile.Id categoryToOwner(int categoryId) {
+		synchronized(cacheCategoryToOwner) {
+			if(cacheCategoryToOwner.containsKey(categoryId)) {
+				return cacheCategoryToOwner.get(categoryId);
+			} else {
+				try {
+					UserProfile.Id owner = findCategoryOwner(categoryId);
+					cacheCategoryToOwner.put(categoryId, owner);
+					return owner;
+				} catch(WTException ex) {
+					throw new WTRuntimeException(ex.getMessage());
+				}
+			}
+		}
+	}
+	
 	private void writeLog(String action, String data) {
 		CoreManager core = WT.getCoreManager();
 		core.setSoftwareName(getSoftwareName());
@@ -180,7 +227,7 @@ public class ContactsManager extends BaseManager {
 	private List<Integer> cachedCategoryFolderKeys() {
 		List<Integer> keys = new ArrayList<>();
 		synchronized(cacheReady) {
-			if(!isCacheReady("shareCache")) buildShareCache();
+			if(!cacheReady.contains("shareCache")) buildShareCache();
 			keys.addAll(cacheCategoryToFolderShare.keySet());
 			keys.addAll(cacheCategoryToWildcardFolderShare.keySet());
 		}
@@ -190,7 +237,7 @@ public class ContactsManager extends BaseManager {
 	private List<Integer> rootShareToCategoryFolderIds(String rootShareId) {
 		List<Integer> keys = new ArrayList<>();
 		synchronized(cacheReady) {
-			if(!isCacheReady("shareCache")) buildShareCache();
+			if(!cacheReady.contains("shareCache")) buildShareCache();
 			if(cacheRootShareToFolderShare.containsKey(rootShareId)) {
 				keys.addAll(cacheRootShareToFolderShare.getCollection(rootShareId));
 			}
@@ -198,11 +245,41 @@ public class ContactsManager extends BaseManager {
 		return keys;
 	}
 	
-	public List<InternetRecipient> listEmailRecipients(String queryText) throws WTException {
-		return listEmailRecipients(null, queryText);
+	@Override
+	public List<RecipientsProviderBase> returnRecipientsProviders() {
+		ArrayList<RecipientsProviderBase> providers = new ArrayList<>();
+		providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), "My", getTargetProfileId()));
+		for(CategoryRoot root : getCategoryRoots()) {
+			providers.add(new RootRecipientsProvider(root.getOwnerProfileId().toString(), root.getDescription(), root.getOwnerProfileId()));
+		}
+		return providers;
 	}
 	
-	public List<InternetRecipient> listEmailRecipients(UserProfile.Id ownerPid, String queryText) throws WTException {
+	public class RootRecipientsProvider extends RecipientsProviderBase {
+		public final UserProfile.Id ownerId;
+		
+		public RootRecipientsProvider(String id, String description, UserProfile.Id ownerId) {
+			super(id, description);
+			this.ownerId = ownerId;
+		}
+		
+		@Override
+		public List<InternetRecipient> getRecipients(String queryText, int max) {
+			try {
+				return listEmailRecipients(this.ownerId, queryText, max);
+			} catch(Throwable t) {
+				logger.error("Error listing recipients", t);
+				return null;
+			}
+		}
+	}
+	
+	
+	public List<InternetRecipient> listEmailRecipients(String queryText, int max) throws WTException {
+		return listEmailRecipients(null, queryText, max);
+	}
+	
+	public List<InternetRecipient> listEmailRecipients(UserProfile.Id ownerPid, String queryText, int max) throws WTException {
 		ContactDAO dao = ContactDAO.getInstance();
 		ArrayList<InternetRecipient> items = new ArrayList<>();
 		Connection con = null;
@@ -1533,48 +1610,6 @@ public class ContactsManager extends BaseManager {
 		item.setNotes(cont.getNotes());
 		item.setHasPicture(hasPicture);
 		return item;
-	}
-	
-	private CategoryRoot ownerToRootShare(UserProfile.Id owner) {
-		synchronized(cacheReady) {
-			if(!isCacheReady("shareCache") || !cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
-			return cacheOwnerToRootShare.get(owner);
-		}
-	}
-	
-	private String ownerToRootShareId(UserProfile.Id owner) {
-		CategoryRoot root = ownerToRootShare(owner);
-		return (root != null) ? root.getShareId() : null;
-	}
-	
-	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
-		synchronized(cacheReady) {
-			if(!isCacheReady("shareCache") || (!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty())) buildShareCache();
-			return cacheOwnerToWildcardFolderShare.get(ownerPid);
-		}
-	}
-	
-	private String categoryToFolderShareId(int category) {
-		synchronized(cacheReady) {
-			if(!isCacheReady("shareCache") || !cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
-			return cacheCategoryToFolderShare.get(category);
-		}
-	}
-	
-	private UserProfile.Id categoryToOwner(int categoryId) {
-		synchronized(cacheCategoryToOwner) {
-			if(cacheCategoryToOwner.containsKey(categoryId)) {
-				return cacheCategoryToOwner.get(categoryId);
-			} else {
-				try {
-					UserProfile.Id owner = findCategoryOwner(categoryId);
-					cacheCategoryToOwner.put(categoryId, owner);
-					return owner;
-				} catch(WTException ex) {
-					throw new WTRuntimeException(ex.getMessage());
-				}
-			}
-		}
 	}
 	
 	private UserProfile.Id findCategoryOwner(int categoryId) throws WTException {
