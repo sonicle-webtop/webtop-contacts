@@ -1188,6 +1188,7 @@ public class Service extends BaseService {
 		node.put("_pid", pid);
 		node.put("_rrights", rights);
 		node.put("_visible", visible);
+		
 		node.setIconClass(iconClass);
 		node.setChecked(visible);
 		return node;
