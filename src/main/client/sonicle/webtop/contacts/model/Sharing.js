@@ -42,17 +42,8 @@ Ext.define('Sonicle.webtop.contacts.model.Sharing', {
 	
 	field:[
 		WTF.roField('description', 'string')
-	]
-});
-Ext.define('Sonicle.webtop.contacts.model.SharingRights', {
-	extend: 'WT.sdk.model.SharingRights',
-	
-	fields: [
-		WTF.field('_fk', 'string', true, {
-			reference: {
-				parent: 'Sonicle.webtop.contacts.model.Sharing',
-				inverse: 'rights'
-			}
-		})
+	],
+	hasMany: [
+		WTF.hasMany('rights', 'Sonicle.webtop.core.sdk.model.SharingRights')
 	]
 });

@@ -250,7 +250,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				rec;
 		
 		re.cancelEdit();
-		rec = sto.add(Ext.create('Sonicle.webtop.contacts.model.ContactsListRecipients', {}))[0];
+		rec = sto.add(Ext.create('Sonicle.webtop.contacts.model.ContactsListRecipient', {}))[0];
 		re.startEdit(rec);
 		return rec;
 	},
