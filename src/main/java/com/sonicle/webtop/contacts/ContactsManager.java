@@ -312,18 +312,27 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			List<VContact> contacts = null;
 			contacts = dao.viewWorkRecipientsByCategoriesQueryText(con, categoryIds, queryText);
 			for(VContact contact : contacts) {
-				String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-				items.add(new InternetRecipient(SERVICE_ID, "contact", personal, contact.getWorkAddress()));
+				final String email = contact.getWorkEmail();
+				if(MailUtils.isAddressValid(email)) {
+					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+					items.add(new InternetRecipient(SERVICE_ID, "contact-work", personal, email));
+				}
 			}
 			contacts = dao.viewHomeRecipientsByCategoriesQueryText(con, categoryIds, queryText);
 			for(VContact contact : contacts) {
-				String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-				items.add(new InternetRecipient(SERVICE_ID, "contact", personal, contact.getHomeAddress()));
+				final String email = contact.getHomeEmail();
+				if(MailUtils.isAddressValid(email)) {
+					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+					items.add(new InternetRecipient(SERVICE_ID, "contact-home", personal, email));
+				}
 			}
 			contacts = dao.viewOtherRecipientsByCategoriesQueryText(con, categoryIds, queryText);
 			for(VContact contact : contacts) {
-				String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-				items.add(new InternetRecipient(SERVICE_ID, "contact", personal, contact.getOtherAddress()));
+				final String email = contact.getOtherEmail();
+				if(MailUtils.isAddressValid(email)) {
+					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+					items.add(new InternetRecipient(SERVICE_ID, "contact-other", personal, email));
+				}
 			}
 			return items;
 			

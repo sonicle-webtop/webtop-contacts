@@ -262,6 +262,9 @@ public class ContactDAO extends BaseDAO {
 					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
 				)
 				.and(
+					emailField.isNotNull()
+				)
+				.and(
 					searchCndt
 				)
 			)

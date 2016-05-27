@@ -34,7 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	extend: 'WT.sdk.DockableView',
 	requires: [
-		'Sonicle.form.field.IconComboBox',
+		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.webtop.contacts.model.CategoryLkp'
 	],
 	
@@ -110,7 +110,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 					allowBlank: false
 				}),
 				WTF.lookupCombo('categoryId', 'name', {
-					xtype: 'soiconcombo',
+					xtype: 'socolorcombo',
 					reference: 'fldcategory',
 					bind: '{categoryId}',
 					store: {
@@ -118,7 +118,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 						model: me.mys.preNs('model.CategoryLkp'),
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 					},
-					iconClsField: 'colorCls',
+					colorField: 'color',
 					fieldLabel: me.mys.res('categoryChooser.fld-category.lbl'),
 					anchor: '100%',
 					allowBlank: false

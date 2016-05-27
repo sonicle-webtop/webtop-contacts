@@ -34,7 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	extend: 'WT.sdk.ModelView',
 	requires: [
-		'Sonicle.form.field.IconComboBox',
+		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.ContactsList',
 		'Sonicle.webtop.core.store.RcptType'
@@ -43,7 +43,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	dockableConfig: {
 		title: '{contactsList.tit}',
 		iconCls: 'wtcon-icon-contacts-list-xs',
-		width: 450,
+		width: 650,
 		height: 450
 	},
 	confirm: 'yn',
@@ -86,6 +86,22 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 							me.updateCategoryFilters(true);
 						}
 					}
+				}),
+				WTF.lookupCombo('categoryId', 'name', {
+					xtype: 'socolorcombo',
+					reference: 'fldcategory',
+					bind: '{record.categoryId}',
+					store: {
+						autoLoad: true,
+						model: me.mys.preNs('model.CategoryLkp'),
+						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
+					},
+					colorField: 'color',
+					listeners: {
+						select: function(s, rec) {
+							me.onCategorySelect(rec);
+						}
+					}
 				})
 			]
 		});
@@ -96,20 +112,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			xtype: 'wtform',
 			modelValidation: true,
 			height: 60,
-			items: [
-			WTF.lookupCombo('categoryId', 'name', {
-				xtype: 'soiconcombo',
-				reference: 'fldcategory',
-				bind: '{record.categoryId}',
-				store: {
-					autoLoad: true,
-					model: 'Sonicle.webtop.contacts.model.CategoryLkp',
-					proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
-				},
-				iconClsField: 'colorCls',
-				fieldLabel: me.mys.res('contactsList.fld-category.lbl'),
-				anchor: '100%'
-			}), {
+			items: [{
 				xtype: 'textfield',
 				reference: 'fldname',
 				bind: '{record.name}',

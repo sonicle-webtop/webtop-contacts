@@ -53,6 +53,6 @@ public class JsCategoryLkp {
 		userId = item.getUserId();
 		name = item.getName();
 		isDefault = item.getIsDefault();
-		color = item.getHexColor();
+		color = item.getColor();
 	}
 }

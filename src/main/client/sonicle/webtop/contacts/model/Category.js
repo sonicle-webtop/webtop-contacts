@@ -44,9 +44,6 @@ Ext.define('Sonicle.webtop.contacts.model.Category', {
 		WTF.field('name', 'string', false),
 		WTF.field('description', 'string', true),
 		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
-		WTF.calcField('colorCls', 'string', 'color', function(v, rec) {
-			return (rec.get('color')) ? 'wt-palette-' + rec.get('color').replace('#', '') : v;
-		}),
 		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
 		WTF.field('sync', 'boolean', false, {defaultValue: false}),
 		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
