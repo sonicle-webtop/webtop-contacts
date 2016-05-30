@@ -250,7 +250,9 @@ public class ContactDAO extends BaseDAO {
 				emailField
 			)
 			.select(
-				CUSTOMERS_DESCRIPTION.as("company_as_customer")
+				CUSTOMERS_DESCRIPTION.as("company_as_customer"),
+				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
+				CATEGORIES.USER_ID.as("category_user_id")
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))

@@ -14,7 +14,7 @@
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
- * You should have received a copy of the GNU Affero General Public License
+ * You should have received a copy of the GNU Affero General Public License 
  * along with this program; if not, see http://www.gnu.org/licenses or write to
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
@@ -315,7 +315,8 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 				final String email = contact.getWorkEmail();
 				if(MailUtils.isAddressValid(email)) {
 					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-					items.add(new InternetRecipient(SERVICE_ID, "contact-work", personal, email));
+					UserProfile.Data ud=WT.getUserData(contact.getCategoryProfileId());
+					items.add(new InternetRecipient(SERVICE_ID, ud.getDisplayName(), "contact-work", personal, email));
 				}
 			}
 			contacts = dao.viewHomeRecipientsByCategoriesQueryText(con, categoryIds, queryText);
@@ -323,7 +324,8 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 				final String email = contact.getHomeEmail();
 				if(MailUtils.isAddressValid(email)) {
 					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-					items.add(new InternetRecipient(SERVICE_ID, "contact-home", personal, email));
+					UserProfile.Data ud=WT.getUserData(contact.getCategoryProfileId());
+					items.add(new InternetRecipient(SERVICE_ID, ud.getDisplayName(), "contact-home", personal, email));
 				}
 			}
 			contacts = dao.viewOtherRecipientsByCategoriesQueryText(con, categoryIds, queryText);
@@ -331,7 +333,8 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 				final String email = contact.getOtherEmail();
 				if(MailUtils.isAddressValid(email)) {
 					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-					items.add(new InternetRecipient(SERVICE_ID, "contact-other", personal, email));
+					UserProfile.Data ud=WT.getUserData(contact.getCategoryProfileId());
+					items.add(new InternetRecipient(SERVICE_ID, ud.getDisplayName(), "contact-other", personal, email));
 				}
 			}
 			return items;
