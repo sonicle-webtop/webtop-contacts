@@ -780,7 +780,7 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error in action ManageContactsLists", ex);
+			logger.error("Error in ManageContactsLists", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}
@@ -862,7 +862,7 @@ public class Service extends BaseService {
 		
 		try {
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
-			String op = ServletUtils.getStringParameter(request, "op", true);
+			String crud = ServletUtils.getStringParameter(request, "op", true);
 			String encoding = ServletUtils.getStringParameter(request, "encoding", true);
 			String delimiter = ServletUtils.getStringParameter(request, "delimiter", true);
 			String lineSeparator = ServletUtils.getStringParameter(request, "lineSeparator", true);
@@ -873,7 +873,7 @@ public class Service extends BaseService {
 			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
-			File file = new File(WT.getTempFolder(), upl.id);
+			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
 			CsvPreference pref = TextFileReader.buildCsvPreference(delimiter, lineSeparator, textQualifier);
 			ContactTextFileReader rea = new ContactTextFileReader(pref, encoding);
@@ -881,18 +881,18 @@ public class Service extends BaseService {
 			rea.setFirstDataRow(fdr);
 			if(ldr != -1) rea.setLastDataRow(ldr);
 			
-			if(op.equals("columns")) {
+			if(crud.equals("columns")) {
 				ArrayList<JsValue> items = new ArrayList<>();
 				for(String sheet : rea.listColumnNames(file).values()) {
 					items.add(new JsValue(sheet));
 				}
 				new JsonResult("columns", items).printTo(out);
 				
-			} else if(op.equals("mappings")) {
+			} else if(crud.equals("mappings")) {
 				List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, MemoryContactTextFileReader.MAPPING_TARGETS);
 				new JsonResult("mappings", items).printTo(out);
 				
-			} else if(op.equals("do")) {
+			} else if(crud.equals("do")) {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 				String mode = ServletUtils.getStringParameter(request, "importMode", true);
 				ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
@@ -914,13 +914,13 @@ public class Service extends BaseService {
 		try {
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
 			Boolean binary = ServletUtils.getBooleanParameter(request, "binary", false);
-			String op = ServletUtils.getStringParameter(request, "op", true);
+			String crud = ServletUtils.getStringParameter(request, "op", true);
 			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
-			File file = new File(WT.getTempFolder(), upl.id);
+			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
-			if(op.equals("sheets")) {
+			if(crud.equals("sheets")) {
 				ArrayList<JsValue> items = new ArrayList<>();
 				ExcelFileReader rea = new ExcelFileReader(binary);
 				List<String> sheets = rea.listSheets(file);
@@ -941,18 +941,18 @@ public class Service extends BaseService {
 				if(ldr != -1) rea.setLastDataRow(ldr);
 				rea.setSheet(sheet);
 				
-				if(op.equals("columns")) {
+				if(crud.equals("columns")) {
 					ArrayList<JsValue> items = new ArrayList<>();
 					for(String col : rea.listColumnNames(file).values()) {
 						items.add(new JsValue(col));
 					}
 					new JsonResult("columns", items).printTo(out);
 					
-				} else if(op.equals("mappings")) {
+				} else if(crud.equals("mappings")) {
 					List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, MemoryContactTextFileReader.MAPPING_TARGETS);
 					new JsonResult("mappings", items).printTo(out);
 					
-				} else if(op.equals("do")) {
+				} else if(crud.equals("do")) {
 					Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 					String mode = ServletUtils.getStringParameter(request, "importMode", true);
 					ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
@@ -974,15 +974,15 @@ public class Service extends BaseService {
 		
 		try {
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
-			String op = ServletUtils.getStringParameter(request, "op", true);
+			String crud = ServletUtils.getStringParameter(request, "op", true);
 			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
-			File file = new File(WT.getTempFolder(), upl.id);
+			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
 			ContactVCardFileReader rea = new ContactVCardFileReader();
 			
-			if(op.equals("do")) {
+			if(crud.equals("do")) {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 				String mode = ServletUtils.getStringParameter(request, "importMode", true);
 				
@@ -1087,7 +1087,7 @@ public class Service extends BaseService {
 		ContactPicture pic = null;
 		FileInputStream fis = null;
 		try {
-			fis = new FileInputStream(new File(WT.getTempFolder(), upl.id));
+			fis = new FileInputStream(new File(WT.getTempFolder(), upl.getUploadId()));
 			pic = new ContactPicture("image/png", IOUtils.toByteArray(fis));
 		} catch (FileNotFoundException ex) {
 			throw new WTException(ex, "File not found {0}");
