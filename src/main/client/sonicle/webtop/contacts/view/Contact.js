@@ -40,7 +40,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		'Sonicle.form.trigger.Clear',
 		'WT.ux.field.SuggestCombo',
 		'Sonicle.webtop.core.store.Gender',
-		'Sonicle.webtop.contacts.model.CategoryLkp'
+		'Sonicle.webtop.contacts.model.CategoryLkp',
+		'Sonicle.webtop.contacts.model.Contact'
 	],
 	
 	dockableConfig: {
@@ -212,6 +213,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					clearTriggerCls: 'wtcon-trash-trigger',
 					uploadTriggerCls: 'wtcon-add-trigger',
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
+						extraParams: {tag: me.getId()},
 						mimeTypes: [
 							{title: 'Image files', extensions: 'jpeg,jpg,png'}
 						]
@@ -227,7 +229,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 							me.unwait();
 						},
 						fileuploaded: function(up, file) {
-							me.getModel().set('picture', file.uploadId);
+							me.getModel().set('picture', file.server_response.uploadId);
 						}
 					}
 				}]
@@ -471,6 +473,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		
 		me.on('viewload', me.onViewLoad);
+		me.on('viewclose', me.onViewClose);
 	},
 	
 	onViewLoad: function(s, success) {
@@ -492,6 +495,10 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		}
 		
 		me.lref('fldfirstname').focus(true);
+	},
+	
+	onViewClose: function(s) {
+		this.mys.cleanupUploadedFile(s.getId());
 	},
 	
 	updateCategoryFilters: function(owner) {

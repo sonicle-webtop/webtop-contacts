@@ -111,7 +111,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			region: 'north',
 			xtype: 'wtform',
 			modelValidation: true,
-			height: 60,
+			height: 30,
 			items: [{
 				xtype: 'textfield',
 				reference: 'fldname',

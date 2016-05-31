@@ -460,7 +460,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					},
 					fileuploaded: function(up, file) {
 						var node = me.getSelectedFolder(me.getRef('folderstree'));
-						if(node) me.importVCard(node.get('_catId'), file.uploadId);
+						if(node) me.importVCard(node.get('_catId'), file.server_response.uploadId);
 					}
 				}
 			})

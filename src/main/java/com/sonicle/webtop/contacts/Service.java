@@ -899,7 +899,7 @@ public class Service extends BaseService {
 				
 				rea.setMappings(mappings);
 				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
-				clearUploadedFile(uploadId);
+				removeUploadedFile(uploadId);
 				new JsonResult(log.print()).printTo(out);
 			}
 			
@@ -959,7 +959,7 @@ public class Service extends BaseService {
 				
 					rea.setMappings(mappings);
 					LogEntries log = manager.importContacts(categoryId, rea, file, mode);
-					clearUploadedFile(uploadId);
+					removeUploadedFile(uploadId);
 					new JsonResult(log.print()).printTo(out);
 				}
 			}
@@ -987,7 +987,7 @@ public class Service extends BaseService {
 				String mode = ServletUtils.getStringParameter(request, "importMode", true);
 				
 				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
-				clearUploadedFile(uploadId);
+				removeUploadedFile(uploadId);
 				new JsonResult(log.print()).printTo(out);
 			}
 			
