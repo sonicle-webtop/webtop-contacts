@@ -205,6 +205,81 @@ public class ContactDAO extends BaseDAO {
 		return StringUtils.trim(s);
 	}
 	
+	public List<VContact> viewWorkRecipientsByOwnerQueryText(Connection con, UserProfile.Id ownerId, String queryText) throws DAOException {
+		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.WORK_EMAIL, ownerId, queryText);
+	}
+	
+	public List<VContact> viewHomeRecipientsByOwnerQueryText(Connection con, UserProfile.Id ownerId, String queryText) throws DAOException {
+		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.HOME_EMAIL, ownerId, queryText);
+	}
+	
+	public List<VContact> viewOtherRecipientsByOwnerQueryText(Connection con, UserProfile.Id ownerId, String queryText) throws DAOException {
+		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.OTHER_EMAIL, ownerId, queryText);
+	}
+	
+	private List<VContact> viewRecipientsByFieldOwnerQueryText(Connection con, TableField<ContactsRecord, String> emailField, UserProfile.Id ownerId, String queryText) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		
+		String patt1 = null, patt2 = null, patt3 = null;
+		if(StringUtils.contains(queryText, " ")) {
+			patt1 = patternizeWords(queryText);
+			patt2 = queryText;
+		} else {
+			patt1 = patternizeWords(queryText);
+			patt2 = "%" + queryText;
+		}
+		patt3 = "%@" + queryText + "%";
+		
+		Condition searchCndt = null;
+		searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
+				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
+				.or(emailField.likeIgnoreCase(patt1)
+				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
+				.or(CUSTOMERS_DESCRIPTION.likeIgnoreCase(patt2)))));
+		
+		if(StringUtils.contains(queryText, "@")) {
+			searchCndt = searchCndt.or(
+					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
+			);
+		}
+		
+		return dsl
+			.select(
+				CONTACTS.FIRSTNAME,
+				CONTACTS.LASTNAME,
+				emailField
+			)
+			.select(
+				CUSTOMERS_DESCRIPTION.as("company_as_customer")
+			)
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin("public.customers").on("contacts.contacts.company = public.customers.customer_id")
+			.where(
+				CATEGORIES.DOMAIN_ID.equal(ownerId.getDomain())
+					.and(CATEGORIES.USER_ID.equal(ownerId.getUser())
+				)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
+					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
+				)
+				.and(
+					emailField.isNotNull()
+				)
+				.and(
+					searchCndt
+				)
+			)
+			.orderBy(
+				emailField.asc()
+			)
+			.fetchInto(VContact.class);
+	}
+	
+	
+	
+	
+	/*
 	public List<VContact> viewWorkRecipientsByCategoriesQueryText(Connection con, List<Integer> categoryIds, String queryText) throws DAOException {
 		return viewRecipientsByFieldCategoriesQueryText(con, CONTACTS.WORK_EMAIL, categoryIds, queryText);
 	}
@@ -274,7 +349,8 @@ public class ContactDAO extends BaseDAO {
 				emailField.asc()
 			)
 			.fetchInto(VContact.class);
-	} 
+	}
+	*/
 	
 	public OContact selectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);

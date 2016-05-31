@@ -248,7 +248,8 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 	@Override
 	public List<RecipientsProviderBase> returnRecipientsProviders() {
 		ArrayList<RecipientsProviderBase> providers = new ArrayList<>();
-		providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), "My", getTargetProfileId()));
+		UserProfile.Data ud = WT.getUserData(getTargetProfileId());
+		providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), ud.getDisplayName(), getTargetProfileId()));
 		for(CategoryRoot root : getCategoryRoots()) {
 			providers.add(new RootRecipientsProvider(root.getOwnerProfileId().toString(), root.getDescription(), root.getOwnerProfileId()));
 		}
@@ -265,8 +266,40 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		
 		@Override
 		public List<InternetRecipient> getRecipients(String queryText, int max) {
+			ContactDAO dao = ContactDAO.getInstance();
+			ArrayList<InternetRecipient> items = new ArrayList<>();
+			Connection con = null;
+			
 			try {
-				return listEmailRecipients(this.ownerId, queryText, max);
+				con = WT.getConnection(SERVICE_ID);
+				List<VContact> contacts = null;
+				contacts = dao.viewWorkRecipientsByOwnerQueryText(con, ownerId, queryText);
+				for(VContact contact : contacts) {
+					final String email = contact.getWorkEmail();
+					if(MailUtils.isAddressValid(email)) {
+						String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+						items.add(new InternetRecipient(this.getId(), this.getDescription(), "contact-work", personal, email));
+					}
+				}
+				contacts = dao.viewHomeRecipientsByOwnerQueryText(con, ownerId, queryText);
+				for(VContact contact : contacts) {
+					final String email = contact.getHomeEmail();
+					if(MailUtils.isAddressValid(email)) {
+						String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+						items.add(new InternetRecipient(this.getId(), this.getDescription(), "contact-home", personal, email));
+					}
+				}
+				contacts = dao.viewOtherRecipientsByOwnerQueryText(con, ownerId, queryText);
+				for(VContact contact : contacts) {
+					final String email = contact.getOtherEmail();
+					if(MailUtils.isAddressValid(email)) {
+						String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+						items.add(new InternetRecipient(this.getId(), this.getDescription(), "contact-other", personal, email));
+					}
+				}
+				
+				return items;
+				
 			} catch(Throwable t) {
 				logger.error("Error listing recipients", t);
 				return null;
@@ -274,12 +307,12 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 	}
 	
-	
-	public List<InternetRecipient> listEmailRecipients(String queryText, int max) throws WTException {
+	/*
+	private List<InternetRecipient> listEmailRecipients(String queryText, int max) throws WTException {
 		return listEmailRecipients(null, queryText, max);
 	}
 	
-	public List<InternetRecipient> listEmailRecipients(UserProfile.Id ownerPid, String queryText, int max) throws WTException {
+	private List<InternetRecipient> listEmailRecipients(UserProfile.Id ownerPid, String queryText, int max) throws WTException {
 		ContactDAO dao = ContactDAO.getInstance();
 		ArrayList<InternetRecipient> items = new ArrayList<>();
 		Connection con = null;
@@ -345,6 +378,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			DbUtils.closeQuietly(con);
 		}
 	}
+	*/
 	
 	private String getAnniversaryReminderDelivery(HashMap<UserProfile.Id, String> cache, UserProfile.Id pid) {
 		if(!cache.containsKey(pid)) {
