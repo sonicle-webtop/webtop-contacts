@@ -219,17 +219,17 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						]
 					}),
 					listeners: {
-						uploadstarted: function(up) {
+						uploadstarted: function() {
 							me.wait();
 						},
-						uploadcomplete: function(up) {
+						uploadcomplete: function() {
 							me.unwait();
 						},
-						uploaderror: function(up) {
+						uploaderror: function() {
 							me.unwait();
 						},
-						fileuploaded: function(up, file) {
-							me.getModel().set('picture', file.server_response.uploadId);
+						fileuploaded: function(s, file, json) {
+							me.getModel().set('picture', json.data.uploadId);
 						}
 					}
 				}]
