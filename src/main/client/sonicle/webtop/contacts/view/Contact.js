@@ -498,7 +498,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	
 	onViewClose: function(s) {
-		this.mys.cleanupUploadedFile(s.getId());
+		this.mys.cleanupUploadedFiles(s.getId());
 	},
 	
 	updateCategoryFilters: function(owner) {
