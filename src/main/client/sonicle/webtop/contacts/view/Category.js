@@ -35,14 +35,15 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	extend: 'WT.sdk.ModelView',
 	requires: [
 		'Sonicle.form.field.Palette',
-		'Sonicle.form.RadioGroup'
+		'Sonicle.form.RadioGroup',
+		'Sonicle.webtop.contacts.store.Sync'
 	],
 	
 	dockableConfig: {
 		title: '{category.tit}',
 		iconCls: 'wtcon-icon-category-xs',
 		width: 360,
-		height: 260
+		height: 290
 	},
 	fieldTitle: 'name',
 	modelName: 'Sonicle.webtop.contacts.model.Category',
@@ -52,8 +53,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		
 		me.config.viewModel = {
 			formulas: {
-				isDefault: WTF.checkboxBind('record', 'isDefault'),
-				sync: WTF.checkboxBind('record', 'sync')
+				isDefault: WTF.checkboxBind('record', 'isDefault')
 			}
 		};
 		me.callParent([config]);
@@ -68,7 +68,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 			xtype: 'wtform',
 			modelValidation: true,
 			defaults: {
-				labelWidth: 100
+				labelWidth: 110
 			},
 			items: [{
 				xtype: 'textfield',
@@ -86,18 +86,21 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 				bind: '{record.color}',
 				colors: WT.getColorPalette(),
 				fieldLabel: me.mys.res('category.fld-color.lbl'),
-				width: 200
+				width: 210
 			}, {
 				xtype: 'checkbox',
 				bind: '{isDefault}',
 				hideEmptyLabel: false,
 				boxLabel: me.mys.res('category.fld-default.lbl')
-			}, {
-				xtype: 'checkbox',
-				bind: '{sync}',
-				hideEmptyLabel: false,
-				boxLabel: me.mys.res('category.fld-sync.lbl')
-			}]
+			},
+			WTF.lookupCombo('id', 'desc', {
+				bind: '{record.sync}',
+				store: Ext.create('Sonicle.webtop.contacts.store.Sync', {
+					autoLoad: true
+				}),
+				fieldLabel: me.mys.res('category.fld-sync.lbl'),
+				width: 250
+			})]
 		});
 		me.on('viewload', me.onViewLoad);
 	},
