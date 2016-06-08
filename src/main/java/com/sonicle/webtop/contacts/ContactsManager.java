@@ -218,12 +218,6 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 	}
 	
-	private void writeLog(String action, String data) {
-		CoreManager core = WT.getCoreManager();
-		core.setSoftwareName(getSoftwareName());
-		core.writeLog(action, data);
-	}
-	
 	private List<Integer> cachedCategoryFolderKeys() {
 		List<Integer> keys = new ArrayList<>();
 		synchronized(cacheReady) {
