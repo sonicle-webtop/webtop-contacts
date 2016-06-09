@@ -33,6 +33,9 @@
  */
 Ext.define('Sonicle.webtop.contacts.model.Sharing', {
 	extend: 'WT.sdk.model.Sharing',
+	requires: [
+		'Sonicle.webtop.contacts.model.SharingRights'
+	],
 	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageSharing', 'data', {
 		writer: {
 			type: 'sojson',
@@ -44,6 +47,6 @@ Ext.define('Sonicle.webtop.contacts.model.Sharing', {
 		WTF.roField('description', 'string')
 	],
 	hasMany: [
-		WTF.hasMany('rights', 'Sonicle.webtop.core.sdk.model.SharingRights')
+		WTF.hasMany('rights', 'Sonicle.webtop.contacts.model.SharingRights')
 	]
 });

@@ -458,9 +458,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						//TODO: caricamento
 						//me.unwait();
 					},
-					fileuploaded: function(up, file) {
+					fileuploaded: function(up, file, json) {
 						var node = me.getSelectedFolder(me.getRef('folderstree'));
-						if(node) me.importVCard(node.get('_catId'), file.server_response.uploadId);
+						if(node) me.importVCard(node.get('_catId'), json.data.uploadId);
 					}
 				}
 			})

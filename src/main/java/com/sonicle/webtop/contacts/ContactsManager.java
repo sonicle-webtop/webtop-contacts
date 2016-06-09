@@ -218,12 +218,6 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 	}
 	
-	private void writeLog(String action, String data) {
-		CoreManager core = WT.getCoreManager();
-		core.setSoftwareName(getSoftwareName());
-		core.writeLog(action, data);
-	}
-	
 	private List<Integer> cachedCategoryFolderKeys() {
 		List<Integer> keys = new ArrayList<>();
 		synchronized(cacheReady) {
@@ -584,7 +578,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			item.setName(WT.getPlatformName());
 			item.setDescription("");
 			item.setColor("#FFFFFF");
-			item.setSync(true);
+			item.setSync(OCategory.SYNC_OFF);
 			item.setIsDefault(true);
 			item = doInsertCategory(con, item);
 			

@@ -1,5 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+ * WebTop Services is a Web Application framework developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -27,52 +27,25 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.js;
-
-import com.sonicle.webtop.contacts.bol.OCategory;
-
-/**
- *
- * @author malbinola
- */
-public class JsCategory {
-	public Integer categoryId;
-	public String domainId;
-	public String userId;
-	public Boolean builtIn;
-	public String name;
-	public String description;
-	public String color;
-	public String sync;
-	public Boolean isDefault;
+Ext.define('Sonicle.webtop.contacts.store.Sync', {
+	extend: 'Ext.data.ArrayStore',
 	
-	public JsCategory(OCategory bean) {
-		categoryId = bean.getCategoryId();
-		domainId = bean.getDomainId();
-		userId = bean.getUserId();
-		builtIn = bean.getBuiltIn();
-		name = bean.getName();
-		description = bean.getDescription();
-		color = bean.getColor();
-		sync = bean.getSync();
-		isDefault = bean.getIsDefault();
-	}
+	model: 'WT.model.Simple',
+	data: [
+		['O',''],
+		['R',''],
+		['W','']
+	],
 	
-	public static OCategory buildFolder(JsCategory js) {
-		OCategory bean = new OCategory();
-		bean.setCategoryId(js.categoryId);
-		bean.setDomainId(js.domainId);
-		bean.setUserId(js.userId);
-		bean.setBuiltIn(js.builtIn);
-		bean.setName(js.name);
-		bean.setDescription(js.description);
-		bean.setColor(js.color);
-		bean.setSync(js.sync);
-		bean.setIsDefault(js.isDefault);
-		return bean;
+	constructor: function(cfg) {
+		var me = this;
+		Ext.each(me.config.data, function(row) {
+			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.sync.'+row[0]);
+		});
+		me.callParent([cfg]);
 	}
-}
+});
