@@ -21,6 +21,9 @@
 		<controllerClassName> -> Controller class name (do not specify base package name).
 			If empty, default "Controller" value will be used.
 			
+		<managerClassName> -> Manager class name (do not specify base package name).
+			If empty, default "Manager" value will be used.
+			
 		<serviceClassName> -> Service private class name (do not specify base package name).
 			If empty, default "Service" value will be used.
 			
