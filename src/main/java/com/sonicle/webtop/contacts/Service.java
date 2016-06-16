@@ -1087,7 +1087,7 @@ public class Service extends BaseService {
 		ContactPicture pic = null;
 		FileInputStream fis = null;
 		try {
-			fis = new FileInputStream(new File(WT.getTempFolder(), upl.getUploadId()));
+			fis = new FileInputStream(upl.getFile());
 			pic = new ContactPicture("image/png", IOUtils.toByteArray(fis));
 		} catch (FileNotFoundException ex) {
 			throw new WTException(ex, "File not found {0}");
