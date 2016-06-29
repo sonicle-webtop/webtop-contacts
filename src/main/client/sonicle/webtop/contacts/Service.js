@@ -268,7 +268,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						}
 					}
 				},
-				selModel: WTF.multiRowSelection(false),
+				selModel: {
+					type: 'rowmodel',
+					mode : 'MULTI'
+				},
 				columns: [],
 				features: [{
 					id: 'grouping',
