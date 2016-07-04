@@ -213,7 +213,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							if(meta.colsInfo) {
 								colsInfo.push({
 									xtype: 'soiconcolumn',
-									iconField: function(v,rec) {
+									getIconCls: function(v,rec) {
 										return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
 									},
 									iconSize: WTU.imgSizeToPx('xs'),
