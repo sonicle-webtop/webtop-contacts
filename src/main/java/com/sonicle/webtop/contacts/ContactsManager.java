@@ -120,7 +120,7 @@ import org.slf4j.Logger;
  */
 public class ContactsManager extends BaseManager implements IRecipientsProvidersSource {
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
-	private static final String RESOURCE_CATEGORY = "CATEGORY";
+	private static final String GROUPNAME_CATEGORY = "CATEGORY";
 	
 	private final HashSet<String> cacheReady = new HashSet<>();
 	private final HashMap<UserProfile.Id, CategoryRoot> cacheOwnerToRootShare = new HashMap<>();
@@ -149,7 +149,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			cacheCategoryToWildcardFolderShare.clear();
 			for(CategoryRoot root : listIncomingCategoryRoots()) {
 				cacheOwnerToRootShare.put(root.getOwnerProfileId(), root);
-				for(OShare folder : core.listIncomingShareFolders(root.getShareId(), RESOURCE_CATEGORY)) {
+				for(OShare folder : core.listIncomingShareFolders(root.getShareId(), GROUPNAME_CATEGORY)) {
 					if(folder.hasWildcard()) {
 						UserProfile.Id ownerPid = core.userUidToProfileId(folder.getUserUid());
 						cacheOwnerToWildcardFolderShare.put(ownerPid, folder.getShareId().toString());
@@ -403,7 +403,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		ArrayList<CategoryRoot> roots = new ArrayList();
 		HashSet<String> hs = new HashSet<>();
 		
-		List<IncomingShareRoot> shares = core.listIncomingShareRoots(SERVICE_ID, RESOURCE_CATEGORY);
+		List<IncomingShareRoot> shares = core.listIncomingShareRoots(SERVICE_ID, GROUPNAME_CATEGORY);
 		for(IncomingShareRoot share : shares) {
 			SharePermsRoot perms = core.getShareRootPermissions(share.getShareId());
 			CategoryRoot root = new CategoryRoot(share, perms);
@@ -429,7 +429,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		
 		// Retrieves incoming folders (from sharing). This lookup already 
 		// returns readable shares (we don't need to test READ permission)
-		List<OShare> shares = core.listIncomingShareFolders(rootShareId, RESOURCE_CATEGORY);
+		List<OShare> shares = core.listIncomingShareFolders(rootShareId, GROUPNAME_CATEGORY);
 		for(OShare share : shares) {
 			
 			List<OCategory> cats = null;
@@ -458,12 +458,12 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 	
 	public Sharing getSharing(String shareId) throws WTException {
 		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		return core.getSharing(SERVICE_ID, RESOURCE_CATEGORY, shareId);
+		return core.getSharing(SERVICE_ID, GROUPNAME_CATEGORY, shareId);
 	}
 	
 	public void updateSharing(Sharing sharing) throws WTException {
 		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		core.updateSharing(SERVICE_ID, RESOURCE_CATEGORY, sharing);
+		core.updateSharing(SERVICE_ID, GROUPNAME_CATEGORY, sharing);
 	}
 	
 	public UserProfile.Id getCategoryOwner(int categoryId) throws WTException {
@@ -1262,9 +1262,9 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
 						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
 
-						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
+						if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
 							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), true, cont, dateTime));
-						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
+						} else if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
 							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), true, cont, dateTime));
 						}
 					}
@@ -1283,9 +1283,9 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
 						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
 
-						if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
+						if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
 							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), false, cont, dateTime));
-						} else if(delivery.equals(ContactsUserSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
+						} else if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
 							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), false, cont, dateTime));
 						}
 					}
@@ -1681,7 +1681,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		if(core.isShareRootPermitted(shareId, action)) return;
 		//if(core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
-		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, targetPid.toString());
+		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
 	
 	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
@@ -1706,7 +1706,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		if(core.isShareFolderPermitted(shareId, action)) return;
 		//if(core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
-		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, targetPid.toString());
+		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
 	
 	private void checkRightsOnCategoryElements(int categoryId, String action) throws WTException {
@@ -1731,7 +1731,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		if(core.isShareElementsPermitted(shareId, action)) return;
 		//if(core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
-		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, RESOURCE_CATEGORY, targetPid.toString());
+		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
 	
 	private ReminderInApp createAnniversaryInAppReminder(Locale locale, boolean birthday, VContact contact, DateTime date) {

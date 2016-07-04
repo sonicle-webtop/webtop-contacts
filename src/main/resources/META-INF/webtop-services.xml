@@ -84,8 +84,8 @@
 			<modelJsClassName>model.UserOptions</modelJsClassName>
 		</userOptions>
 		
-		<resources>
-			<resource name="GROUP" type="share" />
-		</resources>
+		<permissions>
+			<sharePermission group="CATEGORY" />
+		</permissions>
 	</service>
 </services>

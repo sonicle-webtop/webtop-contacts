@@ -33,24 +33,70 @@
  */
 package com.sonicle.webtop.contacts;
 
-import static com.sonicle.webtop.contacts.ContactsSettings.*;
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
-
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
+public class ContactsSettings {
 	
-	public ContactsServiceSettings(String serviceId, String domainId) {
-		super(serviceId, domainId);
-	}
+	/**
+	 * [user][default]
+	 * [string]
+	 * Contacts grid view (w:work, h:home)
+	 */
+	public static final String VIEW = "view";
+	public static final String VIEW_WORK = "w";
+	public static final String VIEW_HOME = "h";
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + VIEW, VIEW_WORK);
-	}
+	/**
+	 * [user]
+	 * [time(hh:mm)]
+	 * Anniversary reminder notification time
+	 */
+	public static final String ANNIVERSARY_REMINDER_TIME = "anniversary.reminder.time";
 	
-	public String getDefaultAnniversaryReminderDelivery() {
-		return getString(DEFAULT_PREFIX + ANNIVERSARY_REMINDER_DELIVERY, ANNIVERSARY_REMINDER_DELIVERY_APP);
-	}
+	/**
+	 * [user][default]
+	 * [string]
+	 * Set anniversary reminder delivery mode
+	 */
+	public static final String ANNIVERSARY_REMINDER_DELIVERY = "anniversary.reminder.delivery";
+	public static final String ANNIVERSARY_REMINDER_DELIVERY_NONE = "none";
+	public static final String ANNIVERSARY_REMINDER_DELIVERY_APP = "app";
+	public static final String ANNIVERSARY_REMINDER_DELIVERY_EMAIL = "email";
+	
+	/**
+	 * [user]
+	 * [string]
+	 * Selected folder root node.
+	 */
+	public static final String SELECTED_ROOT = "roots.selected";
+	
+	/**
+	 * [user]
+	 * [string[]]
+	 * List of checked (or visible) folder root nodes.
+	 */
+	public static final String CHECKED_CATEGORY_ROOTS = "category.roots.checked";
+	
+	/**
+	 * [user]
+	 * [int[]]
+	 * List of checked (or visible) folders (groups).
+	 */
+	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
+	
+	/**
+	 * [user]
+	 * [object]
+	 * JSON value for sortInfo.
+	 */
+	public static final String GRID_CONTACTS_SORTINFO_ROOT = "grid.contacts.{0}.sortinfo";
+	
+	/**
+	 * [user]
+	 * [object]
+	 * JSON value for sortInfo.
+	 */
+	public static final String GRID_CONTACTS_GROUPINFO_ROOT = "grid.contacts.{0}.groupinfo";
 }

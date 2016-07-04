@@ -34,7 +34,5 @@
 Ext.define('Sonicle.webtop.contacts.model.ClientOptions', {
 	extend: 'WT.sdk.model.ClientOptions',
 	
-	fields: [
-		
-	]
+	fields: []
 });

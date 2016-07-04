@@ -36,6 +36,7 @@ package com.sonicle.webtop.contacts;
 import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
+import static com.sonicle.webtop.contacts.ContactsSettings.*;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import java.text.MessageFormat;
@@ -53,59 +54,6 @@ public class ContactsUserSettings extends BaseUserSettings {
 		super(serviceId, profileId);
 		ss = new ContactsServiceSettings(serviceId, profileId.getDomainId());
 	}
-	
-	/**
-	 * [string][default]
-	 * Contacts grid view (w:work, h:home)
-	 */
-	public static final String VIEW = "view";
-	public static final String VIEW_WORK = "w";
-	public static final String VIEW_HOME = "h";
-	
-	/**
-	 * [time(hh:mm)]
-	 * Anniversary reminder notification time
-	 */
-	public static final String ANNIVERSARY_REMINDER_TIME = "anniversary.reminder.time";
-	
-	/**
-	 * [string][default]
-	 * Set anniversary reminder delivery mode
-	 */
-	public static final String ANNIVERSARY_REMINDER_DELIVERY = "anniversary.reminder.delivery";
-	public static final String ANNIVERSARY_REMINDER_DELIVERY_NONE = "none";
-	public static final String ANNIVERSARY_REMINDER_DELIVERY_APP = "app";
-	public static final String ANNIVERSARY_REMINDER_DELIVERY_EMAIL = "email";
-	
-	/**
-	 * [string]
-	 * Selected folder root node.
-	 */
-	public static final String SELECTED_ROOT = "roots.selected";
-	
-	/**
-	 * [string[]]
-	 * List of checked (or visible) folder root nodes.
-	 */
-	public static final String CHECKED_CATEGORY_ROOTS = "category.roots.checked";
-	
-	/**
-	 * [int[]]
-	 * List of checked (or visible) folders (groups).
-	 */
-	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
-	
-	/**
-	 * [object]
-	 * JSON value for sortInfo.
-	 */
-	public static final String GRID_CONTACTS_SORTINFO_ROOT = "grid.contacts.{0}.sortinfo";
-	
-	/**
-	 * [object]
-	 * JSON value for sortInfo.
-	 */
-	public static final String GRID_CONTACTS_GROUPINFO_ROOT = "grid.contacts.{0}.groupinfo";
 	
 	public String getView() {
 		String value = getString(VIEW, null);
