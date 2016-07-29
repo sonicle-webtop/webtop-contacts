@@ -1123,14 +1123,14 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
 			
+			con = WT.getConnection(SERVICE_ID, false);
+			
 			if(mode.equals("copy")) {
 				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning contacts..."));
 				int del = doDeleteContactsByCategory(con, categoryId, false);
 				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
 			}
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
 			ContactBatchImportBeanHandler handler = new ContactBatchImportBeanHandler(log, con, categoryId);
 			try {
 				rea.readContacts(file, handler);
