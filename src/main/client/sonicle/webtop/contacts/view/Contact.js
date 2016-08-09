@@ -34,10 +34,8 @@
 Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WT.sdk.ModelView',
 	requires: [
-		'Sonicle.form.Separator',
 		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.form.field.Image',
-		'Sonicle.form.trigger.Clear',
 		'WT.ux.field.SuggestCombo',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',

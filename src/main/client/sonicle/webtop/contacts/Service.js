@@ -193,10 +193,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 									tb = me.getToolbar(),
 									tbi = me.tbIndex();
 							if(!Ext.isEmpty(pars.view)) tb.getComponent(pars.view).toggle(true);
-							if(pars.letter != null) {
+							if(pars.letter !== null) {
 								tbi.getComponent('chr'+pars.letter.charCodeAt(0)).toggle(true);
 								me.txtSearch().setValue(null);
-							} else if(pars.query != null) {
+							} else if(pars.query !== null) {
 								tbi.getComponent(0).toggle(true);
 								tbi.getComponent(0).toggle(false);
 							} else {
