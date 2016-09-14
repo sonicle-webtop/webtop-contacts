@@ -56,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	init: function() {
 		var me = this, ies, iitems = [];
 		
-		me.activeView = me.getOption('view');
+		me.activeView = me.getVar('view');
 		me.initActions();
 		me.initCxm();
 		
@@ -512,7 +512,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if(er.CREATE) {
 					me.addContactsList(node.get('_pid'), node.get('_catId'), rcpts);
 				} else {
-					me.addContactsList(WT.getOption('profileId'), null, rcpts);
+					me.addContactsList(WT.getVar('profileId'), null, rcpts);
 				}
 			}
 		});
