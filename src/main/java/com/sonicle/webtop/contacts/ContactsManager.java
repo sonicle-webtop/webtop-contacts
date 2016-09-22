@@ -130,12 +130,12 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 	private final HashMap<Integer, String> cacheCategoryToWildcardFolderShare = new HashMap<>();
 	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
 
-	public ContactsManager() {
-		this(RunContext.getProfileId());
+	public ContactsManager(boolean fastInit) {
+		this(fastInit, RunContext.getProfileId());
 	}
 	
-	public ContactsManager(UserProfile.Id targetProfileId) {
-		super(targetProfileId);
+	public ContactsManager(boolean fastInit, UserProfile.Id targetProfileId) {
+		super(fastInit, targetProfileId);
 	}
 	
 	private void buildShareCache() {
@@ -1752,32 +1752,17 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		String fullName = Contact.buildFullName(contact.getFirstname(), contact.getLastname());
 		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
 		String subject = NotificationHelper.buildSubject(locale, SERVICE_ID, title);
-		String body = buildAnniversaryNotificationEmailBody(locale, birthday, recipient.getAddress(), fullName);
+		String body = null;
+		try {
+			body = TplHelper.buildAnniversaryEmail(locale, birthday, recipient.getAddress(), fullName);
+		} catch(IOException | TemplateException ex) {
+			logger.error("Error building anniversary email", ex);
+		}
 		
 		ReminderEmail alert = new ReminderEmail(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
 		alert.setSubject(subject);
 		alert.setBody(body);
 		return alert;
-	}
-	
-	public String buildAnniversaryNotificationEmailBody(Locale locale, boolean birthday, String recipientEmail, String contactFullName) {
-		String resKey = (birthday) ? ContactsLocale.TPL_ANNIVERSARY_HEADER_BIRTHDAY : ContactsLocale.TPL_ANNIVERSARY_HEADER_ANNIVERSARY;
-		
-		try {
-			String source = NotificationHelper.buildSource(locale, SERVICE_ID);
-			String bodyHeader = MessageFormat.format(lookupResource(locale, resKey), contactFullName);
-			String because = lookupResource(locale, ContactsLocale.TPL_ANNIVERSARY_FOOTER_BECAUSE);
-			
-			MapItem i18nMap = new MapItem();
-			i18nMap.putAll(NotificationHelper.generateNotificationI18nTplStrings(locale, source, recipientEmail, bodyHeader, null, because));
-			MapItem map = new MapItem();
-			map.put("i18n", i18nMap);
-			map.put("recipientEmail", StringUtils.defaultString(recipientEmail));
-			return WT.buildTemplate(SERVICE_ID, "tpl/anniversary-notification.html", map);
-		} catch(IOException | TemplateException ex) {
-			logger.error("Error generating body", ex);
-			return null;
-		}
 	}
 	
 	private DateTime createRevisionTimestamp() {

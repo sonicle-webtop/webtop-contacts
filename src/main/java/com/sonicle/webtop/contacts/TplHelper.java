@@ -1,5 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+ * webtop-vfs is a WebTop Service developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -33,52 +33,33 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.webtop.core.app.WT;
-import com.sonicle.webtop.core.sdk.BaseController;
-import com.sonicle.webtop.core.sdk.BaseReminder;
-import com.sonicle.webtop.core.sdk.UserProfile;
-import com.sonicle.webtop.core.sdk.WTException;
-import com.sonicle.webtop.core.sdk.WTOperationException;
-import com.sonicle.webtop.core.sdk.interfaces.IControllerHandlesProfiles;
-import com.sonicle.webtop.core.sdk.interfaces.IControllerHandlesReminders;
-import java.util.List;
-import org.joda.time.DateTime;
-import org.slf4j.Logger;
+import com.sonicle.webtop.core.util.NotificationHelper;
+import freemarker.template.TemplateException;
+import java.io.IOException;
+import java.text.MessageFormat;
+import java.util.Locale;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsController extends BaseController implements IControllerHandlesProfiles, IControllerHandlesReminders {
-	public static final Logger logger = WT.getLogger(ContactsController.class);
+public class TplHelper {
+	private static final String SERVICE_ID = "com.sonicle.webtop.contacts";
 	
-	public ContactsController() {
-		super();
+	public static String buildAnniversaryBodyTpl(Locale locale) throws IOException, TemplateException {
+		return WT.buildTemplate(SERVICE_ID, "tpl/email/anniversary-body.html", new MapItem());
 	}
 	
-	@Override
-	public void addProfile(UserProfile.Id profileId) throws WTException {
-		ContactsManager manager = new ContactsManager(true, profileId);
+	public static String buildAnniversaryEmail(Locale locale, boolean birthday, String recipientEmail, String contactFullName) throws IOException, TemplateException {
+		final String BHD_KEY = (birthday) ? ContactsLocale.TPL_EMAIL_ANNIVERSARY_BODY_HEADER_BDAY : ContactsLocale.TPL_EMAIL_ANNIVERSARY_BODY_HEADER;
 		
-		// Adds built-in category
-		try {
-			manager.addBuiltInCategory();
-		} catch(WTOperationException ex) {
-			// Do nothing...
-		} catch(WTException ex) {
-			throw ex;
-		}
-	}
-	
-	@Override
-	public void removeProfile(UserProfile.Id profileId, boolean deep) throws WTException {
-		//TODO: implementare cleanup utente
-		//ContactsManager manager = new ContactsManager(getRunContext(), profileId);
-	}
-	
-	@Override
-	public List<BaseReminder> returnReminders(DateTime now) {
-		ContactsManager manager = new ContactsManager(true);
-		return manager.getRemindersToBeNotified(now);
+		String source = NotificationHelper.buildSource(locale, SERVICE_ID);
+		String bodyHeader = MessageFormat.format(WT.lookupResource(SERVICE_ID, locale, BHD_KEY), contactFullName);
+		String complexBody = buildAnniversaryBodyTpl(locale);
+		String because = WT.lookupResource(SERVICE_ID, locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_BECAUSE);
+		
+		return NotificationHelper.buildTpl(locale, true, source, recipientEmail, bodyHeader, complexBody, because);
 	}
 }
