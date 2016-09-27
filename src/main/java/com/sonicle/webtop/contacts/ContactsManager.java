@@ -297,6 +297,8 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			} catch(Throwable t) {
 				logger.error("Error listing recipients", t);
 				return null;
+			} finally {
+				DbUtils.closeQuietly(con);
 			}
 		}
 	}
