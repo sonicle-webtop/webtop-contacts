@@ -60,6 +60,6 @@ public class TplHelper {
 		String complexBody = buildAnniversaryBodyTpl(locale);
 		String because = WT.lookupResource(SERVICE_ID, locale, ContactsLocale.TPL_EMAIL_ANNIVERSARY_FOOTER_BECAUSE);
 		
-		return NotificationHelper.buildTpl(locale, true, source, recipientEmail, bodyHeader, complexBody, because);
+		return NotificationHelper.buildCustomBodyTpl(locale, source, recipientEmail, bodyHeader, complexBody, because);
 	}
 }
