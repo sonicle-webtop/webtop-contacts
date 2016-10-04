@@ -129,10 +129,6 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 	private final HashMap<Integer, String> cacheCategoryToFolderShare = new HashMap<>();
 	private final HashMap<Integer, String> cacheCategoryToWildcardFolderShare = new HashMap<>();
 	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
-
-	public ContactsManager(boolean fastInit) {
-		this(fastInit, RunContext.getProfileId());
-	}
 	
 	public ContactsManager(boolean fastInit, UserProfile.Id targetProfileId) {
 		super(fastInit, targetProfileId);

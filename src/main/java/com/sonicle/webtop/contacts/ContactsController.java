@@ -33,6 +33,7 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.BaseController;
 import com.sonicle.webtop.core.sdk.BaseReminder;
@@ -78,7 +79,7 @@ public class ContactsController extends BaseController implements IControllerHan
 	
 	@Override
 	public List<BaseReminder> returnReminders(DateTime now) {
-		ContactsManager manager = new ContactsManager(true);
+		ContactsManager manager = new ContactsManager(true, RunContext.getRunProfileId());
 		return manager.getRemindersToBeNotified(now);
 	}
 }

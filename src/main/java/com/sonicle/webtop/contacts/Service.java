@@ -142,9 +142,8 @@ public class Service extends BaseService {
 	
 	@Override
 	public void initialize() throws Exception {
-		UserProfile up = getEnv().getProfile();
-		manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, up.getId());
-		us = new ContactsUserSettings(SERVICE_ID, up.getId());
+		manager = (ContactsManager)WT.getServiceManager(SERVICE_ID);
+		us = new ContactsUserSettings(SERVICE_ID, getEnv().getProfileId());
 		initFolders();
 		gridFieldsW = buildFields(WORK_VIEW);
 		gridFieldsH = buildFields(HOME_VIEW);
