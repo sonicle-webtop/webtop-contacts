@@ -35,7 +35,6 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.MailUtils;
 import com.sonicle.commons.db.DbUtils;
-import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
@@ -69,6 +68,7 @@ import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.io.BatchBeanHandler;
+import com.sonicle.webtop.core.io.BeanHandlerException;
 import com.sonicle.webtop.core.io.DefaultBeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.sdk.AuthException;
@@ -1104,16 +1104,20 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 		
 		@Override
-		public void handleStoredBeans() throws Exception {
-			insertedCount = insertedCount + doBatchInsertContacts(con, categoryId, contacts);
+		public void handleStoredBeans() throws BeanHandlerException {
+			try {
+				insertedCount = insertedCount + doBatchInsertContacts(con, categoryId, contacts);
+			} catch(Exception ex) {
+				throw new BeanHandlerException(ex);
+			}
 		}
 	}
 	
 	public LogEntries importContacts(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
-		int readCount = 0;
-		int importedCount = 0;
+		//int readCount = 0;
+		//int importedCount = 0;
 		
 		try {
 			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
@@ -1133,29 +1137,34 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			try {
 				rea.readContacts(file, handler);
 				handler.flush();
-			} catch(IOException | FileReaderException ex) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex.getMessage()));
-				throw new WTException(ex);
-			} catch(Exception ex) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex.getMessage()));
-				throw new WTException(ex);
+			} catch(IOException | FileReaderException ex1) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex1.getMessage()));
+				throw new BeanHandlerException(ex1);
+			} catch(BeanHandlerException ex1) {
+				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex1.getMessage()));
+				throw ex1;
 			}
 			
-			readCount = handler.handledCount;
-			importedCount = handler.insertedCount;
+			//readCount = handler.handledCount;
+			//importedCount = handler.insertedCount;
 			DbUtils.commitQuietly(con);
 			
-		} catch(SQLException | DAOException ex) {
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s read!", handler.handledCount));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", handler.insertedCount));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+			
+		} catch(BeanHandlerException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(WTException ex) {
+			logger.error("Bean error", ex);
+		} catch(Exception ex) {
 			DbUtils.rollbackQuietly(con);
-			throw ex;
+			logger.error("DB error", ex);
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unexpected error. Reason: {0}", ex.getMessage()));
 		} finally {
 			DbUtils.closeQuietly(con);
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s read!", readCount));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", importedCount));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+			//log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s read!", readCount));
+			//log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", importedCount));
+			//log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
 		}
 		return log;
 	}
@@ -1176,6 +1185,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 	}
 	
+	/*
 	public LogEntries importContacts22(int categoryId, ContactFileReader rea, File file, String mode) throws WTException {
 		LogEntries log = new LogEntries();
 		Connection con = null;
@@ -1231,6 +1241,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 		return log;
 	}
+	*/
 	
 	public List<BaseReminder> getRemindersToBeNotified(DateTime now) {
 		ArrayList<BaseReminder> alerts = new ArrayList<>();
@@ -1371,7 +1382,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		return item;
 	}
 	
-	private int doBatchInsertContacts(Connection con, int categoryId, ArrayList<Contact> contacts) throws WTException {
+	private int doBatchInsertContacts(Connection con, int categoryId, ArrayList<Contact> contacts) {
 		ContactDAO cdao = ContactDAO.getInstance();
 		ArrayList<OContact> ocontacts = new ArrayList<>();
 		//TODO: eventualmente introdurre supporto alle immagini

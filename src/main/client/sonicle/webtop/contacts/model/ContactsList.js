@@ -34,6 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
 	extend: 'WT.ux.data.BaseModel',
 	requires: [
+		'Sonicle.data.writer.Json',
 		'Sonicle.webtop.contacts.model.ContactsListRecipient'
 	],
 	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContactsLists', 'data', {
