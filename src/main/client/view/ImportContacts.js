@@ -32,7 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
-	extend: 'WT.sdk.ImportWizardView',
+	extend: 'WTA.sdk.ImportWizardView',
 	
 	dockableConfig: {
 		title: '{importContacts.tit}',

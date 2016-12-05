@@ -32,7 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
-	extend: 'WT.sdk.ModelView',
+	extend: 'WTA.sdk.ModelView',
 	requires: [
 		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
@@ -76,7 +76,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					bind: '{record._profileId}',
 					store: {
 						autoLoad: true,
-						model: 'WT.ux.data.SimpleModel',
+						model: 'WTA.ux.data.SimpleModel',
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
 					},
 					fieldLabel: me.mys.res('contact.fld-owner.lbl'),

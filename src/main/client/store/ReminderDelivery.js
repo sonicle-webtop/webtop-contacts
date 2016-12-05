@@ -31,62 +31,21 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
-	extend: 'WT.sdk.UserOptionsView',
-	requires: [
-		'Sonicle.webtop.contacts.store.View',
-		'Sonicle.webtop.contacts.store.ReminderDelivery'
+Ext.define('Sonicle.webtop.contacts.store.ReminderDelivery', {
+	extend: 'Ext.data.ArrayStore',
+	
+	model: 'WTA.model.Simple',
+	data: [
+		['off',''],
+		['app',''],
+		['email','']
 	],
-		
-	initComponent: function() {
+	
+	constructor: function(cfg) {
 		var me = this;
-		me.callParent(arguments);
-		
-		me.add({
-			xtype: 'wtopttabsection',
-			title: WT.res(me.ID, 'opts.main.tit'),
-			items: [
-			WTF.lookupCombo('id', 'desc', {
-				bind: '{record.view}',
-				store: Ext.create('Sonicle.webtop.contacts.store.View', {
-					autoLoad: true
-				}),
-				fieldLabel: WT.res(me.ID, 'opts.main.fld-view.lbl'),
-				width: 280,
-				listeners: {
-					blur: {
-						fn: me.onBlurAutoSave,
-						scope: me
-					}
-				}
-			}), WTF.lookupCombo('id', 'desc', {
-				bind: '{record.anniversaryReminderDelivery}',
-				store: Ext.create('Sonicle.webtop.contacts.store.ReminderDelivery', {
-					autoLoad: true
-				}),
-				fieldLabel: WT.res(me.ID, 'opts.main.fld-anniversaryReminderDelivery.lbl'),
-				width: 280,
-				listeners: {
-					blur: {
-						fn: me.onBlurAutoSave,
-						scope: me
-					}
-				}
-			}), {
-				xtype: 'timefield',
-				bind: '{record.anniversaryReminderTime}',
-				format: 'H:i',
-				increment : 30,
-				snapToIncrement: true,
-				fieldLabel: WT.res(me.ID, 'opts.main.fld-anniversaryReminderTime.lbl'),
-				width: 220,
-				listeners: {
-					blur: {
-						fn: me.onBlurAutoSave,
-						scope: me
-					}
-				}
-			}]
+		Ext.each(me.config.data, function(row) {
+			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.reminderDelivery.'+row[0]);
 		});
+		me.callParent([cfg]);
 	}
 });

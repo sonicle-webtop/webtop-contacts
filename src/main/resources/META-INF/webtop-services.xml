@@ -4,8 +4,8 @@
 		<package>com.sonicle.webtop.contacts</package>
 		<jsPackage>Sonicle.webtop.contacts</jsPackage>
 		<shortName>wtcon</shortName>
-		<version>1.0.0</version>
-		<buildDate>15/07/2015</buildDate>
+		<version>@@webtop.service.version@@</version>
+		<buildDate>@@webtop.service.buildDate@@</buildDate>
 		
 		<company>Sonicle S.r.l.</company>
 		<companyEmail>sonicle@sonicle.com</companyEmail>

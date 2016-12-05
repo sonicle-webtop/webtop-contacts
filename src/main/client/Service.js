@@ -32,12 +32,12 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.Service', {
-	extend: 'WT.sdk.Service',
+	extend: 'WTA.sdk.Service',
 	requires: [
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
-		'WT.ux.data.EmptyModel',
-		'WT.ux.data.SimpleModel',
+		'WTA.ux.data.EmptyModel',
+		'WTA.ux.data.SimpleModel',
 		'Sonicle.webtop.contacts.model.FolderNode',
 		'Sonicle.webtop.contacts.model.GridContact',
 		'Sonicle.webtop.contacts.view.Sharing',
@@ -47,7 +47,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.view.CategoryChooser'
 	],
 	mixins: [
-		'WT.mixin.FoldersTree'
+		'WTA.mixin.FoldersTree'
 	],
 	
 	needsReload: true,
@@ -79,7 +79,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.addRef('cbogroup', Ext.create(WTF.lookupCombo('id', 'desc', {
 					queryMode: 'local',
 					store: {
-						model: 'WT.ux.data.SimpleModel'
+						model: 'WTA.ux.data.SimpleModel'
 					},
 					fieldLabel: me.res('fld-group.lbl'),
 					labelWidth: 70,

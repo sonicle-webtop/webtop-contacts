@@ -31,81 +31,62 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.view.Category', {
-	extend: 'WT.sdk.ModelView',
+Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
+	extend: 'WTA.sdk.UserOptionsView',
 	requires: [
-		'Sonicle.form.field.Palette',
-		'Sonicle.form.RadioGroup',
-		'Sonicle.webtop.contacts.store.Sync'
+		'Sonicle.webtop.contacts.store.View',
+		'Sonicle.webtop.contacts.store.ReminderDelivery'
 	],
-	
-	dockableConfig: {
-		title: '{category.tit}',
-		iconCls: 'wtcon-icon-category-xs',
-		width: 360,
-		height: 290
-	},
-	fieldTitle: 'name',
-	modelName: 'Sonicle.webtop.contacts.model.Category',
-	
-	constructor: function(cfg) {
-		var me = this;
-		me.callParent([cfg]);
 		
-		WTU.applyFormulas(me.getVM(), {
-			isDefault: WTF.checkboxBind('record', 'isDefault')
-		});
-	},
-	
 	initComponent: function() {
 		var me = this;
 		me.callParent(arguments);
 		
 		me.add({
-			region: 'center',
-			xtype: 'wtform',
-			modelValidation: true,
-			defaults: {
-				labelWidth: 110
-			},
-			items: [{
-				xtype: 'textfield',
-				reference: 'fldname',
-				bind: '{record.name}',
-				fieldLabel: me.mys.res('category.fld-name.lbl'),
-				anchor: '100%'
-			}, {
-				xtype: 'textareafield',
-				bind: '{record.description}',
-				fieldLabel: me.mys.res('category.fld-description.lbl'),
-				anchor: '100%'
-			}, {
-				xtype: 'sopalettefield',
-				bind: '{record.color}',
-				colors: WT.getColorPalette(),
-				fieldLabel: me.mys.res('category.fld-color.lbl'),
-				width: 210
-			}, {
-				xtype: 'checkbox',
-				bind: '{isDefault}',
-				hideEmptyLabel: false,
-				boxLabel: me.mys.res('category.fld-default.lbl')
-			},
+			xtype: 'wtopttabsection',
+			title: WT.res(me.ID, 'opts.main.tit'),
+			items: [
 			WTF.lookupCombo('id', 'desc', {
-				bind: '{record.sync}',
-				store: Ext.create('Sonicle.webtop.contacts.store.Sync', {
+				bind: '{record.view}',
+				store: Ext.create('Sonicle.webtop.contacts.store.View', {
 					autoLoad: true
 				}),
-				fieldLabel: me.mys.res('category.fld-sync.lbl'),
-				width: 250
-			})]
+				fieldLabel: WT.res(me.ID, 'opts.main.fld-view.lbl'),
+				width: 280,
+				listeners: {
+					blur: {
+						fn: me.onBlurAutoSave,
+						scope: me
+					}
+				}
+			}), WTF.lookupCombo('id', 'desc', {
+				bind: '{record.anniversaryReminderDelivery}',
+				store: Ext.create('Sonicle.webtop.contacts.store.ReminderDelivery', {
+					autoLoad: true
+				}),
+				fieldLabel: WT.res(me.ID, 'opts.main.fld-anniversaryReminderDelivery.lbl'),
+				width: 280,
+				listeners: {
+					blur: {
+						fn: me.onBlurAutoSave,
+						scope: me
+					}
+				}
+			}), {
+				xtype: 'timefield',
+				bind: '{record.anniversaryReminderTime}',
+				format: 'H:i',
+				increment : 30,
+				snapToIncrement: true,
+				fieldLabel: WT.res(me.ID, 'opts.main.fld-anniversaryReminderTime.lbl'),
+				width: 220,
+				listeners: {
+					blur: {
+						fn: me.onBlurAutoSave,
+						scope: me
+					}
+				}
+			}]
 		});
-		me.on('viewload', me.onViewLoad);
-	},
-	
-	onViewLoad: function(s, success) {
-		if(!success) return;
-		var me = this;
-		me.lref('fldname').focus(true);
 	}
 });

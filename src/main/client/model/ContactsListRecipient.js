@@ -31,29 +31,15 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
-	extend: 'WT.ux.data.BaseModel',
-	requires: [
-		'Sonicle.data.writer.Json',
-		'Sonicle.webtop.contacts.model.ContactsListRecipient'
-	],
-	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContactsLists', 'data', {
-		writer: {
-			type: 'sojson',
-			writeAssociations: true
-		}
-	}),
+Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipient', {
+	extend: 'WTA.ux.data.BaseModel',
 	
-	identifier: 'negativestring',
-	idProperty: 'id',
+	identifier: 'negative',
+	idProperty: 'listRecipientId',
 	fields: [
-		WTF.field('id', 'string', false),
-		WTF.field('contactId', 'int', true),
-		WTF.field('categoryId', 'int', false),
-		WTF.field('name', 'string', false),
-		WTF.field('_profileId', 'string', false)
-	],
-	hasMany: [
-		WTF.hasMany('recipients', 'Sonicle.webtop.contacts.model.ContactsListRecipient')
+		WTF.fkField('string'),
+		WTF.field('listRecipientId', 'int', false),
+		WTF.field('recipientType', 'string', false),
+		WTF.field('recipient', 'string', false)
 	]
 });

@@ -1,23 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.sonicle.webtop</groupId>
-    <artifactId>webtop-contacts</artifactId>
-    <version>1.0.0</version>
-    <packaging>jar</packaging>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.sonicle.webtop</groupId>
+	<artifactId>webtop-contacts</artifactId>
+	<version>1.0.0</version>
+	<packaging>jar</packaging>
 	<name>webtop-contacts</name>
 	
 	<parent>
 		<groupId>com.sonicle.webtop</groupId>
-		<artifactId>webtop-sdk-service-project</artifactId>
+		<artifactId>webtop-superpom-service-sdk</artifactId>
 		<version>1.0</version>
 	</parent>
 	
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
-    </properties>
+	<properties>
+		<maven.compiler.source>1.7</maven.compiler.source>
+		<maven.compiler.target>1.7</maven.compiler.target>
+		
+		<!-- WEBTOP SERVICE CONFIGURATION -->
+		<webtop.service.package>com.sonicle.webtop.contacts</webtop.service.package>
+		<webtop.service.jsPackage>Sonicle.webtop.contacts</webtop.service.jsPackage>
+	</properties>
 	
 	<dependencies>
 		<dependency>
@@ -32,39 +35,13 @@
 		</dependency>
 	</dependencies>
 	
+	<!--
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>com.sonicle.maven</groupId>
-				<artifactId>jasperreports-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>process-sources</phase>
-						<goals>
-							<goal>jasper</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>com.sonicle.maven</groupId>
-				<artifactId>minify-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>minify-debug</id>
-						<goals>
-							<goal>minify</goal>
-						</goals>
-						<configuration>
-							<suffix>.debug</suffix>
-							<jsEngine>CLEANER</jsEngine>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<groupId>org.jooq</groupId>
 				<artifactId>jooq-codegen-maven</artifactId>
+				<version>${jooq-codegen-maven.version}</version>
 				<configuration>
 					<jdbc>
 						<driver>org.postgresql.Driver</driver>
@@ -72,132 +49,9 @@
 						<user>sonicle</user>
 						<password>sonicle</password>
 					</jdbc>
-					<generator>
-						<database>
-							<inputSchema>contacts</inputSchema>
-						</database>
-						<target>
-							<packageName>com.sonicle.webtop.contacts.jooq</packageName>
-						</target>
-					</generator>
 				</configuration>
-				<executions>
-					<execution>
-						<goals><!-- the plugin should hook into the generate goal --></goals>
-					</execution>
-				</executions>
 			</plugin>
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			<!--
-			<plugin>
-				<groupId>com.sonicle.maven</groupId>
-				<artifactId>minify-maven-plugin</artifactId>
-				<version>1.7.5-SNAPSHOT</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>minify</goal>
-						</goals>
-						<configuration>
-							<charset>UTF-8</charset>
-							<skipMerge>true</skipMerge>
-							<webappSourceDir>${project.basedir}/src/main</webappSourceDir>
-							<webappTargetDir>${project.build.directory}</webappTargetDir>
-							<jsSourceDir>client</jsSourceDir>
-							<jsTargetDir>classes</jsTargetDir>
-							<jsSourceIncludes>
-								<jsSourceInclude>**/*.js</jsSourceInclude>
-							</jsSourceIncludes>
-							<suffix>.debug</suffix>
-							<jsEngine>CLEANER</jsEngine>
-							<closurePrettyPrint>true</closurePrettyPrint>
-							<closureCompilationLevel>WHITESPACE_ONLY</closureCompilationLevel>
-							<yuiPreserveSemicolons>true</yuiPreserveSemicolons>
-							<yuiLineBreak>0</yuiLineBreak>
-							<yuiNoMunge>true</yuiNoMunge>
-							<yuiDisableOptimizations>true</yuiDisableOptimizations>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			-->
-			<!--
-			<plugin>
-				<groupId>org.jooq</groupId>
-				<artifactId>jooq-codegen-maven</artifactId>
-				<version>3.5.3</version>
-				<dependencies>
-					<dependency>
-						<groupId>org.postgresql</groupId>
-						<artifactId>postgresql</artifactId>
-						<version>9.3-1102-jdbc4</version>
-					</dependency>
-				</dependencies>
-				<configuration>
-					<jdbc>
-						<driver>org.postgresql.Driver</driver>
-						<url>jdbc:postgresql://www.sonicle.com/webtop5</url>
-						<user>sonicle</user>
-						<password>sonicle</password>
-					</jdbc>
-					<generator>
-						<name>org.jooq.util.DefaultGenerator</name>
-						<database>
-							<name>org.jooq.util.postgres.PostgresDatabase</name>
-							<includes>.*</includes>
-							<excludes></excludes>
-							<inputSchema>contacts</inputSchema>
-							<customTypes>
-								<customType>
-									<name>JodaLocalDate</name>
-									<type>org.joda.time.LocalDate</type>
-									<converter>com.sonicle.webtop.core.jooq.LocalDateConverter</converter>
-								</customType>
-								<customType>
-									<name>JodaDateTime</name>
-									<type>org.joda.time.DateTime</type>
-									<converter>com.sonicle.webtop.core.jooq.DateTimeConverter</converter>
-								</customType>
-							</customTypes>
-							<forcedTypes>
-								<forcedType>
-									<name>JodaLocalDate</name>
-									<expression>.*</expression>
-									<types>date.*</types>
-								</forcedType>
-								<forcedType>
-									<name>JodaDateTime</name>
-									<expression>.*</expression>
-									<types>timestamp.*</types>
-								</forcedType>
-							</forcedTypes>
-						</database>
-						<target>
-							<packageName>com.sonicle.webtop.contacts.jooq</packageName>
-							<directory>target/generated-sources/jooq</directory>
-						</target>
-						<generate>
-							<pojos>true</pojos>
-							<immutablePojos>false</immutablePojos>
-						</generate>
-					</generator>
-				</configuration>
-				<executions>
-					<execution>
-						<goals></goals>
-					</execution>
-				</executions>
-			</plugin>
-			-->
 		</plugins>
 	</build>
+	-->
 </project>

@@ -27,25 +27,16 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-Ext.define('Sonicle.webtop.contacts.store.ReminderDelivery', {
-	extend: 'Ext.data.ArrayStore',
-	
-	model: 'WT.model.Simple',
-	data: [
-		['off',''],
-		['app',''],
-		['email','']
+Ext.define('Sonicle.webtop.contacts.view.Sharing', {
+	extend: 'WTA.sdk.Sharing',
+	requires: [
+		'Sonicle.webtop.contacts.model.Sharing'
 	],
 	
-	constructor: function(cfg) {
-		var me = this;
-		Ext.each(me.config.data, function(row) {
-			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.reminderDelivery.'+row[0]);
-		});
-		me.callParent([cfg]);
-	}
+	modelName: 'Sonicle.webtop.contacts.model.Sharing',
+	fieldTitle: 'description'
 });

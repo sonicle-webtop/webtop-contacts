@@ -31,8 +31,27 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.ServiceVars', {
-	extend: 'WT.sdk.model.ServiceVars',
+Ext.define('Sonicle.webtop.contacts.store.Group', {
+	extend: 'Ext.data.ArrayStore',
 	
-	fields: []
+	model: 'WTA.model.Simple',
+	data: [],
+	
+	initComponent: function() {
+		this.callParent(arguments);
+		this.on('load', function(s) {
+			s.insert(0, {id: '-', desc: WT.res('word.no')});
+		});
+	}
+	
+	/*
+	loadRecords: function(records, options) {
+		var me = this,
+				session = me.getSession(),
+				Model = me.getModel();
+		records.unshift(new Model({id: '-', desc: WT.res('word.no')}, session));
+		//records.unshift(Ext.create('WTA.model.Simple', {id: '-', desc: WT.res('word.no')}));
+		me.callParent(arguments);
+	}
+	*/
 });

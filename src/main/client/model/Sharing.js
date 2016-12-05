@@ -31,15 +31,22 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipient', {
-	extend: 'WT.ux.data.BaseModel',
+Ext.define('Sonicle.webtop.contacts.model.Sharing', {
+	extend: 'WTA.sdk.model.Sharing',
+	requires: [
+		'Sonicle.webtop.contacts.model.SharingRights'
+	],
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageSharing', 'data', {
+		writer: {
+			type: 'sojson',
+			writeAssociations: true
+		}
+	}),
 	
-	identifier: 'negative',
-	idProperty: 'listRecipientId',
-	fields: [
-		WTF.fkField('string'),
-		WTF.field('listRecipientId', 'int', false),
-		WTF.field('recipientType', 'string', false),
-		WTF.field('recipient', 'string', false)
+	field:[
+		WTF.roField('description', 'string')
+	],
+	hasMany: [
+		WTF.hasMany('rights', 'Sonicle.webtop.contacts.model.SharingRights')
 	]
 });

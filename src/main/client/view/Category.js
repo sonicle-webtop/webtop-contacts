@@ -31,27 +31,81 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.store.Group', {
-	extend: 'Ext.data.ArrayStore',
+Ext.define('Sonicle.webtop.contacts.view.Category', {
+	extend: 'WTA.sdk.ModelView',
+	requires: [
+		'Sonicle.form.field.Palette',
+		'Sonicle.form.RadioGroup',
+		'Sonicle.webtop.contacts.store.Sync'
+	],
 	
-	model: 'WT.model.Simple',
-	data: [],
+	dockableConfig: {
+		title: '{category.tit}',
+		iconCls: 'wtcon-icon-category-xs',
+		width: 360,
+		height: 290
+	},
+	fieldTitle: 'name',
+	modelName: 'Sonicle.webtop.contacts.model.Category',
+	
+	constructor: function(cfg) {
+		var me = this;
+		me.callParent([cfg]);
+		
+		WTU.applyFormulas(me.getVM(), {
+			isDefault: WTF.checkboxBind('record', 'isDefault')
+		});
+	},
 	
 	initComponent: function() {
-		this.callParent(arguments);
-		this.on('load', function(s) {
-			s.insert(0, {id: '-', desc: WT.res('word.no')});
-		});
-	}
-	
-	/*
-	loadRecords: function(records, options) {
-		var me = this,
-				session = me.getSession(),
-				Model = me.getModel();
-		records.unshift(new Model({id: '-', desc: WT.res('word.no')}, session));
-		//records.unshift(Ext.create('WT.model.Simple', {id: '-', desc: WT.res('word.no')}));
+		var me = this;
 		me.callParent(arguments);
+		
+		me.add({
+			region: 'center',
+			xtype: 'wtform',
+			modelValidation: true,
+			defaults: {
+				labelWidth: 110
+			},
+			items: [{
+				xtype: 'textfield',
+				reference: 'fldname',
+				bind: '{record.name}',
+				fieldLabel: me.mys.res('category.fld-name.lbl'),
+				anchor: '100%'
+			}, {
+				xtype: 'textareafield',
+				bind: '{record.description}',
+				fieldLabel: me.mys.res('category.fld-description.lbl'),
+				anchor: '100%'
+			}, {
+				xtype: 'sopalettefield',
+				bind: '{record.color}',
+				colors: WT.getColorPalette(),
+				fieldLabel: me.mys.res('category.fld-color.lbl'),
+				width: 210
+			}, {
+				xtype: 'checkbox',
+				bind: '{isDefault}',
+				hideEmptyLabel: false,
+				boxLabel: me.mys.res('category.fld-default.lbl')
+			},
+			WTF.lookupCombo('id', 'desc', {
+				bind: '{record.sync}',
+				store: Ext.create('Sonicle.webtop.contacts.store.Sync', {
+					autoLoad: true
+				}),
+				fieldLabel: me.mys.res('category.fld-sync.lbl'),
+				width: 250
+			})]
+		});
+		me.on('viewload', me.onViewLoad);
+	},
+	
+	onViewLoad: function(s, success) {
+		if(!success) return;
+		var me = this;
+		me.lref('fldname').focus(true);
 	}
-	*/
 });

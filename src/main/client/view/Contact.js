@@ -32,11 +32,11 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.view.Contact', {
-	extend: 'WT.sdk.ModelView',
+	extend: 'WTA.sdk.ModelView',
 	requires: [
 		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.form.field.Image',
-		'WT.ux.field.SuggestCombo',
+		'WTA.ux.field.SuggestCombo',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.Contact'
@@ -88,7 +88,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					bind: '{record._profileId}',
 					store: {
 						autoLoad: true,
-						model: 'WT.ux.data.SimpleModel',
+						model: 'WTA.ux.data.SimpleModel',
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
 					},
 					fieldLabel: me.mys.res('contact.fld-owner.lbl'),
@@ -154,7 +154,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						forceSelection: false,
 						autoLoadOnValue: true,
 						store: {
-							model: 'WT.ux.data.SimpleModel',
+							model: 'WTA.ux.data.SimpleModel',
 							proxy: WTF.proxy(WT.ID, 'LookupCustomers', 'customers')
 						},
 						triggers: {
