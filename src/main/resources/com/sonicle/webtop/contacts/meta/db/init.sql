@@ -1,10 +1,25 @@
 
 -- ----------------------------
--- Structures for categories
+-- Sequence structure for seq_categories
 -- ----------------------------
-DROP SEQUENCE IF EXISTS "contacts"."seq_categories" CASCADE;
+DROP SEQUENCE IF EXISTS "contacts"."seq_categories";
 CREATE SEQUENCE "contacts"."seq_categories";
 
+-- ----------------------------
+-- Sequence structure for seq_contacts
+-- ----------------------------
+DROP SEQUENCE IF EXISTS "contacts"."seq_contacts";
+CREATE SEQUENCE "contacts"."seq_contacts";
+
+-- ----------------------------
+-- Sequence structure for seq_list_recipients
+-- ----------------------------
+DROP SEQUENCE IF EXISTS "contacts"."seq_list_recipients";
+CREATE SEQUENCE "contacts"."seq_list_recipients";
+
+-- ----------------------------
+-- Table structure for categories
+-- ----------------------------
 DROP TABLE IF EXISTS "contacts"."categories";
 CREATE TABLE "contacts"."categories" (
 "category_id" int4 DEFAULT nextval('"contacts".seq_categories'::regclass) NOT NULL,
@@ -17,18 +32,13 @@ CREATE TABLE "contacts"."categories" (
 "sync" varchar(1) NOT NULL,
 "is_default" bool NOT NULL
 )
-WITH (OIDS=FALSE);
+WITH (OIDS=FALSE)
 
-ALTER TABLE "contacts"."categories" ADD PRIMARY KEY ("category_id");
-CREATE INDEX "categories_ak1" ON "contacts"."categories" USING btree ("domain_id", "user_id", "built_in");
-CREATE UNIQUE INDEX "categories_ak2" ON "contacts"."categories" USING btree ("domain_id", "user_id", "name");
+;
 
 -- ----------------------------
--- Structures for contacts
+-- Table structure for contacts
 -- ----------------------------
-DROP SEQUENCE IF EXISTS "contacts"."seq_contacts" CASCADE;
-CREATE SEQUENCE "contacts"."seq_contacts";
-
 DROP TABLE IF EXISTS "contacts"."contacts";
 CREATE TABLE "contacts"."contacts" (
 "contact_id" int4 NOT NULL,
@@ -86,17 +96,12 @@ CREATE TABLE "contacts"."contacts" (
 "url" varchar(255),
 "notes" varchar(2000)
 )
-WITH (OIDS=FALSE);
+WITH (OIDS=FALSE)
 
-ALTER TABLE "contacts"."contacts" ADD PRIMARY KEY ("contact_id");
-CREATE INDEX "contacts_ak1" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "revision_timestamp");
-CREATE INDEX "contacts_ak2" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "lastname");
-CREATE INDEX "contacts_ak3" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "searchfield");
-CREATE INDEX "contacts_ak4" ON "contacts"."contacts" USING btree ("revision_status", "birthday");
-CREATE INDEX "contacts_ak5" ON "contacts"."contacts" USING btree ("revision_status", "anniversary");
+;
 
 -- ----------------------------
--- Structures for contacts_pictures
+-- Table structure for contacts_pictures
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."contacts_pictures";
 CREATE TABLE "contacts"."contacts_pictures" (
@@ -106,24 +111,64 @@ CREATE TABLE "contacts"."contacts_pictures" (
 "media_type" varchar(50),
 "bytes" bytea
 )
-WITH (OIDS=FALSE);
+WITH (OIDS=FALSE)
 
-ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
+;
 
 -- ----------------------------
--- Structures for list_recipients
+-- Table structure for list_recipients
 -- ----------------------------
-DROP SEQUENCE IF EXISTS "contacts"."seq_list_recipients" CASCADE;
-CREATE SEQUENCE "contacts"."seq_list_recipients";
-
 DROP TABLE IF EXISTS "contacts"."list_recipients";
 CREATE TABLE "contacts"."list_recipients" (
-"list_recipient_id" int4 NOT NULL,
+"list_recipient_id" int4 DEFAULT nextval('"contacts".seq_list_recipients'::regclass) NOT NULL,
 "contact_id" int4 NOT NULL,
 "recipient" varchar(320) NOT NULL,
 "recipient_type" varchar(3)
 )
-WITH (OIDS=FALSE);
+WITH (OIDS=FALSE)
 
-ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
+;
+
+-- ----------------------------
+-- Alter Sequences Owned By 
+-- ----------------------------
+
+-- ----------------------------
+-- Indexes structure for table categories
+-- ----------------------------
+CREATE INDEX "categories_ak1" ON "contacts"."categories" USING btree ("domain_id", "user_id", "built_in");
+CREATE UNIQUE INDEX "categories_ak2" ON "contacts"."categories" USING btree ("domain_id", "user_id", "name");
+
+-- ----------------------------
+-- Primary Key structure for table categories
+-- ----------------------------
+ALTER TABLE "contacts"."categories" ADD PRIMARY KEY ("category_id");
+
+-- ----------------------------
+-- Indexes structure for table contacts
+-- ----------------------------
+CREATE INDEX "contacts_ak1" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "revision_timestamp");
+CREATE INDEX "contacts_ak2" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "lastname");
+CREATE INDEX "contacts_ak3" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "searchfield");
+CREATE INDEX "contacts_ak4" ON "contacts"."contacts" USING btree ("revision_status", "birthday");
+CREATE INDEX "contacts_ak5" ON "contacts"."contacts" USING btree ("revision_status", "anniversary");
+
+-- ----------------------------
+-- Primary Key structure for table contacts
+-- ----------------------------
+ALTER TABLE "contacts"."contacts" ADD PRIMARY KEY ("contact_id");
+
+-- ----------------------------
+-- Primary Key structure for table contacts_pictures
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
+
+-- ----------------------------
+-- Indexes structure for table list_recipients
+-- ----------------------------
 CREATE UNIQUE INDEX "list_recipients_ak1" ON "contacts"."list_recipients" USING btree ("contact_id", "recipient");
+
+-- ----------------------------
+-- Primary Key structure for table list_recipients
+-- ----------------------------
+ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
