@@ -853,8 +853,7 @@ public class Service extends BaseService {
 			*/
 			
 		} catch(Exception ex) {
-			//TODO: logging
-			ex.printStackTrace();
+			logger.error("Error in action GetContactPicture", ex);
 		}
 	}
 	
