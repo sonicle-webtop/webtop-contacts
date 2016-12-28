@@ -299,7 +299,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					},
 					groupchange: function(sto, group) {
 						if(sto.isReconfiguring) return;
-						if(group == null) {
+						if(group === null) {
 							me.getRef('cbogroup').setValue('-');
 							me.saveGroupInfo(null, null);
 						} else {

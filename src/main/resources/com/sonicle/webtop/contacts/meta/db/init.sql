@@ -41,7 +41,7 @@ WITH (OIDS=FALSE)
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."contacts";
 CREATE TABLE "contacts"."contacts" (
-"contact_id" int4 NOT NULL,
+"contact_id" int4 DEFAULT nextval('"contacts".seq_contacts'::regclass) NOT NULL,
 "category_id" int4,
 "revision_status" varchar(1),
 "revision_timestamp" timestamptz(6),
