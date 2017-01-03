@@ -399,6 +399,23 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
+	public int updateList(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
+		item.setRevisionTimestamp(revisionTimestamp);
+		return dsl
+			.update(CONTACTS)
+			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
+			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
+			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
+			.set(CONTACTS.SEARCHFIELD, item.getSearchfield())
+			.set(CONTACTS.LASTNAME, item.getLastname())
+			.where(
+					CONTACTS.CONTACT_ID.equal(item.getContactId())
+			)
+			.execute();
+	}
+	
 	public int updateCategory(Connection con, int contactId, int categoryId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl

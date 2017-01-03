@@ -1448,12 +1448,12 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			OContact item = new OContact(contact);
 			item.setIsList(isList);
-			if (StringUtils.isBlank(contact.getPublicUid())) contact.setPublicUid(IdentifierUtils.getUUID());
+			if (StringUtils.isBlank(item.getPublicUid())) item.setPublicUid(IdentifierUtils.getUUID());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
 			item.setContactId(cdao.getSequence(con).intValue());
 			if (isList) {
 				// Compose list workEmail as: "list-{contactId}@{serviceId}"
-				contact.setWorkEmail(RCPT_TYPE_LIST + "-" + item.getContactId() + "@" + SERVICE_ID);
+				item.setWorkEmail(RCPT_TYPE_LIST + "-" + item.getContactId() + "@" + SERVICE_ID);
 			}
 			cdao.insert(con, item, createRevisionTimestamp());
 			
@@ -1474,9 +1474,12 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		
 		try {
 			OContact item = new OContact(contact);
-			item.setIsList(isList); // This is necessary because update method in dao writes all fields!!!
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
-			cdao.update(con, item, createRevisionTimestamp());
+			if (isList) {
+				cdao.updateList(con, item, createRevisionTimestamp());
+			} else {
+				cdao.update(con, item, createRevisionTimestamp());
+			}
 			
 			if(contact.getHasPicture()) {
 				if(picture != null) {
