@@ -245,6 +245,7 @@ public class ContactDAO extends BaseDAO {
 		
 		return dsl
 			.select(
+				CONTACTS.IS_LIST,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
 				emailField

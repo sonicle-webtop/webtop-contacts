@@ -1,4 +1,6 @@
 
+CREATE SCHEMA "contacts";
+
 -- ----------------------------
 -- Sequence structure for seq_categories
 -- ----------------------------
@@ -162,11 +164,6 @@ ALTER TABLE "contacts"."contacts" ADD PRIMARY KEY ("contact_id");
 -- Primary Key structure for table contacts_pictures
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
-
--- ----------------------------
--- Indexes structure for table list_recipients
--- ----------------------------
-CREATE UNIQUE INDEX "list_recipients_ak1" ON "contacts"."list_recipients" USING btree ("contact_id", "recipient");
 
 -- ----------------------------
 -- Primary Key structure for table list_recipients

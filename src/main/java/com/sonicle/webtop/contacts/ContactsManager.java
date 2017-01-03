@@ -34,6 +34,7 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.MailUtils;
+import com.sonicle.commons.RegexUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OContact;
@@ -102,6 +103,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.mail.internet.InternetAddress;
 import org.apache.commons.collections.map.MultiValueMap;
@@ -121,6 +124,11 @@ import org.slf4j.Logger;
 public class ContactsManager extends BaseManager implements IRecipientsProvidersSource {
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String GROUPNAME_CATEGORY = "CATEGORY";
+	private static final String RCPT_TYPE_CONTACT_WORK = "contact-work";
+	private static final String RCPT_TYPE_CONTACT_HOME = "contact-home";
+	private static final String RCPT_TYPE_CONTACT_OTHER = "contact-other";
+	private static final String RCPT_TYPE_LIST = "list";
+	private static final Pattern PATTERN_LIST_KEY = Pattern.compile("^" + RCPT_TYPE_LIST + "-(\\d+)$");
 	
 	private final HashSet<String> cacheReady = new HashSet<>();
 	private final HashMap<UserProfile.Id, CategoryRoot> cacheOwnerToRootShare = new HashMap<>();
@@ -266,9 +274,13 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 				contacts = dao.viewWorkRecipientsByOwnerQueryText(con, ownerId, queryText);
 				for(VContact contact : contacts) {
 					final String email = contact.getWorkEmail();
-					if(MailUtils.isAddressValid(email)) {
-						String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-						items.add(new InternetRecipient(this.getId(), this.getDescription(), "contact-work", personal, email));
+					if (contact.getIsList()) {
+						items.add(new InternetRecipient(this.getId(), this.getDescription(), "list", contact.getLastname(), email));
+					} else {
+						if(MailUtils.isAddressValid(email)) {
+							final String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
+							items.add(new InternetRecipient(this.getId(), this.getDescription(), RCPT_TYPE_CONTACT_WORK, personal, email));
+						}
 					}
 				}
 				contacts = dao.viewHomeRecipientsByOwnerQueryText(con, ownerId, queryText);
@@ -276,7 +288,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 					final String email = contact.getHomeEmail();
 					if(MailUtils.isAddressValid(email)) {
 						String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-						items.add(new InternetRecipient(this.getId(), this.getDescription(), "contact-home", personal, email));
+						items.add(new InternetRecipient(this.getId(), this.getDescription(), RCPT_TYPE_CONTACT_HOME, personal, email));
 					}
 				}
 				contacts = dao.viewOtherRecipientsByOwnerQueryText(con, ownerId, queryText);
@@ -284,8 +296,41 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 					final String email = contact.getOtherEmail();
 					if(MailUtils.isAddressValid(email)) {
 						String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-						items.add(new InternetRecipient(this.getId(), this.getDescription(), "contact-other", personal, email));
+						items.add(new InternetRecipient(this.getId(), this.getDescription(), RCPT_TYPE_CONTACT_OTHER, personal, email));
 					}
+				}
+				
+				return items;
+				
+			} catch(Throwable t) {
+				logger.error("Error listing recipients", t);
+				return null;
+			} finally {
+				DbUtils.closeQuietly(con);
+			}
+		}
+		
+		@Override
+		public List<InternetRecipient> expandToRecipients(String key) {
+			ListRecipientDAO dao = ListRecipientDAO.getInstance();
+			ArrayList<InternetRecipient> items = new ArrayList<>();
+			Connection con = null;
+			
+			try {
+				con = WT.getConnection(SERVICE_ID);
+				Matcher matcher = PATTERN_LIST_KEY.matcher(key);
+				if (matcher.matches()) {
+					int contactId = Integer.valueOf(matcher.group(1));
+					List<OListRecipient> recipients = dao.selectByContact(con, contactId);
+					for (OListRecipient recipient : recipients) {
+						InternetAddress ia = MailUtils.buildInternetAddress(recipient.getRecipient());
+						if (ia != null) {
+							items.add(new InternetRecipient(this.getId(), this.getDescription(), "list-recipient", ia.getPersonal(), ia.getAddress()));
+						}
+					}
+					
+				} else {
+					throw new WTException("Bad key format [{0}]", key);
 				}
 				
 				return items;
@@ -1403,9 +1448,13 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			OContact item = new OContact(contact);
 			item.setIsList(isList);
-			if(StringUtils.isBlank(contact.getPublicUid())) contact.setPublicUid(IdentifierUtils.getUUID());
+			if (StringUtils.isBlank(contact.getPublicUid())) contact.setPublicUid(IdentifierUtils.getUUID());
 			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
 			item.setContactId(cdao.getSequence(con).intValue());
+			if (isList) {
+				// Compose list workEmail as: "list-{contactId}@{serviceId}"
+				contact.setWorkEmail(RCPT_TYPE_LIST + "-" + item.getContactId() + "@" + SERVICE_ID);
+			}
 			cdao.insert(con, item, createRevisionTimestamp());
 			
 			if(contact.getHasPicture()) {
