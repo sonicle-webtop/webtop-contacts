@@ -64,8 +64,6 @@ public class ContactsController extends BaseController implements IControllerHan
 		// Adds built-in category
 		try {
 			manager.addBuiltInCategory();
-		} catch(WTOperationException ex) {
-			logger.debug(ex.getMessage());
 		} catch(WTException ex) {
 			throw ex;
 		}

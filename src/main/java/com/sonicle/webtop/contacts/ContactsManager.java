@@ -610,7 +610,10 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			item = dao.selectBuiltInByDomainUser(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
-			if(item != null) throw new WTOperationException("Built-in category already present");
+			if (item != null) {
+				logger.debug("Built-in category already present");
+				return null;
+			}
 			
 			item = new OCategory();
 			item.setDomainId(getTargetProfileId().getDomainId());
