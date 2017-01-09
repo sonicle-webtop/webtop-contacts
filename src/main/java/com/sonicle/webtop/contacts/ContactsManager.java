@@ -571,8 +571,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		
 		try {
 			checkRightsOnCategoryRoot(item.getProfileId(), "MANAGE");
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			item.setBuiltIn(false);
 			item = doInsertCategory(con, item);
 			DbUtils.commitQuietly(con);
@@ -601,15 +600,14 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 	}
 	
-	public OCategory addBuiltInCategory() throws WTException {
+	public OCategory addBuiltInCategory() throws WTOperationException, WTException {
 		CategoryDAO dao = CategoryDAO.getInstance();
 		Connection con = null;
 		OCategory item = null;
 		
 		try {
 			checkRightsOnCategoryRoot(getTargetProfileId(), "MANAGE");
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			
 			item = dao.selectBuiltInByDomainUser(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
 			if(item != null) throw new WTOperationException("Built-in category already present");
@@ -647,8 +645,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryFolder(item.getCategoryId(), "UPDATE");
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
 			dao.update(con, item);
 			DbUtils.commitQuietly(con);
@@ -673,8 +670,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryFolder(categoryId, "DELETE");
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			dao.deleteById(con, categoryId);
 			//TODO: cancellare contatti collegati
 			DbUtils.commitQuietly(con);
@@ -757,8 +753,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryElements(contact.getCategoryId(), "CREATE"); // Rights check!
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			OContact result = doInsertContact(con, false, contact, picture);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_INSERT", String.valueOf(result.getContactId()));
@@ -784,8 +779,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE"); // Rights check!
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			doUpdateContact(con, false, contact, picture);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
@@ -828,8 +822,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			
 			OContact cont = cntdao.selectById(con, contactId);
 			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
@@ -857,8 +850,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			doDeleteContactsByCategory(con, categoryId, false);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_DELETE", "*");
@@ -906,8 +898,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			
 			for(Integer contactId : contactIds) {
 				if(contactId == null) continue;
@@ -996,8 +987,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryElements(list.getCategoryId(), "CREATE"); // Rights check!
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			OContact result = doInsertContactsList(con, list);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_INSERT", String.valueOf(result.getContactId()));
@@ -1019,8 +1009,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryElements(list.getCategoryId(), "UPDATE"); // Rights check!
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			doUpdateContactsList(con, list);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_UPDATE", String.valueOf(list.getContactId()));
@@ -1069,8 +1058,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		try {
 			checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
 			
-			con = WT.getConnection(SERVICE_ID);
-			con.setAutoCommit(false);
+			con = WT.getConnection(SERVICE_ID, false);
 			doDeleteContactsByCategory(con, categoryId, true);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_DELETE", "*");
