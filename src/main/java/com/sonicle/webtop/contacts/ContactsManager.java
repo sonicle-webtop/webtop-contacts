@@ -128,7 +128,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 	private static final String RCPT_TYPE_CONTACT_HOME = "contact-home";
 	private static final String RCPT_TYPE_CONTACT_OTHER = "contact-other";
 	private static final String RCPT_TYPE_LIST = "list";
-	private static final Pattern PATTERN_LIST_KEY = Pattern.compile("^" + RCPT_TYPE_LIST + "-(\\d+)$");
+	private static final Pattern PATTERN_VIRTUALRCPT_LIST = Pattern.compile("^" + RCPT_TYPE_LIST + "-(\\d+)$");
 	
 	private final HashSet<String> cacheReady = new HashSet<>();
 	private final HashMap<UserProfile.Id, CategoryRoot> cacheOwnerToRootShare = new HashMap<>();
@@ -311,14 +311,14 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		}
 		
 		@Override
-		public List<InternetRecipient> expandToRecipients(String key) {
+		public List<InternetRecipient> expandToRecipients(String virtualRecipient) {
 			ListRecipientDAO dao = ListRecipientDAO.getInstance();
 			ArrayList<InternetRecipient> items = new ArrayList<>();
 			Connection con = null;
 			
 			try {
 				con = WT.getConnection(SERVICE_ID);
-				Matcher matcher = PATTERN_LIST_KEY.matcher(key);
+				Matcher matcher = PATTERN_VIRTUALRCPT_LIST.matcher(virtualRecipient);
 				if (matcher.matches()) {
 					int contactId = Integer.valueOf(matcher.group(1));
 					List<OListRecipient> recipients = dao.selectByContact(con, contactId);
@@ -330,7 +330,7 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 					}
 					
 				} else {
-					throw new WTException("Bad key format [{0}]", key);
+					throw new WTException("Bad key format [{0}]", virtualRecipient);
 				}
 				
 				return items;
@@ -343,79 +343,6 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			}
 		}
 	}
-	
-	/*
-	private List<InternetRecipient> listEmailRecipients(String queryText, int max) throws WTException {
-		return listEmailRecipients(null, queryText, max);
-	}
-	
-	private List<InternetRecipient> listEmailRecipients(UserProfile.Id ownerPid, String queryText, int max) throws WTException {
-		ContactDAO dao = ContactDAO.getInstance();
-		ArrayList<InternetRecipient> items = new ArrayList<>();
-		Connection con = null;
-		
-		try {
-			List<Integer> categoryIds = new ArrayList<>();
-			if(ownerPid != null) {
-				if(getTargetProfileId().equals(ownerPid)) {
-					for(OCategory category : listCategories(getTargetProfileId())) {
-						categoryIds.add(category.getCategoryId());
-					}
-				} else {
-					CategoryRoot root = ownerToRootShare(ownerPid);
-					if(root != null) {
-						categoryIds.addAll(rootShareToCategoryFolderIds(root.getShareId()));
-					} else {
-						logger.warn("Unable to find root share for specified owner [{}]", ownerPid.toString());
-					}
-				}
-			} else {
-				categoryIds = new ArrayList<>();
-				for(OCategory category : listCategories(getTargetProfileId())) {
-					categoryIds.add(category.getCategoryId());
-				}
-				categoryIds.addAll(cachedCategoryFolderKeys());
-			}
-			
-			con = WT.getConnection(SERVICE_ID);
-			
-			List<VContact> contacts = null;
-			contacts = dao.viewWorkRecipientsByCategoriesQueryText(con, categoryIds, queryText);
-			for(VContact contact : contacts) {
-				final String email = contact.getWorkEmail();
-				if(MailUtils.isAddressValid(email)) {
-					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-					UserProfile.Data ud=WT.getUserData(contact.getCategoryProfileId());
-					items.add(new InternetRecipient(SERVICE_ID, ud.getDisplayName(), "contact-work", personal, email));
-				}
-			}
-			contacts = dao.viewHomeRecipientsByCategoriesQueryText(con, categoryIds, queryText);
-			for(VContact contact : contacts) {
-				final String email = contact.getHomeEmail();
-				if(MailUtils.isAddressValid(email)) {
-					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-					UserProfile.Data ud=WT.getUserData(contact.getCategoryProfileId());
-					items.add(new InternetRecipient(SERVICE_ID, ud.getDisplayName(), "contact-home", personal, email));
-				}
-			}
-			contacts = dao.viewOtherRecipientsByCategoriesQueryText(con, categoryIds, queryText);
-			for(VContact contact : contacts) {
-				final String email = contact.getOtherEmail();
-				if(MailUtils.isAddressValid(email)) {
-					String personal = MailUtils.buildPersonal(contact.getFirstname(), contact.getLastname());
-					UserProfile.Data ud=WT.getUserData(contact.getCategoryProfileId());
-					items.add(new InternetRecipient(SERVICE_ID, ud.getDisplayName(), "contact-other", personal, email));
-				}
-			}
-			return items;
-			
-		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
 	
 	private String getAnniversaryReminderDelivery(HashMap<UserProfile.Id, String> cache, UserProfile.Id pid) {
 		if(!cache.containsKey(pid)) {
