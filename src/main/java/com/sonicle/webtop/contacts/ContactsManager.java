@@ -324,8 +324,11 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 					List<OListRecipient> recipients = dao.selectByContact(con, contactId);
 					for (OListRecipient recipient : recipients) {
 						InternetAddress ia = MailUtils.buildInternetAddress(recipient.getRecipient());
+						InternetRecipient.RecipientType rt=InternetRecipient.TO;
+						if (recipient.getRecipientType().equals("cc")) rt=InternetRecipient.CC;
+						else if (recipient.getRecipientType().equals("bcc")) rt=InternetRecipient.BCC;
 						if (ia != null) {
-							items.add(new InternetRecipient(this.getId(), this.getDescription(), "list-recipient", ia.getPersonal(), ia.getAddress()));
+							items.add(new InternetRecipient(this.getId(), this.getDescription(), "list-recipient", ia.getPersonal(), ia.getAddress(), rt));
 						}
 					}
 					
