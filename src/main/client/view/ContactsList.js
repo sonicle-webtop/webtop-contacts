@@ -148,8 +148,12 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				}, {
 					dataIndex: 'recipient',
 					editor: {
-						xtype: 'textfield'
+						xtype: 'wtrcptsuggestcombo',
+						listConfig: {
+							width: 300
+						}
 					},
+					renderer: Ext.util.Format.htmlEncode,
 					header: me.mys.res('contactsList.gp-recipients.recipient.lbl'),
 					flex: 1
 				}],
