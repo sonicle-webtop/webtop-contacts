@@ -508,17 +508,6 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 			writeLog("CATEGORY_INSERT", item.getCategoryId().toString());
 			return item;
 			
-			/*
-			CategoryDAO dao = CategoryDAO.getInstance();
-			
-			item.setCategoryId(dao.getSequence(con).intValue());
-			item.setBuiltIn(false);
-			if(item.getIsDefault()) dao.resetIsDefaultByDomainUser(con, item.getDomainId(), item.getUserId());
-			dao.insert(con, item, createUpdateInfo());
-			DbUtils.commitQuietly(con);
-			return item;
-			*/
-			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
 			throw new WTException(ex, "DB error");
