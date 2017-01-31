@@ -641,8 +641,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					text: me.res('copyormove.lbl'),
 					menu: {
 						items: [
-							me.getAction('copyContact'),
-							me.getAction('moveContact')
+							me.getAction('moveContact'),
+							me.getAction('copyContact')
 						]
 					}
 				},
