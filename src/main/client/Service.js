@@ -223,20 +223,43 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								});
 								
 								Ext.iterate(meta.colsInfo, function(col,i) {
-									if(col.dataIndex === 'categoryName') {
+									if (col.dataIndex === 'categoryName') {
 										col.xtype = 'socolorcolumn',
 										col.header = me.res('gpcontacts.category.lbl');
 										col.colorField = 'categoryColor',
 										col.displayField = 'categoryName',
-										col.width = 100;
+										col.width = 150;
 										col.hidden = false;
-									} else if(col.dataIndex === 'birthday') {
-										col.format = WT.getShortDateFmt();
 									} else {
 										col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
+										if (col.dataIndex === 'title') {
+											col.width = 50;
+										} else if((col.dataIndex === 'workEmail') || (col.dataIndex === 'homeEmail')) {
+											col.flex = 2;
+										} else {
+											col.flex = 1;
+										}
+									} 
+									
+									
+									/*
+									if(col.dataIndex === 'title') {
+										col.width = 50;
+									} else if(col.dataIndex === 'workEmail') {
+										col.flex = 2;
+									} else if(col.dataIndex === 'homeEmail') {
+										col.flex = 2;
+									} else if(col.dataIndex === 'birthday') {
+										col.format = WT.getShortDateFmt();
+										col.flex = 1;
+									} else {
+										col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
+										col.flex = 1;
 									}
+									*/
+									
 									if(col.xtype === 'datecolumn') {
-										col['format'] = WT.getShortDateFmt();
+										col.format = WT.getShortDateFmt();
 									}
 									colsInfo.push(col);
 								});
