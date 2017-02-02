@@ -67,6 +67,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			
 			items: [
 				'-',
+				me.getAction('refresh'),
 				me.getAction('printAddressbook'),
 				me.getAction('deleteContact2'),
 				'-',
@@ -392,6 +393,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAction('new', 'newContactsList', {
 			handler: function() {
 				me.getAction('addContactsList').execute();
+			}
+		});
+		me.addAction('refresh', {
+			text: '',
+			tooltip: WT.res('act-refresh.lbl'),
+			iconCls: 'wt-icon-refresh-xs',
+			handler: function() {
+				me.reloadContacts();
 			}
 		});
 		me.addAction('workview', {
