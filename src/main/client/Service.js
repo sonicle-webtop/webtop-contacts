@@ -239,24 +239,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 										} else {
 											col.flex = 1;
 										}
-									} 
-									
-									
-									/*
-									if(col.dataIndex === 'title') {
-										col.width = 50;
-									} else if(col.dataIndex === 'workEmail') {
-										col.flex = 2;
-									} else if(col.dataIndex === 'homeEmail') {
-										col.flex = 2;
-									} else if(col.dataIndex === 'birthday') {
-										col.format = WT.getShortDateFmt();
-										col.flex = 1;
-									} else {
-										col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
-										col.flex = 1;
 									}
-									*/
 									
 									if(col.xtype === 'datecolumn') {
 										col.format = WT.getShortDateFmt();

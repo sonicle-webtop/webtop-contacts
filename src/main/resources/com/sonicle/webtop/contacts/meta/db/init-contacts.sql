@@ -47,6 +47,7 @@ CREATE TABLE "contacts"."contacts" (
 "category_id" int4,
 "revision_status" varchar(1),
 "revision_timestamp" timestamptz(6),
+"revision_sequence" int4 DEFAULT 0 NOT NULL,
 "public_uid" varchar(36),
 "is_list" bool,
 "searchfield" varchar(255),
