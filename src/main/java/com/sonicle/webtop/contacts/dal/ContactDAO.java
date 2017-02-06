@@ -366,6 +366,7 @@ public class ContactDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		item.setRevisionStatus(OContact.REV_STATUS_NEW);
 		item.setRevisionTimestamp(revisionTimestamp);
+		item.setRevisionSequence(0);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.insertInto(CONTACTS)
@@ -379,6 +380,7 @@ public class ContactDAO extends BaseDAO {
 		for(OContact item : items) {
 			item.setRevisionStatus(OContact.REV_STATUS_NEW);
 			item.setRevisionTimestamp(revisionTimestamp);
+			item.setRevisionSequence(0);
 			records.add(dsl.newRecord(CONTACTS, item));
 		}
 		dsl.batchInsert(records).execute();
