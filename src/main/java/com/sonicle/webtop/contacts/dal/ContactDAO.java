@@ -391,6 +391,7 @@ public class ContactDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
 		item.setRevisionTimestamp(revisionTimestamp);
+		item.setRevisionSequence(0);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.update(CONTACTS)
