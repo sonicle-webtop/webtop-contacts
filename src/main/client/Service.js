@@ -64,7 +64,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		
 		me.setToolbar(Ext.create({
 			xtype: 'toolbar',
-			
+			referenceHolder: true,
 			items: [
 				'-',
 				me.getAction('refresh'),
@@ -92,9 +92,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 				}))),
 				' ',
-				me.addRef('txtsearch', Ext.create({
+				{
 					xtype: 'textfield',
-					width: 200,
+					reference: 'txtsearch',
+					tooltip: me.res('textfield.tip'),
+					plugins: ['sofieldtooltip'],
 					triggers: {
 						search: {
 							cls: Ext.baseCSSPrefix + 'form-search-trigger',
@@ -107,8 +109,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						specialkey: function(s, e) {
 							if(e.getKey() === e.ENTER) me.queryContacts(s.getValue());
 						}
-					}
-				}))
+					},
+					width: 200
+				}
 			]
 		}));
 		
@@ -377,7 +380,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	txtSearch: function() {
-		return this.getRef('txtsearch');
+		return this.getToolbar().lookupReference('txtsearch');
+		//return this.getRef('txtsearch');
 	},
 	
 	gpContacts: function() {
@@ -723,7 +727,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	queryContacts: function(txt) {
-		this.reloadContacts(null, txt);
+		if (!Ext.isEmpty(txt)) {
+			this.reloadContacts(null, txt);
+		}
 	},
 	
 	reloadContacts: function(letter, query) {

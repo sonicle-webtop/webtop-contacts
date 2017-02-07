@@ -464,9 +464,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.add({
 			region: 'center',
 			xtype: 'wttabpanel',
-			defaults: {
-				
-			},
 			items: [main, work, home, other, more, notes]
 		});
 		
