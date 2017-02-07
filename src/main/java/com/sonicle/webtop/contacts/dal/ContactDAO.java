@@ -37,10 +37,11 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.VContact;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
-import static com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
+import static com.sonicle.webtop.core.jooq.core.Tables.CUSTOMERS;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -48,12 +49,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
-import org.jooq.Batch;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
-import org.jooq.Field;
 import org.jooq.TableField;
-import static org.jooq.impl.DSL.field;
 
 /**
  *
@@ -64,8 +62,6 @@ public class ContactDAO extends BaseDAO {
 	public static ContactDAO getInstance() {
 		return INSTANCE;
 	}
-	
-	public static Field<String> CUSTOMERS_DESCRIPTION = field("public.customers.description", String.class);
 	
 	public Long getSequence(Connection con) throws DAOException {
 		DSLContext dsl = getDSL(con);
@@ -143,10 +139,10 @@ public class ContactDAO extends BaseDAO {
 			if(pattern.equals("^.*")) searchCndt = searchCndt.or(CONTACTS.LASTNAME.isNull());
 		} else {
 			searchCndt = CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
-					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
-					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
+				.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
+				.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
+				.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
+				.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
 		}
 		
 		return dsl
@@ -171,13 +167,17 @@ public class ContactDAO extends BaseDAO {
 				CONTACTS.BIRTHDAY
 			)
 			.select(
-				CUSTOMERS_DESCRIPTION.as("company_as_customer"),
+				CUSTOMERS.DESCRIPTION.as("company_as_customer"),
 				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
 				CATEGORIES.USER_ID.as("category_user_id")
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin("public.customers").on("contacts.contacts.company = public.customers.customer_id")
+			.join(CATEGORIES).on(
+					CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
+			)
+			.leftOuterJoin(CUSTOMERS).on(
+					CONTACTS.COMPANY.equal(CUSTOMERS.CUSTOMER_ID)
+			)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(
@@ -232,14 +232,14 @@ public class ContactDAO extends BaseDAO {
 		
 		Condition searchCndt = null;
 		searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
-				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
-				.or(emailField.likeIgnoreCase(patt1)
-				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
-				.or(CUSTOMERS_DESCRIPTION.likeIgnoreCase(patt2)))));
+			.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
+			.or(emailField.likeIgnoreCase(patt1)
+			.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
+			.or(CUSTOMERS.DESCRIPTION.likeIgnoreCase(patt2)))));
 		
 		if(StringUtils.contains(queryText, "@")) {
 			searchCndt = searchCndt.or(
-					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
+				CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
 			);
 		}
 		
@@ -251,11 +251,15 @@ public class ContactDAO extends BaseDAO {
 				emailField
 			)
 			.select(
-				CUSTOMERS_DESCRIPTION.as("company_as_customer")
+				CUSTOMERS.DESCRIPTION.as("company_as_customer")
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin("public.customers").on("contacts.contacts.company = public.customers.customer_id")
+			.join(CATEGORIES).on(
+					CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
+			)
+			.leftOuterJoin(CUSTOMERS).on(
+				CONTACTS.COMPANY.equal(CUSTOMERS.CUSTOMER_ID)
+			)
 			.where(
 				CATEGORIES.DOMAIN_ID.equal(ownerId.getDomain())
 					.and(CATEGORIES.USER_ID.equal(ownerId.getUser())
@@ -276,82 +280,6 @@ public class ContactDAO extends BaseDAO {
 			)
 			.fetchInto(VContact.class);
 	}
-	
-	
-	
-	
-	/*
-	public List<VContact> viewWorkRecipientsByCategoriesQueryText(Connection con, List<Integer> categoryIds, String queryText) throws DAOException {
-		return viewRecipientsByFieldCategoriesQueryText(con, CONTACTS.WORK_EMAIL, categoryIds, queryText);
-	}
-	
-	public List<VContact> viewHomeRecipientsByCategoriesQueryText(Connection con, List<Integer> categoryIds, String queryText) throws DAOException {
-		return viewRecipientsByFieldCategoriesQueryText(con, CONTACTS.HOME_EMAIL, categoryIds, queryText);
-	}
-	
-	public List<VContact> viewOtherRecipientsByCategoriesQueryText(Connection con, List<Integer> categoryIds, String queryText) throws DAOException {
-		return viewRecipientsByFieldCategoriesQueryText(con, CONTACTS.OTHER_EMAIL, categoryIds, queryText);
-	}
-	
-	private List<VContact> viewRecipientsByFieldCategoriesQueryText(Connection con, TableField<ContactsRecord, String> emailField, List<Integer> categoryIds, String queryText) throws DAOException {
-		DSLContext dsl = getDSL(con);
-		
-		String patt1 = null, patt2 = null, patt3 = null;
-		if(StringUtils.contains(queryText, " ")) {
-			patt1 = patternizeWords(queryText);
-			patt2 = queryText;
-		} else {
-			patt1 = patternizeWords(queryText);
-			patt2 = "%" + queryText;
-		}
-		patt3 = "%@" + queryText + "%";
-		
-		Condition searchCndt = null;
-		searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
-				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
-				.or(emailField.likeIgnoreCase(patt1)
-				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
-				.or(CUSTOMERS_DESCRIPTION.likeIgnoreCase(patt2)))));
-		
-		if(StringUtils.contains(queryText, "@")) {
-			searchCndt = searchCndt.or(
-					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
-			);
-		}
-		
-		return dsl
-			.select(
-				CONTACTS.FIRSTNAME,
-				CONTACTS.LASTNAME,
-				emailField
-			)
-			.select(
-				CUSTOMERS_DESCRIPTION.as("company_as_customer"),
-				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
-				CATEGORIES.USER_ID.as("category_user_id")
-			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin("public.customers").on("contacts.contacts.company = public.customers.customer_id")
-			.where(
-				CONTACTS.CATEGORY_ID.in(categoryIds)
-				.and(
-					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
-					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
-				)
-				.and(
-					emailField.isNotNull()
-				)
-				.and(
-					searchCndt
-				)
-			)
-			.orderBy(
-				emailField.asc()
-			)
-			.fetchInto(VContact.class);
-	}
-	*/
 	
 	public OContact selectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
@@ -406,6 +334,7 @@ public class ContactDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
 		item.setRevisionTimestamp(revisionTimestamp);
+		item.setRevisionSequence(0);
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
