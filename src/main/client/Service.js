@@ -162,7 +162,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			]
 		}));
 		
-		ies = ['#','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','*'];
+		ies = ['*','#','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
 		for(var i=0; i<ies.length; i++) {
 			iitems.push({
 				itemId: 'chr'+ies[i].charCodeAt(0),
@@ -204,7 +204,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								tbi.getComponent(0).toggle(true);
 								tbi.getComponent(0).toggle(false);
 							} else {
-								tbi.getComponent('chr'+'A'.charCodeAt(0)).toggle(true);
+								tbi.getComponent('chr'+'*'.charCodeAt(0)).toggle(true);
 								me.txtSearch().setValue(null);
 							}
 						},
