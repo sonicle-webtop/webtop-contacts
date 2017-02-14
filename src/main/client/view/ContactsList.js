@@ -96,12 +96,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 						model: me.mys.preNs('model.CategoryLkp'),
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 					},
-					colorField: 'color',
-					listeners: {
-						select: function(s, rec) {
-							me.onCategorySelect(rec);
-						}
-					}
+					colorField: 'color'
 				})
 			]
 		});
@@ -109,7 +104,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		
 		me.add({
 			region: 'north',
-			xtype: 'wtform',
+			xtype: 'wtfieldspanel',
 			modelValidation: true,
 			height: 30,
 			items: [{
@@ -203,12 +198,16 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		
 		me.updateCategoryFilters();
 		if(me.isMode(me.MODE_NEW)) {
+			me.getAction('saveClose').setDisabled(false);
+			me.getAction('delete').setDisabled(true);
 			owner.setDisabled(false);
 		} else if(me.isMode(me.MODE_VIEW)) {
 			me.getAction('saveClose').setDisabled(true);
 			me.getAction('delete').setDisabled(true);
 			owner.setDisabled(true);
 		} else if(me.isMode(me.MODE_EDIT)) {
+			me.getAction('saveClose').setDisabled(false);
+			me.getAction('delete').setDisabled(false);
 			owner.setDisabled(true);
 		}
 		

@@ -952,16 +952,47 @@ public class ContactsManager extends BaseManager implements IRecipientsProviders
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(SERVICE_ID);
+			con = WT.getConnection(SERVICE_ID, false);
 			
 			OContact cont = cdao.selectById(con, contactsListId);
 			if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
+			
 			checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE"); // Rights check!
 			
-			con.setAutoCommit(false);
 			doDeleteContact(con, contactsListId);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_DELETE", String.valueOf(contactsListId));
+			
+		} catch(SQLException | DAOException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw new WTException(ex, "DB error");
+		} catch(Exception ex) {
+			DbUtils.rollbackQuietly(con);
+			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void deleteContactsList(ArrayList<Integer> contactsListIds) throws WTException {
+		ContactDAO cdao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID, false);
+			
+			for(Integer contactsListId : contactsListIds) {
+				if(contactsListId == null) continue;
+				OContact cont = cdao.selectById(con, contactsListId);
+				if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
+
+				checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE"); // Rights check!
+				
+				doDeleteContact(con, contactsListId);
+			}
+			
+			DbUtils.commitQuietly(con);
+			writeLog("CONTACTLIST_DELETE", "*");
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);

@@ -478,14 +478,17 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		
 		me.updateCategoryFilters(owner.getValue());
 		if(me.isMode(me.MODE_NEW)) {
-			owner.setDisabled(false);
+			me.getAction('saveClose').setDisabled(false);
 			me.getAction('delete').setDisabled(true);
+			owner.setDisabled(false);
 		} else if(me.isMode(me.MODE_VIEW)) {
 			me.getAction('saveClose').setDisabled(true);
 			me.getAction('delete').setDisabled(true);
 			owner.setDisabled(true);
 			me.lref('fldpic').setDisabled(true);
 		} else if(me.isMode(me.MODE_EDIT)) {
+			me.getAction('saveClose').setDisabled(false);
+			me.getAction('delete').setDisabled(false);
 			owner.setDisabled(true);
 		}
 		

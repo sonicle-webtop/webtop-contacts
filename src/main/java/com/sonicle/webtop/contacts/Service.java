@@ -712,7 +712,12 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.DELETE)) {
 				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 				
-				manager.deleteContact(ids);
+				if (ids.size() == 1) {
+					manager.deleteContact(ids.get(0));
+				} else {
+					manager.deleteContact(ids);
+				}
+				
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.MOVE)) {
@@ -752,6 +757,7 @@ public class Service extends BaseService {
 				
 				ContactsList contact = JsContactsList.buildContactsList(pl.data);
 				manager.addContactsList(contact);
+				
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
@@ -759,13 +765,18 @@ public class Service extends BaseService {
 				
 				ContactsList contact = JsContactsList.buildContactsList(pl.data);
 				manager.updateContactsList(contact);
+				
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				String id = ServletUtils.getStringParameter(request, "id", true);
+				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 				
-				int contactId = Integer.parseInt(id);
-				manager.deleteContactsList(contactId);
+				if (ids.size() == 1) {
+					manager.deleteContactsList(ids.get(0));
+				} else {
+					manager.deleteContactsList(ids);
+				}
+				
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.MOVE)) {
