@@ -211,7 +211,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								tbi.getComponent(0).toggle(true);
 								tbi.getComponent(0).toggle(false);
 							} else {
-								tbi.getComponent('chr'+'*'.charCodeAt(0)).toggle(true);
+								tbi.getComponent('chr'+'A'.charCodeAt(0)).toggle(true);
 								me.txtSearch().setValue(null);
 							}
 						},
