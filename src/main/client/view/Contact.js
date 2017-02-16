@@ -521,7 +521,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				WT.ajaxReq(me.mys.ID, 'ManageContacts', {
 					params: {
 						crud: 'delete',
-						id: rec.get('id')
+						ids: WTU.arrayAsParam([rec.get('id')])
 					},
 					callback: function(success) {
 						me.unwait();
