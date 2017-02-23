@@ -1,5 +1,4 @@
-/*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+/* 
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -11,7 +10,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -19,7 +18,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
+ * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -27,19 +26,21 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.webtop.contacts.bol.OContactPicture;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -57,7 +58,7 @@ public class ContactPictureDAO extends BaseDAO {
 			.selectCount()
 			.from(CONTACTS_PICTURES)
 			.where(
-					CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
+				CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
 			)
 			.fetchOne(0, Integer.class) == 1;
 	}
@@ -68,7 +69,7 @@ public class ContactPictureDAO extends BaseDAO {
 			.select()
 			.from(CONTACTS_PICTURES)
 			.where(
-					CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
+				CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
 			)
 			.fetchOneInto(OContactPicture.class);
 	}
@@ -85,10 +86,28 @@ public class ContactPictureDAO extends BaseDAO {
 	public int delete(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-				.delete(CONTACTS_PICTURES)
-				.where(
-					CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
-				)
-				.execute();
+			.delete(CONTACTS_PICTURES)
+			.where(
+				CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
+			)
+			.execute();
+	}
+	
+	public int deleteByCategoryId(Connection con, int categoryId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.delete(CONTACTS_PICTURES)
+			.where(
+				CONTACTS_PICTURES.CONTACT_ID.in(
+					DSL.select(
+						CONTACTS.CONTACT_ID
+					)
+					.from(CONTACTS)
+					.where(
+						CONTACTS.CATEGORY_ID.equal(categoryId)
+					)
+				)				
+			)
+			.execute();
 	}
 }

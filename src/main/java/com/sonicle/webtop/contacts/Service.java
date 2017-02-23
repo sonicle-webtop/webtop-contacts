@@ -1,5 +1,4 @@
-/*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
+/* 
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -11,7 +10,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -19,7 +18,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
+ * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -27,9 +26,9 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
 package com.sonicle.webtop.contacts;
 
@@ -61,18 +60,19 @@ import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
-import com.sonicle.webtop.contacts.bol.model.CategoryFolder;
-import com.sonicle.webtop.contacts.bol.model.CategoryRoot;
-import com.sonicle.webtop.contacts.bol.model.Contact;
-import com.sonicle.webtop.contacts.bol.model.ContactPicture;
-import com.sonicle.webtop.contacts.bol.model.ContactsList;
+import com.sonicle.webtop.contacts.model.CategoryFolder;
+import com.sonicle.webtop.contacts.model.CategoryRoot;
+import com.sonicle.webtop.contacts.model.Contact;
+import com.sonicle.webtop.contacts.model.ContactPicture;
+import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFolder;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
-import com.sonicle.webtop.contacts.bol.model.AddressbookBean;
-import com.sonicle.webtop.contacts.bol.model.ContactDetailBean;
+import com.sonicle.webtop.contacts.bol.model.RBAddressbook;
+import com.sonicle.webtop.contacts.bol.model.RBContactDetail;
 import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
+import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
 import com.sonicle.webtop.core.CoreManager;
@@ -204,7 +204,7 @@ public class Service extends BaseService {
 			for(CategoryRoot root : roots.values()) {
 				foldersByRoot.put(root.getShareId(), new ArrayList<CategoryFolder>());
 				if(root instanceof MyCategoryRoot) {
-					for(OCategory cat : manager.listCategories()) {
+					for(Category cat : manager.listCategories()) {
 						MyCategoryFolder fold = new MyCategoryFolder(root.getShareId(), cat);
 						foldersByRoot.get(root.getShareId()).add(fold);
 						folders.put(cat.getCategoryId(), fold);
@@ -271,7 +271,7 @@ public class Service extends BaseService {
 					CategoryRoot root = roots.get(node);
 					
 					if(root instanceof MyCategoryRoot) {
-						for(OCategory cal : manager.listCategories()) {
+						for(Category cal : manager.listCategories()) {
 							MyCategoryFolder folder = new MyCategoryFolder(node, cal);
 							children.add(createFolderNode(folder, root.getPerms()));
 						}
@@ -352,7 +352,7 @@ public class Service extends BaseService {
 		try {
 			for(CategoryRoot root : roots.values()) {
 				if(root instanceof MyCategoryRoot) {
-					for(OCategory cal : manager.listCategories()) {
+					for(Category cal : manager.listCategories()) {
 						items.add(new JsCategoryLkp(cal));
 					}
 				} else {
@@ -404,7 +404,7 @@ public class Service extends BaseService {
 	}
 	
 	public void processManageCategories(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		OCategory item = null;
+		Category item = null;
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
@@ -1008,7 +1008,7 @@ public class Service extends BaseService {
 	}
 	
 	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
-		ArrayList<AddressbookBean> items = new ArrayList<>();
+		ArrayList<RBAddressbook> items = new ArrayList<>();
 		ByteArrayOutputStream baos = null;
 		
 		try {
@@ -1031,7 +1031,7 @@ public class Service extends BaseService {
 					if(fold == null) continue;
 
 					for(VContact vc : foldContact.contacts) {
-						items.add(new AddressbookBean(fold.getCategory(), vc));
+						items.add(new RBAddressbook(fold.getCategory(), vc));
 					}
 				}
 			}
@@ -1054,7 +1054,7 @@ public class Service extends BaseService {
 	}
 	
 	public void processPrintContactsDetail(HttpServletRequest request, HttpServletResponse response) {
-		ArrayList<ContactDetailBean> items = new ArrayList<>();
+		ArrayList<RBContactDetail> items = new ArrayList<>();
 		ByteArrayOutputStream baos = null;
 		CoreManager core = WT.getCoreManager();
 		
@@ -1064,13 +1064,13 @@ public class Service extends BaseService {
 			
 			Contact contact = null;
 			ContactPicture picture = null;
-			OCategory category = null;
+			Category category = null;
 			for(Integer id : ids) {
 				picture = null;
 				contact = manager.getContact(id);
 				category = manager.getCategory(contact.getCategoryId());
 				if(contact.getHasPicture()) picture = manager.getContactPicture(id);
-				items.add(new ContactDetailBean(core, category, contact, picture));
+				items.add(new RBContactDetail(core, category, contact, picture));
 			}
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
@@ -1140,7 +1140,7 @@ public class Service extends BaseService {
 		// Folder description part
 		if(sharing.getLevel() == 1) {
 			int catId = Integer.valueOf(cid.getToken(1));
-			OCategory category = manager.getCategory(catId);
+			Category category = manager.getCategory(catId);
 			sb.append("/");
 			sb.append((category != null) ? category.getName() : cid.getToken(1));
 		}
@@ -1205,7 +1205,7 @@ public class Service extends BaseService {
 	}
 	
 	private ExtTreeNode createFolderNode(CategoryFolder folder, SharePermsRoot rootPerms) {
-		OCategory cat = folder.getCategory();
+		Category cat = folder.getCategory();
 		String id = new CompositeId().setTokens(folder.getShareId(), cat.getCategoryId()).toString();
 		boolean visible = checkedFolders.contains(cat.getCategoryId());
 		ExtTreeNode node = new ExtTreeNode(id, cat.getName(), true);
