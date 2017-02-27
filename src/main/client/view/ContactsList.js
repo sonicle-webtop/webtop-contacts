@@ -56,6 +56,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			tbar: [
 				me.addAction('saveClose', {
 					text: WT.res('act-saveClose.lbl'),
+					tooltip: null,
 					iconCls: 'wt-icon-saveClose-xs',
 					handler: function() {
 						me.saveView(true);
