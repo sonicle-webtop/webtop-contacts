@@ -39,6 +39,13 @@ package com.sonicle.webtop.contacts;
 public class ContactsSettings {
 	
 	/**
+	 * [system+domain][default-only]
+	 * [enum]
+	 * The default value of the sync field for new categories.
+	 */
+	public static final String CATEGORY_SYNC = "category.sync";
+	
+	/**
 	 * [user][default]
 	 * [string]
 	 * Contacts grid view (w:work, h:home)

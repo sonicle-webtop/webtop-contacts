@@ -929,7 +929,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			vct.getView().begin('new', {
 				data: {
 					domainId: domainId,
-					userId: userId
+					userId: userId,
+					sync: me.getVar('defaultCategorySync')
 				}
 			});
 		});

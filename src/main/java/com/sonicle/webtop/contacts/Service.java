@@ -50,7 +50,6 @@ import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
-import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
@@ -123,6 +122,7 @@ public class Service extends BaseService {
 	
 	private ContactsManager manager;
 	private ContactsUserSettings us;
+	private ContactsServiceSettings ss;
 	
 	public static final String EVENTS_EXPORT_FILENAME = "events_{0}-{1}-{2}.{3}";
 	
@@ -142,8 +142,10 @@ public class Service extends BaseService {
 	
 	@Override
 	public void initialize() throws Exception {
+		UserProfile up = getEnv().getProfile();
 		manager = (ContactsManager)WT.getServiceManager(SERVICE_ID);
-		us = new ContactsUserSettings(SERVICE_ID, getEnv().getProfileId());
+		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
+		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
 		gridFieldsW = buildFields(WORK_VIEW);
 		gridFieldsH = buildFields(HOME_VIEW);
@@ -161,12 +163,14 @@ public class Service extends BaseService {
 		foldersByRoot.clear();
 		roots.clear();
 		us = null;
+		ss = null;
 		manager = null;
 	}
 	
 	@Override
 	public ServiceVars returnServiceVars() {
 		ServiceVars co = new ServiceVars();
+		co.put("defaultCategorySync", ss.getDefaultCategorySync().toString());
 		co.put("view", us.getView());
 		return co;
 	}

@@ -32,7 +32,9 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.Sync;
 
 /**
  *
@@ -57,7 +59,7 @@ public class JsCategory {
 		name = cat.getName();
 		description = cat.getDescription();
 		color = cat.getColor();
-		sync = cat.getSync();
+		sync = EnumUtils.getValue(cat.getSync());
 		isDefault = cat.getIsDefault();
 	}
 	
@@ -70,7 +72,7 @@ public class JsCategory {
 		cat.setName(js.name);
 		cat.setDescription(js.description);
 		cat.setColor(js.color);
-		cat.setSync(js.sync);
+		cat.setSync(EnumUtils.forValue(Sync.class, js.sync));
 		cat.setIsDefault(js.isDefault);
 		return cat;
 	}

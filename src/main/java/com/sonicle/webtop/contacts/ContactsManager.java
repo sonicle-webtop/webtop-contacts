@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.MailUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.webtop.contacts.bol.OCategory;
@@ -52,6 +53,7 @@ import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactReadResult;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.Sync;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -446,6 +448,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				return null;
 			}
 			
+			ContactsServiceSettings ss = new ContactsServiceSettings(SERVICE_ID, getTargetProfileId().getDomainId());
+			
 			Category cat = new Category();
 			cat.setDomainId(getTargetProfileId().getDomainId());
 			cat.setUserId(getTargetProfileId().getUserId());
@@ -454,7 +458,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			cat.setDescription("");
 			cat.setColor("#FFFFFF");
 			cat.setIsPrivate(false);
-			cat.setSync(Category.SYNC_OFF);
+			cat.setSync(ss.getDefaultCategorySync());
 			cat.setIsDefault(true);
 			cat = doCategoryUpdate(true, con, cat);
 			DbUtils.commitQuietly(con);
@@ -1473,7 +1477,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		cat.setName(ocat.getName());
 		cat.setDescription(ocat.getDescription());
 		cat.setColor(ocat.getColor());
-		cat.setSync(ocat.getSync());
+		cat.setSync(EnumUtils.forValue(Sync.class, ocat.getSync()));
 		// TODO: aggiungere supporto campo is_private
 		//cat.setIsPrivate(ocat.getIsPrivate());
 		cat.setIsDefault(ocat.getIsDefault());
@@ -1490,7 +1494,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		ocat.setName(cat.getName());
 		ocat.setDescription(cat.getDescription());
 		ocat.setColor(cat.getColor());
-		ocat.setSync(cat.getSync());
+		ocat.setSync(EnumUtils.getValue(cat.getSync()));
 		// TODO: aggiungere supporto campo is_private
 		//ocat.setIsPrivate(cat.getIsPrivate());
 		ocat.setIsDefault(cat.getIsDefault());
