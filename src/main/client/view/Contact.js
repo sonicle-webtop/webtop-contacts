@@ -109,12 +109,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						model: me.mys.preNs('model.CategoryLkp'),
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 					},
-					colorField: 'color',
-					listeners: {
-						select: function(s, rec) {
-							me.onCategorySelect(rec);
-						}
-					}
+					colorField: 'color'
 				})
 			]
 		});
