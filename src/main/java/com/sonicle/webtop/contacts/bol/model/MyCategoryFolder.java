@@ -34,8 +34,8 @@ package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.model.CategoryFolder;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.core.bol.model.SharePermsFolder;
-import com.sonicle.webtop.core.bol.model.SharePermsElements;
+import com.sonicle.webtop.core.model.SharePermsFolder;
+import com.sonicle.webtop.core.model.SharePermsElements;
 
 /**
  *

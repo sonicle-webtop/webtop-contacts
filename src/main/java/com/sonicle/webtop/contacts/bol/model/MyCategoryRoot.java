@@ -33,7 +33,7 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.model.CategoryRoot;
-import com.sonicle.webtop.core.bol.model.SharePermsRoot;
+import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 
 /**
