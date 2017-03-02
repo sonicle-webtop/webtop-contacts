@@ -90,6 +90,7 @@ import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.LogEntries;
 import java.io.ByteArrayInputStream;
@@ -191,7 +192,7 @@ public class Service extends BaseService {
 	}
 	
 	private void updateRootFoldersCache() throws WTException {
-		UserProfile.Id pid = getEnv().getProfile().getId();
+		UserProfileId pid = getEnv().getProfile().getId();
 		synchronized(roots) {
 			roots.clear();
 			roots.put(MyCategoryRoot.SHARE_ID, new MyCategoryRoot(pid));
@@ -225,7 +226,7 @@ public class Service extends BaseService {
 	
 	/*
 	private void initFolders() throws Exception {
-		UserProfile.Id pid = getEnv().getProfile().getId();
+		UserProfileId pid = getEnv().getProfile().getId();
 		synchronized(roots) {
 			roots.clear();
 			foldersByRoot.clear();
@@ -581,7 +582,7 @@ public class Service extends BaseService {
 							item.put("categoryId", foldContact.folder.getCategoryId());
 							item.put("categoryName", foldContact.folder.getName());
 							item.put("categoryColor", foldContact.folder.getColor());
-							item.put("_profileId", new UserProfile.Id(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
+							item.put("_profileId", new UserProfileId(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
 							item.put("_frights", fold.getPerms().toString());
 							item.put("_erights", fold.getElementsPerms().toString());
 							items.add(item);
@@ -674,7 +675,7 @@ public class Service extends BaseService {
 				
 				int contactId = Integer.parseInt(id);
 				Contact contact = manager.getContact(contactId);
-				UserProfile.Id ownerId = manager.getCategoryOwner(contact.getCategoryId());
+				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
 				item = new JsContact(ownerId, contact);
 				
 				new JsonResult(item).printTo(out);
@@ -751,7 +752,7 @@ public class Service extends BaseService {
 				
 				int contactId = Integer.parseInt(id);
 				ContactsList list = manager.getContactsList(contactId);
-				UserProfile.Id ownerId = manager.getCategoryOwner(list.getCategoryId());
+				UserProfileId ownerId = manager.getCategoryOwner(list.getCategoryId());
 				item = new JsContactsList(ownerId, list);
 				
 				new JsonResult(item).printTo(out);

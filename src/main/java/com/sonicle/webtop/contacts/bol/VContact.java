@@ -32,7 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 
 /**
  *
@@ -67,7 +67,7 @@ public class VContact extends OContact {
 		categoryUserId = value;
 	}
 	
-	public UserProfile.Id getCategoryProfileId() {
-		return new UserProfile.Id(categoryDomainId, categoryUserId);
+	public UserProfileId getCategoryProfileId() {
+		return new UserProfileId(categoryDomainId, categoryUserId);
 	}
 }

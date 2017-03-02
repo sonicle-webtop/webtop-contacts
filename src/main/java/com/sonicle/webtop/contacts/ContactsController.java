@@ -37,7 +37,7 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.BaseController;
 import com.sonicle.webtop.core.sdk.BaseReminder;
-import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.interfaces.IControllerHandlesProfiles;
 import com.sonicle.webtop.core.sdk.interfaces.IControllerHandlesReminders;
@@ -57,7 +57,7 @@ public class ContactsController extends BaseController implements IControllerHan
 	}
 	
 	@Override
-	public void addProfile(UserProfile.Id profileId) throws WTException {
+	public void addProfile(UserProfileId profileId) throws WTException {
 		ContactsManager manager = new ContactsManager(true, profileId);
 		
 		// Adds built-in category
@@ -70,7 +70,7 @@ public class ContactsController extends BaseController implements IControllerHan
 	}
 	
 	@Override
-	public void removeProfile(UserProfile.Id profileId, boolean deep) throws WTException {
+	public void removeProfile(UserProfileId profileId, boolean deep) throws WTException {
 		ContactsManager manager = new ContactsManager(false, profileId);
 		manager.eraseData(deep);
 	}
@@ -81,7 +81,7 @@ public class ContactsController extends BaseController implements IControllerHan
 		return manager.getRemindersToBeNotified(now);
 	}
 	
-	private void setCategoryCheckedState(UserProfile.Id profileId, int categoryId, boolean checked) {
+	private void setCategoryCheckedState(UserProfileId profileId, int categoryId, boolean checked) {
 		ContactsUserSettings tus = new ContactsUserSettings(SERVICE_ID, profileId);
 		ContactsUserSettings.CheckedFolders cf = tus.getCheckedCategoryFolders();
 		if (checked) {

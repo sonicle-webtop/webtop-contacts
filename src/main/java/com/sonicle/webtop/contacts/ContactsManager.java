@@ -71,15 +71,14 @@ import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.io.BatchBeanHandler;
 import com.sonicle.webtop.core.io.BeanHandlerException;
-import com.sonicle.webtop.core.io.DefaultBeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.BaseReminder;
 import com.sonicle.webtop.core.sdk.ReminderEmail;
 import com.sonicle.webtop.core.sdk.ReminderInApp;
 import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
-import com.sonicle.webtop.core.sdk.WTOperationException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
 import com.sonicle.webtop.core.sdk.interfaces.IRecipientsProvidersSource;
 import com.sonicle.webtop.core.util.IdentifierUtils;
@@ -132,14 +131,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private static final Pattern PATTERN_VIRTUALRCPT_LIST = Pattern.compile("^" + RCPT_TYPE_LIST + "-(\\d+)$");
 	
 	private final HashSet<String> cacheReady = new HashSet<>();
-	private final HashMap<UserProfile.Id, CategoryRoot> cacheOwnerToRootShare = new HashMap<>();
-	private final HashMap<UserProfile.Id, String> cacheOwnerToWildcardFolderShare = new HashMap<>();
+	private final HashMap<UserProfileId, CategoryRoot> cacheOwnerToRootShare = new HashMap<>();
+	private final HashMap<UserProfileId, String> cacheOwnerToWildcardFolderShare = new HashMap<>();
 	private final MultiValueMap cacheRootShareToFolderShare = MultiValueMap.decorate(new HashMap<String, Integer>());
 	private final HashMap<Integer, String> cacheCategoryToFolderShare = new HashMap<>();
 	private final HashMap<Integer, String> cacheCategoryToWildcardFolderShare = new HashMap<>();
-	private final HashMap<Integer, UserProfile.Id> cacheCategoryToOwner = new HashMap<>();
+	private final HashMap<Integer, UserProfileId> cacheCategoryToOwner = new HashMap<>();
 	
-	public ContactsManager(boolean fastInit, UserProfile.Id targetProfileId) {
+	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
 	}
 	
@@ -156,7 +155,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				cacheOwnerToRootShare.put(root.getOwnerProfileId(), root);
 				for(OShare folder : core.listIncomingShareFolders(root.getShareId(), GROUPNAME_CATEGORY)) {
 					if(folder.hasWildcard()) {
-						UserProfile.Id ownerPid = core.userUidToProfileId(folder.getUserUid());
+						UserProfileId ownerPid = core.userUidToProfileId(folder.getUserUid());
 						cacheOwnerToWildcardFolderShare.put(ownerPid, folder.getShareId().toString());
 						for(Category category : listCategories(ownerPid)) {
 							cacheRootShareToFolderShare.put(root.getShareId(), category.getCategoryId());
@@ -181,19 +180,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private CategoryRoot ownerToRootShare(UserProfile.Id owner) {
+	private CategoryRoot ownerToRootShare(UserProfileId owner) {
 		synchronized(cacheReady) {
 			if(!cacheReady.contains("shareCache") || !cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
 			return cacheOwnerToRootShare.get(owner);
 		}
 	}
 	
-	private String ownerToRootShareId(UserProfile.Id owner) {
+	private String ownerToRootShareId(UserProfileId owner) {
 		CategoryRoot root = ownerToRootShare(owner);
 		return (root != null) ? root.getShareId() : null;
 	}
 	
-	private String ownerToWildcardFolderShareId(UserProfile.Id ownerPid) {
+	private String ownerToWildcardFolderShareId(UserProfileId ownerPid) {
 		synchronized(cacheReady) {
 			if(!cacheReady.contains("shareCache") || (!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty())) buildShareCache();
 			return cacheOwnerToWildcardFolderShare.get(ownerPid);
@@ -207,13 +206,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private UserProfile.Id categoryToOwner(int categoryId) {
+	private UserProfileId categoryToOwner(int categoryId) {
 		synchronized(cacheCategoryToOwner) {
 			if(cacheCategoryToOwner.containsKey(categoryId)) {
 				return cacheCategoryToOwner.get(categoryId);
 			} else {
 				try {
-					UserProfile.Id owner = findCategoryOwner(categoryId);
+					UserProfileId owner = findCategoryOwner(categoryId);
 					cacheCategoryToOwner.put(categoryId, owner);
 					return owner;
 				} catch(WTException ex) {
@@ -255,7 +254,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return providers;
 	}
 	
-	private String getAnniversaryReminderDelivery(HashMap<UserProfile.Id, String> cache, UserProfile.Id pid) {
+	private String getAnniversaryReminderDelivery(HashMap<UserProfileId, String> cache, UserProfileId pid) {
 		if(!cache.containsKey(pid)) {
 			ContactsUserSettings cus = new ContactsUserSettings(SERVICE_ID, pid);
 			String value = cus.getAnniversaryReminderDelivery();
@@ -266,7 +265,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private DateTime getAnniversaryReminderTime(HashMap<UserProfile.Id, DateTime> cache, UserProfile.Id pid, LocalDate date) {
+	private DateTime getAnniversaryReminderTime(HashMap<UserProfileId, DateTime> cache, UserProfileId pid, LocalDate date) {
 		if(!cache.containsKey(pid)) {
 			LocalTime time = new ContactsUserSettings(SERVICE_ID, pid).getAnniversaryReminderTime();
 			//TODO: valutare se uniformare i minuti a quelli consentiti (ai min 0 e 30), se errato non verrà mai preso in considerazione
@@ -306,7 +305,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			List<Category> cats = null;
 			if(share.hasWildcard()) {
-				UserProfile.Id ownerId = core.userUidToProfileId(share.getUserUid());
+				UserProfileId ownerId = core.userUidToProfileId(share.getUserUid());
 				cats = listCategories(ownerId);
 			} else {
 				cats = Arrays.asList(getCategory(Integer.valueOf(share.getInstance())));
@@ -338,7 +337,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		core.updateSharing(SERVICE_ID, GROUPNAME_CATEGORY, sharing);
 	}
 	
-	public UserProfile.Id getCategoryOwner(int categoryId) throws WTException {
+	public UserProfileId getCategoryOwner(int categoryId) throws WTException {
 		return categoryToOwner(categoryId);
 	}
 	
@@ -347,7 +346,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return listCategories(getTargetProfileId());
 	}
 	
-	private List<Category> listCategories(UserProfile.Id pid) throws WTException {
+	private List<Category> listCategories(UserProfileId pid) throws WTException {
 		CategoryDAO dao = CategoryDAO.getInstance();
 		ArrayList<Category> items = new ArrayList<>();
 		Connection con = null;
@@ -536,7 +535,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return listContacts(root.getOwnerProfileId(), categoryFolders, searchMode, pattern);
 	}
 	
-	public List<CategoryContacts> listContacts(UserProfile.Id pid, Integer[] categoryFolders, String searchMode, String pattern) throws WTException {
+	public List<CategoryContacts> listContacts(UserProfileId pid, Integer[] categoryFolders, String searchMode, String pattern) throws WTException {
 		CategoryDAO catdao = CategoryDAO.getInstance();
 		ContactDAO condao = ContactDAO.getInstance();
 		ArrayList<CategoryContacts> catContacts = new ArrayList<>();
@@ -1016,7 +1015,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			con = WT.getConnection(SERVICE_ID, false);
-			UserProfile.Id pid = getTargetProfileId();
+			UserProfileId pid = getTargetProfileId();
 			
 			// Erase contact and all related tables
 			if (deep) {
@@ -1101,9 +1100,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public List<BaseReminder> getRemindersToBeNotified(DateTime now) {
 		ArrayList<BaseReminder> alerts = new ArrayList<>();
-		HashMap<UserProfile.Id, Boolean> okCache = new HashMap<>();
-		HashMap<UserProfile.Id, DateTime> dateTimeCache = new HashMap<>();
-		HashMap<UserProfile.Id, String> deliveryCache = new HashMap<>();
+		HashMap<UserProfileId, Boolean> okCache = new HashMap<>();
+		HashMap<UserProfileId, DateTime> dateTimeCache = new HashMap<>();
+		HashMap<UserProfileId, String> deliveryCache = new HashMap<>();
 		ContactDAO cdao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1385,7 +1384,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private UserProfile.Id findCategoryOwner(int categoryId) throws WTException {
+	private UserProfileId findCategoryOwner(int categoryId) throws WTException {
 		Connection con = null;
 		
 		try {
@@ -1393,7 +1392,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			CategoryDAO dao = CategoryDAO.getInstance();
 			Owner owner = dao.selectOwnerById(con, categoryId);
 			if(owner == null) throw new WTException("Category not found [{0}]", categoryId);
-			return new UserProfile.Id(owner.getDomainId(), owner.getUserId());
+			return new UserProfileId(owner.getDomainId(), owner.getUserId());
 			
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -1402,8 +1401,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private void checkRightsOnCategoryRoot(UserProfile.Id ownerPid, String action) throws WTException {
-		UserProfile.Id targetPid = getTargetProfileId();
+	private void checkRightsOnCategoryRoot(UserProfileId ownerPid, String action) throws WTException {
+		UserProfileId targetPid = getTargetProfileId();
 		
 		if(RunContext.isWebTopAdmin()) return;
 		if(ownerPid.equals(targetPid)) return;
@@ -1418,11 +1417,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
-		UserProfile.Id targetPid = getTargetProfileId();
+		UserProfileId targetPid = getTargetProfileId();
 		
 		if(RunContext.isWebTopAdmin()) return;
 		// Skip rights check if running user is resource's owner
-		UserProfile.Id ownerPid = categoryToOwner(categoryId);
+		UserProfileId ownerPid = categoryToOwner(categoryId);
 		if(ownerPid.equals(getTargetProfileId())) return;
 		
 		// Checks rights on the wildcard instance (if present)
@@ -1443,11 +1442,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private void checkRightsOnCategoryElements(int categoryId, String action) throws WTException {
-		UserProfile.Id targetPid = getTargetProfileId();
+		UserProfileId targetPid = getTargetProfileId();
 		
 		if(RunContext.isWebTopAdmin()) return;
 		// Skip rights check if running user is resource's owner
-		UserProfile.Id ownerPid = categoryToOwner(categoryId);
+		UserProfileId ownerPid = categoryToOwner(categoryId);
 		if(ownerPid.equals(targetPid)) return;
 		
 		// Checks rights on the wildcard instance (if present)
@@ -1705,9 +1704,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	public class RootRecipientsProvider extends RecipientsProviderBase {
-		public final UserProfile.Id ownerId;
+		public final UserProfileId ownerId;
 		
-		public RootRecipientsProvider(String id, String description, UserProfile.Id ownerId) {
+		public RootRecipientsProvider(String id, String description, UserProfileId ownerId) {
 			super(id, description);
 			this.ownerId = ownerId;
 		}

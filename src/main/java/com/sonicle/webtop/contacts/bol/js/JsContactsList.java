@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
-import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.bol.js.JsFkModel;
 import java.util.ArrayList;
 
@@ -52,7 +52,7 @@ public class JsContactsList {
 	
 	public JsContactsList() {}
 	
-	public JsContactsList(UserProfile.Id ownerId, ContactsList cl) {
+	public JsContactsList(UserProfileId ownerId, ContactsList cl) {
 		id = cl.getContactId().toString();
 		contactId = cl.getContactId();
 		categoryId = cl.getCategoryId();

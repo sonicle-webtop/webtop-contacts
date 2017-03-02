@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -96,7 +96,7 @@ public class JsContact {
 	
 	public JsContact() {}
 	
-	public JsContact(UserProfile.Id ownerId, Contact contact) {
+	public JsContact(UserProfileId ownerId, Contact contact) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
 		id = contact.getContactId();

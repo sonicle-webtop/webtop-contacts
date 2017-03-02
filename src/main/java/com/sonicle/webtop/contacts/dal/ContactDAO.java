@@ -41,7 +41,7 @@ import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import static com.sonicle.webtop.core.jooq.core.Tables.CUSTOMERS;
-import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
@@ -204,19 +204,19 @@ public class ContactDAO extends BaseDAO {
 		return StringUtils.trim(s);
 	}
 	
-	public List<VContact> viewWorkRecipientsByOwnerQueryText(Connection con, UserProfile.Id ownerId, String queryText) throws DAOException {
+	public List<VContact> viewWorkRecipientsByOwnerQueryText(Connection con, UserProfileId ownerId, String queryText) throws DAOException {
 		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.WORK_EMAIL, ownerId, queryText);
 	}
 	
-	public List<VContact> viewHomeRecipientsByOwnerQueryText(Connection con, UserProfile.Id ownerId, String queryText) throws DAOException {
+	public List<VContact> viewHomeRecipientsByOwnerQueryText(Connection con, UserProfileId ownerId, String queryText) throws DAOException {
 		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.HOME_EMAIL, ownerId, queryText);
 	}
 	
-	public List<VContact> viewOtherRecipientsByOwnerQueryText(Connection con, UserProfile.Id ownerId, String queryText) throws DAOException {
+	public List<VContact> viewOtherRecipientsByOwnerQueryText(Connection con, UserProfileId ownerId, String queryText) throws DAOException {
 		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.OTHER_EMAIL, ownerId, queryText);
 	}
 	
-	private List<VContact> viewRecipientsByFieldOwnerQueryText(Connection con, TableField<ContactsRecord, String> emailField, UserProfile.Id ownerId, String queryText) throws DAOException {
+	private List<VContact> viewRecipientsByFieldOwnerQueryText(Connection con, TableField<ContactsRecord, String> emailField, UserProfileId ownerId, String queryText) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		String patt1 = null, patt2 = null, patt3 = null;

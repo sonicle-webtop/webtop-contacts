@@ -37,7 +37,7 @@ import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
-import com.sonicle.webtop.core.sdk.UserProfile;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.text.MessageFormat;
 import java.util.HashSet;
 import org.joda.time.LocalTime;
@@ -49,7 +49,7 @@ import org.joda.time.LocalTime;
 public class ContactsUserSettings extends BaseUserSettings {
 	private ContactsServiceSettings ss;
 	
-	public ContactsUserSettings(String serviceId, UserProfile.Id profileId) {
+	public ContactsUserSettings(String serviceId, UserProfileId profileId) {
 		super(serviceId, profileId);
 		ss = new ContactsServiceSettings(serviceId, profileId.getDomainId());
 	}
