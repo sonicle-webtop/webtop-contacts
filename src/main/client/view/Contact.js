@@ -56,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		var me = this, main, work, more, home, other, notes;
 		Ext.apply(me, {
 			tbar: [
-				me.addAction('saveClose', {
+				me.addAct('saveClose', {
 					text: WT.res('act-saveClose.lbl'),
 					tooltip: null,
 					iconCls: 'wt-icon-saveClose-xs',
@@ -65,7 +65,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					}
 				}),
 				'-',
-				me.addAction('delete', {
+				me.addAct('delete', {
 					text: null,
 					tooltip: WT.res('act-delete.lbl'),
 					iconCls: 'wt-icon-delete-xs',
@@ -74,7 +74,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					}
 				}),
 				'-',
-				me.addAction('print', {
+				me.addAct('print', {
 					text: null,
 					tooltip: WT.res('act-print.lbl'),
 					iconCls: 'wt-icon-print-xs',
@@ -474,17 +474,17 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		
 		me.updateCategoryFilters(owner.getValue());
 		if(me.isMode(me.MODE_NEW)) {
-			me.getAction('saveClose').setDisabled(false);
-			me.getAction('delete').setDisabled(true);
+			me.getAct('saveClose').setDisabled(false);
+			me.getAct('delete').setDisabled(true);
 			owner.setDisabled(false);
 		} else if(me.isMode(me.MODE_VIEW)) {
-			me.getAction('saveClose').setDisabled(true);
-			me.getAction('delete').setDisabled(true);
+			me.getAct('saveClose').setDisabled(true);
+			me.getAct('delete').setDisabled(true);
 			owner.setDisabled(true);
 			me.lref('fldpic').setDisabled(true);
 		} else if(me.isMode(me.MODE_EDIT)) {
-			me.getAction('saveClose').setDisabled(false);
-			me.getAction('delete').setDisabled(false);
+			me.getAct('saveClose').setDisabled(false);
+			me.getAct('delete').setDisabled(false);
 			owner.setDisabled(true);
 		}
 		
