@@ -43,43 +43,43 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	
 	/**
 	 * Adds a new contact.
-	 * @param {Object} cnt An object containing event data.
-	 * @param {String} [cnt.title]
-	 * @param {String} [cnt.firstName]
-	 * @param {String} [cnt.lastName]
-	 * @param {String} [cnt.nickname]
-	 * @param {male|female|other} [cnt.gender]
-	 * @param {String} [cnt.workAddress]
-	 * @param {String} [cnt.workPostalCode]
-	 * @param {String} [cnt.workCity]
-	 * @param {String} [cnt.workState]
-	 * @param {String} [cnt.workCountry]
-	 * @param {String} [cnt.workTelephone]
-	 * @param {String} [cnt.workTelephone2]
-	 * @param {String} [cnt.workMobile]
-	 * @param {String} [cnt.workFax]
-	 * @param {String} [cnt.workPager]
-	 * @param {String} [cnt.workEmail]
-	 * @param {String} [cnt.workInstantMsg]
-	 * @param {String} [cnt.homeAddress]
-	 * @param {String} [cnt.homePostalCode]
-	 * @param {String} [cnt.homeCity]
-	 * @param {String} [cnt.homeState]
-	 * @param {String} [cnt.homeCountry]
-	 * @param {String} [cnt.homeTelephone]
-	 * @param {String} [cnt.homeTelephone2]
-	 * @param {String} [cnt.homeFax]
-	 * @param {String} [cnt.homePager]
-	 * @param {String} [cnt.homeEmail]
-	 * @param {String} [cnt.homeInstantMsg]
+	 * @param {Object} data An object containing event data.
+	 * @param {String} [data.title]
+	 * @param {String} [data.firstName]
+	 * @param {String} [data.lastName]
+	 * @param {String} [data.nickname]
+	 * @param {male|female|other} [data.gender]
+	 * @param {String} [data.workAddress]
+	 * @param {String} [data.workPostalCode]
+	 * @param {String} [data.workCity]
+	 * @param {String} [data.workState]
+	 * @param {String} [data.workCountry]
+	 * @param {String} [data.workTelephone]
+	 * @param {String} [data.workTelephone2]
+	 * @param {String} [data.workMobile]
+	 * @param {String} [data.workFax]
+	 * @param {String} [data.workPager]
+	 * @param {String} [data.workEmail]
+	 * @param {String} [data.workInstantMsg]
+	 * @param {String} [data.homeAddress]
+	 * @param {String} [data.homePostalCode]
+	 * @param {String} [data.homeCity]
+	 * @param {String} [data.homeState]
+	 * @param {String} [data.homeCountry]
+	 * @param {String} [data.homeTelephone]
+	 * @param {String} [data.homeTelephone2]
+	 * @param {String} [data.homeFax]
+	 * @param {String} [data.homePager]
+	 * @param {String} [data.homeEmail]
+	 * @param {String} [data.homeInstantMsg]
 	 * @param {Object} opts An object containing configuration.
 	 * @param {Function} [opts.callback] Callback method for 'viewsave' event.
 	 * @param {Object} [opts.scope] The callback method scope.
 	 * @param {Boolean} [opts.dirty] The dirty state of the model.
 	 */
-	addContact: function(cnt, opts) {
+	addContact: function(data, opts) {
 		opts = opts || {};
-		this.service.addContact2(cnt, {
+		this.service.addContact2(data, {
 			callback: opts.callback,
 			scope: opts.scope,
 			dirty: opts.dirty
