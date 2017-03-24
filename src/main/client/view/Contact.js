@@ -438,10 +438,14 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			}, {
 				xtype: 'datefield',
 				bind: '{record.birthday}',
+				startDay: WT.getStartDay(),
+				format: WT.getShortDateFmt(),
 				fieldLabel: me.mys.res('contact.fld-birthday.lbl')
 			}, {
 				xtype: 'datefield',
 				bind: '{record.anniversary}',
+				startDay: WT.getStartDay(),
+				format: WT.getShortDateFmt(),
 				fieldLabel: me.mys.res('contact.fld-anniversary.lbl')
 			}]
 		});
