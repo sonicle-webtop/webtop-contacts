@@ -1,0 +1,22 @@
+[main]
+host = https://www.transifex.com
+
+[webtop-contacts.server_locale]
+source_file = ./src/main/resources/com/sonicle/webtop/contacts/locale_en_EN.properties
+source_lang = en
+type = PROPERTIES
+
+[webtop-contacts.client_locale]
+source_file = ./src/main/client/locale_en_EN.properties
+source_lang = en
+type = PROPERTIES
+
+[webtop-contacts.rpt_addressbook]
+source_file = ./src/main/reports/com/sonicle/webtop/contacts/rpt/addressbook_en_EN.properties
+source_lang = en
+type = PROPERTIES
+
+[webtop-contacts.rpt_contactsdetail]
+source_file = ./src/main/reports/com/sonicle/webtop/contacts/rpt/contactsdetail_en_EN.properties
+source_lang = en
+type = PROPERTIES
