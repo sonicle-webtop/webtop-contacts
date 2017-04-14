@@ -70,7 +70,6 @@ import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.io.BatchBeanHandler;
-import com.sonicle.webtop.core.io.BeanHandlerException;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.BaseReminder;
@@ -93,6 +92,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
@@ -1053,48 +1053,63 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		LogEntries log = new LogEntries();
 		Connection con = null;
 		
+		checkRightsOnCategoryElements(categoryId, "CREATE");
+		if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE");
+		
+		log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
+		
 		try {
-			checkRightsOnCategoryElements(categoryId, "CREATE");
-			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE");
-			
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
-			
 			con = WT.getConnection(SERVICE_ID, false);
-			
-			if(mode.equals("copy")) {
+
+			if (mode.equals("copy")) {
 				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning contacts..."));
 				int del = doDeleteContactsByCategory(con, categoryId, false);
 				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
 			}
-			
+
 			ContactBatchImportBeanHandler handler = new ContactBatchImportBeanHandler(log, con, categoryId);
 			try {
 				rea.readContacts(file, handler);
 				handler.flush();
+				
+				Throwable lex = handler.getLastException();
+				if (lex != null) {
+					if (lex.getCause() instanceof BatchUpdateException) {
+						SQLException sex = ((BatchUpdateException)lex.getCause()).getNextException();
+						if (sex != null) {
+							logger.error("DB error", lex);
+							throw sex;
+						}
+					}
+					throw new ImportException(MessageFormat.format("Unexpected error. Reason: {0}", lex.getMessage()), lex);
+				}
+
 			} catch(IOException | FileReaderException ex1) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex1.getMessage()));
-				throw new BeanHandlerException(ex1);
-			} catch(BeanHandlerException ex1) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete operation. Reason: {0}", ex1.getMessage()));
-				throw ex1;
+				throw new ImportException(MessageFormat.format("Problems while opening source file. Reason: {0}", ex1.getMessage()), ex1);
 			}
-			
+
 			DbUtils.commitQuietly(con);
-			
+
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s read!", handler.handledCount));
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", handler.insertedCount));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
-			
-		} catch(BeanHandlerException ex) {
+
+		} catch(ImportException ex) {
 			DbUtils.rollbackQuietly(con);
-			logger.error("Bean error", ex);
-		} catch(Exception ex) {
+			logger.error("Import error", ex.getCause());
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "Problems encountered. No changes have been applied!"));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, ex.getMessage()));
+			
+		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
 			logger.error("DB error", ex);
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unexpected error. Reason: {0}", ex.getMessage()));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "Problems encountered. No changes have been applied!"));
+			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unexpected DB error. Reason: {0}", ex.getMessage()));
+			
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
+		
+		log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
 		return log;
 	}
 	
@@ -1826,12 +1841,25 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 		
 		@Override
-		public void handleStoredBeans() throws BeanHandlerException {
+		public boolean handleStoredBeans() {
 			try {
 				insertedCount = insertedCount + doBatchInsertContacts(con, categoryId, contacts);
-			} catch(Exception ex) {
-				throw new BeanHandlerException(ex);
+				return true;
+			} catch(Throwable t) {
+				lastException = t;
+				return false;
 			}
+		}
+	}
+	
+	private static class ImportException extends Exception {
+		
+		public ImportException(Throwable cause) {
+			super(cause);
+		}
+		
+		public ImportException(String message, Throwable cause) {
+			super(message, cause);
 		}
 	}
 	
