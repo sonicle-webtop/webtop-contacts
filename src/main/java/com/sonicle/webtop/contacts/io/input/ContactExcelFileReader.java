@@ -183,7 +183,8 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 		} catch(Throwable t) {
 			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
 		} finally {
-			beanHandler.handle(new ContactReadResult(contact, null), log);
+			boolean ret = beanHandler.handle(new ContactReadResult(contact, null), log);
+			if (!ret) throw new Exception("Handle not succesful");
 		}
 	}
 	
