@@ -34,6 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
+		'Sonicle.webtop.core.ux.RecipientsGrid',
 		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.ContactsList',
@@ -113,80 +114,43 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				reference: 'fldname',
 				bind: '{record.name}',
 				fieldLabel: me.mys.res('contactsList.fld-name.lbl'),
-				anchor: '100%'
+				anchor: '100%',
+				listeners: {
+					blur: function() {
+						if (me.lref('gprecipients').validate()) {
+							var rg=me.lref('gprecipients'),
+								sm=rg.getSelectionModel(),
+								c=sm.getCount(),
+								rx=(c===0?0:rg.store.indexOf(sm.getSelection()[0]));
+							Ext.defer(function() {
+								rg.startEditAt(rx);
+							},100);
+						}						
+					}
+				}
 			}]
 		});
 		
 		me.add({
+			xtype: 'wtrecipientsgrid',
+			reference: 'gprecipients',
 			region: 'center',
-			xtype: 'wtfieldspanel',
-			layout: 'fit',
-			items: [{
-				xtype: 'gridpanel',
-				reference: 'gprecipients',
-				bind: {
-					store: '{record.recipients}'
-				},
-				border: true,
-				columns: [{
-					dataIndex: 'recipientType',
-					renderer: WTF.resColRenderer({
-						id: WT.ID,
-						key: 'store.rcptType'
-					}),
-					editor: Ext.create(WTF.localCombo('id', 'desc', {
-						store: Ext.create('Sonicle.webtop.core.store.RcptType', {
-							autoLoad: true
-						})
-					})),
-					header: me.mys.res('contactsList.gp-recipients.recipientType.lbl'),
-					width: 60
-				}, {
-					dataIndex: 'recipient',
-					editor: {
-						xtype: 'wtrcptsuggestcombo',
-						listConfig: {
-							width: 300
-						}
-					},
-					renderer: Ext.util.Format.htmlEncode,
-					header: me.mys.res('contactsList.gp-recipients.recipient.lbl'),
-					flex: 1
-				}],
-				plugins: [
-					Ext.create('Ext.grid.plugin.RowEditing', {
-						pluginId: 'rowediting',
-						clicksToMoveEditor: 2,
-						saveBtnText: WT.res('act-confirm.lbl'),
-						cancelBtnText: WT.res('act-cancel.lbl')
-					})
-				],
-				tbar: [
-					me.addAct('addRecipient', {
-						text: WT.res('act-add.lbl'),
-						tooltip: null,
-						iconCls: 'wt-icon-add-xs',
-						handler: function() {
-							me.addRecipient();
-						}
-					}),
-					me.addAct('deleteRecipient', {
-						text: WT.res('act-delete.lbl'),
-						tooltip: null,
-						iconCls: 'wt-icon-delete-xs',
-						handler: function() {
-							var sm = me.lref('gprecipients').getSelectionModel();
-							me.deleteRecipient(sm.getSelection());
-						},
-						disabled: true
-					})
-				],
-				listeners: {
-					selectionchange: function(s,recs) {
-						me.getAct('deleteRecipient').setDisabled(!recs.length);
+			tbar: [
+				me.addAct('pasteList', {
+					text: null,
+					tooltip: me.mys.res('act-pasteList.tip'),
+					iconCls: 'wtcon-icon-paste-list-xs',
+					handler: function() {
+						//Ext.defer(function() {
+							me.pasteList();
+						//},100);
 					}
-				}
-			}]
+				})
+			],
+			fields: { recipientType: 'recipientType', email: 'recipient' },
+			bind: {
+				store: '{record.recipients}'
+			}
 		});
 		
 		me.on('viewload', me.onViewLoad);
@@ -195,7 +159,8 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	onViewLoad: function(s, success) {
 		if(!success) return;
 		var me = this,
-				owner = me.lref('fldowner');
+			rg = me.lref('gprecipients'),
+			owner = me.lref('fldowner');
 		
 		me.updateCategoryFilters();
 		if(me.isMode(me.MODE_NEW)) {
@@ -211,6 +176,9 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			me.getAct('delete').setDisabled(false);
 			owner.setDisabled(true);
 		}
+		
+		if (rg.getRecipientsCount()===0)
+			rg.addRecipient('to','');
 		
 		me.lref('fldname').focus(true);
 	},
@@ -249,7 +217,24 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		}, me);
 	},
 	
-	addRecipient: function() {
+	pasteList: function() {
+		var me=this;
+		
+		WT.prompt('',{
+			title: me.mys.res("act-pasteList.tit"),
+			fn: function(btn,text) {
+				if (btn=='ok') {
+					me.lref('gprecipients').loadValues(text);
+				}
+			},
+			scope: me,
+			width: 400,
+			multiline: 200,
+			value: ''
+		});
+	}
+	
+	/*addRecipient: function() {
 		var me = this,
 				gp = me.lref('gprecipients'),
 				sto = gp.getStore(),
@@ -266,5 +251,5 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		var me = this,
 				gp = me.lref('gprecipients');
 		gp.getStore().remove(rec);
-	}
+	}*/
 });

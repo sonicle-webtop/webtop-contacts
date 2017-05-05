@@ -85,11 +85,13 @@ public class JsContactsList {
 		cl.setCategoryId(js.categoryId);
 		cl.setName(js.name);
 		for(Recipient jsRcpt : js.recipients) {
-			ContactsListRecipient rcpt = new ContactsListRecipient();
-			rcpt.setListRecipientId(jsRcpt.listRecipientId);
-			rcpt.setRecipient(jsRcpt.recipient);
-			rcpt.setRecipientType(jsRcpt.recipientType);
-			cl.getRecipients().add(rcpt);
+			if (jsRcpt.recipientType!=null && jsRcpt.recipient!=null && jsRcpt.recipient.trim().length()>0) {
+				ContactsListRecipient rcpt = new ContactsListRecipient();
+				rcpt.setListRecipientId(jsRcpt.listRecipientId);
+				rcpt.setRecipient(jsRcpt.recipient);
+				rcpt.setRecipientType(jsRcpt.recipientType);
+				cl.getRecipients().add(rcpt);
+			}
 		}
 		return cl;
 	}
