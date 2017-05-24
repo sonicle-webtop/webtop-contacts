@@ -1840,7 +1840,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				Matcher matcher = PATTERN_VIRTUALRCPT_LIST.matcher(virtualRecipient);
 				if (matcher.matches()) {
 					int contactId = Integer.valueOf(matcher.group(1));
-					List<OListRecipient> recipients = dao.selectByContact(con, contactId);
+					UserProfileId pid=new UserProfileId(getId());
+					List<OListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
 					for (OListRecipient recipient : recipients) {
 						InternetAddress ia = MailUtils.buildInternetAddress(recipient.getRecipient());
 						InternetRecipient.RecipientType rt=InternetRecipient.TO;
