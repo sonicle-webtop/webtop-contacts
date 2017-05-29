@@ -1501,7 +1501,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				sel = me.getSelectedContacts();
 				if(sel.length === 1) {
 					er = me.toRightsObj(sel[0].get('_erights'));
-					return !er.UPDATE;
+					return !er.DELETE;
 				} else {
 					return true;
 				}

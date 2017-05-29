@@ -827,15 +827,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			OContact cont = cdao.selectById(con, contactId);
-			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
-			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
+			OContact ocont = cdao.selectById(con, contactId);
+			if(ocont == null || ocont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
+			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 			
-			if(copy || (targetCategoryId != cont.getCategoryId())) {
-				checkRightsOnCategoryElements(targetCategoryId, "CREATE"); // Rights check!
+			if(copy || (targetCategoryId != ocont.getCategoryId())) {
+				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
+				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
 				
 				boolean hasPicture = pdao.hasPicture(con, contactId);
-				Contact contact = createContact(cont, hasPicture);
+				Contact contact = createContact(ocont, hasPicture);
 
 				con.setAutoCommit(false);
 				doMoveContact(con, copy, contact, targetCategoryId);
