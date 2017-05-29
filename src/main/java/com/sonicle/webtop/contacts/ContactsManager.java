@@ -1020,19 +1020,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryElements(targetCategoryId, "UPDATE");
+			OContact ocont = cdao.selectById(con, contactsListId);
+			if(ocont == null || !ocont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
+			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 			
-			OContact cont = cdao.selectById(con, contactsListId);
-			if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
-			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ");
-			
-			List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
-			ContactsList clist = createContactsList(cont, recipients);
-			
-			con.setAutoCommit(false);
-			doMoveContactsList(con, copy, clist, targetCategoryId);
-			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
+			if(copy || (targetCategoryId != ocont.getCategoryId())) {
+				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
+				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+				
+				List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
+				ContactsList clist = createContactsList(ocont, recipients);
+
+				con.setAutoCommit(false);
+				doMoveContactsList(con, copy, clist, targetCategoryId);
+				DbUtils.commitQuietly(con);
+				writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
+			}	
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
