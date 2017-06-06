@@ -105,4 +105,11 @@ public class ContactsSettings {
 	 * JSON value for sortInfo.
 	 */
 	public static final String GRID_CONTACTS_GROUPINFO_ROOT = "grid.contacts.{0}.groupinfo";
+	
+	/**
+	 * [user]
+	 * [object[]]
+	 * Custom data for the @ category folder.
+	 */
+	public static final String CATEGORY_FOLDER_DATA = "category.folder.data@{0}";
 }

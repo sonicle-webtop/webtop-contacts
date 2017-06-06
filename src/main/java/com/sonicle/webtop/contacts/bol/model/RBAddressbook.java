@@ -63,8 +63,8 @@ public class RBAddressbook {
 		this.isList = contact.getIsList();
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
-		this.categoryColor = category.getHexColor();
-		this.categoryColorImage = JRHelper.colorAsImage(category.getHexColor());
+		this.categoryColor = Category.getHexColor(category.getColor());
+		this.categoryColorImage = JRHelper.colorAsImage(Category.getHexColor(category.getColor()));
 		this.contactId = contact.getContactId();
 		this.title = contact.getTitle();
 		this.firstName = contact.getFirstname();

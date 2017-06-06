@@ -35,11 +35,13 @@ package com.sonicle.webtop.contacts;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.MailUtils;
 import com.sonicle.commons.db.DbUtils;
+import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
+import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.model.CategoryFolder;
 import com.sonicle.webtop.contacts.model.CategoryRoot;
 import com.sonicle.webtop.contacts.model.Contact;
@@ -194,26 +196,26 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private String ownerToWildcardFolderShareId(UserProfileId ownerPid) {
 		synchronized(cacheReady) {
-			if(!cacheReady.contains("shareCache") || (!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty())) buildShareCache();
+			if (!cacheReady.contains("shareCache") || (!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty())) buildShareCache();
 			return cacheOwnerToWildcardFolderShare.get(ownerPid);
 		}
 	}
 	
 	private String categoryToFolderShareId(int category) {
 		synchronized(cacheReady) {
-			if(!cacheReady.contains("shareCache") || !cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
+			if (!cacheReady.contains("shareCache") || !cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
 			return cacheCategoryToFolderShare.get(category);
 		}
 	}
 	
 	private UserProfileId categoryToOwner(int categoryId) {
 		synchronized(cacheCategoryToOwner) {
-			if(cacheCategoryToOwner.containsKey(categoryId)) {
+			if (cacheCategoryToOwner.containsKey(categoryId)) {
 				return cacheCategoryToOwner.get(categoryId);
 			} else {
 				try {
 					UserProfileId owner = findCategoryOwner(categoryId);
-					cacheCategoryToOwner.put(categoryId, owner);
+					if (owner != null) cacheCategoryToOwner.put(categoryId, owner);
 					return owner;
 				} catch(WTException ex) {
 					throw new WTRuntimeException(ex.getMessage());
@@ -225,7 +227,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private List<Integer> cachedCategoryFolderKeys() {
 		List<Integer> keys = new ArrayList<>();
 		synchronized(cacheReady) {
-			if(!cacheReady.contains("shareCache")) buildShareCache();
+			if (!cacheReady.contains("shareCache")) buildShareCache();
 			keys.addAll(cacheCategoryToFolderShare.keySet());
 			keys.addAll(cacheCategoryToWildcardFolderShare.keySet());
 		}
@@ -235,8 +237,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private List<Integer> rootShareToCategoryFolderIds(String rootShareId) {
 		List<Integer> keys = new ArrayList<>();
 		synchronized(cacheReady) {
-			if(!cacheReady.contains("shareCache")) buildShareCache();
-			if(cacheRootShareToFolderShare.containsKey(rootShareId)) {
+			if (!cacheReady.contains("shareCache")) buildShareCache();
+			if (cacheRootShareToFolderShare.containsKey(rootShareId)) {
 				keys.addAll(cacheRootShareToFolderShare.getCollection(rootShareId));
 			}
 		}
@@ -255,7 +257,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private String getAnniversaryReminderDelivery(HashMap<UserProfileId, String> cache, UserProfileId pid) {
-		if(!cache.containsKey(pid)) {
+		if (!cache.containsKey(pid)) {
 			ContactsUserSettings cus = new ContactsUserSettings(SERVICE_ID, pid);
 			String value = cus.getAnniversaryReminderDelivery();
 			cache.put(pid, value);
@@ -325,6 +327,29 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 		}
 		return folders;
+	}
+	
+	public String buildCategoryFolderShareId(int categoryId) throws WTException {
+		UserProfileId targetPid = getTargetProfileId();
+		
+		UserProfileId ownerPid = categoryToOwner(categoryId);
+		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
+		
+		String rootShareId = null;
+		if (ownerPid.equals(targetPid)) {
+			rootShareId = MyCategoryRoot.SHARE_ID;
+		} else {
+			for(CategoryRoot root : listIncomingCategoryRoots()) {
+				HashMap<Integer, CategoryFolder> folders = listIncomingCategoryFolders(root.getShareId());
+				if (folders.containsKey(categoryId)) {
+					rootShareId = root.getShareId();
+					break;
+				}
+			}
+		}
+		
+		if (rootShareId == null) throw new WTException("Unable to find a root share [{0}]", categoryId);
+		return new CompositeId().setTokens(rootShareId, categoryId).toString();
 	}
 	
 	public Sharing getSharing(String shareId) throws WTException {
@@ -509,14 +534,28 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			checkRightsOnCategoryFolder(categoryId, "DELETE");
 			
+			// Retrieve sharing status (for later)
+			String shareId = buildCategoryFolderShareId(categoryId);
+			Sharing sharing = getSharing(shareId);
+			
 			con = WT.getConnection(SERVICE_ID, false);
 			int ret = dao.deleteById(con, categoryId);
 			doDeleteContactsByCategory(con, categoryId, false);
 			doDeleteContactsByCategory(con, categoryId, true);
+			
+			// Cleanup sharing, if necessary
+			if ((sharing != null) && !sharing.getRights().isEmpty()) {
+				logger.debug("Removing {} active sharing [{}]", sharing.getRights().size(), sharing.getId());
+				sharing.getRights().clear();
+				updateSharing(sharing);
+			}
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_DELETE", String.valueOf(categoryId));
-			writeLog("CONTACTS_DELETE", "*");
-			writeLog("CONTACTLIST_DELETE", "*");
+			
+			final String ref = String.valueOf(categoryId);
+			writeLog("CATEGORY_DELETE", ref);
+			writeLog("CONTACT_DELETE", "*@"+ref);
+			writeLog("CONTACTLIST_DELETE", "*@"+ref);
 			
 			return ret == 1;
 			
@@ -547,12 +586,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			// Lists desired groups (tipically visibles) coming from passed list
 			// Passed ids should belong to referenced folder(group), 
 			// this is ensured using domainId and userId parameters in below query.
-			List<OCategory> cats = catdao.selectByProfileIn(con, pid.getDomainId(), pid.getUserId(), categoryFolders);
+			List<OCategory> ocats = catdao.selectByProfileIn(con, pid.getDomainId(), pid.getUserId(), categoryFolders);
 			List<VContact> vcs = null;
-			for(OCategory cat : cats) {
-				checkRightsOnCategoryFolder(cat.getCategoryId(), "READ");
-				vcs = condao.viewByCategoryPattern(con, cat.getCategoryId(), searchMode, pattern);
-				catContacts.add(new CategoryContacts(cat, vcs));
+			for(OCategory ocat : ocats) {
+				if (!quietlyCheckRightsOnCategoryFolder(ocat.getCategoryId(), "READ")) continue;
+				
+				vcs = condao.viewByCategoryPattern(con, ocat.getCategoryId(), searchMode, pattern);
+				catContacts.add(new CategoryContacts(ocat, vcs));
 			}
 			return catContacts;
 		
@@ -787,15 +827,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			OContact cont = cdao.selectById(con, contactId);
-			if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
-			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
+			OContact ocont = cdao.selectById(con, contactId);
+			if(ocont == null || ocont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
+			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 			
-			if(copy || (targetCategoryId != cont.getCategoryId())) {
-				checkRightsOnCategoryElements(targetCategoryId, "CREATE"); // Rights check!
+			if(copy || (targetCategoryId != ocont.getCategoryId())) {
+				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
+				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
 				
 				boolean hasPicture = pdao.hasPicture(con, contactId);
-				Contact contact = createContact(cont, hasPicture);
+				Contact contact = createContact(ocont, hasPicture);
 
 				con.setAutoCommit(false);
 				doMoveContact(con, copy, contact, targetCategoryId);
@@ -979,19 +1020,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryElements(targetCategoryId, "UPDATE");
+			OContact ocont = cdao.selectById(con, contactsListId);
+			if(ocont == null || !ocont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
+			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 			
-			OContact cont = cdao.selectById(con, contactsListId);
-			if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
-			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ");
-			
-			List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
-			ContactsList clist = createContactsList(cont, recipients);
-			
-			con.setAutoCommit(false);
-			doMoveContactsList(con, copy, clist, targetCategoryId);
-			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
+			if(copy || (targetCategoryId != ocont.getCategoryId())) {
+				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
+				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+				
+				List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
+				ContactsList clist = createContactsList(ocont, recipients);
+
+				con.setAutoCommit(false);
+				doMoveContactsList(con, copy, clist, targetCategoryId);
+				DbUtils.commitQuietly(con);
+				writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
+			}	
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1406,8 +1450,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			CategoryDAO dao = CategoryDAO.getInstance();
 			Owner owner = dao.selectOwnerById(con, categoryId);
-			if(owner == null) throw new WTException("Category not found [{0}]", categoryId);
-			return new UserProfileId(owner.getDomainId(), owner.getUserId());
+			return (owner == null) ? null : new UserProfileId(owner.getDomainId(), owner.getUserId());
 			
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -1419,39 +1462,53 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private void checkRightsOnCategoryRoot(UserProfileId ownerPid, String action) throws WTException {
 		UserProfileId targetPid = getTargetProfileId();
 		
-		if(RunContext.isWebTopAdmin()) return;
-		if(ownerPid.equals(targetPid)) return;
+		if (RunContext.isWebTopAdmin()) return;
+		if (ownerPid.equals(targetPid)) return;
 		
 		String shareId = ownerToRootShareId(ownerPid);
-		if(shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
+		if (shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
 		CoreManager core = WT.getCoreManager(targetPid);
-		if(core.isShareRootPermitted(shareId, action)) return;
-		//if(core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
+		if (core.isShareRootPermitted(shareId, action)) return;
+		//if (core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
+	}
+	
+	private boolean quietlyCheckRightsOnCategoryFolder(int categoryId, String action) {
+		try {
+			checkRightsOnCategoryFolder(categoryId, action);
+			return true;
+		} catch(AuthException ex1) {
+			return false;
+		} catch(WTException ex1) {
+			logger.warn("Unable to check rights [{}]", categoryId);
+			return false;
+		}
 	}
 	
 	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
 		UserProfileId targetPid = getTargetProfileId();
 		
-		if(RunContext.isWebTopAdmin()) return;
+		if (RunContext.isWebTopAdmin()) return;
+		
 		// Skip rights check if running user is resource's owner
 		UserProfileId ownerPid = categoryToOwner(categoryId);
-		if(ownerPid.equals(getTargetProfileId())) return;
+		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
+		if (ownerPid.equals(targetPid)) return;
 		
 		// Checks rights on the wildcard instance (if present)
 		CoreManager core = WT.getCoreManager(targetPid);
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
-		if(wildcardShareId != null) {
-			if(core.isShareFolderPermitted(wildcardShareId, action)) return;
-			//if(core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		if (wildcardShareId != null) {
+			if (core.isShareFolderPermitted(wildcardShareId, action)) return;
+			//if (core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on category instance
 		String shareId = categoryToFolderShareId(categoryId);
-		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isShareFolderPermitted(shareId, action)) return;
-		//if(core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
+		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+		if (core.isShareFolderPermitted(shareId, action)) return;
+		//if (core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
@@ -1459,24 +1516,26 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private void checkRightsOnCategoryElements(int categoryId, String action) throws WTException {
 		UserProfileId targetPid = getTargetProfileId();
 		
-		if(RunContext.isWebTopAdmin()) return;
+		if (RunContext.isWebTopAdmin()) return;
+		
 		// Skip rights check if running user is resource's owner
 		UserProfileId ownerPid = categoryToOwner(categoryId);
-		if(ownerPid.equals(targetPid)) return;
+		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
+		if (ownerPid.equals(targetPid)) return;
 		
 		// Checks rights on the wildcard instance (if present)
 		CoreManager core = WT.getCoreManager(targetPid);
 		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
-		if(wildcardShareId != null) {
-			if(core.isShareElementsPermitted(wildcardShareId, action)) return;
-			//if(core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		if (wildcardShareId != null) {
+			if (core.isShareElementsPermitted(wildcardShareId, action)) return;
+			//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on calendar instance
 		String shareId = categoryToFolderShareId(categoryId);
-		if(shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if(core.isShareElementsPermitted(shareId, action)) return;
-		//if(core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
+		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+		if (core.isShareElementsPermitted(shareId, action)) return;
+		//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
@@ -1785,7 +1844,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				Matcher matcher = PATTERN_VIRTUALRCPT_LIST.matcher(virtualRecipient);
 				if (matcher.matches()) {
 					int contactId = Integer.valueOf(matcher.group(1));
-					List<OListRecipient> recipients = dao.selectByContact(con, contactId);
+					UserProfileId pid=new UserProfileId(getId());
+					List<OListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
 					for (OListRecipient recipient : recipients) {
 						InternetAddress ia = MailUtils.buildInternetAddress(recipient.getRecipient());
 						InternetRecipient.RecipientType rt=InternetRecipient.TO;
