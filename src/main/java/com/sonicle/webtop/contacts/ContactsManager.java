@@ -69,10 +69,10 @@ import com.sonicle.webtop.core.model.SharePermsFolder;
 import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
-import com.sonicle.webtop.core.dal.CustomerDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import com.sonicle.webtop.core.io.BatchBeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
+import com.sonicle.webtop.core.model.MasterData;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.BaseReminder;
 import com.sonicle.webtop.core.sdk.ReminderEmail;
@@ -1241,14 +1241,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return createCategory(ocat);
 	}
 	
-	private int doBatchInsertContacts(Connection con, int categoryId, ArrayList<Contact> contacts) {
+	private int doBatchInsertContacts(Connection con, int categoryId, ArrayList<Contact> contacts) throws WTException {
+		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactDAO cdao = ContactDAO.getInstance();
 		ArrayList<OContact> ocontacts = new ArrayList<>();
 		//TODO: eventualmente introdurre supporto alle immagini
 		for(Contact contact : contacts) {
 			OContact cont = createOContact(contact);
 			cont.setIsList(false);
-			cont.setSearchfield(StringUtils.lowerCase(buildSearchfield(cont)));
+			cont.setSearchfield(StringUtils.lowerCase(buildSearchfield(coreMgr, cont)));
 			cont.setCategoryId(categoryId);
 			cont.setContactId(cdao.getSequence(con).intValue());
 			ocontacts.add(cont);
@@ -1257,13 +1258,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private OContact doInsertContact(Connection con, boolean isList, Contact contact, ContactPicture picture) throws WTException {
+		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactDAO cdao = ContactDAO.getInstance();
 		
 		try {
 			OContact item = createOContact(contact);
 			item.setIsList(isList);
 			if (StringUtils.isBlank(item.getPublicUid())) item.setPublicUid(IdentifierUtils.getUUID());
-			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
+			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(coreMgr, item)));
 			item.setContactId(cdao.getSequence(con).intValue());
 			if (isList) {
 				// Compose list workEmail as: "list-{contactId}@{serviceId}"
@@ -1284,11 +1286,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private void doUpdateContact(Connection con, boolean isList, Contact contact, ContactPicture picture) throws WTException {
+		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactDAO cdao = ContactDAO.getInstance();
 		
 		try {
 			OContact item = createOContact(contact);
-			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(item)));
+			item.setSearchfield(StringUtils.lowerCase(buildSearchfield(coreMgr, item)));
 			if (isList) {
 				cdao.updateList(con, item, createRevisionTimestamp());
 			} else {
@@ -1428,19 +1431,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private String lookupCustomerDescription(String customerId) {
-		CustomerDAO cusdao = CustomerDAO.getInstance();
-		Connection con = null;
-
-		try {
-			con = WT.getCoreConnection();
-			return cusdao.selectDescriptionById(con, customerId);
-		} catch(SQLException | DAOException ex) {
-			logger.error("Error getting description from customers [{}]", customerId);
-			return null;
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
+	private String lookupMasterDataDescription(CoreManager coreMgr, String masterDataId) throws WTException {
+		if (masterDataId == null) return null;
+		MasterData md = coreMgr.getMasterData(masterDataId);
+		return (md != null) ? md.getDescription() : null;
 	}
 	
 	private UserProfileId findCategoryOwner(int categoryId) throws WTException {
@@ -1467,8 +1461,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		String shareId = ownerToRootShareId(ownerPid);
 		if (shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
-		CoreManager core = WT.getCoreManager(targetPid);
-		if (core.isShareRootPermitted(shareId, action)) return;
+		CoreManager coreMgr = WT.getCoreManager(targetPid);
+		if (coreMgr.isShareRootPermitted(shareId, action)) return;
 		//if (core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
@@ -1574,16 +1568,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ocat;
 	}
 	
-	private String buildSearchfield(OContact contact) {
+	private String buildSearchfield(CoreManager coreMgr, OContact contact) throws WTException {
 		StringBuilder sb = new StringBuilder();
 		sb.append(StringUtils.defaultString(contact.getLastname()));
 		sb.append(StringUtils.defaultString(contact.getFirstname()));
 		
-		String customer = null;
-		if(!StringUtils.isEmpty(contact.getCompany())) {
-			customer = lookupCustomerDescription(contact.getCompany());
+		String masterData = null;
+		if (!StringUtils.isEmpty(contact.getCompany())) {
+			masterData = lookupMasterDataDescription(coreMgr, contact.getCompany());
 		}
-		String company = StringUtils.defaultIfBlank(customer, contact.getCompany());
+		String company = StringUtils.defaultIfBlank(masterData, contact.getCompany());
 		sb.append(StringUtils.defaultString(company));
 		return sb.toString();
 	}

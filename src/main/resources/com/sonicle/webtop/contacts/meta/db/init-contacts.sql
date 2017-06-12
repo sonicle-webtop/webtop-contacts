@@ -1,3 +1,4 @@
+@DataSource[default@com.sonicle.webtop.contacts]
 
 CREATE SCHEMA "contacts";
 
@@ -170,3 +171,10 @@ ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
 -- Primary Key structure for table list_recipients
 -- ----------------------------
 ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
+
+-- ----------------------------
+-- Align service version
+-- ----------------------------
+@DataSource[default@com.sonicle.webtop.core]
+DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.0.0');

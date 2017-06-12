@@ -40,7 +40,7 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
-import static com.sonicle.webtop.core.jooq.core.Tables.CUSTOMERS;
+import static com.sonicle.webtop.core.jooq.core.Tables.MASTER_DATA;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -166,7 +166,7 @@ public class ContactDAO extends BaseDAO {
 				CONTACTS.BIRTHDAY
 			)
 			.select(
-				CUSTOMERS.DESCRIPTION.as("company_as_customer"),
+				MASTER_DATA.DESCRIPTION.as("company_as_master_data_id"),
 				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
 				CATEGORIES.USER_ID.as("category_user_id")
 			)
@@ -174,8 +174,8 @@ public class ContactDAO extends BaseDAO {
 			.join(CATEGORIES).on(
 					CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
 			)
-			.leftOuterJoin(CUSTOMERS).on(
-					CONTACTS.COMPANY.equal(CUSTOMERS.CUSTOMER_ID)
+			.leftOuterJoin(MASTER_DATA).on(
+					CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID)
 			)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
@@ -234,7 +234,7 @@ public class ContactDAO extends BaseDAO {
 			.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
 			.or(emailField.likeIgnoreCase(patt1)
 			.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
-			.or(CUSTOMERS.DESCRIPTION.likeIgnoreCase(patt2)))));
+			.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)))));
 		
 		if(StringUtils.contains(queryText, "@")) {
 			searchCndt = searchCndt.or(
@@ -250,14 +250,14 @@ public class ContactDAO extends BaseDAO {
 				emailField
 			)
 			.select(
-				CUSTOMERS.DESCRIPTION.as("company_as_customer")
+				MASTER_DATA.DESCRIPTION.as("company_as_master_data_id")
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(
 					CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
 			)
-			.leftOuterJoin(CUSTOMERS).on(
-				CONTACTS.COMPANY.equal(CUSTOMERS.CUSTOMER_ID)
+			.leftOuterJoin(MASTER_DATA).on(
+				CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID)
 			)
 			.where(
 				CATEGORIES.DOMAIN_ID.equal(ownerId.getDomain())

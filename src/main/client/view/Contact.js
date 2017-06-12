@@ -151,7 +151,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						autoLoadOnValue: true,
 						store: {
 							model: 'WTA.ux.data.SimpleModel',
-							proxy: WTF.proxy(WT.ID, 'LookupCustomers', 'customers')
+							proxy: WTF.proxy(WT.ID, 'LookupCustomersSuppliers')
 						},
 						triggers: {
 							clear: WTF.clearTrigger()
