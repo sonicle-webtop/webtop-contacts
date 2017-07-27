@@ -39,32 +39,32 @@ import com.sonicle.webtop.core.sdk.UserProfileId;
  * @author malbinola
  */
 public class VContact extends OContact {
-	private String companyAsCustomer;
+	private String companyAsMasterDataId;
 	private String categoryDomainId;
 	private String categoryUserId;
 	
-	public String getCompanyAsCustomer() {
-		return companyAsCustomer;
+	public String getCompanyAsMasterDataId() {
+		return companyAsMasterDataId;
 	}
 
-	public void setCompanyAsCustomer(String value) {
-		companyAsCustomer = value;
+	public void setCompanyAsMasterDataId(String companyAsMasterDataId) {
+		this.companyAsMasterDataId = companyAsMasterDataId;
 	}
 	
 	public String getCategoryDomainId() {
 		return categoryDomainId;
 	}
 
-	public void setCategoryDomainId(String value) {
-		categoryDomainId = value;
+	public void setCategoryDomainId(String categoryDomainId) {
+		this.categoryDomainId = categoryDomainId;
 	}
 	
 	public String getCategoryUserId() {
 		return categoryUserId;
 	}
 
-	public void setCategoryUserId(String value) {
-		categoryUserId = value;
+	public void setCategoryUserId(String categoryUserId) {
+		this.categoryUserId = categoryUserId;
 	}
 	
 	public UserProfileId getCategoryProfileId() {

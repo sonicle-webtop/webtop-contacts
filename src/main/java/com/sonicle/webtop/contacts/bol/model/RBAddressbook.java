@@ -69,7 +69,7 @@ public class RBAddressbook {
 		this.title = contact.getTitle();
 		this.firstName = contact.getFirstname();
 		this.lastName = contact.getLastname();
-		this.company = StringUtils.defaultIfEmpty(contact.getCompanyAsCustomer(), contact.getCompany());
+		this.company = StringUtils.defaultIfEmpty(contact.getCompanyAsMasterDataId(), contact.getCompany());
 		this.workTelephone = contact.getWorkTelephone();
 		this.workMobile = contact.getWorkMobile();
 		this.workEmail = contact.getWorkEmail();

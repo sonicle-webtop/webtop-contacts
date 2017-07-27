@@ -655,7 +655,7 @@ public class Service extends BaseService {
 							item.put("lastName", vc.getLastname());
 							if(view.equals(HOME_VIEW)) item.put("nickname", vc.getNickname());
 							if(view.equals(WORK_VIEW)) {
-								item.put("company", StringUtils.defaultIfEmpty(vc.getCompanyAsCustomer(), vc.getCompany()));
+								item.put("company", StringUtils.defaultIfEmpty(vc.getCompanyAsMasterDataId(), vc.getCompany()));
 								item.put("function", vc.getFunction());
 								//item.put("workAddress", vc.getCaddress());
 								//item.put("workCity", vc.getCcity());

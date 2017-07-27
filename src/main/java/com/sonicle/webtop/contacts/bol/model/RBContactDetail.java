@@ -36,7 +36,7 @@ import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.core.CoreManager;
-import com.sonicle.webtop.core.bol.OCustomer;
+import com.sonicle.webtop.core.model.MasterData;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.JRHelper;
 import java.awt.Image;
@@ -101,7 +101,7 @@ public class RBContactDetail {
 	public String notes;
 	public Image picture;
 		
-	public RBContactDetail(CoreManager core, Category category, Contact contact, ContactPicture picture) throws WTException {
+	public RBContactDetail(CoreManager coreMgr, Category category, Contact contact, ContactPicture picture) throws WTException {
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
 		this.categoryColor = Category.getHexColor(category.getColor());
@@ -142,7 +142,7 @@ public class RBContactDetail {
 		this.otherCountry = contact.getOtherCountry();
 		this.otherEmail = contact.getOtherEmail();
 		this.otherInstantMsg = contact.getOtherInstantMsg();
-		this.company = StringUtils.defaultIfBlank(lookupCustomer(core, contact.getCompany()), contact.getCompany());	
+		this.company = StringUtils.defaultIfBlank(lookupMasterDataDescription(coreMgr, contact.getCompany()), contact.getCompany());	
 		this.function = contact.getFunction();
 		this.department = contact.getDepartment();
 		this.manager = contact.getManager();
@@ -167,10 +167,10 @@ public class RBContactDetail {
 		*/
 	}
 	
-	private String lookupCustomer(CoreManager core, String customerId) throws WTException {
-		if(customerId == null) return null;
-		OCustomer customer = core.getCustomer(customerId);
-		return (customer != null) ? customer.getDescription() : null;
+	private String lookupMasterDataDescription(CoreManager coreMgr, String masterDataId) throws WTException {
+		if (masterDataId == null) return null;
+		MasterData omd = coreMgr.getMasterData(masterDataId);
+		return (omd != null) ? omd.getDescription() : null;
 	}
 	
 	public Integer getCategoryId() {
