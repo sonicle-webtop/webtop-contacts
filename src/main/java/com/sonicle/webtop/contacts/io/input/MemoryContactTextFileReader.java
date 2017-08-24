@@ -99,11 +99,11 @@ public class MemoryContactTextFileReader extends TextFileReader implements Memor
 				try {
 					results.add(readRow(rowlog, headersIndexes, line));
 					if(!rowlog.isEmpty()) {
-						log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "ROW [{0}]", lr.getLineNumber()));
+						log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", lr.getLineNumber()));
 						log.addAll(rowlog);
 					}
 				} catch(Throwable t) {
-					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", lr.getLineNumber(), t.getMessage()));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", lr.getLineNumber(), t.getMessage()));
 				}
 			}
 		} finally {

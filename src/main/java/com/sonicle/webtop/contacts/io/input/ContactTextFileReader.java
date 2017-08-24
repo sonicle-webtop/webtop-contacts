@@ -118,11 +118,11 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 				fillContactByMapping(contact, mapping.target, rowValues.get(index));
 			}
 			if(!rowlog.isEmpty()) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "ROW [{0}]", row+1));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", row+1));
 				log.addAll(rowlog);
 			}
 		} catch(Throwable t) {
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
 		} finally {
 			beanHandler.handle(new ContactReadResult(contact, null), log);
 		}

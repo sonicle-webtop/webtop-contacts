@@ -177,11 +177,11 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 				fillContactByMapping(contact, mapping.target, rowBean.get(index));
 			}
 			if(!rowlog.isEmpty()) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "ROW [{0}]", row+1));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", row+1));
 				log.addAll(rowlog);
 			}
 		} catch(Throwable t) {
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
 		} finally {
 			boolean ret = beanHandler.handle(new ContactReadResult(contact, null), log);
 			if (!ret) throw new Exception("Handle not succesful");
