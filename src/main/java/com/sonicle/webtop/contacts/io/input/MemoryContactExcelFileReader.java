@@ -100,11 +100,11 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 				try {
 					results.add(readRow(rowlog, headersIndexes, row));
 					if(!rowlog.isEmpty()) {
-						log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "ROW [{0}]", row.getRowNum()+1));
+						log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", row.getRowNum()+1));
 						log.addAll(rowlog);
 					}
 				} catch(Throwable t) {
-					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "ROW [{0}]. Reason: {1}", row.getRowNum()+1, t.getMessage()));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", row.getRowNum()+1, t.getMessage()));
 				}
 			}
 		} finally {

@@ -97,11 +97,11 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 			try {
 				results.add(readVCard(vclog, vc));
 				if(!vclog.isEmpty()) {
-					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "VCARD [{0}]", vc.getUid()));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "VCARD [{0}]", vc.getUid()));
 					log.addAll(vclog);
 				}
 			} catch(Throwable t) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
 			}
 		}
 		return results;
@@ -120,7 +120,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		if(!vc.getTitles().isEmpty()) {
 			Title ti = vc.getTitles().get(0);
 			contact.setTitle(deflt(ti.getValue()));
-			if(vc.getTitles().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many TITLE properties found"));
+			if(vc.getTitles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many TITLE properties found"));
 		}
 		
 		// N -> FirstName/LastName
@@ -128,14 +128,14 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 			StructuredName sn = vc.getStructuredNames().get(0);
 			contact.setFirstName(deflt(sn.getGiven()));
 			contact.setLastName(deflt(sn.getFamily()));
-			if(vc.getStructuredNames().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many N properties found"));
+			if(vc.getStructuredNames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many N properties found"));
 		}
 		
 		// NICKNAME
 		if(!vc.getNicknames().isEmpty()) {
 			Nickname ni = vc.getNicknames().get(0);
 			contact.setNickname(deflt(flatten(ni)));
-			if(vc.getNicknames().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many NICKNAME properties found"));
+			if(vc.getNicknames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many NICKNAME properties found"));
 		}
 		
 		// GENDER
@@ -244,7 +244,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		if(!vc.getRoles().isEmpty()) {
 			Role ro = vc.getRoles().get(0);
 			contact.setFunction(deflt(ro.getValue()));
-			if(vc.getRoles().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many ROLE properties found"));
+			if(vc.getRoles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many ROLE properties found"));
 		}
 		
 		//TODO: come riempiamo il campo manager?
@@ -265,7 +265,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		if(!vc.getUrls().isEmpty()) {
 			Url ur = vc.getUrls().get(0);
 			contact.setUrl(deflt(ur.getValue()));
-			if(vc.getUrls().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many URL properties found"));
+			if(vc.getUrls().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many URL properties found"));
 		}
 		
 		// NOTE
@@ -282,7 +282,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		if(!vc.getPhotos().isEmpty()) {
 			Photo po = vc.getPhotos().get(0);
 			picture = new ContactPicture(po.getContentType().getMediaType(), po.getData());
-			if(vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many PHOTO properties found"));
+			if(vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many PHOTO properties found"));
 		} else {
 			contact.setHasPicture(false);
 		}

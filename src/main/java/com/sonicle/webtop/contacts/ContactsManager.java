@@ -1100,15 +1100,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		checkRightsOnCategoryElements(categoryId, "CREATE");
 		if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE");
 		
-		log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
+		log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Started at {0}", new DateTime()));
 		
 		try {
 			con = WT.getConnection(SERVICE_ID, false);
 
 			if (mode.equals("copy")) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning contacts..."));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Cleaning contacts..."));
 				int del = doDeleteContactsByCategory(con, categoryId, false);
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s deleted!", del));
 			}
 
 			ContactBatchImportBeanHandler handler = new ContactBatchImportBeanHandler(log, con, categoryId);
@@ -1134,26 +1134,26 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 
 			DbUtils.commitQuietly(con);
 
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s read!", handler.handledCount));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", handler.insertedCount));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s read!", handler.handledCount));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s imported!", handler.insertedCount));
 
 		} catch(ImportException ex) {
 			DbUtils.rollbackQuietly(con);
 			logger.error("Import error", ex.getCause());
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "Problems encountered. No changes have been applied!"));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, ex.getMessage()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "Problems encountered. No changes have been applied!"));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, ex.getMessage()));
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
 			logger.error("DB error", ex);
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "Problems encountered. No changes have been applied!"));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unexpected DB error. Reason: {0}", ex.getMessage()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "Problems encountered. No changes have been applied!"));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "Unexpected DB error. Reason: {0}", ex.getMessage()));
 			
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 		
-		log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+		log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Ended at {0}", new DateTime()));
 		return log;
 	}
 	
@@ -1953,28 +1953,28 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
 			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
 			
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Reading source file..."));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Started at {0}", new DateTime()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Reading source file..."));
 			
 			ContactResultBeanHandler handler = new ContactResultBeanHandler(log);
 			try {
 				rea.readContacts(file, handler);
 			} catch(IOException | FileReaderException ex) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete reading. Reason: {0}", ex.getMessage()));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "Unable to complete reading. Reason: {0}", ex.getMessage()));
 				throw new WTException(ex);
 			}
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s found!", handler.parsed.size()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s found!", handler.parsed.size()));
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			
 			if(mode.equals("copy")) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning previous contacts..."));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Cleaning previous contacts..."));
 				int del = doDeleteContactsByCategory(con, categoryId, false);
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s deleted!", del));
 			}
 			
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Importing..."));
 			int count = 0;
 			for(ContactReadResult parse : handler.parsed) {
 				parse.contact.setCategoryId(categoryId);
@@ -1985,10 +1985,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				} catch(Exception ex) {
 					logger.trace("Error inserting contact", ex);
 					DbUtils.rollbackQuietly(con);
-					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
 				}
 			}
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", count));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s imported!", count));
 			
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -1996,7 +1996,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			throw ex;
 		} finally {
 			DbUtils.closeQuietly(con);
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Ended at {0}", new DateTime()));
 		}
 		return log;
 	}
@@ -2011,27 +2011,27 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
 			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
 			
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Started at {0}", new DateTime()));
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Reading vCard file..."));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Started at {0}", new DateTime()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Reading vCard file..."));
 			ArrayList<ParseResult> parsed = null;
 			try {
 				parsed = VCardHelper.parseVCard(log, is);
 			} catch(IOException ex) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to complete parsing. Reason: {0}", ex.getMessage()));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "Unable to complete parsing. Reason: {0}", ex.getMessage()));
 				throw new WTException(ex);
 			}
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contacts/s found!", parsed.size()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contacts/s found!", parsed.size()));
 			
 			con = WT.getConnection(SERVICE_ID);
 			con.setAutoCommit(false);
 			
 			if(mode.equals("copy")) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Cleaning previous contacts..."));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Cleaning previous contacts..."));
 				int del = doDeleteContactsByCategory(con, categoryId, false);
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s deleted!", del));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s deleted!", del));
 			}
 			
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Importing..."));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Importing..."));
 			int count = 0;
 			for(ParseResult parse : parsed) {
 				parse.contact.setCategoryId(categoryId);
@@ -2042,10 +2042,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				} catch(Exception ex) {
 					logger.trace("Error inserting contact", ex);
 					DbUtils.rollbackQuietly(con);
-					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "Unable to import contact [{0}, {1}, {2}]. Reason: {3}", parse.contact.getFirstName(), parse.contact.getLastName(), parse.contact.getPublicUid(), ex.getMessage()));
 				}
 			}
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "{0} contact/s imported!", count));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s imported!", count));
 			
 		} catch(SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
@@ -2053,7 +2053,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			throw ex;
 		} finally {
 			DbUtils.closeQuietly(con);
-			log.addMaster(new MessageLogEntry(LogEntry.LEVEL_INFO, "Ended at {0}", new DateTime()));
+			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Ended at {0}", new DateTime()));
 			//TODO: inviare email report
 			//for(LogEntry entry : log) {
 			//	logger.trace("{}", ((MessageLogEntry)entry).getMessage());

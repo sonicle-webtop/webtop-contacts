@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts.io.input;
 
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactPicture;
+import com.sonicle.webtop.contacts.util.VCardHelper;
 import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.util.LogEntries;
@@ -98,12 +99,12 @@ public class ContactVCardFileReader implements ContactFileReader {
 				LogEntries vclog = new LogEntries();
 				result = readVCard(vclog, vc);
 				if(!vclog.isEmpty()) {
-					log.addMaster(new MessageLogEntry(LogEntry.LEVEL_WARN, "VCARD [{0}]", vc.getUid()));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "VCARD [{0}]", vc.getUid()));
 					log.addAll(vclog);
 				}
 				
 			} catch(Throwable t) {
-				log.addMaster(new MessageLogEntry(LogEntry.LEVEL_ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
+				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
 			} finally {
 				try {
 					beanHandler.handle(result, log);
@@ -114,6 +115,12 @@ public class ContactVCardFileReader implements ContactFileReader {
 		}
 	}
 	
+	public ContactReadResult readVCard(LogEntries log, VCard vc) throws Exception {
+		VCardHelper.ToContactResult result = VCardHelper.toContact(vc, log);
+		return new ContactReadResult(result.contact, result.picture);
+	}
+	
+	/*
 	public ContactReadResult readVCard(LogEntries log, VCard vc) throws Exception {
 		Contact contact = new Contact();
 		ContactPicture picture = null;
@@ -127,7 +134,7 @@ public class ContactVCardFileReader implements ContactFileReader {
 		if(!vc.getTitles().isEmpty()) {
 			Title ti = vc.getTitles().get(0);
 			contact.setTitle(deflt(ti.getValue()));
-			if(vc.getTitles().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many TITLE properties found"));
+			if(vc.getTitles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many TITLE properties found"));
 		}
 		
 		// N -> FirstName/LastName
@@ -135,14 +142,14 @@ public class ContactVCardFileReader implements ContactFileReader {
 			StructuredName sn = vc.getStructuredNames().get(0);
 			contact.setFirstName(deflt(sn.getGiven()));
 			contact.setLastName(deflt(sn.getFamily()));
-			if(vc.getStructuredNames().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many N properties found"));
+			if(vc.getStructuredNames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many N properties found"));
 		}
 		
 		// NICKNAME
 		if(!vc.getNicknames().isEmpty()) {
 			Nickname ni = vc.getNicknames().get(0);
 			contact.setNickname(deflt(flatten(ni)));
-			if(vc.getNicknames().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many NICKNAME properties found"));
+			if(vc.getNicknames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many NICKNAME properties found"));
 		}
 		
 		// GENDER
@@ -251,7 +258,7 @@ public class ContactVCardFileReader implements ContactFileReader {
 		if(!vc.getRoles().isEmpty()) {
 			Role ro = vc.getRoles().get(0);
 			contact.setFunction(deflt(ro.getValue()));
-			if(vc.getRoles().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many ROLE properties found"));
+			if(vc.getRoles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many ROLE properties found"));
 		}
 		
 		//TODO: come riempiamo il campo manager?
@@ -272,7 +279,7 @@ public class ContactVCardFileReader implements ContactFileReader {
 		if(!vc.getUrls().isEmpty()) {
 			Url ur = vc.getUrls().get(0);
 			contact.setUrl(deflt(ur.getValue()));
-			if(vc.getUrls().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many URL properties found"));
+			if(vc.getUrls().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many URL properties found"));
 		}
 		
 		// NOTE
@@ -289,7 +296,7 @@ public class ContactVCardFileReader implements ContactFileReader {
 		if(!vc.getPhotos().isEmpty()) {
 			Photo po = vc.getPhotos().get(0);
 			picture = new ContactPicture(po.getContentType().getMediaType(), po.getData());
-			if(vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.LEVEL_WARN, "Many PHOTO properties found"));
+			if(vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many PHOTO properties found"));
 		} else {
 			contact.setHasPicture(false);
 		}
@@ -315,4 +322,5 @@ public class ContactVCardFileReader implements ContactFileReader {
 	private String flatten(TextListProperty textListProp, String separator) {
 		return StringUtils.join(textListProp.getValues(), separator);
 	}
+	*/
 }
