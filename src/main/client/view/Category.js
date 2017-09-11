@@ -75,6 +75,11 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 				fieldLabel: me.mys.res('category.fld-name.lbl'),
 				anchor: '100%'
 			}, {
+				xtype: 'checkbox',
+				bind: '{isDefault}',
+				hideEmptyLabel: false,
+				boxLabel: me.mys.res('category.fld-default.lbl')
+			}, {
 				xtype: 'textareafield',
 				bind: '{record.description}',
 				fieldLabel: me.mys.res('category.fld-description.lbl'),
@@ -85,11 +90,6 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 				colors: WT.getColorPalette(),
 				fieldLabel: me.mys.res('category.fld-color.lbl'),
 				width: 210
-			}, {
-				xtype: 'checkbox',
-				bind: '{isDefault}',
-				hideEmptyLabel: false,
-				boxLabel: me.mys.res('category.fld-default.lbl')
 			},
 			WTF.lookupCombo('id', 'desc', {
 				bind: '{record.sync}',
