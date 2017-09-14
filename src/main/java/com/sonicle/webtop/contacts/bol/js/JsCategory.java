@@ -33,8 +33,10 @@
 package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.LangUtils;
+import com.sonicle.commons.URIUtils;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.Sync;
+import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
 
 /**
  *
@@ -45,35 +47,54 @@ public class JsCategory {
 	public String domainId;
 	public String userId;
 	public Boolean builtIn;
+	public String provider;
 	public String name;
 	public String description;
 	public String color;
 	public String sync;
 	public Boolean isDefault;
+	public String remoteUrl;
+	public String remoteUsername;
+	public String remotePassword;
 	
 	public JsCategory(Category cat) {
 		categoryId = cat.getCategoryId();
 		domainId = cat.getDomainId();
 		userId = cat.getUserId();
 		builtIn = cat.getBuiltIn();
+		provider = EnumUtils.toSerializedName(cat.getProvider());
 		name = cat.getName();
 		description = cat.getDescription();
 		color = cat.getColor();
 		sync = EnumUtils.getValue(cat.getSync());
 		isDefault = cat.getIsDefault();
+		
+		CategoryRemoteParameters params = LangUtils.deserialize(cat.getParameters(), new CategoryRemoteParameters(), CategoryRemoteParameters.class);
+		remoteUrl = URIUtils.toString(params.url);
+		remoteUsername = params.username;
+		remotePassword = params.password;
 	}
 	
-	public static Category buildFolder(JsCategory js) {
-		Category cat = new Category();
-		cat.setCategoryId(js.categoryId);
-		cat.setDomainId(js.domainId);
-		cat.setUserId(js.userId);
-		cat.setBuiltIn(js.builtIn);
-		cat.setName(js.name);
-		cat.setDescription(js.description);
-		cat.setColor(js.color);
-		cat.setSync(EnumUtils.forValue(Sync.class, js.sync));
-		cat.setIsDefault(js.isDefault);
-		return cat;
+	public static Category createCategory(JsCategory js, String origParameters) {
+		Category cal = new Category();
+		cal.setCategoryId(js.categoryId);
+		cal.setDomainId(js.domainId);
+		cal.setUserId(js.userId);
+		cal.setBuiltIn(js.builtIn);
+		cal.setProvider(EnumUtils.forSerializedName(js.provider, Category.Provider.class));
+		cal.setName(js.name);
+		cal.setDescription(js.description);
+		cal.setColor(js.color);
+		cal.setSync(EnumUtils.forSerializedName(js.sync, Category.Sync.class));
+		cal.setIsDefault(js.isDefault);
+		//cal.setIsPrivate(js.isPrivate);
+		
+		CategoryRemoteParameters params = LangUtils.deserialize(origParameters, new CategoryRemoteParameters(), CategoryRemoteParameters.class);
+		params.url = URIUtils.createURIQuietly(js.remoteUrl);
+		params.username = js.remoteUsername;
+		params.password = js.remotePassword;
+		cal.setParameters(LangUtils.serialize(params, CategoryRemoteParameters.class));
+		
+		return cal;
 	}
 }

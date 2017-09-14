@@ -33,7 +33,7 @@
 package com.sonicle.webtop.contacts;
 
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
-import com.sonicle.webtop.contacts.model.Sync;
+import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.core.sdk.BaseServiceSettings;
 
 /**
@@ -46,8 +46,8 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 		super(serviceId, domainId);
 	}
 	
-	public Sync getDefaultCategorySync() {
-		return getEnum(Sync.class, DEFAULT_PREFIX + CATEGORY_SYNC, Sync.OFF);
+	public Category.Sync getDefaultCategorySync() {
+		return getEnum(Category.Sync.class, DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF);
 	}
 	
 	public String getDefaultView() {
