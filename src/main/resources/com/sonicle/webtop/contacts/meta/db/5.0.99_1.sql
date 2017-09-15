@@ -1,9 +1,11 @@
 @DataSource[default@com.sonicle.webtop.contacts]
 
 -- ----------------------------
--- Update structure for calendars
+-- Update structure for categories
 -- ----------------------------
 ALTER TABLE "contacts"."categories"
+ALTER COLUMN "built_in" SET DEFAULT false,
+ALTER COLUMN "is_default" SET DEFAULT false,
 ADD COLUMN "provider" varchar(20),
 ADD COLUMN "parameters" text;
 
@@ -21,5 +23,6 @@ ALTER TABLE "contacts"."categories" ALTER COLUMN "provider" SET NOT NULL;
 -- Update structure for events
 -- ----------------------------
 ALTER TABLE "contacts"."contacts"
-ADD COLUMN "href" varchar(255),
-ADD COLUMN "etag" varchar(255);
+ALTER COLUMN "url" TYPE varchar(2048),
+ADD COLUMN "href" varchar(2048),
+ADD COLUMN "etag" varchar(2048);
