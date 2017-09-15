@@ -74,27 +74,31 @@ public class JsCategory {
 		remoteUsername = params.username;
 		remotePassword = params.password;
 	}
-	
+		
 	public static Category createCategory(JsCategory js, String origParameters) {
-		Category cal = new Category();
-		cal.setCategoryId(js.categoryId);
-		cal.setDomainId(js.domainId);
-		cal.setUserId(js.userId);
-		cal.setBuiltIn(js.builtIn);
-		cal.setProvider(EnumUtils.forSerializedName(js.provider, Category.Provider.class));
-		cal.setName(js.name);
-		cal.setDescription(js.description);
-		cal.setColor(js.color);
-		cal.setSync(EnumUtils.forSerializedName(js.sync, Category.Sync.class));
-		cal.setIsDefault(js.isDefault);
+		Category cat = new Category();
+		cat.setCategoryId(js.categoryId);
+		cat.setDomainId(js.domainId);
+		cat.setUserId(js.userId);
+		cat.setBuiltIn(js.builtIn);
+		cat.setProvider(EnumUtils.forSerializedName(js.provider, Category.Provider.class));
+		cat.setName(js.name);
+		cat.setDescription(js.description);
+		cat.setColor(js.color);
+		cat.setSync(EnumUtils.forSerializedName(js.sync, Category.Sync.class));
+		cat.setIsDefault(js.isDefault);
 		//cal.setIsPrivate(js.isPrivate);
 		
-		CategoryRemoteParameters params = LangUtils.deserialize(origParameters, new CategoryRemoteParameters(), CategoryRemoteParameters.class);
-		params.url = URIUtils.createURIQuietly(js.remoteUrl);
-		params.username = js.remoteUsername;
-		params.password = js.remotePassword;
-		cal.setParameters(LangUtils.serialize(params, CategoryRemoteParameters.class));
+		if (cat.isRemoteProvider()) {
+			CategoryRemoteParameters params = LangUtils.deserialize(origParameters, new CategoryRemoteParameters(), CategoryRemoteParameters.class);
+			params.url = URIUtils.createURIQuietly(js.remoteUrl);
+			params.username = js.remoteUsername;
+			params.password = js.remotePassword;
+			cat.setParameters(LangUtils.serialize(params, CategoryRemoteParameters.class));
+		} else {
+			cat.setParameters(null);
+		}
 		
-		return cal;
+		return cat;
 	}
 }

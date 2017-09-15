@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = 740832107;
+	private static final long serialVersionUID = -1494853329;
 
 	/**
 	 * The reference instance of <code>contacts.contacts</code>
@@ -294,7 +294,7 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	/**
 	 * The column <code>contacts.contacts.url</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> URL = createField("url", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> URL = createField("url", org.jooq.impl.SQLDataType.VARCHAR.length(2048), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.notes</code>.
@@ -305,6 +305,16 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	 * The column <code>contacts.contacts.revision_sequence</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> REVISION_SEQUENCE = createField("revision_sequence", org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaulted(true), this, "");
+
+	/**
+	 * The column <code>contacts.contacts.href</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> HREF = createField("href", org.jooq.impl.SQLDataType.VARCHAR.length(2048), this, "");
+
+	/**
+	 * The column <code>contacts.contacts.etag</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> ETAG = createField("etag", org.jooq.impl.SQLDataType.VARCHAR.length(2048), this, "");
 
 	/**
 	 * Create a <code>contacts.contacts</code> table reference
