@@ -29,7 +29,7 @@ CREATE TABLE "contacts"."categories" (
 "domain_id" varchar(20) NOT NULL,
 "user_id" varchar(100) NOT NULL,
 "built_in" bool DEFAULT false NOT NULL,
-"provider" varchar(20) NOT NULL,
+"provider" varchar(20) DEFAULT 'local'::character varying NOT NULL,
 "name" varchar(100) NOT NULL,
 "description" varchar(255),
 "color" varchar(20),
@@ -181,4 +181,4 @@ ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.0.0');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.1.1');
