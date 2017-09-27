@@ -55,7 +55,6 @@ import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactReadResult;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.Sync;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -142,6 +141,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
+	}
+	
+	private ContactsServiceSettings getServiceSettings() {
+		return new ContactsServiceSettings(SERVICE_ID, getTargetProfileId().getDomainId());
 	}
 	
 	private void buildShareCache() {
@@ -432,19 +435,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public Category addCategory(Category cat) throws WTException {
+	public Category addCategory(Category category) throws WTException {
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryRoot(cat.getProfileId(), "MANAGE");
+			checkRightsOnCategoryRoot(category.getProfileId(), "MANAGE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
-			cat.setBuiltIn(false);
-			cat = doCategoryUpdate(true, con, cat);
+			category.setBuiltIn(false);
+			category = doCategoryUpdate(true, con, category);
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_INSERT", cat.getCategoryId().toString());
+			writeLog("CATEGORY_INSERT", category.getCategoryId().toString());
 			
-			return cat;
+			return category;
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -472,17 +475,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				return null;
 			}
 			
-			ContactsServiceSettings ss = new ContactsServiceSettings(SERVICE_ID, getTargetProfileId().getDomainId());
-			
 			Category cat = new Category();
-			cat.setDomainId(getTargetProfileId().getDomainId());
-			cat.setUserId(getTargetProfileId().getUserId());
 			cat.setBuiltIn(true);
 			cat.setName(WT.getPlatformName());
 			cat.setDescription("");
-			cat.setColor("#FFFFFF");
-			cat.setIsPrivate(false);
-			cat.setSync(ss.getDefaultCategorySync());
 			cat.setIsDefault(true);
 			cat = doCategoryUpdate(true, con, cat);
 			DbUtils.commitQuietly(con);
@@ -1223,19 +1219,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return alerts;
 	}
 	
-	private Category doCategoryUpdate(boolean insert, Connection con, Category cat) throws WTException {
-		CategoryDAO dao = CategoryDAO.getInstance();
+	private Category doCategoryUpdate(boolean insert, Connection con, Category cat) throws DAOException {
+		CategoryDAO catDao = CategoryDAO.getInstance();
 		
 		OCategory ocat = createOCategory(cat);
-		if (ocat.getDomainId() == null) ocat.setDomainId(getTargetProfileId().getDomainId());
-		if (ocat.getUserId() == null) ocat.setUserId(getTargetProfileId().getUserId());
-		
-		if(ocat.getIsDefault()) dao.resetIsDefaultByProfile(con, ocat.getDomainId(), ocat.getUserId());
+		if(ocat.getIsDefault()) catDao.resetIsDefaultByProfile(con, ocat.getDomainId(), ocat.getUserId());
 		if (insert) {
-			ocat.setCategoryId(dao.getSequence(con).intValue());
-			dao.insert(con, ocat);
+			ocat.setCategoryId(catDao.getSequence(con).intValue());
+			catDao.insert(con, ocat);
 		} else {
-			dao.update(con, ocat);
+			catDao.update(con, ocat);
 		}
 		
 		return createCategory(ocat);
@@ -1534,38 +1527,70 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
 	
-	private Category createCategory(OCategory ocat) {
-		if (ocat == null) return null;
-		Category cat = new Category();
-		cat.setCategoryId(ocat.getCategoryId());
-		cat.setDomainId(ocat.getDomainId());
-		cat.setUserId(ocat.getUserId());
-		cat.setBuiltIn(ocat.getBuiltIn());
-		cat.setName(ocat.getName());
-		cat.setDescription(ocat.getDescription());
-		cat.setColor(ocat.getColor());
-		cat.setSync(EnumUtils.forValue(Sync.class, ocat.getSync()));
-		// TODO: aggiungere supporto campo is_private
-		//cat.setIsPrivate(ocat.getIsPrivate());
-		cat.setIsDefault(ocat.getIsDefault());
-		return cat;
+	private Category createCategory(OCategory with) {
+		return fillCategory(new Category(), with);
 	}
 	
-	private OCategory createOCategory(Category cat) {
-		if (cat == null) return null;
-		OCategory ocat = new OCategory();
-		ocat.setCategoryId(cat.getCategoryId());
-		ocat.setDomainId(cat.getDomainId());
-		ocat.setUserId(cat.getUserId());
-		ocat.setBuiltIn(cat.getBuiltIn());
-		ocat.setName(cat.getName());
-		ocat.setDescription(cat.getDescription());
-		ocat.setColor(cat.getColor());
-		ocat.setSync(EnumUtils.getValue(cat.getSync()));
-		// TODO: aggiungere supporto campo is_private
-		//ocat.setIsPrivate(cat.getIsPrivate());
-		ocat.setIsDefault(cat.getIsDefault());
-		return ocat;
+	private Category fillCategory(Category fill, OCategory with) {
+		if ((fill != null) && (with != null)) {
+			fill.setCategoryId(with.getCategoryId());
+			fill.setDomainId(with.getDomainId());
+			fill.setUserId(with.getUserId());
+			fill.setBuiltIn(with.getBuiltIn());
+			fill.setProvider(EnumUtils.forSerializedName(with.getProvider(), Category.Provider.class));
+			fill.setName(with.getName());
+			fill.setDescription(with.getDescription());
+			fill.setColor(with.getColor());
+			fill.setSync(EnumUtils.forSerializedName(with.getSync(), Category.Sync.class));
+			fill.setIsDefault(with.getIsDefault());
+			// TODO: aggiungere supporto campo is_private
+			//cat.setIsPrivate(ocat.getIsPrivate());
+			fill.setParameters(with.getParameters());
+		}
+		return fill;
+	}
+	
+	private OCategory createOCategory(Category with) {
+		return fillOCategoryWithDefaults(fillOCategory(new OCategory(), with));
+	}
+	
+	private OCategory fillOCategory(OCategory fill, Category with) {
+		if ((fill != null) && (with != null)) {
+			fill.setCategoryId(with.getCategoryId());
+			fill.setDomainId(with.getDomainId());
+			fill.setUserId(with.getUserId());
+			fill.setBuiltIn(with.getBuiltIn());
+			fill.setProvider(EnumUtils.toSerializedName(with.getProvider()));
+			fill.setName(with.getName());
+			fill.setDescription(with.getDescription());
+			fill.setColor(with.getColor());
+			fill.setSync(EnumUtils.getValue(with.getSync()));
+			fill.setIsDefault(with.getIsDefault());
+			// TODO: aggiungere supporto campo is_private
+			//ocat.setIsPrivate(cat.getIsPrivate());
+			fill.setParameters(with.getParameters());
+		}
+		return fill;
+	}
+	
+	private OCategory fillOCategoryWithDefaults(OCategory fill) {
+		if (fill != null) {
+			ContactsServiceSettings ss = getServiceSettings();
+			if (fill.getDomainId() == null) fill.setDomainId(getTargetProfileId().getDomainId());
+			if (fill.getUserId() == null) fill.setUserId(getTargetProfileId().getUserId());
+			if (fill.getBuiltIn() == null) fill.setBuiltIn(false);
+			if (StringUtils.isBlank(fill.getProvider())) fill.setProvider(EnumUtils.toSerializedName(Category.Provider.LOCAL));
+			if (StringUtils.isBlank(fill.getColor())) fill.setColor("#FFFFFF");
+			if (StringUtils.isBlank(fill.getSync())) fill.setSync(EnumUtils.toSerializedName(ss.getDefaultCategorySync()));
+			if (fill.getIsDefault() == null) fill.setIsDefault(false);
+			//if (fill.getIsPrivate() == null) fill.setIsPrivate(false);
+			
+			Category.Provider provider = EnumUtils.forSerializedName(fill.getProvider(), Category.Provider.class);
+			if (Category.Provider.CARDDAV.equals(provider)) {
+				fill.setIsDefault(false);
+			}
+		}
+		return fill;
 	}
 	
 	private String buildSearchfield(CoreManager coreMgr, OContact contact) throws WTException {

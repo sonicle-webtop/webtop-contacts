@@ -489,7 +489,7 @@ public class Service extends BaseService {
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
-				Integer id = ServletUtils.getIntParameter(request, "id", true);
+				int id = ServletUtils.getIntParameter(request, "id", true);
 				
 				item = manager.getCategory(id);
 				new JsonResult(new JsCategory(item)).printTo(out);
@@ -497,7 +497,7 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				item = manager.addCategory(JsCategory.buildFolder(pl.data));
+				item = manager.addCategory(JsCategory.createCategory(pl.data, null));
 				updateFoldersCache();
 				toggleCheckedFolder(item.getCategoryId(), true);
 				new JsonResult().printTo(out);
@@ -505,7 +505,10 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				manager.updateCategory(JsCategory.buildFolder(pl.data));
+				item = manager.getCategory(pl.data.categoryId);
+				if (item == null) throw new WTException("Category not found [{0}]", pl.data.categoryId);
+				manager.updateCategory(JsCategory.createCategory(pl.data, item.getParameters()));
+				updateFoldersCache();
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
@@ -513,11 +516,22 @@ public class Service extends BaseService {
 				
 				manager.deleteCategory(pl.data.categoryId);
 				updateFoldersCache();
+				toggleCheckedFolder(pl.data.categoryId, false);
+				new JsonResult().printTo(out);
+				
+			} else if (crud.equals("sync")) {
+				int id = ServletUtils.getIntParameter(request, "id", true);
+				boolean full = ServletUtils.getBooleanParameter(request, "full", false);
+				
+				item = manager.getCategory(id);
+				if (item == null) throw new WTException("Category not found [{0}]", id);
+				//runSyncRemoteCalendar(id, item.getName(), full);
+				
 				new JsonResult().printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in action ManageCategories", ex);
+		} catch(Throwable t) {
+			logger.error("Error in ManageCategories", t);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}

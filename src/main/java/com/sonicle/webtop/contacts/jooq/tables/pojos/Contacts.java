@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts implements java.io.Serializable {
 
-	private static final long serialVersionUID = 1372406416;
+	private static final long serialVersionUID = -1186552464;
 
 	private java.lang.Integer       contactId;
 	private java.lang.Integer       categoryId;
@@ -73,6 +73,8 @@ public class Contacts implements java.io.Serializable {
 	private java.lang.String        url;
 	private java.lang.String        notes;
 	private java.lang.Integer       revisionSequence;
+	private java.lang.String        href;
+	private java.lang.String        etag;
 
 	public Contacts() {}
 
@@ -131,7 +133,9 @@ public class Contacts implements java.io.Serializable {
 		java.lang.String        otherIm,
 		java.lang.String        url,
 		java.lang.String        notes,
-		java.lang.Integer       revisionSequence
+		java.lang.Integer       revisionSequence,
+		java.lang.String        href,
+		java.lang.String        etag
 	) {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
@@ -188,6 +192,8 @@ public class Contacts implements java.io.Serializable {
 		this.url = url;
 		this.notes = notes;
 		this.revisionSequence = revisionSequence;
+		this.href = href;
+		this.etag = etag;
 	}
 
 	public java.lang.Integer getContactId() {
@@ -628,5 +634,21 @@ public class Contacts implements java.io.Serializable {
 
 	public void setRevisionSequence(java.lang.Integer revisionSequence) {
 		this.revisionSequence = revisionSequence;
+	}
+
+	public java.lang.String getHref() {
+		return this.href;
+	}
+
+	public void setHref(java.lang.String href) {
+		this.href = href;
+	}
+
+	public java.lang.String getEtag() {
+		return this.etag;
+	}
+
+	public void setEtag(java.lang.String etag) {
+		this.etag = etag;
 	}
 }

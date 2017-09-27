@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> {
 
-	private static final long serialVersionUID = -816935563;
+	private static final long serialVersionUID = -346838317;
 
 	/**
 	 * The reference instance of <code>contacts.categories</code>
@@ -49,7 +49,7 @@ public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.conta
 	/**
 	 * The column <code>contacts.categories.built_in</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Boolean> BUILT_IN = createField("built_in", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Boolean> BUILT_IN = createField("built_in", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>contacts.categories.name</code>.
@@ -74,7 +74,17 @@ public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.conta
 	/**
 	 * The column <code>contacts.categories.is_default</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Boolean> IS_DEFAULT = createField("is_default", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Boolean> IS_DEFAULT = createField("is_default", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaulted(true), this, "");
+
+	/**
+	 * The column <code>contacts.categories.provider</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PROVIDER = createField("provider", org.jooq.impl.SQLDataType.VARCHAR.length(20).nullable(false), this, "");
+
+	/**
+	 * The column <code>contacts.categories.parameters</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PARAMETERS = createField("parameters", org.jooq.impl.SQLDataType.CLOB, this, "");
 
 	/**
 	 * Create a <code>contacts.categories</code> table reference

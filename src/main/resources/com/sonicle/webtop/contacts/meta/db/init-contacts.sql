@@ -28,12 +28,14 @@ CREATE TABLE "contacts"."categories" (
 "category_id" int4 DEFAULT nextval('"contacts".seq_categories'::regclass) NOT NULL,
 "domain_id" varchar(20) NOT NULL,
 "user_id" varchar(100) NOT NULL,
-"built_in" bool NOT NULL,
+"built_in" bool DEFAULT false NOT NULL,
+"provider" varchar(20) DEFAULT 'local'::character varying NOT NULL,
 "name" varchar(100) NOT NULL,
 "description" varchar(255),
 "color" varchar(20),
 "sync" varchar(1) NOT NULL,
-"is_default" bool NOT NULL
+"is_default" bool DEFAULT false NOT NULL,
+"parameters" text
 )
 WITH (OIDS=FALSE)
 
@@ -97,8 +99,10 @@ CREATE TABLE "contacts"."contacts" (
 "other_country" varchar(30),
 "other_email" varchar(320),
 "other_im" varchar(200),
-"url" varchar(255),
-"notes" varchar(2000)
+"url" varchar(2048),
+"notes" varchar(2000),
+"href" varchar(2048),
+"etag" varchar(2048)
 )
 WITH (OIDS=FALSE)
 
@@ -177,4 +181,4 @@ ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.0.0');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.1.1');

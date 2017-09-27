@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories implements java.io.Serializable {
 
-	private static final long serialVersionUID = 2047349173;
+	private static final long serialVersionUID = 1379108929;
 
 	private java.lang.Integer categoryId;
 	private java.lang.String  domainId;
@@ -27,6 +27,8 @@ public class Categories implements java.io.Serializable {
 	private java.lang.String  color;
 	private java.lang.String  sync;
 	private java.lang.Boolean isDefault;
+	private java.lang.String  provider;
+	private java.lang.String  parameters;
 
 	public Categories() {}
 
@@ -39,7 +41,9 @@ public class Categories implements java.io.Serializable {
 		java.lang.String  description,
 		java.lang.String  color,
 		java.lang.String  sync,
-		java.lang.Boolean isDefault
+		java.lang.Boolean isDefault,
+		java.lang.String  provider,
+		java.lang.String  parameters
 	) {
 		this.categoryId = categoryId;
 		this.domainId = domainId;
@@ -50,6 +54,8 @@ public class Categories implements java.io.Serializable {
 		this.color = color;
 		this.sync = sync;
 		this.isDefault = isDefault;
+		this.provider = provider;
+		this.parameters = parameters;
 	}
 
 	public java.lang.Integer getCategoryId() {
@@ -122,5 +128,21 @@ public class Categories implements java.io.Serializable {
 
 	public void setIsDefault(java.lang.Boolean isDefault) {
 		this.isDefault = isDefault;
+	}
+
+	public java.lang.String getProvider() {
+		return this.provider;
+	}
+
+	public void setProvider(java.lang.String provider) {
+		this.provider = provider;
+	}
+
+	public java.lang.String getParameters() {
+		return this.parameters;
+	}
+
+	public void setParameters(java.lang.String parameters) {
+		this.parameters = parameters;
 	}
 }
