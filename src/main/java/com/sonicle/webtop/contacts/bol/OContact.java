@@ -41,14 +41,6 @@ import com.sonicle.webtop.core.model.RecipientFieldType;
  * @author malbinola
  */
 public class OContact extends Contacts {
-	public final static String REV_STATUS_NEW = "N";
-	public final static String REV_STATUS_MODIFIED = "M";
-	public final static String REV_STATUS_DELETED = "D";
-	
-	public OContact() {
-		super();
-		setRevisionStatus(REV_STATUS_NEW);
-	}
 	
 	public String getValueBy(RecipientFieldType type, RecipientFieldCategory category) {
 		if (type.equals(RecipientFieldType.TELEPHONE)) {

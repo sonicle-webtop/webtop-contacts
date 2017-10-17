@@ -32,19 +32,19 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.VContact;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
-import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
+import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import static com.sonicle.webtop.core.jooq.core.Tables.MASTER_DATA;
 import com.sonicle.webtop.core.model.RecipientFieldCategory;
 import com.sonicle.webtop.core.model.RecipientFieldType;
-import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +55,6 @@ import org.joda.time.LocalDate;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
-import org.jooq.TableField;
 import org.jooq.impl.DSL;
 
 /**
@@ -93,8 +92,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.BIRTHDAY.equal(date)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
-					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -123,8 +122,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.ANNIVERSARY.equal(date)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
-					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -137,17 +136,19 @@ public class ContactDAO extends BaseDAO {
 	public List<VContact> viewByCategoryPattern(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
-		Condition searchCndt = null;
-		if(searchMode.equals("lastname")) {
-			//searchCndt = CONTACTS.LASTNAME.lower().like(query);
-			searchCndt = CONTACTS.LASTNAME.lower().likeRegex(pattern);
-			if(pattern.equals("^.*")) searchCndt = searchCndt.or(CONTACTS.LASTNAME.isNull());
-		} else {
-			searchCndt = CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
-				.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
-				.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
-				.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
-				.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
+		Condition patternCndt = DSL.trueCondition();
+		if (!StringUtils.isBlank(pattern)) {
+			if (searchMode.equals("lastname")) {
+				//searchCndt = CONTACTS.LASTNAME.lower().like(query);
+				patternCndt = CONTACTS.LASTNAME.lower().likeRegex(pattern);
+				if (pattern.equals("^.*")) patternCndt = patternCndt.or(CONTACTS.LASTNAME.isNull());
+			} else {
+				patternCndt = CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
+					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
+					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
+			}
 		}
 		
 		return dsl
@@ -186,11 +187,11 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
-					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 				.and(
-					searchCndt
+					patternCndt
 				)
 			)
 			.orderBy(
@@ -253,8 +254,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
-					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 				.and(
 					targetField.isNotNull()
@@ -280,7 +281,7 @@ public class ContactDAO extends BaseDAO {
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(OContact.REV_STATUS_NEW);
+		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
@@ -291,10 +292,11 @@ public class ContactDAO extends BaseDAO {
 	}
 	
 	public int batchInsert(Connection con, ArrayList<OContact> items, DateTime revisionTimestamp) throws DAOException {
+		final String NEW = EnumUtils.toSerializedName(Contact.RevisionStatus.NEW);
 		DSLContext dsl = getDSL(con);
 		ArrayList<ContactsRecord> records = new ArrayList<>();
 		for(OContact item : items) {
-			item.setRevisionStatus(OContact.REV_STATUS_NEW);
+			item.setRevisionStatus(NEW);
 			item.setRevisionTimestamp(revisionTimestamp);
 			item.setRevisionSequence(0);
 			records.add(dsl.newRecord(CONTACTS, item));
@@ -305,7 +307,7 @@ public class ContactDAO extends BaseDAO {
 	
 	public int update(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
+		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
@@ -320,7 +322,7 @@ public class ContactDAO extends BaseDAO {
 	
 	public int updateList(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(OContact.REV_STATUS_MODIFIED);
+		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		return dsl
@@ -341,7 +343,7 @@ public class ContactDAO extends BaseDAO {
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.CATEGORY_ID, categoryId)
-			.set(CONTACTS.REVISION_STATUS, OContact.REV_STATUS_MODIFIED)
+			.set(CONTACTS.REVISION_STATUS, EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED))
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
@@ -360,11 +362,11 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int updateRevisionStatus(Connection con, int contactId, String revisionStatus, DateTime revisionTimestamp) throws DAOException {
+	public int updateRevisionStatus(Connection con, int contactId, Contact.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.REVISION_STATUS, revisionStatus)
+			.set(CONTACTS.REVISION_STATUS, EnumUtils.toSerializedName(revisionStatus))
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
@@ -384,28 +386,30 @@ public class ContactDAO extends BaseDAO {
 	}
 	
 	public int logicDeleteById(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
+		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.REVISION_STATUS, OContact.REV_STATUS_DELETED)
+			.set(CONTACTS.REVISION_STATUS, DELETED)
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
-				.and(CONTACTS.REVISION_STATUS.notEqual(OContact.REV_STATUS_DELETED))
+				.and(CONTACTS.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();
 	}
 	
 	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean list, DateTime revisionTimestamp) throws DAOException {
+		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
-			.set(CONTACTS.REVISION_STATUS, OContact.REV_STATUS_DELETED)
+			.set(CONTACTS.REVISION_STATUS, DELETED)
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(list))
-				.and(CONTACTS.REVISION_STATUS.notEqual(OContact.REV_STATUS_DELETED))
+				.and(CONTACTS.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();
 	}

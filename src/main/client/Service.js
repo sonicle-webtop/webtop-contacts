@@ -615,6 +615,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iconCls: 'wt-icon-print-xs',
 			handler: function() {
 				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
+				delete params.action;
 				var url = WTF.processBinUrl(me.ID, 'PrintAddressbook', params);
 				Sonicle.URLMgr.openFile(url, {filename: 'addressbook', newWindow: true});
 			}

@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.core.sdk.UserProfileId;
@@ -105,7 +106,7 @@ public class JsContact {
 		firstName = contact.getFirstName();
 		lastName = contact.getLastName();
 		nickname = contact.getNickname();
-		gender = contact.getGender();
+		gender = EnumUtils.toSerializedName(contact.getGender());
 		workAddress = contact.getWorkAddress();
 		workPostalCode = contact.getWorkPostalCode();
 		workCity = contact.getWorkCity();
@@ -161,7 +162,7 @@ public class JsContact {
 		item.setFirstName(js.firstName);
 		item.setLastName(js.lastName);
 		item.setNickname(js.nickname);
-		item.setGender(js.gender);
+		item.setGender(EnumUtils.forSerializedName(js.gender, Contact.Gender.class));
 		item.setWorkAddress(js.workAddress);
 		item.setWorkPostalCode(js.workPostalCode);
 		item.setWorkCity(js.workCity);

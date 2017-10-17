@@ -290,10 +290,10 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		return new ContactReadResult(contact, picture);
 	}
 	
-	public static String parseGender(Gender ge) {
-		if(ge.isMale()) return Contact.Gender.MALE.toString();
-		if(ge.isFemale()) return Contact.Gender.FEMALE.toString();
-		if(ge.isOther()) return Contact.Gender.OTHER.toString();
+	public static Contact.Gender parseGender(Gender ge) {
+		if (ge.isMale()) return Contact.Gender.MALE;
+		if (ge.isFemale()) return Contact.Gender.FEMALE;
+		if (ge.isOther()) return Contact.Gender.OTHER;
 		return null;
 	}
 	

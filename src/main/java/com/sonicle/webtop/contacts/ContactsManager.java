@@ -55,6 +55,8 @@ import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactReadResult;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.FolderContacts;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -389,13 +391,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private List<Category> listCategories(UserProfileId pid) throws WTException {
-		CategoryDAO dao = CategoryDAO.getInstance();
+		CategoryDAO catDao = CategoryDAO.getInstance();
 		ArrayList<Category> items = new ArrayList<>();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			for (OCategory ocat : dao.selectByProfile(con, pid.getDomainId(), pid.getUserId())) {
+			for (OCategory ocat : catDao.selectByProfile(con, pid.getDomainId(), pid.getUserId())) {
 				items.add(createCategory(ocat));
 			}
 			return items;
@@ -580,33 +582,30 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public List<CategoryContacts> listContacts(CategoryRoot root, Integer[] categoryFolders, String searchMode, String pattern) throws WTException {
-		return listContacts(root.getOwnerProfileId(), categoryFolders, searchMode, pattern);
-	}
-	
-	public List<CategoryContacts> listContacts(UserProfileId pid, Integer[] categoryFolders, String searchMode, String pattern) throws WTException {
-		CategoryDAO catdao = CategoryDAO.getInstance();
-		ContactDAO condao = ContactDAO.getInstance();
-		ArrayList<CategoryContacts> catContacts = new ArrayList<>();
+	@Override
+	public List<FolderContacts> listFolderContacts(Collection<Integer> categoryFolderIds, String searchMode, String pattern) throws WTException {
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		ContactDAO conDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			// Lists desired groups (tipically visibles) coming from passed list
-			// Passed ids should belong to referenced folder(group), 
-			// this is ensured using domainId and userId parameters in below query.
-			List<OCategory> ocats = catdao.selectByProfileIn(con, pid.getDomainId(), pid.getUserId(), categoryFolders);
-			List<VContact> vcs = null;
-			for(OCategory ocat : ocats) {
+			ArrayList<FolderContacts> foConts = new ArrayList<>();
+			List<OCategory> ocats = catDao.selectByDomainIn(con, getTargetProfileId().getDomainId(), categoryFolderIds);
+			for (OCategory ocat : ocats) {
 				if (!quietlyCheckRightsOnCategoryFolder(ocat.getCategoryId(), "READ")) continue;
 				
-				vcs = condao.viewByCategoryPattern(con, ocat.getCategoryId(), searchMode, pattern);
-				catContacts.add(new CategoryContacts(ocat, vcs));
+				final List<VContact> vconts = conDao.viewByCategoryPattern(con, ocat.getCategoryId(), searchMode, pattern);
+				final ArrayList<ContactEx> conts = new ArrayList<>();
+				for (VContact vcont : vconts) {
+					conts.add(fillContactEx(new ContactEx(), vcont));
+				}
+				foConts.add(new FolderContacts(createCategory(ocat), conts));
 			}
-			return catContacts;
-		
-		} catch(SQLException | DAOException ex) {
+			return foConts;
+			
+		} catch (SQLException | DAOException ex) {
 			throw new WTException(ex, "DB error");
 		} finally {
 			DbUtils.closeQuietly(con);
@@ -676,7 +675,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE"); // Rights check!
+			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			doUpdateContact(con, false, contact, picture);
@@ -774,7 +773,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void deleteContact(List<Integer> contactIds) throws WTException {
+	public void deleteContact(Collection<Integer> contactIds) throws WTException {
 		ContactDAO cdao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -782,9 +781,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			for(Integer contactId : contactIds) {
-				if(contactId == null) continue;
+				if (contactId == null) continue;
 				OContact cont = cdao.selectById(con, contactId);
-				if(cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
+				if (cont == null || cont.getIsList()) throw new WTException("Unable to retrieve contact [{0}]", contactId);
 				checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE"); // Rights check!
 				
 				doDeleteContact(con, contactId);
@@ -965,7 +964,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void deleteContactsList(List<Integer> contactsListIds) throws WTException {
+	public void deleteContactsList(Collection<Integer> contactsListIds) throws WTException {
 		ContactDAO condao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -973,9 +972,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			for(Integer contactsListId : contactsListIds) {
-				if(contactsListId == null) continue;
+				if (contactsListId == null) continue;
 				OContact cont = condao.selectById(con, contactsListId);
-				if(cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
+				if (cont == null || !cont.getIsList()) throw new WTException("Unable to retrieve contactsList [{0}]", contactsListId);
 
 				checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE");
 				
@@ -1652,127 +1651,151 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return cont;
 	}
 	
-	private Contact createContact(OContact ocont, boolean hasPicture) {
-		if (ocont == null) return null;
-		Contact cont = new Contact();
-		cont.setContactId(ocont.getContactId());
-		cont.setCategoryId(ocont.getCategoryId());
-		cont.setRevisionStatus(ocont.getRevisionStatus());
-		cont.setTitle(ocont.getTitle());
-		cont.setFirstName(ocont.getFirstname());
-		cont.setLastName(ocont.getLastname());
-		cont.setNickname(ocont.getNickname());
-		cont.setGender(ocont.getGender());
-		cont.setWorkAddress(ocont.getWorkAddress());
-		cont.setWorkPostalCode(ocont.getWorkPostalcode());
-		cont.setWorkCity(ocont.getWorkCity());
-		cont.setWorkState(ocont.getWorkState());
-		cont.setWorkCountry(ocont.getWorkCountry());
-		cont.setWorkTelephone(ocont.getWorkTelephone());
-		cont.setWorkTelephone2(ocont.getWorkTelephone2());
-		cont.setWorkMobile(ocont.getWorkMobile());
-		cont.setWorkFax(ocont.getWorkFax());
-		cont.setWorkPager(ocont.getWorkPager());
-		cont.setWorkEmail(ocont.getWorkEmail());
-		cont.setWorkInstantMsg(ocont.getWorkIm());
-		cont.setHomeAddress(ocont.getHomeAddress());
-		cont.setHomePostalCode(ocont.getHomePostalcode());
-		cont.setHomeCity(ocont.getHomeCity());
-		cont.setHomeState(ocont.getHomeState());
-		cont.setHomeCountry(ocont.getHomeCountry());
-		cont.setHomeTelephone(ocont.getHomeTelephone());
-		cont.setHomeTelephone2(ocont.getHomeTelephone2());
-		cont.setHomeFax(ocont.getHomeFax());
-		cont.setHomePager(ocont.getHomePager());
-		cont.setHomeEmail(ocont.getHomeEmail());
-		cont.setHomeInstantMsg(ocont.getHomeIm());
-		cont.setOtherAddress(ocont.getOtherAddress());
-		cont.setOtherPostalCode(ocont.getOtherPostalcode());
-		cont.setOtherCity(ocont.getOtherCity());
-		cont.setOtherState(ocont.getOtherState());
-		cont.setOtherCountry(ocont.getOtherCountry());
-		cont.setOtherEmail(ocont.getOtherEmail());
-		cont.setOtherInstantMsg(ocont.getOtherIm());
-		cont.setCompany(ocont.getCompany());
-		cont.setFunction(ocont.getFunction());
-		cont.setDepartment(ocont.getDepartment());
-		cont.setManager(ocont.getManager());
-		cont.setAssistant(ocont.getAssistant());
-		cont.setAssistantTelephone(ocont.getAssistantTelephone());
-		cont.setPartner(ocont.getPartner());
-		cont.setBirthday(ocont.getBirthday());
-		cont.setAnniversary(ocont.getAnniversary());
-		cont.setUrl(ocont.getUrl());
-		cont.setNotes(ocont.getNotes());
-		cont.setHasPicture(hasPicture);
-		return cont;
+	private Contact createContact(OContact with, boolean hasPicture) {
+		Contact obj = fillContact(new Contact(), with);
+		obj.setHasPicture(hasPicture);
+		return obj;
 	}
 	
-	private OContact createOContact(Contact cont) {
-		if (cont == null) return null;
-		OContact ocont = new OContact();
-		ocont.setContactId(cont.getContactId());
-		ocont.setCategoryId(cont.getCategoryId());
-		ocont.setPublicUid(cont.getPublicUid());
-		ocont.setRevisionStatus(cont.getRevisionStatus());
-		ocont.setIsList(false);
-		ocont.setTitle(cont.getTitle());
-		ocont.setFirstname(cont.getFirstName());
-		ocont.setLastname(cont.getLastName());
-		ocont.setNickname(cont.getNickname());
-		ocont.setGender(cont.getGender());
-		ocont.setWorkAddress(cont.getWorkAddress());
-		ocont.setWorkPostalcode(cont.getWorkPostalCode());
-		ocont.setWorkCity(cont.getWorkCity());
-		ocont.setWorkState(cont.getWorkState());
-		ocont.setWorkCountry(cont.getWorkCountry());
-		ocont.setWorkTelephone(cont.getWorkTelephone());
-		ocont.setWorkTelephone2(cont.getWorkTelephone2());
-		ocont.setWorkMobile(cont.getWorkMobile());
-		ocont.setWorkFax(cont.getWorkFax());
-		ocont.setWorkPager(cont.getWorkPager());
-		ocont.setWorkEmail(cont.getWorkEmail());
-		ocont.setWorkIm(cont.getWorkInstantMsg());
-		ocont.setHomeAddress(cont.getHomeAddress());
-		ocont.setHomePostalcode(cont.getHomePostalCode());
-		ocont.setHomeCity(cont.getHomeCity());
-		ocont.setHomeState(cont.getHomeState());
-		ocont.setHomeCountry(cont.getHomeCountry());
-		ocont.setHomeTelephone(cont.getHomeTelephone());
-		ocont.setHomeTelephone2(cont.getHomeTelephone2());
-		ocont.setHomeFax(cont.getHomeFax());
-		ocont.setHomePager(cont.getHomePager());
-		ocont.setHomeEmail(cont.getHomeEmail());
-		ocont.setHomeIm(cont.getHomeInstantMsg());
-		ocont.setOtherAddress(cont.getOtherAddress());
-		ocont.setOtherPostalcode(cont.getOtherPostalCode());
-		ocont.setOtherCity(cont.getOtherCity());
-		ocont.setOtherState(cont.getOtherState());
-		ocont.setOtherCountry(cont.getOtherCountry());
-		ocont.setOtherEmail(cont.getOtherEmail());
-		ocont.setOtherIm(cont.getOtherInstantMsg());
-		ocont.setCompany(cont.getCompany());
-		ocont.setFunction(cont.getFunction());
-		ocont.setDepartment(cont.getDepartment());
-		ocont.setManager(cont.getManager());
-		ocont.setAssistant(cont.getAssistant());
-		ocont.setAssistantTelephone(cont.getAssistantTelephone());
-		ocont.setPartner(cont.getPartner());
-		ocont.setBirthday(cont.getBirthday());
-		ocont.setAnniversary(cont.getAnniversary());
-		ocont.setUrl(cont.getUrl());
-		ocont.setNotes(cont.getNotes());
-		return ocont;
+	private Contact fillContact(Contact fill, OContact with) {
+		if ((fill != null) && (with != null)) {
+			fill.setContactId(with.getContactId());
+			fill.setCategoryId(with.getCategoryId());
+			fill.setRevisionStatus(EnumUtils.forSerializedName(with.getRevisionStatus(), Contact.RevisionStatus.class));
+			fill.setTitle(with.getTitle());
+			fill.setFirstName(with.getFirstname());
+			fill.setLastName(with.getLastname());
+			fill.setNickname(with.getNickname());
+			fill.setGender(EnumUtils.forSerializedName(with.getGender(), Contact.Gender.class));
+			fill.setWorkAddress(with.getWorkAddress());
+			fill.setWorkPostalCode(with.getWorkPostalcode());
+			fill.setWorkCity(with.getWorkCity());
+			fill.setWorkState(with.getWorkState());
+			fill.setWorkCountry(with.getWorkCountry());
+			fill.setWorkTelephone(with.getWorkTelephone());
+			fill.setWorkTelephone2(with.getWorkTelephone2());
+			fill.setWorkMobile(with.getWorkMobile());
+			fill.setWorkFax(with.getWorkFax());
+			fill.setWorkPager(with.getWorkPager());
+			fill.setWorkEmail(with.getWorkEmail());
+			fill.setWorkInstantMsg(with.getWorkIm());
+			fill.setHomeAddress(with.getHomeAddress());
+			fill.setHomePostalCode(with.getHomePostalcode());
+			fill.setHomeCity(with.getHomeCity());
+			fill.setHomeState(with.getHomeState());
+			fill.setHomeCountry(with.getHomeCountry());
+			fill.setHomeTelephone(with.getHomeTelephone());
+			fill.setHomeTelephone2(with.getHomeTelephone2());
+			fill.setHomeFax(with.getHomeFax());
+			fill.setHomePager(with.getHomePager());
+			fill.setHomeEmail(with.getHomeEmail());
+			fill.setHomeInstantMsg(with.getHomeIm());
+			fill.setOtherAddress(with.getOtherAddress());
+			fill.setOtherPostalCode(with.getOtherPostalcode());
+			fill.setOtherCity(with.getOtherCity());
+			fill.setOtherState(with.getOtherState());
+			fill.setOtherCountry(with.getOtherCountry());
+			fill.setOtherEmail(with.getOtherEmail());
+			fill.setOtherInstantMsg(with.getOtherIm());
+			fill.setCompany(with.getCompany());
+			fill.setFunction(with.getFunction());
+			fill.setDepartment(with.getDepartment());
+			fill.setManager(with.getManager());
+			fill.setAssistant(with.getAssistant());
+			fill.setAssistantTelephone(with.getAssistantTelephone());
+			fill.setPartner(with.getPartner());
+			fill.setBirthday(with.getBirthday());
+			fill.setAnniversary(with.getAnniversary());
+			fill.setUrl(with.getUrl());
+			fill.setNotes(with.getNotes());
+		}
+		return fill;
 	}
 	
-	private ContactPicture createContactPicture(OContactPicture ocontpic) {
-		if (ocontpic == null) return null;
-		ContactPicture contpic = new ContactPicture();
-		contpic.setWidth(ocontpic.getWidth());
-		contpic.setHeight(ocontpic.getHeight());
-		contpic.setMediaType(ocontpic.getMediaType());
-		contpic.setBytes(ocontpic.getBytes());
-		return contpic;
+	private OContact createOContact(Contact with) {
+		return fillOContact(new OContact(), with);
+	}
+	
+	private OContact fillOContact(OContact fill, Contact with) {
+		if ((fill != null) && (with != null)) {
+			fill.setContactId(with.getContactId());
+			fill.setCategoryId(with.getCategoryId());
+			fill.setPublicUid(with.getPublicUid());
+			fill.setRevisionStatus(EnumUtils.toSerializedName(with.getRevisionStatus()));
+			fill.setIsList(false);
+			fill.setTitle(with.getTitle());
+			fill.setFirstname(with.getFirstName());
+			fill.setLastname(with.getLastName());
+			fill.setNickname(with.getNickname());
+			fill.setGender(EnumUtils.toSerializedName(with.getGender()));
+			fill.setWorkAddress(with.getWorkAddress());
+			fill.setWorkPostalcode(with.getWorkPostalCode());
+			fill.setWorkCity(with.getWorkCity());
+			fill.setWorkState(with.getWorkState());
+			fill.setWorkCountry(with.getWorkCountry());
+			fill.setWorkTelephone(with.getWorkTelephone());
+			fill.setWorkTelephone2(with.getWorkTelephone2());
+			fill.setWorkMobile(with.getWorkMobile());
+			fill.setWorkFax(with.getWorkFax());
+			fill.setWorkPager(with.getWorkPager());
+			fill.setWorkEmail(with.getWorkEmail());
+			fill.setWorkIm(with.getWorkInstantMsg());
+			fill.setHomeAddress(with.getHomeAddress());
+			fill.setHomePostalcode(with.getHomePostalCode());
+			fill.setHomeCity(with.getHomeCity());
+			fill.setHomeState(with.getHomeState());
+			fill.setHomeCountry(with.getHomeCountry());
+			fill.setHomeTelephone(with.getHomeTelephone());
+			fill.setHomeTelephone2(with.getHomeTelephone2());
+			fill.setHomeFax(with.getHomeFax());
+			fill.setHomePager(with.getHomePager());
+			fill.setHomeEmail(with.getHomeEmail());
+			fill.setHomeIm(with.getHomeInstantMsg());
+			fill.setOtherAddress(with.getOtherAddress());
+			fill.setOtherPostalcode(with.getOtherPostalCode());
+			fill.setOtherCity(with.getOtherCity());
+			fill.setOtherState(with.getOtherState());
+			fill.setOtherCountry(with.getOtherCountry());
+			fill.setOtherEmail(with.getOtherEmail());
+			fill.setOtherIm(with.getOtherInstantMsg());
+			fill.setCompany(with.getCompany());
+			fill.setFunction(with.getFunction());
+			fill.setDepartment(with.getDepartment());
+			fill.setManager(with.getManager());
+			fill.setAssistant(with.getAssistant());
+			fill.setAssistantTelephone(with.getAssistantTelephone());
+			fill.setPartner(with.getPartner());
+			fill.setBirthday(with.getBirthday());
+			fill.setAnniversary(with.getAnniversary());
+			fill.setUrl(with.getUrl());
+			fill.setNotes(with.getNotes());
+		}
+		return fill;
+	}
+	
+	private ContactPicture createContactPicture(OContactPicture with) {
+		return fillContactPicture(new ContactPicture(), with);
+	}
+	
+	private ContactPicture fillContactPicture(ContactPicture fill, OContactPicture with) {
+		if ((fill != null) && (with != null)) {
+			fill.setWidth(with.getWidth());
+			fill.setHeight(with.getHeight());
+			fill.setMediaType(with.getMediaType());
+			fill.setBytes(with.getBytes());
+		}
+		return fill;
+	}
+	
+	private ContactEx fillContactEx(ContactEx fill, VContact with) {
+		if ((fill != null) && (with != null)) {
+			fillContact(fill, with);
+			fill.setIsList(with.getIsList());
+			fill.setCompanyAsMasterDataId(with.getCompanyAsMasterDataId());
+			fill.setCategoryDomainId(with.getCategoryDomainId());
+			fill.setCategoryUserId(with.getCategoryUserId());
+		}
+		return fill;
 	}
 	
 	private ReminderInApp createAnniversaryInAppReminder(Locale locale, boolean birthday, VContact contact, DateTime date) {

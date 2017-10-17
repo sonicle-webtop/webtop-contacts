@@ -72,6 +72,8 @@ import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.FolderContacts;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
 import com.sonicle.webtop.core.CoreManager;
@@ -129,8 +131,9 @@ public class Service extends BaseService {
 	public static final String EVENTS_EXPORT_FILENAME = "events_{0}-{1}-{2}.{3}";
 	
 	private final LinkedHashMap<String, CategoryRoot> roots = new LinkedHashMap<>();
-	private final HashMap<String, ArrayList<CategoryFolder>> foldersByRoot = new HashMap<>();
 	private final LinkedHashMap<Integer, CategoryFolder> folders = new LinkedHashMap<>();
+	private final HashMap<String, ArrayList<CategoryFolder>> foldersByRoot = new HashMap<>();
+	private final HashMap<Integer, CategoryRoot> rootByFolder = new HashMap<>();
 	
 	private CheckedRoots checkedRoots = null;
 	private CheckedFolders checkedFolders = null;
@@ -161,8 +164,9 @@ public class Service extends BaseService {
 		checkedFolders = null;
 		checkedRoots.clear();
 		checkedRoots = null;
-		folders.clear();
+		rootByFolder.clear();
 		foldersByRoot.clear();
+		folders.clear();
 		roots.clear();
 		us = null;
 		ss = null;
@@ -207,6 +211,7 @@ public class Service extends BaseService {
 		synchronized(roots) {
 			foldersByRoot.clear();
 			folders.clear();
+			rootByFolder.clear();
 			for(CategoryRoot root : roots.values()) {
 				foldersByRoot.put(root.getShareId(), new ArrayList<CategoryFolder>());
 				if(root instanceof MyCategoryRoot) {
@@ -214,6 +219,7 @@ public class Service extends BaseService {
 						final MyCategoryFolder fold = new MyCategoryFolder(root.getShareId(), cat);
 						foldersByRoot.get(root.getShareId()).add(fold);
 						folders.put(cat.getCategoryId(), fold);
+						rootByFolder.put(cat.getCategoryId(), root);
 					}
 				} else {
 					for(CategoryFolder fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
@@ -221,6 +227,7 @@ public class Service extends BaseService {
 						fold.setData(us.getCategoryFolderData(catId));
 						foldersByRoot.get(root.getShareId()).add(fold);
 						folders.put(catId, fold);
+						rootByFolder.put(catId, root);
 					}
 				}
 			}
@@ -614,16 +621,16 @@ public class Service extends BaseService {
 	
 	private String[] buildQueryParameters(String view, String letter, String query) {
 		String searchMode = null, pattern = null;
-		if(!StringUtils.isEmpty(letter)) {
+		if (!StringUtils.isEmpty(letter)) {
 			searchMode = "lastname";
-			if(letter.equals("*")) {
+			if (letter.equals("*")) {
 				pattern = "^.*";
-			} else if(letter.equals("#")) {
+			} else if (letter.equals("#")) {
 				pattern = "^[0-9]";
 			} else {
 				pattern = "^[" + letter.toLowerCase() + "]";
 			}
-		} else if(query != null) {
+		} else if (query != null) {
 			searchMode = (view.equals(WORK_VIEW)) ? "work" : "home";
 			pattern = "%" + query.toLowerCase() + "%";
 		} else {
@@ -634,8 +641,8 @@ public class Service extends BaseService {
 	}
 	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		ArrayList<MapItem> items = new ArrayList<>();
-		MapItem item = null;
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
@@ -647,52 +654,46 @@ public class Service extends BaseService {
 				String[] parameters = buildQueryParameters(view, letter, query);
 				String searchMode = parameters[0], pattern = parameters[1];
 				
-				// Get contacts for each visible folder
-				DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
-				Integer[] checked = getCheckedFolders();
-				List<ContactsManager.CategoryContacts> foldContacts = null;
-				for(CategoryRoot root : getCheckedRoots()) {
-					foldContacts = manager.listContacts(root, checked, searchMode, pattern);
+				List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
+				List<FolderContacts> foContactsObjs = manager.listFolderContacts(visibleCategoryIds, searchMode, pattern);
+				for (FolderContacts foContactsObj : foContactsObjs) {
+					final CategoryFolder fold = folders.get(foContactsObj.folder.getCategoryId());
+					if (fold == null) continue;
 					
-					for(ContactsManager.CategoryContacts foldContact : foldContacts) {
-						CategoryFolder fold = folders.get(foldContact.folder.getCategoryId());
-						if(fold == null) continue;
-						
-						for(VContact vc : foldContact.contacts) {
-							item = new MapItem();
-							item.put("id", Contact.buildUid(vc.getContactId()));
-							item.put("contactId", vc.getContactId());
-							item.put("isList", vc.getIsList());
-							if(view.equals(WORK_VIEW)) item.put("title", vc.getTitle());
-							item.put("firstName", vc.getFirstname());
-							item.put("lastName", vc.getLastname());
-							if(view.equals(HOME_VIEW)) item.put("nickname", vc.getNickname());
-							if(view.equals(WORK_VIEW)) {
-								item.put("company", StringUtils.defaultIfEmpty(vc.getCompanyAsMasterDataId(), vc.getCompany()));
-								item.put("function", vc.getFunction());
-								//item.put("workAddress", vc.getCaddress());
-								//item.put("workCity", vc.getCcity());
-								item.put("workTelephone", vc.getWorkTelephone());
-								item.put("workMobile", vc.getWorkMobile());
-								item.put("workEmail", vc.getWorkEmail());
-							}
-							if(view.equals(HOME_VIEW)) {
-								item.put("homeTelephone", vc.getHomeTelephone());
-								item.put("homeEmail", vc.getHomeEmail());
-								item.put("birthday", (vc.getBirthday() != null) ? ymdFmt.print(vc.getBirthday()) : null);
-							}
-							item.put("categoryId", foldContact.folder.getCategoryId());
-							item.put("categoryName", foldContact.folder.getName());
-							item.put("categoryColor", foldContact.folder.getColor());
-							if (fold.getData() != null) {
-								CategoryFolderData data = (CategoryFolderData)fold.getData();
-								if (!StringUtils.isBlank(data.color)) item.put("categoryColor", data.color);
-							}
-							item.put("_profileId", new UserProfileId(foldContact.folder.getDomainId(), foldContact.folder.getUserId()).toString());
-							item.put("_frights", fold.getPerms().toString());
-							item.put("_erights", fold.getElementsPerms().toString());
-							items.add(item);
+					for (ContactEx ce : foContactsObj.contacts) {
+						final MapItem item = new MapItem();
+						item.put("id", Contact.buildUid(ce.getContactId()));
+						item.put("contactId", ce.getContactId());
+						item.put("isList", ce.getIsList());
+						if(view.equals(WORK_VIEW)) item.put("title", ce.getTitle());
+						item.put("firstName", ce.getFirstName());
+						item.put("lastName", ce.getLastName());
+						if(view.equals(HOME_VIEW)) item.put("nickname", ce.getNickname());
+						if(view.equals(WORK_VIEW)) {
+							item.put("company", StringUtils.defaultIfEmpty(ce.getCompanyAsMasterDataId(), ce.getCompany()));
+							item.put("function", ce.getFunction());
+							//item.put("workAddress", vc.getCaddress());
+							//item.put("workCity", vc.getCcity());
+							item.put("workTelephone", ce.getWorkTelephone());
+							item.put("workMobile", ce.getWorkMobile());
+							item.put("workEmail", ce.getWorkEmail());
 						}
+						if(view.equals(HOME_VIEW)) {
+							item.put("homeTelephone", ce.getHomeTelephone());
+							item.put("homeEmail", ce.getHomeEmail());
+							item.put("birthday", (ce.getBirthday() != null) ? ymdFmt.print(ce.getBirthday()) : null);
+						}
+						item.put("categoryId", foContactsObj.folder.getCategoryId());
+						item.put("categoryName", foContactsObj.folder.getName());
+						item.put("categoryColor", foContactsObj.folder.getColor());
+						if (fold.getData() != null) {
+							CategoryFolderData data = (CategoryFolderData)fold.getData();
+							if (!StringUtils.isBlank(data.color)) item.put("categoryColor", data.color);
+						}
+						item.put("_profileId", new UserProfileId(foContactsObj.folder.getDomainId(), foContactsObj.folder.getUserId()).toString());
+						item.put("_frights", fold.getPerms().toString());
+						item.put("_erights", fold.getElementsPerms().toString());
+						items.add(item);
 					}
 				}
 				
@@ -1120,7 +1121,6 @@ public class Service extends BaseService {
 	
 	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBAddressbook> items = new ArrayList<>();
-		ByteArrayOutputStream baos = null;
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
@@ -1131,19 +1131,14 @@ public class Service extends BaseService {
 			String[] parameters = buildQueryParameters(view, letter, query);
 			String searchMode = parameters[0], pattern = parameters[1];
 			
-			// Get contacts for each visible folder
-			Integer[] checked = getCheckedFolders();
-			List<ContactsManager.CategoryContacts> foldContacts = null;
-			for(CategoryRoot root : getCheckedRoots()) {
-				foldContacts = manager.listContacts(root, checked, searchMode, pattern);
-				
-				for(ContactsManager.CategoryContacts foldContact : foldContacts) {
-					CategoryFolder fold = folders.get(foldContact.folder.getCategoryId());
-					if(fold == null) continue;
+			List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
+			List<FolderContacts> foContactsObjs = manager.listFolderContacts(visibleCategoryIds, searchMode, pattern);
+			for (FolderContacts foContactsObj : foContactsObjs) {
+				final CategoryFolder fold = folders.get(foContactsObj.folder.getCategoryId());
+				if (fold == null) continue;
 
-					for(VContact vc : foldContact.contacts) {
-						items.add(new RBAddressbook(fold.getCategory(), vc));
-					}
+				for (ContactEx ce : foContactsObj.contacts) {
+					items.add(new RBAddressbook(fold.getCategory(), ce));
 				}
 			}
 			
@@ -1151,22 +1146,17 @@ public class Service extends BaseService {
 			RptAddressbook rpt = new RptAddressbook(builder.build());
 			rpt.setDataSource(items);
 			
-			baos = new ByteArrayOutputStream();
-			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
-			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
-			ServletUtils.writeContent(response, baos, "application/pdf");
+			ServletUtils.setFileStreamHeaders(response, filename + ".pdf");
+			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, response.getOutputStream());
 			
 		} catch(Exception ex) {
-			logger.error("Error in action PrintAddressbook", ex);
+			logger.error("Error in PrintAddressbook", ex);
 			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
-		} finally {
-			IOUtils.closeQuietly(baos);
 		}
 	}
 	
 	public void processPrintContactsDetail(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBContactDetail> items = new ArrayList<>();
-		ByteArrayOutputStream baos = null;
 		CoreManager core = WT.getCoreManager();
 		
 		try {
@@ -1188,16 +1178,12 @@ public class Service extends BaseService {
 			RptContactsDetail rpt = new RptContactsDetail(builder.build());
 			rpt.setDataSource(items);
 			
-			baos = new ByteArrayOutputStream();
-			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, baos);
-			ServletUtils.setContentDispositionHeader(response, "inline", filename + ".pdf");
-			ServletUtils.writeContent(response, baos, "application/pdf");
+			ServletUtils.setFileStreamHeaders(response, filename + ".pdf");
+			WT.generateReportToStream(rpt, AbstractReport.OutputType.PDF, response.getOutputStream());
 			
 		} catch(Exception ex) {
 			logger.error("Error in action PrintContact", ex);
 			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
-		} finally {
-			IOUtils.closeQuietly(baos);
 		}
 	}
 	
@@ -1257,6 +1243,28 @@ public class Service extends BaseService {
 		}
 		
 		return sb.toString();
+	}
+	
+	private ArrayList<Integer> getVisibleFolderIds(boolean cleanupOrphans) {
+		ArrayList<Integer> ids = new ArrayList<>();
+		ArrayList<Integer> orphans = new ArrayList<>();
+		
+		Integer[] checked = getCheckedFolders();
+		for (CategoryRoot root : getCheckedRoots()) {
+			for (Integer folderId : checked) {
+				final CategoryRoot folderRoot = rootByFolder.get(folderId);
+				if (folderRoot == null) {
+					if (cleanupOrphans) orphans.add(folderId);
+					continue;
+				}
+				
+				if (root.getShareId().equals(folderRoot.getShareId())) {
+					ids.add(folderId);
+				}
+			}
+		}
+		if (cleanupOrphans) toggleCheckedFolders(orphans.toArray(new Integer[orphans.size()]), false);
+		return ids;
 	}
 	
 	private List<CategoryRoot> getCheckedRoots() {
