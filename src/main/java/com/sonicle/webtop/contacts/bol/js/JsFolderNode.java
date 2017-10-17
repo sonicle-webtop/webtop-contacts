@@ -49,8 +49,8 @@ public class JsFolderNode {
 	
 	public JsFolderNode() {}
 	
-	public static class JsFolderNodeList extends ArrayList<JsFolderNode> {
-		public JsFolderNodeList() {
+	public static class List extends ArrayList<JsFolderNode> {
+		public List() {
 			super();
 		}
 	}

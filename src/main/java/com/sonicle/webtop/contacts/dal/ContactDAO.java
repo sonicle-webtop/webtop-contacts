@@ -38,18 +38,23 @@ import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
+import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import static com.sonicle.webtop.core.jooq.core.Tables.MASTER_DATA;
+import com.sonicle.webtop.core.model.RecipientFieldCategory;
+import com.sonicle.webtop.core.model.RecipientFieldType;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.TableField;
 
 /**
@@ -194,29 +199,8 @@ public class ContactDAO extends BaseDAO {
 			)
 			.fetchInto(VContact.class);
 	}
-	
-	private String patternizeWords(String text) {
-		String[] tokens = StringUtils.split(text, " ");
-		String s = "";
-		for(String token : tokens) {
-			s += "%" + token + "% ";
-		}
-		return StringUtils.trim(s);
-	}
-	
-	public List<VContact> viewWorkRecipientsByOwnerQueryText(Connection con, UserProfileId ownerId, String queryText) throws DAOException {
-		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.WORK_EMAIL, ownerId, queryText);
-	}
-	
-	public List<VContact> viewHomeRecipientsByOwnerQueryText(Connection con, UserProfileId ownerId, String queryText) throws DAOException {
-		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.HOME_EMAIL, ownerId, queryText);
-	}
-	
-	public List<VContact> viewOtherRecipientsByOwnerQueryText(Connection con, UserProfileId ownerId, String queryText) throws DAOException {
-		return viewRecipientsByFieldOwnerQueryText(con, CONTACTS.OTHER_EMAIL, ownerId, queryText);
-	}
-	
-	private List<VContact> viewRecipientsByFieldOwnerQueryText(Connection con, TableField<ContactsRecord, String> emailField, UserProfileId ownerId, String queryText) throws DAOException {
+
+	public List<VContact> viewRecipientsByFieldCategoryQuery(Connection con, RecipientFieldType fieldType, RecipientFieldCategory fieldCategory, Collection<Integer> categoryIds, String queryText) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		String patt1 = null, patt2 = null, patt3 = null;
@@ -229,17 +213,21 @@ public class ContactDAO extends BaseDAO {
 		}
 		patt3 = "%@" + queryText + "%";
 		
+		Field<?> targetField = getTableFieldBy(fieldType, fieldCategory);
 		Condition searchCndt = null;
 		searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
-			.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
-			.or(emailField.likeIgnoreCase(patt1)
-			.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
-			.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)))));
+				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
+				.or(targetField.likeIgnoreCase(patt1)
+				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
+				.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)
+			))));
 		
-		if(StringUtils.contains(queryText, "@")) {
-			searchCndt = searchCndt.or(
-				CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
-			);
+		if (fieldType.equals(RecipientFieldType.EMAIL)) {
+			if (StringUtils.contains(queryText, "@")) {
+				searchCndt = searchCndt.or(
+					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
+				);
+			}
 		}
 		
 		return dsl
@@ -247,7 +235,7 @@ public class ContactDAO extends BaseDAO {
 				CONTACTS.IS_LIST,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
-				emailField
+				targetField
 			)
 			.select(
 				MASTER_DATA.DESCRIPTION.as("company_as_master_data_id")
@@ -260,22 +248,20 @@ public class ContactDAO extends BaseDAO {
 				CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID)
 			)
 			.where(
-				CATEGORIES.DOMAIN_ID.equal(ownerId.getDomain())
-					.and(CATEGORIES.USER_ID.equal(ownerId.getUser())
-				)
+				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(
 					CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_NEW)
 					.or(CONTACTS.REVISION_STATUS.equal(OContact.REV_STATUS_MODIFIED))
 				)
 				.and(
-					emailField.isNotNull()
+					targetField.isNotNull()
 				)
 				.and(
 					searchCndt
 				)
 			)
 			.orderBy(
-				emailField.asc()
+				targetField.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -421,7 +407,65 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
+	private Field<?> getTableFieldBy(RecipientFieldType fieldType, RecipientFieldCategory fieldCategory) {
+		if (fieldType.equals(RecipientFieldType.TELEPHONE)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_TELEPHONE;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_TELEPHONE;
+			}
+		} else if (fieldType.equals(RecipientFieldType.TELEPHONE_2)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_TELEPHONE2;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_TELEPHONE2;
+			}
+		} else if (fieldType.equals(RecipientFieldType.FAX)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_FAX;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_FAX;
+			}
+		} else if (fieldType.equals(RecipientFieldType.MOBILE)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_MOBILE;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_MOBILE;
+			}
+		} else if (fieldType.equals(RecipientFieldType.PAGER)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_PAGER;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_PAGER;
+			}
+		} else if (fieldType.equals(RecipientFieldType.EMAIL)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_EMAIL;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_EMAIL;
+			} else if (fieldCategory.equals(RecipientFieldCategory.OTHER)) {
+				return CONTACTS.OTHER_EMAIL;
+			}
+		} else if (fieldType.equals(RecipientFieldType.IM)) {
+			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
+				return CONTACTS.WORK_EMAIL;
+			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
+				return CONTACTS.HOME_EMAIL;
+			} else if (fieldCategory.equals(RecipientFieldCategory.OTHER)) {
+				return CONTACTS.OTHER_EMAIL;
+			}
+		}
+		return null;
+	}
 	
+	private String patternizeWords(String text) {
+		String[] tokens = StringUtils.split(text, " ");
+		String s = "";
+		for(String token : tokens) {
+			s += "%" + token + "% ";
+		}
+		return StringUtils.trim(s);
+	}
 	
 	
 	

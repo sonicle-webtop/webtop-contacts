@@ -56,7 +56,6 @@ import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
-import com.sonicle.webtop.contacts.bol.js.JsFolderNode.JsFolderNodeList;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.bol.model.CategoryFolderData;
@@ -302,7 +301,7 @@ public class Service extends BaseService {
 				new JsonResult("children", children).printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
-				PayloadAsList<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
+				PayloadAsList<JsFolderNode.List> pl = ServletUtils.getPayloadAsList(request, JsFolderNode.List.class);
 				
 				for(JsFolderNode node : pl.data) {
 					if(node._type.equals(JsFolderNode.TYPE_ROOT)) {
@@ -316,7 +315,7 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				PayloadAsList<JsFolderNodeList> pl = ServletUtils.getPayloadAsList(request, JsFolderNodeList.class);
+				PayloadAsList<JsFolderNode.List> pl = ServletUtils.getPayloadAsList(request, JsFolderNode.List.class);
 				
 				for(JsFolderNode node : pl.data) {
 					if(node._type.equals(JsFolderNode.TYPE_FOLDER)) {
