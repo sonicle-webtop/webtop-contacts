@@ -56,6 +56,7 @@ import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.TableField;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -203,30 +204,32 @@ public class ContactDAO extends BaseDAO {
 	public List<VContact> viewRecipientsByFieldCategoryQuery(Connection con, RecipientFieldType fieldType, RecipientFieldCategory fieldCategory, Collection<Integer> categoryIds, String queryText) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
-		String patt1 = null, patt2 = null, patt3 = null;
-		if(StringUtils.contains(queryText, " ")) {
-			patt1 = patternizeWords(queryText);
-			patt2 = queryText;
-		} else {
-			patt1 = patternizeWords(queryText);
-			patt2 = "%" + queryText;
-		}
-		patt3 = "%@" + queryText + "%";
-		
 		Field<?> targetField = getTableFieldBy(fieldType, fieldCategory);
-		Condition searchCndt = null;
-		searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
+		Condition searchCndt = DSL.trueCondition();
+		if (!StringUtils.isBlank(queryText)) {
+			String patt1 = null, patt2 = null, patt3 = null;
+			if(StringUtils.contains(queryText, " ")) {
+				patt1 = patternizeWords(queryText);
+				patt2 = queryText;
+			} else {
+				patt1 = patternizeWords(queryText);
+				patt2 = "%" + queryText;
+			}
+			patt3 = "%@" + queryText + "%";
+			
+			searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
 				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
 				.or(targetField.likeIgnoreCase(patt1)
 				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
 				.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)
 			))));
-		
-		if (fieldType.equals(RecipientFieldType.EMAIL)) {
-			if (StringUtils.contains(queryText, "@")) {
-				searchCndt = searchCndt.or(
-					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
-				);
+			
+			if (fieldType.equals(RecipientFieldType.EMAIL)) {
+				if (StringUtils.contains(queryText, "@")) {
+					searchCndt = searchCndt.or(
+						CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
+					);
+				}
 			}
 		}
 		
