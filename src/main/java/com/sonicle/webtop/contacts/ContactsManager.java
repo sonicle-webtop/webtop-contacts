@@ -1856,6 +1856,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					RecipientFieldCategory.WORK, RecipientFieldCategory.HOME, RecipientFieldCategory.OTHER
 				};
 				for(RecipientFieldCategory fieldCategory : fieldCategories) {
+					if (!dao.hasTableFieldFor(fieldType, fieldCategory)) continue;
+					
 					final String origin = getContactOriginBy(fieldCategory);
 					final List<VContact> vconts = dao.viewRecipientsByFieldCategoryQuery(con, fieldType, fieldCategory, categoryIds, queryText);
 					for(VContact vcont : vconts) {

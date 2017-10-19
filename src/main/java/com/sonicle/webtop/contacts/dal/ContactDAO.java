@@ -206,6 +206,7 @@ public class ContactDAO extends BaseDAO {
 		DSLContext dsl = getDSL(con);
 		
 		Field<?> targetField = getTableFieldBy(fieldType, fieldCategory);
+		if (targetField == null) throw new DAOException("Unable to determine a targetField for passed Type and Category");
 		Condition searchCndt = DSL.trueCondition();
 		if (!StringUtils.isBlank(queryText)) {
 			String patt1 = null, patt2 = null, patt3 = null;
@@ -412,6 +413,10 @@ public class ContactDAO extends BaseDAO {
 				.and(CONTACTS.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();
+	}
+	
+	public boolean hasTableFieldFor(RecipientFieldType fieldType, RecipientFieldCategory fieldCategory) {
+		return getTableFieldBy(fieldType, fieldCategory) != null;
 	}
 	
 	private Field<?> getTableFieldBy(RecipientFieldType fieldType, RecipientFieldCategory fieldCategory) {
