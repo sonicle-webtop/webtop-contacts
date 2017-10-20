@@ -290,78 +290,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
-		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		ArrayList<CategoryRoot> roots = new ArrayList();
-		HashSet<String> hs = new HashSet<>();
-		
-		List<IncomingShareRoot> shares = core.listIncomingShareRoots(SERVICE_ID, GROUPNAME_CATEGORY);
-		for(IncomingShareRoot share : shares) {
-			SharePermsRoot perms = core.getShareRootPermissions(share.getShareId());
-			CategoryRoot root = new CategoryRoot(share, perms);
-			if(hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
-			hs.add(root.getShareId());
-			roots.add(root);
-		}
-		return roots;
-	}
-	
-	public HashMap<Integer, CategoryFolder> listIncomingCategoryFolders(String rootShareId) throws WTException {
-		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		LinkedHashMap<Integer, CategoryFolder> folders = new LinkedHashMap<>();
-		
-		// Retrieves incoming folders (from sharing). This lookup already 
-		// returns readable shares (we don't need to test READ permission)
-		List<OShare> shares = core.listIncomingShareFolders(rootShareId, GROUPNAME_CATEGORY);
-		for(OShare share : shares) {
-			
-			List<Category> cats = null;
-			if(share.hasWildcard()) {
-				UserProfileId ownerId = core.userUidToProfileId(share.getUserUid());
-				cats = listCategories(ownerId);
-			} else {
-				cats = Arrays.asList(getCategory(Integer.valueOf(share.getInstance())));
-			}
-			
-			for(Category cat : cats) {
-				SharePermsFolder fperms = core.getShareFolderPermissions(share.getShareId().toString());
-				SharePermsElements eperms = core.getShareElementsPermissions(share.getShareId().toString());
-				
-				if(folders.containsKey(cat.getCategoryId())) {
-					CategoryFolder folder = folders.get(cat.getCategoryId());
-					folder.getPerms().merge(fperms);
-					folder.getElementsPerms().merge(eperms);
-				} else {
-					folders.put(cat.getCategoryId(), new CategoryFolder(share.getShareId().toString(), fperms, eperms, cat));
-				}
-			}
-		}
-		return folders;
-	}
-	
-	public String buildCategoryFolderShareId(int categoryId) throws WTException {
-		UserProfileId targetPid = getTargetProfileId();
-		
-		UserProfileId ownerPid = categoryToOwner(categoryId);
-		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
-		
-		String rootShareId = null;
-		if (ownerPid.equals(targetPid)) {
-			rootShareId = MyCategoryRoot.SHARE_ID;
-		} else {
-			for(CategoryRoot root : listIncomingCategoryRoots()) {
-				HashMap<Integer, CategoryFolder> folders = listIncomingCategoryFolders(root.getShareId());
-				if (folders.containsKey(categoryId)) {
-					rootShareId = root.getShareId();
-					break;
-				}
-			}
-		}
-		
-		if (rootShareId == null) throw new WTException("Unable to find a root share [{0}]", categoryId);
-		return new CompositeId().setTokens(rootShareId, categoryId).toString();
-	}
-	
 	public Sharing getSharing(String shareId) throws WTException {
 		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		return core.getSharing(SERVICE_ID, GROUPNAME_CATEGORY, shareId);
@@ -374,6 +302,80 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public UserProfileId getCategoryOwner(int categoryId) throws WTException {
 		return categoryToOwner(categoryId);
+	}
+	
+	public String buildCategoryFolderShareId(int categoryId) throws WTException {
+		UserProfileId targetPid = getTargetProfileId();
+		
+		UserProfileId ownerPid = categoryToOwner(categoryId);
+		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
+		
+		String rootShareId = null;
+		if (ownerPid.equals(targetPid)) {
+			rootShareId = MyCategoryRoot.SHARE_ID;
+		} else {
+			for (CategoryRoot root : listIncomingCategoryRoots()) {
+				HashMap<Integer, CategoryFolder> folders = listIncomingCategoryFolders(root.getShareId());
+				if (folders.containsKey(categoryId)) {
+					rootShareId = root.getShareId();
+					break;
+				}
+			}
+		}
+		
+		if (rootShareId == null) throw new WTException("Unable to find a root share [{0}]", categoryId);
+		return new CompositeId().setTokens(rootShareId, categoryId).toString();
+	}
+	
+	@Override
+	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
+		ArrayList<CategoryRoot> roots = new ArrayList();
+		HashSet<String> hs = new HashSet<>();
+		
+		List<IncomingShareRoot> shares = core.listIncomingShareRoots(SERVICE_ID, GROUPNAME_CATEGORY);
+		for (IncomingShareRoot share : shares) {
+			SharePermsRoot perms = core.getShareRootPermissions(share.getShareId());
+			CategoryRoot root = new CategoryRoot(share, perms);
+			if (hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
+			hs.add(root.getShareId());
+			roots.add(root);
+		}
+		return roots;
+	}
+	
+	@Override
+	public HashMap<Integer, CategoryFolder> listIncomingCategoryFolders(String rootShareId) throws WTException {
+		CoreManager core = WT.getCoreManager(getTargetProfileId());
+		LinkedHashMap<Integer, CategoryFolder> folders = new LinkedHashMap<>();
+		
+		// Retrieves incoming folders (from sharing). This lookup already 
+		// returns readable shares (we don't need to test READ permission)
+		List<OShare> shares = core.listIncomingShareFolders(rootShareId, GROUPNAME_CATEGORY);
+		for (OShare share : shares) {
+			
+			List<Category> cats = null;
+			if (share.hasWildcard()) {
+				UserProfileId ownerId = core.userUidToProfileId(share.getUserUid());
+				cats = listCategories(ownerId);
+			} else {
+				cats = Arrays.asList(getCategory(Integer.valueOf(share.getInstance())));
+			}
+			
+			for (Category cat : cats) {
+				SharePermsFolder fperms = core.getShareFolderPermissions(share.getShareId().toString());
+				SharePermsElements eperms = core.getShareElementsPermissions(share.getShareId().toString());
+				
+				if (folders.containsKey(cat.getCategoryId())) {
+					CategoryFolder folder = folders.get(cat.getCategoryId());
+					folder.getPerms().merge(fperms);
+					folder.getElementsPerms().merge(eperms);
+				} else {
+					folders.put(cat.getCategoryId(), new CategoryFolder(share.getShareId().toString(), fperms, eperms, cat));
+				}
+			}
+		}
+		return folders;
 	}
 	
 	@Override
