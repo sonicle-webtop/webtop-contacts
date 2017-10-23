@@ -217,7 +217,6 @@ public class ContactDAO extends BaseDAO {
 				patt1 = patternizeWords(queryText);
 				patt2 = "%" + queryText;
 			}
-			patt3 = "%@" + queryText + "%";
 			
 			searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
 				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
@@ -226,13 +225,24 @@ public class ContactDAO extends BaseDAO {
 				.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)
 			))));
 			
-			if (fieldType.equals(RecipientFieldType.EMAIL)) {
-				if (StringUtils.contains(queryText, "@")) {
-					searchCndt = searchCndt.or(
-						CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
-					);
-				}
+			if (!fieldType.equals(RecipientFieldType.EMAIL)) {
+				searchCndt = searchCndt.or(
+					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt1)
+				);
+				searchCndt = searchCndt.or(
+					CONTACTS.HOME_EMAIL.likeIgnoreCase(patt1)
+				);
+				searchCndt = searchCndt.or(
+					CONTACTS.OTHER_EMAIL.likeIgnoreCase(patt1)
+				);
 			}
+			
+			if (StringUtils.contains(queryText, "@")) {
+				patt3 = "%" + queryText + "%";
+				searchCndt = searchCndt.or(
+					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
+				);
+			}			
 		}
 		
 		return dsl
