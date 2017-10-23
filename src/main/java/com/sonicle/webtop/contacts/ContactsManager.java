@@ -381,8 +381,17 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public List<Integer> listCategoryIds() throws WTException {
 		ArrayList<Integer> ids = new ArrayList<>();
-		for(Category category : listCategories()) {
+		for (Category category : listCategories()) {
 			ids.add(category.getCategoryId());
+		}
+		return ids;
+	}
+	
+	@Override
+	public List<Integer> listIncomingCategoryIds() throws WTException {
+		ArrayList<Integer> ids = new ArrayList<>();
+		for (CategoryRoot root : listIncomingCategoryRoots()) {
+			ids.addAll(listIncomingCategoryFolders(root.getShareId()).keySet());
 		}
 		return ids;
 	}
