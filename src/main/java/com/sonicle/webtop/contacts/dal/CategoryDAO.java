@@ -197,11 +197,22 @@ public class CategoryDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int update(Connection con, Integer categoryId, FieldsMap fieldValues) throws DAOException {
+	public int update(Connection con, int categoryId, FieldsMap fieldValues) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CATEGORIES)
 			.set(fieldValues)
+			.where(
+				CATEGORIES.CATEGORY_ID.equal(categoryId)
+			)
+			.execute();
+	}
+	
+	public int updateParametersById(Connection con, int categoryId, String parameters) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CATEGORIES)
+			.set(CATEGORIES.PARAMETERS, parameters)
 			.where(
 				CATEGORIES.CATEGORY_ID.equal(categoryId)
 			)

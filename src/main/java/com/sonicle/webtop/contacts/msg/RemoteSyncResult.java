@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2017 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,22 +28,31 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2017 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.model;
+package com.sonicle.webtop.contacts.msg;
 
-import com.sonicle.webtop.contacts.model.CategoryFolder;
-import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.core.model.SharePermsFolder;
-import com.sonicle.webtop.core.model.SharePermsElements;
+import com.sonicle.webtop.core.sdk.msg.ResultServiceMessage;
 
 /**
  *
  * @author malbinola
  */
-public class MyCategoryFolder extends CategoryFolder {
+public class RemoteSyncResult extends ResultServiceMessage {
+	public static final String ACTION = "remoteSyncResult";
 
-	public MyCategoryFolder(String shareId, Category category) {
-		super(shareId, SharePermsFolder.full(), SharePermsElements.full(), category);
+	public RemoteSyncResult(boolean start) {
+		super("com.sonicle.webtop.contacts", ACTION);
+		setMappedPayload("start", start);
+	}
+	
+	public final RemoteSyncResult setCategoryId(int categoryId) {
+		setMappedPayload("categoryId", categoryId);
+		return this;
+	}
+	
+	public final RemoteSyncResult setCategoryName(String categoryName) {
+		setMappedPayload("categoryName", categoryName);
+		return this;
 	}
 }

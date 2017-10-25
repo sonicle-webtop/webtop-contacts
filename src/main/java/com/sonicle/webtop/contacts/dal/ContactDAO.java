@@ -49,6 +49,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -290,6 +291,24 @@ public class ContactDAO extends BaseDAO {
 			.fetchOneInto(OContact.class);
 	}
 	
+	public Map<String, Integer> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.HREF
+			)
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CATEGORY_ID.equal(categoryId)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchMap(CONTACTS.HREF, CONTACTS.CONTACT_ID);
+	}
+	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW));
@@ -306,7 +325,7 @@ public class ContactDAO extends BaseDAO {
 		final String NEW = EnumUtils.toSerializedName(Contact.RevisionStatus.NEW);
 		DSLContext dsl = getDSL(con);
 		ArrayList<ContactsRecord> records = new ArrayList<>();
-		for(OContact item : items) {
+		for (OContact item : items) {
 			item.setRevisionStatus(NEW);
 			item.setRevisionTimestamp(revisionTimestamp);
 			item.setRevisionSequence(0);
@@ -385,13 +404,22 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByCategoryId(Connection con, int categoryId, boolean list) throws DAOException {
+	public int deleteById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.delete(CONTACTS)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+			)
+			.execute();
+	}
+	
+	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(list))
 			)
 			.execute();
 	}
@@ -410,7 +438,7 @@ public class ContactDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int logicDeleteByCategoryId(Connection con, int categoryId, boolean list, DateTime revisionTimestamp) throws DAOException {
+	public int logicDeleteByCategory(Connection con, int categoryId, DateTime revisionTimestamp) throws DAOException {
 		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -419,7 +447,6 @@ public class ContactDAO extends BaseDAO {
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(list))
 				.and(CONTACTS.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();

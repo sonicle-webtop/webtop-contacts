@@ -66,7 +66,7 @@ public class JsCategory {
 		name = cat.getName();
 		description = cat.getDescription();
 		color = cat.getColor();
-		sync = EnumUtils.getValue(cat.getSync());
+		sync = EnumUtils.toSerializedName(cat.getSync());
 		isDefault = cat.getIsDefault();
 		
 		CategoryRemoteParameters params = LangUtils.deserialize(cat.getParameters(), new CategoryRemoteParameters(), CategoryRemoteParameters.class);

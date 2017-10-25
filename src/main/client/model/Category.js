@@ -33,7 +33,7 @@
  */
 Ext.define('Sonicle.webtop.contacts.model.Category', {
 	extend: 'WTA.ux.data.BaseModel',
-	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageCategories'),
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageCategory'),
 	
 	identifier: 'negative',
 	idProperty: 'categoryId',
@@ -41,11 +41,21 @@ Ext.define('Sonicle.webtop.contacts.model.Category', {
 		WTF.field('categoryId', 'int', false),
 		WTF.field('domainId', 'string', false),
 		WTF.field('userId', 'string', false),
+		WTF.field('provider', 'string', false, {defaultValue: 'local'}),
 		WTF.field('name', 'string', false),
 		WTF.field('description', 'string', true),
 		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
-		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
 		WTF.field('sync', 'string', false, {defaultValue: 'O'}),
+		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
+		WTF.field('remoteUrl', 'string', true, {
+			validators: [{
+				type: 'sopresence',
+				ifField: 'provider',
+				ifValues: ['carddav']
+			}]
+		}),
+		WTF.field('remoteUsername', 'string', true),
+		WTF.field('remotePassword', 'string', true),
 		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
 			return rec.get('userId') + '@' + rec.get('domainId');
 		})
