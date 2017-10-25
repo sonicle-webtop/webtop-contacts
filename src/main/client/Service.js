@@ -582,6 +582,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.addContactsListUI(node.get('_pid'), node.get('_catId'));
 			}
 		});
+		me.addAct('sendContact', {
+			tooltip: null,
+			handler: function() {
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) me.sendSelContacts(sel);
+			}
+		});
 		me.addAct('addContactsListFromSel', {
 			tooltip: null,
 			handler: function() {
@@ -768,7 +775,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				'-',
 				me.getAct('deleteContact'),
 				'-',
-				me.getAct('addContactsListFromSel')
+				me.getAct('addContactsListFromSel'),
+				'-',
+				me.getAct('sendContact')
 			]
 		}));
 	},
@@ -1113,6 +1122,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	printSelContacts: function(sel) {
 		var me = this;
 		me.printContactsDetail(me.selectionIds(sel));
+	},
+	
+	sendSelContacts: function(sel) {
+		var me = this;
+		me.sendContactsDetail(me.selectionIds(sel));
 	},
 	
 	editShare: function(id) {
@@ -1508,6 +1522,34 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this, url;
 		url = WTF.processBinUrl(me.ID, 'PrintContactsDetail', {ids: WTU.arrayAsParam(ids)});
 		Sonicle.URLMgr.openFile(url, {filename: 'contacts-detail', newWindow: true});
+	},
+	
+	sendContactsDetail: function(ids) {
+		var me = this,
+			mapi = WT.getServiceApi('com.sonicle.webtop.mail');
+	
+		if (mapi) {
+			var meid=mapi.buildMessageEditorId();
+			WT.ajaxReq(me.ID, 'PrepareContactsDetailAttachments', {
+				params: {
+					messageEditorId: meid,
+					ids: WTU.arrayAsParam(ids)
+				},
+				callback: function(success, json) {
+					var html = '<br>Send Contacts!<br>';
+					mapi.newMessage({
+						messageEditorId: meid,
+						format: 'html',
+						content: html,
+						attachments: json.data
+					}, {
+						dirty: true,
+						contentReady: false,
+						appendContent: false
+					});
+				}
+			});
+		}
 	},
 	
 	/*
