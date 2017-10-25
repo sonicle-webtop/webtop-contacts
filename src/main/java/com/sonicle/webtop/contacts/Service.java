@@ -1187,6 +1187,41 @@ public class Service extends BaseService {
 		}
 	}
 	
+	public void processPrepareContactsDetailAttachments(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		ArrayList<MapItem> items = new ArrayList<>();
+		CoreManager core = WT.getCoreManager();
+		
+		try {
+			String meid = ServletUtils.getStringParameter(request, "messageEditorId", true);
+			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+			
+			Contact contact = null;
+			ContactPicture picture = null;
+			Category category = null;
+			for(Integer id : ids) {
+				picture = null;
+				contact = manager.getContact(id);
+				category = manager.getCategory(contact.getCategoryId());
+				if(contact.getHasPicture()) picture = manager.getContactPicture(id);
+				RBContactDetail rbcd=new RBContactDetail(core, category, contact, picture);
+				
+				String cstring="Name: "+rbcd.getFirstName()+" - Last name: "+rbcd.getLastName()+" - Company : "+rbcd.getCompany();
+				String filename=rbcd.getContactId().toString()+".txt";
+				UploadedFile upfile=addAsUploadedFile(meid, filename, "text/plain", new ByteArrayInputStream(cstring.getBytes()));
+				items.add(
+					new MapItem()
+						.add("uploadId", upfile.getUploadId())
+						.add("fileName", filename)
+						.add("fileSize", upfile.getSize())
+				);
+			}
+			new JsonResult(items).printTo(out);			
+		} catch(Exception ex) {
+			logger.error("Error in action PrepareContactsDetailAttachments", ex);
+			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		}
+	}
+	
 	private ContactPicture getUploadedContactPicture(String id) throws WTException {
 		UploadedFile upl = getUploadedFile(id);
 		if(upl == null) throw new WTException("Uploaded file not found [{0}]", id);
