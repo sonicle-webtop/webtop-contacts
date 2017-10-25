@@ -586,7 +586,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			tooltip: null,
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if (sel.length > 0) me.sendSelContacts(sel);
+				if (sel.length > 0) me.sendSelContactAsEmail(sel);
 			}
 		});
 		me.addAct('addContactsListFromSel', {
@@ -1120,13 +1120,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	printSelContacts: function(sel) {
-		var me = this;
-		me.printContactsDetail(me.selectionIds(sel));
+		this.printContactsDetail(this.selectionIds(sel));
 	},
 	
-	sendSelContacts: function(sel) {
-		var me = this;
-		me.sendContactsDetail(me.selectionIds(sel));
+	sendSelContactAsEmail: function(sel) {
+		this.sendContactAsEmail(this.selectionIds(sel));
 	},
 	
 	editShare: function(id) {
@@ -1524,23 +1522,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		Sonicle.URLMgr.openFile(url, {filename: 'contacts-detail', newWindow: true});
 	},
 	
-	sendContactsDetail: function(ids) {
+	sendContactAsEmail: function(ids) {
 		var me = this,
 			mapi = WT.getServiceApi('com.sonicle.webtop.mail');
 	
 		if (mapi) {
-			var meid=mapi.buildMessageEditorId();
-			WT.ajaxReq(me.ID, 'PrepareContactsDetailAttachments', {
+			var meid = mapi.buildMessageEditorId();
+			WT.ajaxReq(me.ID, 'PrepareSendContactAsEmail', {
 				params: {
-					messageEditorId: meid,
+					uploadTag: meid,
 					ids: WTU.arrayAsParam(ids)
 				},
 				callback: function(success, json) {
-					var html = '<br>Send Contacts!<br>';
 					mapi.newMessage({
 						messageEditorId: meid,
 						format: 'html',
-						content: html,
+						content: '<br>',
 						attachments: json.data
 					}, {
 						dirty: true,

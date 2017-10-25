@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.time.DateTimeUtils;
@@ -71,6 +72,7 @@ import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
 import com.sonicle.webtop.contacts.bol.model.RBAddressbook;
 import com.sonicle.webtop.contacts.bol.model.RBContactDetail;
 import com.sonicle.webtop.contacts.bol.model.SetupDataCategoryRemote;
+import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
@@ -103,6 +105,7 @@ import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.LogEntries;
+import ezvcard.VCard;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -1253,38 +1256,41 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processPrepareContactsDetailAttachments(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+	public void processPrepareSendContactAsEmail(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<MapItem> items = new ArrayList<>();
-		CoreManager core = WT.getCoreManager();
 		
 		try {
-			String meid = ServletUtils.getStringParameter(request, "messageEditorId", true);
+			String tag = ServletUtils.getStringParameter(request, "uploadTag", true);
 			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
-			Contact contact = null;
-			ContactPicture picture = null;
-			Category category = null;
-			for(Integer id : ids) {
-				picture = null;
-				contact = manager.getContact(id);
-				category = manager.getCategory(contact.getCategoryId());
-				if(contact.getHasPicture()) picture = manager.getContactPicture(id);
-				RBContactDetail rbcd=new RBContactDetail(core, category, contact, picture);
+			VCardOutput vout = new VCardOutput();
+			for (Integer id : ids) {
+				final Contact contact = manager.getContact(id);
+				if (contact == null) continue;
 				
-				String cstring="Name: "+rbcd.getFirstName()+" - Last name: "+rbcd.getLastName()+" - Company : "+rbcd.getCompany();
-				String filename=rbcd.getContactId().toString()+".txt";
-				UploadedFile upfile=addAsUploadedFile(meid, filename, "text/plain", new ByteArrayInputStream(cstring.getBytes()));
-				items.add(
-					new MapItem()
-						.add("uploadId", upfile.getUploadId())
-						.add("fileName", filename)
-						.add("fileSize", upfile.getSize())
+				ContactPicture contactPicture = null;
+				if (contact.getHasPicture()) {
+					try {
+						contactPicture = manager.getContactPicture(id);
+					} catch(Throwable t) {
+						logger.warn("Unable to extract picture [{}]", t, id);
+					}
+				}
+				
+				final String filename = buildContactFilename(contact) + ".vcf";
+				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vout.write(vout.toVCard(contact, contactPicture))));
+				
+				items.add(new MapItem()
+					.add("uploadId", upfile.getUploadId())
+					.add("fileName", filename)
+					.add("fileSize", upfile.getSize())
 				);
 			}
-			new JsonResult(items).printTo(out);			
+			new JsonResult(items).printTo(out);
+			
 		} catch(Exception ex) {
-			logger.error("Error in action PrepareContactsDetailAttachments", ex);
-			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+			logger.error("Error in PrepareContactsVCardAttachments", ex);
+			new JsonResult(ex).printTo(out);
 		}
 	}
 	
@@ -1344,6 +1350,11 @@ public class Service extends BaseService {
 		}
 		
 		return sb.toString();
+	}
+	
+	private String buildContactFilename(Contact contact) {
+		final String full = contact.getFullName();
+		return (StringUtils.isBlank(full)) ? String.valueOf(contact.getContactId()) : PathUtils.sanitizeFileName(full);
 	}
 	
 	private ArrayList<Integer> getVisibleFolderIds(boolean cleanupOrphans) {
