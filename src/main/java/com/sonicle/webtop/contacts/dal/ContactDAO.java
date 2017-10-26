@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.VContact;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
@@ -212,10 +213,10 @@ public class ContactDAO extends BaseDAO {
 		if (!StringUtils.isBlank(queryText)) {
 			String patt1 = null, patt2 = null, patt3 = null;
 			if(StringUtils.contains(queryText, " ")) {
-				patt1 = patternizeWords(queryText);
+				patt1 = LangUtils.patternizeWords(queryText);
 				patt2 = queryText;
 			} else {
-				patt1 = patternizeWords(queryText);
+				patt1 = LangUtils.patternizeWords(queryText);
 				patt2 = "%" + queryText;
 			}
 			
@@ -340,12 +341,63 @@ public class ContactDAO extends BaseDAO {
 		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
-		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.update(CONTACTS)
-			.set(record)
+			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
+			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
+			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
+			.set(CONTACTS.SEARCHFIELD, item.getSearchfield())
+			.set(CONTACTS.TITLE, item.getTitle())
+			.set(CONTACTS.FIRSTNAME, item.getFirstname())
+			.set(CONTACTS.LASTNAME, item.getLastname())
+			.set(CONTACTS.NICKNAME, item.getNickname())
+			.set(CONTACTS.GENDER, item.getGender())
+			.set(CONTACTS.COMPANY, item.getCompany())
+			.set(CONTACTS.FUNCTION, item.getFunction())
+			.set(CONTACTS.WORK_ADDRESS, item.getWorkAddress())
+			.set(CONTACTS.WORK_CITY, item.getWorkCity())
+			.set(CONTACTS.WORK_STATE, item.getWorkState())
+			.set(CONTACTS.WORK_POSTALCODE, item.getWorkPostalcode())
+			.set(CONTACTS.WORK_COUNTRY, item.getWorkCountry())
+			.set(CONTACTS.WORK_TELEPHONE, item.getWorkTelephone())
+			.set(CONTACTS.WORK_TELEPHONE2, item.getWorkTelephone2())
+			.set(CONTACTS.WORK_FAX, item.getWorkFax())
+			.set(CONTACTS.WORK_MOBILE, item.getWorkMobile())
+			.set(CONTACTS.WORK_PAGER, item.getWorkPager())
+			.set(CONTACTS.WORK_EMAIL, item.getWorkEmail())
+			.set(CONTACTS.WORK_IM, item.getWorkIm())
+			.set(CONTACTS.ASSISTANT, item.getAssistant())
+			.set(CONTACTS.ASSISTANT_TELEPHONE, item.getAssistantTelephone())
+			.set(CONTACTS.DEPARTMENT, item.getDepartment())
+			.set(CONTACTS.MANAGER, item.getManager())
+			.set(CONTACTS.HOME_ADDRESS, item.getHomeAddress())
+			.set(CONTACTS.HOME_CITY, item.getHomeCity())
+			.set(CONTACTS.HOME_STATE, item.getHomeState())
+			.set(CONTACTS.HOME_POSTALCODE, item.getHomePostalcode())
+			.set(CONTACTS.HOME_COUNTRY, item.getHomeCountry())
+			.set(CONTACTS.HOME_TELEPHONE, item.getHomeTelephone())
+			.set(CONTACTS.HOME_TELEPHONE2, item.getHomeTelephone2())
+			.set(CONTACTS.HOME_FAX, item.getHomeFax())
+			.set(CONTACTS.HOME_MOBILE, item.getHomeMobile())
+			.set(CONTACTS.HOME_PAGER, item.getHomePager())
+			.set(CONTACTS.HOME_EMAIL, item.getHomeEmail())
+			.set(CONTACTS.HOME_IM, item.getHomeIm())
+			.set(CONTACTS.PARTNER, item.getPartner())
+			.set(CONTACTS.BIRTHDAY, item.getBirthday())
+			.set(CONTACTS.ANNIVERSARY, item.getAnniversary())
+			.set(CONTACTS.OTHER_ADDRESS, item.getOtherAddress())
+			.set(CONTACTS.OTHER_CITY, item.getOtherCity())
+			.set(CONTACTS.OTHER_STATE, item.getOtherState())
+			.set(CONTACTS.OTHER_POSTALCODE, item.getOtherPostalcode())
+			.set(CONTACTS.OTHER_COUNTRY, item.getOtherCountry())
+			.set(CONTACTS.OTHER_EMAIL, item.getOtherEmail())
+			.set(CONTACTS.OTHER_IM, item.getOtherIm())
+			.set(CONTACTS.URL, item.getUrl())
+			.set(CONTACTS.NOTES, item.getNotes())
+			.set(CONTACTS.HREF, item.getHref())
+			.set(CONTACTS.ETAG, item.getEtag())
 			.where(
-					CONTACTS.CONTACT_ID.equal(item.getContactId())
+				CONTACTS.CONTACT_ID.equal(item.getContactId())
 			)
 			.execute();
 	}
@@ -506,33 +558,6 @@ public class ContactDAO extends BaseDAO {
 		}
 		return null;
 	}
-	
-	private String patternizeWords(String text) {
-		String[] tokens = StringUtils.split(text, " ");
-		String s = "";
-		for(String token : tokens) {
-			s += "%" + token + "% ";
-		}
-		return StringUtils.trim(s);
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	
 	/*
 	public byte[] readPhoto(Connection con, int contactId) throws IOException {

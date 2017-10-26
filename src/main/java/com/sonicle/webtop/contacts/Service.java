@@ -1289,7 +1289,7 @@ public class Service extends BaseService {
 			new JsonResult(items).printTo(out);
 			
 		} catch(Exception ex) {
-			logger.error("Error in PrepareContactsVCardAttachments", ex);
+			logger.error("Error in PrepareSendContactAsEmail", ex);
 			new JsonResult(ex).printTo(out);
 		}
 	}

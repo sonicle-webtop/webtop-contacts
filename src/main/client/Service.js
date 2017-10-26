@@ -1522,10 +1522,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		Sonicle.URLMgr.openFile(url, {filename: 'contacts-detail', newWindow: true});
 	},
 	
-	sendContactAsEmail: function(ids) {
+	sendContactAsEmail: function(ids, opts) {
 		var me = this,
 			mapi = WT.getServiceApi('com.sonicle.webtop.mail');
-	
 		if (mapi) {
 			var meid = mapi.buildMessageEditorId();
 			WT.ajaxReq(me.ID, 'PrepareSendContactAsEmail', {
@@ -1544,6 +1543,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						contentReady: false,
 						appendContent: false
 					});
+					Ext.callback(opts.callback, opts.scope || me, [true]);
 				}
 			});
 		}

@@ -101,6 +101,7 @@ import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
 import com.sonicle.webtop.core.util.NotificationHelper;
+import com.sonicle.webtop.core.util.VCardUtils;
 import eu.medsea.mimeutil.MimeType;
 import freemarker.template.TemplateException;
 import java.awt.image.BufferedImage;
@@ -126,6 +127,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.mail.internet.InternetAddress;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1393,60 +1395,80 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return createCategory(ocat);
 	}
 	
+	private String buildContactUid(int contactId, String internetName) {
+		return buildContactUid(IdentifierUtils.getUUIDTimeBased(true), contactId, internetName);
+	}
+	
+	private String buildContactUid(String timeBasedPart, int eventId, String internetName) {
+		return buildContactUid(timeBasedPart, DigestUtils.md5Hex(String.valueOf(eventId)), internetName);
+	}
+	
+	private String buildContactUid(String timeBasedPart, String contactPart, String internetName) {
+		// Generates the uid joining a dynamic time-based string with one 
+		// calculated from the real event id. This may help in subsequent phases
+		// especially to determine if the event is original or is coming from 
+		// an invitation.
+		return VCardUtils.buildUid(timeBasedPart + "." + contactPart, internetName);
+	}
+	
 	private int doBatchInsertContacts(CoreManager coreMgr, Connection con, int categoryId, ArrayList<Contact> contacts) throws WTException {
-		ContactDAO cdao = ContactDAO.getInstance();
+		ContactDAO contDao = ContactDAO.getInstance();
 		ArrayList<OContact> ocontacts = new ArrayList<>();
 		//TODO: eventualmente introdurre supporto alle immagini
 		for (Contact contact : contacts) {
-			OContact cont = createOContact(contact);
-			cont.setIsList(false);
-			cont.setSearchfield(StringUtils.lowerCase(buildSearchfield(coreMgr, cont)));
-			cont.setCategoryId(categoryId);
-			cont.setContactId(cdao.getSequence(con).intValue());
-			ocontacts.add(cont);
+			OContact ocont = createOContact(contact);
+			ocont.setIsList(false);
+			ocont.setSearchfield(buildSearchfield(coreMgr, ocont));
+			ocont.setCategoryId(categoryId);
+			ocont.setContactId(contDao.getSequence(con).intValue());
+			fillDefaultsForInsert(ocont);
+			ocontacts.add(ocont);
 		}
-		return cdao.batchInsert(con, ocontacts, createRevisionTimestamp());
+		return contDao.batchInsert(con, ocontacts, createRevisionTimestamp());
 	}
 	
 	private OContact doContactInsert(CoreManager coreMgr, Connection con, boolean isList, Contact contact, ContactPicture picture) throws IOException, DAOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		
-		OContact item = createOContact(contact);
-		item.setIsList(isList);
-		if (StringUtils.isBlank(item.getPublicUid())) item.setPublicUid(IdentifierUtils.getUUID());
-		item.setSearchfield(StringUtils.lowerCase(buildSearchfield(coreMgr, item)));
-		item.setContactId(contDao.getSequence(con).intValue());
+		OContact ocont = createOContact(contact);
+		ocont.setIsList(isList);
+		ocont.setContactId(contDao.getSequence(con).intValue());
+		fillDefaultsForInsert(ocont);
 		if (isList) {
+			ocont.setSearchfield(buildSearchfield(ocont));
 			// Compose list workEmail as: "list-{contactId}@{serviceId}"
-			item.setWorkEmail(RCPT_ORIGIN_LIST + "-" + item.getContactId() + "@" + SERVICE_ID);
+			ocont.setWorkEmail(RCPT_ORIGIN_LIST + "-" + ocont.getContactId() + "@" + SERVICE_ID);
+		} else {
+			ocont.setSearchfield(buildSearchfield(coreMgr, ocont));
 		}
-		contDao.insert(con, item, createRevisionTimestamp());
+		contDao.insert(con, ocont, createRevisionTimestamp());
 
 		if (contact.getHasPicture()) {
 			if (picture != null) {
-				doInsertContactPicture(con, item.getContactId(), picture);
+				doInsertContactPicture(con, ocont.getContactId(), picture);
 			}
 		}
-		return item;
+		return ocont;
 	}
 	
 	private void doContactUpdate(CoreManager coreMgr, Connection con, boolean isList, Contact contact, ContactPicture picture) throws IOException, DAOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		
-		OContact item = createOContact(contact);
-		item.setSearchfield(StringUtils.lowerCase(buildSearchfield(coreMgr, item)));
+		OContact ocont = createOContact(contact);
 		if (isList) {
-			contDao.updateList(con, item, createRevisionTimestamp());
+			ocont.setSearchfield(buildSearchfield(ocont));
+			contDao.updateList(con, ocont, createRevisionTimestamp());
 		} else {
-			contDao.update(con, item, createRevisionTimestamp());
+			ocont.setSearchfield(buildSearchfield(coreMgr, ocont));
+			contDao.update(con, ocont, createRevisionTimestamp());
 		}
 
 		if (contact.getHasPicture()) {
 			if (picture != null) {
-				doUpdateContactPicture(con, item.getContactId(), picture);
+				doUpdateContactPicture(con, ocont.getContactId(), picture);
 			}
 		} else {
-			doDeleteContactPicture(con, item.getContactId());
+			doDeleteContactPicture(con, ocont.getContactId());
 		}
 	}
 	
@@ -1747,10 +1769,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return fill;
 	}
 	
-	private String buildSearchfield(CoreManager coreMgr, OContact contact) {
+	private String buildSearchfield(OContact contact) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(StringUtils.defaultString(contact.getLastname()));
 		sb.append(StringUtils.defaultString(contact.getFirstname()));
+		return sb.toString().toLowerCase();
+	}
+	
+	private String buildSearchfield(CoreManager coreMgr, OContact contact) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(buildSearchfield(contact));
 		
 		String masterData = null;
 		if (!StringUtils.isEmpty(contact.getCompany())) {
@@ -1760,8 +1788,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				logger.warn("Problems looking-up master data description", ex);
 			}
 		}
-		String company = StringUtils.defaultIfBlank(masterData, contact.getCompany());
-		sb.append(StringUtils.defaultString(company));
+		final String company = StringUtils.defaultIfBlank(masterData, contact.getCompany());
+		sb.append(StringUtils.defaultString(company).toLowerCase());
 		return sb.toString();
 	}
 	
@@ -1919,6 +1947,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			fill.setNotes(with.getNotes());
 			fill.setHref(with.getHref());
 			fill.setEtag(with.getEtag());
+		}
+		return fill;
+	}
+	
+	private OContact fillDefaultsForInsert(OContact fill) {
+		if (fill != null) {
+			if (StringUtils.isBlank(fill.getPublicUid())) {
+				fill.setPublicUid(buildContactUid(fill.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
+			}
 		}
 		return fill;
 	}
