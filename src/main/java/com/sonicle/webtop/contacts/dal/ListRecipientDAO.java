@@ -133,7 +133,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByContactId(Connection con, int contactId) throws DAOException {
+	public int deleteByContact(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(LIST_RECIPIENTS)
@@ -143,7 +143,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByCategoryId(Connection con, int categoryId) throws DAOException {
+	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(LIST_RECIPIENTS)

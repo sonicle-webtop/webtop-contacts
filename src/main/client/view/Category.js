@@ -36,14 +36,15 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	requires: [
 		'Sonicle.form.field.Palette',
 		'Sonicle.form.RadioGroup',
+		'Sonicle.webtop.contacts.store.Provider',
 		'Sonicle.webtop.contacts.store.Sync'
 	],
 	
 	dockableConfig: {
 		title: '{category.tit}',
 		iconCls: 'wtcon-icon-category-xs',
-		width: 360,
-		height: 290
+		width: 380,
+		height: 340
 	},
 	fieldTitle: 'name',
 	modelName: 'Sonicle.webtop.contacts.model.Category',
@@ -53,6 +54,9 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		me.callParent([cfg]);
 		
 		WTU.applyFormulas(me.getVM(), {
+			foIsRemote: WTF.foGetFn('record', 'provider', function(v) {
+				return Sonicle.webtop.contacts.view.Category.isRemote(v);
+			}),
 			isDefault: WTF.checkboxBind('record', 'isDefault')
 		});
 	},
@@ -63,42 +67,118 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		
 		me.add({
 			region: 'center',
-			xtype: 'wtform',
-			modelValidation: true,
-			defaults: {
-				labelWidth: 110
-			},
+			xtype: 'wttabpanel',
 			items: [{
-				xtype: 'textfield',
-				reference: 'fldname',
-				bind: '{record.name}',
-				fieldLabel: me.mys.res('category.fld-name.lbl'),
-				anchor: '100%'
+				xtype: 'wtform',
+				title: me.mys.res('category.main.tit'),
+				modelValidation: true,
+				defaults: {
+					labelWidth: 110
+				},
+				items: [
+					WTF.lookupCombo('id', 'desc', {
+						bind: '{record.provider}',
+						disabled: true,
+						store: Ext.create('Sonicle.webtop.contacts.store.Provider', {
+							autoLoad: true
+						}),
+						fieldLabel: me.mys.res('category.fld-provider.lbl'),
+						width: 250
+					}),
+					{
+						xtype: 'textfield',
+						reference: 'fldname',
+						bind: '{record.name}',
+						fieldLabel: me.mys.res('category.fld-name.lbl'),
+						anchor: '100%'
+					}, {
+						xtype: 'checkbox',
+						bind: {
+							value: '{isDefault}',
+							disabled: '{foIsRemote}'
+						},
+						hideEmptyLabel: false,
+						boxLabel: me.mys.res('category.fld-default.lbl')
+					}, {
+						xtype: 'textareafield',
+						bind: '{record.description}',
+						fieldLabel: me.mys.res('category.fld-description.lbl'),
+						anchor: '100%'
+					}, {
+						xtype: 'sopalettefield',
+						bind: '{record.color}',
+						colors: WT.getColorPalette(),
+						fieldLabel: me.mys.res('category.fld-color.lbl'),
+						width: 210
+					},
+					WTF.lookupCombo('id', 'desc', {
+						bind: '{record.sync}',
+						store: Ext.create('Sonicle.webtop.contacts.store.Sync', {
+							autoLoad: true
+						}),
+						fieldLabel: me.mys.res('category.fld-sync.lbl'),
+						width: 250
+					})
+					
+				]
 			}, {
-				xtype: 'checkbox',
-				bind: '{isDefault}',
-				hideEmptyLabel: false,
-				boxLabel: me.mys.res('category.fld-default.lbl')
-			}, {
-				xtype: 'textareafield',
-				bind: '{record.description}',
-				fieldLabel: me.mys.res('category.fld-description.lbl'),
-				anchor: '100%'
-			}, {
-				xtype: 'sopalettefield',
-				bind: '{record.color}',
-				colors: WT.getColorPalette(),
-				fieldLabel: me.mys.res('category.fld-color.lbl'),
-				width: 210
-			},
-			WTF.lookupCombo('id', 'desc', {
-				bind: '{record.sync}',
-				store: Ext.create('Sonicle.webtop.contacts.store.Sync', {
-					autoLoad: true
-				}),
-				fieldLabel: me.mys.res('category.fld-sync.lbl'),
-				width: 250
-			})]
+				xtype: 'wtform',
+				title: me.mys.res('category.remote.tit'),
+				bind: {
+					disabled: '{!foIsRemote}'
+				},
+				modelValidation: true,
+				defaults: {
+					labelWidth: 90
+				},
+				items: [{
+					xtype: 'textfield',
+					bind: '{record.remoteUrl}',
+					selectOnFocus: true,
+					fieldLabel: me.mys.res('category.fld-remoteUrl.lbl'),
+					anchor: '100%'
+				}, {
+					xtype: 'sofakeinput' // Disable Chrome autofill
+				}, {
+					xtype: 'sofakeinput', // Disable Chrome autofill
+					type: 'password'
+				}, {
+					xtype: 'textfield',
+					bind: '{record.remoteUsername}',
+					plugins: 'sonoautocomplete',
+					fieldLabel: me.mys.res('category.fld-remoteUsername.lbl'),
+					width: 280
+				}, {
+					xtype: 'textfield',
+					bind: '{record.remotePassword}',
+					inputType: 'password',
+					plugins: 'sonoautocomplete',
+					fieldLabel: me.mys.res('category.fld-remotePassword.lbl'),
+					width: 280
+				}],
+				tbar: ['->', {
+					xtype: 'splitbutton',
+					tooltip: me.mys.res('category.btn-syncnow.tip'),
+					iconCls: 'wt-icon-refresh-xs',
+					handler: function() {
+						me.syncRemoteCategoryUI(me.getModel().get('categoryId'), false);
+					},
+					menu: {
+						items: [{
+							itemId: 'partial',
+							text: me.mys.res('category.btn-syncnow.partial.lbl')
+						}, {
+							itemId: 'full',
+							text: me.mys.res('category.btn-syncnow.full.lbl')
+						}],
+						listeners: {
+							click: function(s, itm) {
+								me.syncRemoteCategoryUI(me.getModel().get('categoryId'), itm.getItemId() === 'full');
+							}
+						}
+					}
+				}]
+			}]
 		});
 		me.on('viewload', me.onViewLoad);
 	},
@@ -107,5 +187,28 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		if(!success) return;
 		var me = this;
 		me.lref('fldname').focus(true);
+	},
+	
+	syncRemoteCategoryUI: function(categoryId, full) {
+		var me = this;
+		WT.confirm(me.mys.res('category.confirm.remotesync'), function(bid) {
+			if (bid === 'yes') {
+				me.mys.syncRemoteCategory(categoryId, full, {
+					callback: function(success, json) {
+						if (success) {
+							me.closeView(true);
+						} else {
+							WT.error(json.message);
+						}
+					}
+				});
+			}
+		}, this);
+	},
+	
+	statics: {
+		isRemote: function(provider) {
+			return provider === 'carddav';
+		}
 	}
 });

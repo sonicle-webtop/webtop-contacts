@@ -1,6 +1,6 @@
 /*
  * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
- * Copyright (C) 2014 Sonicle S.r.l.
+ * Copyright (C) 2017 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -31,26 +31,20 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-Ext.define('Sonicle.webtop.contacts.model.FolderNode', {
-	extend: 'Ext.data.Model',
+Ext.define('Sonicle.webtop.contacts.store.Provider', {
+	extend: 'Ext.data.ArrayStore',
 	
-	fields: [
-		WTF.field('_type', 'string', false),
-		WTF.field('_pid', 'string', false),
-		WTF.roField('_rperms', 'string'),
-		WTF.roField('_fperms', 'string'),
-		WTF.roField('_eperms', 'string'),
-		WTF.roField('_catId', 'string'),
-		WTF.roField('_builtIn', 'boolean'),
-		WTF.roField('_provider', 'string'),
-		WTF.roField('_color', 'string'),
-		WTF.roField('_default', 'boolean'),
-		WTF.field('_visible', 'boolean', false), // Same as checked
-		WTF.calcField('_domainId', 'string', '_pid', function(v, rec) {
-			return (rec.get('_pid')) ? rec.get('_pid').split('@')[1] : null;
-		}),
-		WTF.calcField('_userId', 'string', '_pid', function(v, rec) {
-			return (rec.get('_pid')) ? rec.get('_pid').split('@')[0] : null;
-		})
-	]
+	model: 'WTA.model.Simple',
+	data: [
+		['local',''],
+		['carddav','']
+	],
+	
+	constructor: function(cfg) {
+		var me = this;
+		Ext.each(me.config.data, function(row) {
+			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.categoryProvider.'+row[0]);
+		});
+		me.callParent([cfg]);
+	}
 });

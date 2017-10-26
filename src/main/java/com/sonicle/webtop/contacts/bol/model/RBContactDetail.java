@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol.model;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.Category;
@@ -111,7 +112,7 @@ public class RBContactDetail {
 		this.firstName = contact.getFirstName();
 		this.lastName = contact.getLastName();
 		this.nickname = contact.getNickname();
-		this.gender = contact.getGender();
+		this.gender = EnumUtils.toSerializedName(contact.getGender());
 		this.workAddress = contact.getWorkAddress();
 		this.workPostalCode = contact.getWorkPostalCode();
 		this.workCity = contact.getWorkCity();

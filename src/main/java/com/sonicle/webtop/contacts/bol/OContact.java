@@ -33,18 +33,63 @@
 package com.sonicle.webtop.contacts.bol;
 
 import com.sonicle.webtop.contacts.jooq.tables.pojos.Contacts;
+import com.sonicle.webtop.core.model.RecipientFieldCategory;
+import com.sonicle.webtop.core.model.RecipientFieldType;
 
 /**
  *
  * @author malbinola
  */
 public class OContact extends Contacts {
-	public final static String REV_STATUS_NEW = "N";
-	public final static String REV_STATUS_MODIFIED = "M";
-	public final static String REV_STATUS_DELETED = "D";
 	
-	public OContact() {
-		super();
-		setRevisionStatus(REV_STATUS_NEW);
+	public String getValueBy(RecipientFieldType type, RecipientFieldCategory category) {
+		if (type.equals(RecipientFieldType.TELEPHONE)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkTelephone();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomeTelephone();
+			}
+		} else if (type.equals(RecipientFieldType.TELEPHONE_2)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkTelephone2();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomeTelephone2();
+			}
+		} else if (type.equals(RecipientFieldType.FAX)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkFax();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomeFax();
+			}
+		} else if (type.equals(RecipientFieldType.MOBILE)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkMobile();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomeMobile();
+			}
+		} else if (type.equals(RecipientFieldType.PAGER)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkPager();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomePager();
+			}
+		} else if (type.equals(RecipientFieldType.EMAIL)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkEmail();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomeEmail();
+			} else if (category.equals(RecipientFieldCategory.OTHER)) {
+				return getOtherEmail();
+			}
+		} else if (type.equals(RecipientFieldType.IM)) {
+			if (category.equals(RecipientFieldCategory.WORK)) {
+				return getWorkIm();
+			} else if (category.equals(RecipientFieldCategory.HOME)) {
+				return getHomeIm();
+			} else if (category.equals(RecipientFieldCategory.OTHER)) {
+				return getOtherIm();
+			}
+		}
+		return null;
 	}
 }

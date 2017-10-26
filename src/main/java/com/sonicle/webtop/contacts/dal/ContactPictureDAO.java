@@ -93,7 +93,7 @@ public class ContactPictureDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByCategoryId(Connection con, int categoryId) throws DAOException {
+	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_PICTURES)

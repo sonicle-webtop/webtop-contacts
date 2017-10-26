@@ -116,15 +116,14 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				fieldLabel: me.mys.res('contactsList.fld-name.lbl'),
 				anchor: '100%',
 				listeners: {
-					blur: function() {
-						if (me.lref('gprecipients').validate()) {
-							var rg=me.lref('gprecipients'),
-								sm=rg.getSelectionModel(),
-								c=sm.getCount(),
-								rx=(c===0?0:rg.store.indexOf(sm.getSelection()[0]));
+					blur: function(s) {
+						if (s.validate()) {
+							var gp = me.lref('gprecipients'),
+								sm = gp.getSelectionModel(),
+								rec = (sm.getCount() === 0 ? 0 : gp.getStore().indexOf(sm.getSelection()[0]));
 							Ext.defer(function() {
-								rg.startEditAt(rx);
-							},100);
+								gp.startEditAt(rec);
+							}, 100);
 						}						
 					}
 				}

@@ -42,7 +42,6 @@ import com.sonicle.webtop.core.model.SharePermsElements;
  * @author malbinola
  */
 public class MyCategoryFolder extends CategoryFolder {
-	public static final String RIGHTS = "crud";
 
 	public MyCategoryFolder(String shareId, Category category) {
 		super(shareId, SharePermsFolder.full(), SharePermsElements.full(), category);
