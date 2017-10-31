@@ -47,12 +47,12 @@ WITH (OIDS=FALSE)
 DROP TABLE IF EXISTS "contacts"."contacts";
 CREATE TABLE "contacts"."contacts" (
 "contact_id" int4 DEFAULT nextval('"contacts".seq_contacts'::regclass) NOT NULL,
-"category_id" int4,
-"revision_status" varchar(1),
-"revision_timestamp" timestamptz(6),
+"category_id" int4 NOT NULL,
+"revision_status" varchar(1) NOT NULL,
+"revision_timestamp" timestamptz(6) NOT NULL,
 "revision_sequence" int4 DEFAULT 0 NOT NULL,
-"public_uid" varchar(36),
-"is_list" bool,
+"public_uid" varchar(255) NOT NULL,
+"is_list" bool DEFAULT false NOT NULL,
 "searchfield" varchar(255),
 "title" varchar(30),
 "firstname" varchar(60),
@@ -181,4 +181,4 @@ ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.1.1');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.1.3');
