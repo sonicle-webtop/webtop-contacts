@@ -1313,6 +1313,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								doContactInsert(coreMgr, con, false, ci.contact, ci.picture);
 								hrefs.add(dcard.getPath());
 							}
+							hrefs.clear();
 							
 							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
 							DbUtils.commitQuietly(con);
