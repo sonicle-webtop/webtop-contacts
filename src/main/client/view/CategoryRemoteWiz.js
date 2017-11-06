@@ -56,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 			username: null,
 			password: null,
 			name: null,
-			color: null
+			color: '#FFFFFF'
 		}
 	},
 	
@@ -166,6 +166,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 				}, {
 					xtype: 'sopalettefield',
 					bind: '{color}',
+					allowBlank: false,
 					colors: WT.getColorPalette(),
 					fieldLabel: me.mys.res('categoryRemoteWiz.fld-color.lbl'),
 					width: 210

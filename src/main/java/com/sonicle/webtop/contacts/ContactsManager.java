@@ -1296,13 +1296,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						// Inserts data...
 						try {
 							logger.debug("Processing results...");
+							// Define a simple map in order to check duplicates.
+							// eg. SOGo passes same card twice :(
+							HashSet<String> hrefs = new HashSet<>();
 							doDeleteContactsByCategory2(con, categoryId, false);
 							for (DavAddressbookCard dcard : dcards) {
+								if (hrefs.contains(dcard.getPath())) {
+									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
+									continue;
+								}
+								
 								final ContactInput ci = icalInput.fromVCard(dcard.getCard(), null);
 								ci.contact.setCategoryId(categoryId);
 								ci.contact.setHref(dcard.getPath());
 								ci.contact.setEtag(dcard.geteTag());
 								doContactInsert(coreMgr, con, false, ci.contact, ci.picture);
+								hrefs.add(dcard.getPath());
 							}
 							
 							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
@@ -1327,7 +1336,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							if (!changes.isEmpty()) {
 								// Process changes...
 								logger.debug("Processing changes...");
-								List<String> hrefs = new ArrayList<>();
+								HashSet<String> hrefs = new HashSet<>();
 								for (DavSyncStatus change : changes) {
 									if (DavUtil.HTTP_SC_TEXT_OK.equals(change.getResponseStatus())) {
 										hrefs.add(change.getPath());
