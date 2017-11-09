@@ -63,7 +63,6 @@ import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
-import com.sonicle.webtop.contacts.io.input.ContactReadResult;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
 import com.sonicle.webtop.contacts.model.ContactEx;
@@ -2128,20 +2127,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private class ContactBatchImportBeanHandler extends BatchBeanHandler<ContactReadResult> {
-		private ArrayList<Contact> contacts;
+	private class ContactBatchImportBeanHandler extends BatchBeanHandler<ContactInput> {
+		private ArrayList<Contact> contacts = new ArrayList<>();
 		public Connection con;
 		public int categoryId;
-		public int insertedCount;
+		public int insertedCount = 0;
 		
 		public ContactBatchImportBeanHandler(LogEntries log, Connection con, int categoryId) {
 			super(log);
-			this.contacts = new ArrayList<>();
 			this.con = con;
 			this.categoryId = categoryId;
-			insertedCount = 0;
 		}
-
+		
 		@Override
 		protected int getCurrentBeanBufferSize() {
 			return contacts.size();
@@ -2153,7 +2150,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 
 		@Override
-		protected void addBeanToBuffer(ContactReadResult bean) {
+		protected void addBeanToBuffer(ContactInput bean) {
 			contacts.add(bean.contact);
 		}
 		

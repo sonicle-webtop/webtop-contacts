@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.io.input;
 
+import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.core.io.input.MemoryExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
@@ -81,8 +82,8 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 	}
 
 	@Override
-	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
-		ArrayList<ContactReadResult> results = new ArrayList<>();
+	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+		ArrayList<ContactInput> results = new ArrayList<>();
 		HashMap<String, Integer> headersIndexes = listColumnIndexes(file);
 		
 		FileInputStream fis = null;
@@ -113,7 +114,7 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 		return results;
 	}
 	
-	private ContactReadResult readRow(LogEntries log, HashMap<String, Integer> headersIndexes, Row row) throws Exception {
+	private ContactInput readRow(LogEntries log, HashMap<String, Integer> headersIndexes, Row row) throws Exception {
 		Contact contact = new Contact();
 		contact.setHasPicture(false);
 		for(FileRowsReader.FieldMapping mapping : mappings) {
@@ -121,7 +122,7 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 			Integer index = headersIndexes.get(mapping.source);
 			fillContactByMapping(contact, mapping.target, row.getCell(index));
 		}
-		return new ContactReadResult(contact, null);
+		return new ContactInput(contact, null);
 	}
 	
 	private void fillContactByMapping(Contact contact, String target, Cell cell) {

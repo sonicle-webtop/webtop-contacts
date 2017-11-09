@@ -53,10 +53,10 @@ CREATE TABLE "contacts"."contacts" (
 "revision_sequence" int4 DEFAULT 0 NOT NULL,
 "public_uid" varchar(255) NOT NULL,
 "is_list" bool DEFAULT false NOT NULL,
-"searchfield" varchar(255),
+"searchfield" varchar(1024),
 "title" varchar(30),
-"firstname" varchar(60),
-"lastname" varchar(60),
+"firstname" varchar(255),
+"lastname" varchar(255),
 "nickname" varchar(60),
 "gender" varchar(6),
 "company" varchar(60),
@@ -181,4 +181,4 @@ ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.1.3');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.1.4');

@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.io.input;
 
+import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.core.util.LogEntries;
@@ -75,7 +76,7 @@ import org.joda.time.LocalDate;
 public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 
 	@Override
-	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
@@ -85,10 +86,10 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		}
 	}
 	
-	public ArrayList<ContactReadResult> listContacts(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
+	public ArrayList<ContactInput> listContacts(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
 		// See https://tools.ietf.org/html/rfc6350
 		// See http://www.w3.org/TR/vcard-rdf/
-		ArrayList<ContactReadResult> results = new ArrayList<>();
+		ArrayList<ContactInput> results = new ArrayList<>();
 		
 		List<VCard> vcs = Ezvcard.parse(is).all();
 		LogEntries vclog = null;
@@ -107,7 +108,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		return results;
 	}
 	
-	public ContactReadResult readVCard(LogEntries log, VCard vc) throws Exception {
+	public ContactInput readVCard(LogEntries log, VCard vc) throws Exception {
 		Contact contact = new Contact();
 		ContactPicture picture = null;
 		
@@ -287,7 +288,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 			contact.setHasPicture(false);
 		}
 		
-		return new ContactReadResult(contact, picture);
+		return new ContactInput(contact, picture);
 	}
 	
 	public static Contact.Gender parseGender(Gender ge) {

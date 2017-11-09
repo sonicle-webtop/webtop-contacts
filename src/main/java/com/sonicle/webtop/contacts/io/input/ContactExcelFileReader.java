@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.io.input;
 
+import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.ExcelFileReader;
@@ -96,7 +97,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 	
 	@Override
 	public void readContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
-		if(binary) {
+		if (binary) {
 			readXlsContacts(file, beanHandler);
 		} else {
 			readXlsxContacts(file, beanHandler);
@@ -116,11 +117,11 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 			
 			XlsxRowsHandler rowsHandler = null;
 			XSSFReader.SheetIterator sit = (XSSFReader.SheetIterator) reader.getSheetsData();
-			while(sit.hasNext()) {
+			while (sit.hasNext()) {
 				InputStream is = null;
 				try {
 					is = sit.next();
-					if(StringUtils.equals(sit.getSheetName(), sheet)) {
+					if (StringUtils.equals(sit.getSheetName(), sheet)) {
 						XMLReader xmlReader = SAXHelper.newXMLReader();
 						rowsHandler = new XlsxRowsHandler(is, headersRow, firstDataRow, lastDataRow, rowHandler);
 						ContentHandler xhandler = new XSSFSheetXMLHandler(styles, null, strings, rowsHandler, fmt, false);
@@ -155,132 +156,135 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 			XlsRowHandler rowHandler = new XlsRowHandler(this, columnIndexes, beanHandler);
 			XlsRowsProcessor rows = new XlsRowsProcessor(is, headersRow, firstDataRow, lastDataRow, sheet, rowHandler);
 			rows.process();
+			
 		} finally {
 			IOUtils.closeQuietly(is);
 			IOUtils.closeQuietly(pfs);
 		}
 	}
 	
-	
-	
 	protected void readRow(HashMap<String, Integer> columnIndexes, BeanHandler beanHandler, int row, RowValues rowBean) throws Exception {
 		LogEntries log = new LogEntries();
 		Contact contact = null;
 		try {
-			LogEntries rowlog = new LogEntries();
+			LogEntries ilog = new LogEntries();
 			contact = new Contact();
 			contact.setHasPicture(false);
-			for(FileRowsReader.FieldMapping mapping : mappings) {
-				if(StringUtils.isBlank(mapping.source)) continue;
-				if(!columnIndexes.containsKey(mapping.source)) throw new Exception("Index not found");
+			for (FileRowsReader.FieldMapping mapping : mappings) {
+				if (StringUtils.isBlank(mapping.source)) continue;
+				if (!columnIndexes.containsKey(mapping.source)) throw new Exception("Index not found");
 				Integer index = columnIndexes.get(mapping.source);
 				fillContactByMapping(contact, mapping.target, rowBean.get(index));
 			}
-			if(!rowlog.isEmpty()) {
-				log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", row+1));
-				log.addAll(rowlog);
+			if (contact.trimFieldLengths()) {
+				ilog.add(new MessageLogEntry(LogEntry.Level.WARN, "Some fields were truncated due to max-length"));
 			}
+			if (!ilog.isEmpty()) {
+				log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", row+1));
+				log.addAll(ilog);
+			}
+			
 		} catch(Throwable t) {
 			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
 		} finally {
-			boolean ret = beanHandler.handle(new ContactReadResult(contact, null), log);
+			boolean ret = beanHandler.handle(new ContactInput(contact, null), log);
 			if (!ret) throw new Exception("Handle not succesful");
 		}
 	}
 	
 	private void fillContactByMapping(Contact contact, String target, String value) {
-		if(target.equals("Title")) {
+		if (target.equals("Title")) {
 			contact.setTitle(value);
-		} else if(target.equals("FirstName")) {
+		} else if (target.equals("FirstName")) {
 			contact.setFirstName(value);
-		} else if(target.equals("LastName")) {
+		} else if (target.equals("LastName")) {
 			contact.setLastName(value);
-		} else if(target.equals("Nickname")) {
+		} else if (target.equals("Nickname")) {
 			contact.setNickname(value);
-		} else if(target.equals("Gender")) {
+		} else if (target.equals("Gender")) {
 			//TODO: gestire sesso
 			//contact.setGender(value);
-		} else if(target.equals("WorkAddress")) {
+		} else if (target.equals("WorkAddress")) {
 			contact.setWorkAddress(value);
-		} else if(target.equals("WorkPostalCode")) {
+		} else if (target.equals("WorkPostalCode")) {
 			contact.setWorkPostalCode(value);
-		} else if(target.equals("WorkCity")) {
+		} else if (target.equals("WorkCity")) {
 			contact.setWorkCity(value);
-		} else if(target.equals("WorkState")) {
+		} else if (target.equals("WorkState")) {
 			contact.setWorkState(value);
-		} else if(target.equals("WorkCountry")) {
+		} else if (target.equals("WorkCountry")) {
 			contact.setWorkCountry(value);
-		} else if(target.equals("WorkTelephone")) {
+		} else if (target.equals("WorkTelephone")) {
 			contact.setWorkTelephone(value);
-		} else if(target.equals("WorkTelephone2")) {
+		} else if (target.equals("WorkTelephone2")) {
 			contact.setWorkTelephone2(value);
-		} else if(target.equals("WorkMobile")) {
+		} else if (target.equals("WorkMobile")) {
 			contact.setWorkMobile(value);
-		} else if(target.equals("WorkFax")) {
+		} else if (target.equals("WorkFax")) {
 			contact.setWorkFax(value);
-		} else if(target.equals("WorkPager")) {
+		} else if (target.equals("WorkPager")) {
 			contact.setWorkPager(value);
-		} else if(target.equals("WorkEmail")) {
+		} else if (target.equals("WorkEmail")) {
 			contact.setWorkEmail(value);
-		} else if(target.equals("WorkInstantMsg")) {
+		} else if (target.equals("WorkInstantMsg")) {
 			contact.setWorkInstantMsg(value);
-		} else if(target.equals("HomeAddress")) {
+		} else if (target.equals("HomeAddress")) {
 			contact.setHomeAddress(value);
-		} else if(target.equals("HomePostalCode")) {
+		} else if (target.equals("HomePostalCode")) {
 			contact.setHomePostalCode(value);
-		} else if(target.equals("HomeCity")) {
+		} else if (target.equals("HomeCity")) {
 			contact.setHomeCity(value);
-		} else if(target.equals("HomeState")) {
+		} else if (target.equals("HomeState")) {
 			contact.setHomeState(value);
-		} else if(target.equals("HomeCountry")) {
+		} else if (target.equals("HomeCountry")) {
 			contact.setHomeCountry(value);
-		} else if(target.equals("HomeTelephone")) {
+		} else if (target.equals("HomeTelephone")) {
 			contact.setHomeTelephone(value);
-		} else if(target.equals("HomeTelephone2")) {
+		} else if (target.equals("HomeTelephone2")) {
 			contact.setHomeTelephone2(value);
-		} else if(target.equals("HomeFax")) {
+		} else if (target.equals("HomeFax")) {
 			contact.setHomeFax(value);
-		} else if(target.equals("HomePager")) {
+		} else if (target.equals("HomePager")) {
 			contact.setHomePager(value);
-		} else if(target.equals("HomeEmail")) {
+		} else if (target.equals("HomeEmail")) {
 			contact.setHomeEmail(value);
-		} else if(target.equals("HomeInstantMsg")) {
+		} else if (target.equals("HomeInstantMsg")) {
 			contact.setHomeInstantMsg(value);
-		} else if(target.equals("OtherAddress")) {
+		} else if (target.equals("OtherAddress")) {
 			contact.setOtherAddress(value);
-		} else if(target.equals("OtherPostalCode")) {
+		} else if (target.equals("OtherPostalCode")) {
 			contact.setOtherPostalCode(value);
-		} else if(target.equals("OtherCity")) {
+		} else if (target.equals("OtherCity")) {
 			contact.setOtherCity(value);
-		} else if(target.equals("OtherState")) {
+		} else if (target.equals("OtherState")) {
 			contact.setOtherState(value);
-		} else if(target.equals("OtherCountry")) {
+		} else if (target.equals("OtherCountry")) {
 			contact.setOtherCountry(value);
-		} else if(target.equals("OtherEmail")) {
+		} else if (target.equals("OtherEmail")) {
 			contact.setOtherEmail(value);
-		} else if(target.equals("OtherInstantMsg")) {
+		} else if (target.equals("OtherInstantMsg")) {
 			contact.setOtherInstantMsg(value);
-		} else if(target.equals("Company")) {
+		} else if (target.equals("Company")) {
 			contact.setCompany(value);
-		} else if(target.equals("Function")) {
+		} else if (target.equals("Function")) {
 			contact.setFunction(value);
-		} else if(target.equals("Department")) {
+		} else if (target.equals("Department")) {
 			contact.setDepartment(value);
-		} else if(target.equals("Manager")) {
+		} else if (target.equals("Manager")) {
 			contact.setManager(value);
-		} else if(target.equals("Assistant")) {
+		} else if (target.equals("Assistant")) {
 			contact.setAssistant(value);
-		} else if(target.equals("AssistantTelephone")) {
+		} else if (target.equals("AssistantTelephone")) {
 			contact.setAssistantTelephone(value);
-		} else if(target.equals("Partner")) {
+		} else if (target.equals("Partner")) {
 			contact.setPartner(value);
-		} else if(target.equals("Birthday")) {
+		} else if (target.equals("Birthday")) {
 			//TODO: gestire compleanno
-		} else if(target.equals("Anniversary")) {
+		} else if (target.equals("Anniversary")) {
 			//TODO: gestire anniversario
-		} else if(target.equals("Url")) {
+		} else if (target.equals("Url")) {
 			contact.setUrl(value);
-		} else if(target.equals("Notes")) {
+		} else if (target.equals("Notes")) {
 			contact.setNotes(value);
 		}
 	}
@@ -301,40 +305,4 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 			excelReader.readRow(columnIndexes, beanHandler, row, rowBean);
 		}
 	}
-	
-	
-	
-	
-	
-	
-	/*
-	private void readXlsContacts(File file, DefaultBeanHandler beanHandler) throws IOException, FileReaderException {
-		POIFSFileSystem pfs = null;
-		
-		try {
-			pfs = new POIFSFileSystem(file);
-			XlsColumnsProcessor cols = null;
-			
-			InputStream is1 = null;
-			try {
-				is1 = pfs.createDocumentInputStream("Workbook");
-				cols = new XlsColumnsProcessor(is1, headersRow, firstDataRow, lastDataRow, sheet);
-				cols.process();
-			} finally {
-				IOUtils.closeQuietly(is1);
-			}
-			InputStream is2 = null;
-			try {
-				is2 = pfs.createDocumentInputStream("Workbook");
-				XlsRowHandler rowHandler = new XlsRowHandler(this, cols.columnIndexes, beanHandler);
-				XlsRowsProcessor rows = new XlsRowsProcessor(is2, headersRow, firstDataRow, lastDataRow, sheet, rowHandler);
-				rows.process();
-			} finally {
-				IOUtils.closeQuietly(is2);
-			}
-		} finally {
-			IOUtils.closeQuietly(pfs);
-		}
-	}
-	*/
 }
