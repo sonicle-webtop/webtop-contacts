@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.io.input;
 
+import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.core.util.LogEntries;
 import java.io.File;
 import java.io.IOException;
@@ -42,5 +43,5 @@ import java.util.ArrayList;
  * @author malbinola
  */
 public interface MemoryContactFileReader {
-	public ArrayList<ContactReadResult> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
+	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
 }

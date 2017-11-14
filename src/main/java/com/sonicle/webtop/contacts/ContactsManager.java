@@ -63,7 +63,6 @@ import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
-import com.sonicle.webtop.contacts.io.input.ContactReadResult;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
 import com.sonicle.webtop.contacts.model.ContactEx;
@@ -1296,14 +1295,24 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						// Inserts data...
 						try {
 							logger.debug("Processing results...");
+							// Define a simple map in order to check duplicates.
+							// eg. SOGo passes same card twice :(
+							HashSet<String> hrefs = new HashSet<>();
 							doDeleteContactsByCategory2(con, categoryId, false);
 							for (DavAddressbookCard dcard : dcards) {
+								if (hrefs.contains(dcard.getPath())) {
+									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
+									continue;
+								}
+								
 								final ContactInput ci = icalInput.fromVCard(dcard.getCard(), null);
 								ci.contact.setCategoryId(categoryId);
 								ci.contact.setHref(dcard.getPath());
 								ci.contact.setEtag(dcard.geteTag());
 								doContactInsert(coreMgr, con, false, ci.contact, ci.picture);
+								hrefs.add(dcard.getPath());
 							}
+							hrefs.clear();
 							
 							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
 							DbUtils.commitQuietly(con);
@@ -1316,18 +1325,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					} else { // Partial update
 						params.syncToken = dbook.getSyncToken();
 						
-						ContactDAO contDao = ContactDAO.getInstance();
-						Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
-						
 						logger.debug("Retrieving changes [{}, {}]", params.url.toString(), savedSyncToken);
 						List<DavSyncStatus> changes = dav.getAddressbookChanges(params.url.toString(), savedSyncToken);
 						logger.debug("Endpoint returns {} items", changes.size());
 						
 						try {
 							if (!changes.isEmpty()) {
+								ContactDAO contDao = ContactDAO.getInstance();
+								Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
+								
 								// Process changes...
 								logger.debug("Processing changes...");
-								List<String> hrefs = new ArrayList<>();
+								HashSet<String> hrefs = new HashSet<>();
 								for (DavSyncStatus change : changes) {
 									if (DavUtil.HTTP_SC_TEXT_OK.equals(change.getResponseStatus())) {
 										hrefs.add(change.getPath());
@@ -2118,20 +2127,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private class ContactBatchImportBeanHandler extends BatchBeanHandler<ContactReadResult> {
-		private ArrayList<Contact> contacts;
+	private class ContactBatchImportBeanHandler extends BatchBeanHandler<ContactInput> {
+		private ArrayList<Contact> contacts = new ArrayList<>();
 		public Connection con;
 		public int categoryId;
-		public int insertedCount;
+		public int insertedCount = 0;
 		
 		public ContactBatchImportBeanHandler(LogEntries log, Connection con, int categoryId) {
 			super(log);
-			this.contacts = new ArrayList<>();
 			this.con = con;
 			this.categoryId = categoryId;
-			insertedCount = 0;
 		}
-
+		
 		@Override
 		protected int getCurrentBeanBufferSize() {
 			return contacts.size();
@@ -2143,7 +2150,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 
 		@Override
-		protected void addBeanToBuffer(ContactReadResult bean) {
+		protected void addBeanToBuffer(ContactInput bean) {
 			contacts.add(bean.contact);
 		}
 		

@@ -36,7 +36,6 @@ import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
-import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
@@ -46,6 +45,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 
@@ -56,46 +56,51 @@ import org.apache.commons.io.IOUtils;
 public class ContactVCardFileReader implements ContactFileReader {
 	
 	@Override
-	public void readContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
+	public void readContacts(File file, BeanHandler handler) throws IOException, FileReaderException {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
-			readContacts(fis, beanHandler);
+			readContacts(fis, handler);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
 	}
 	
-	public void readContacts(InputStream is, BeanHandler beanHandler) throws IOException, FileReaderException {
-		// See https://tools.ietf.org/html/rfc6350
-		// See http://www.w3.org/TR/vcard-rdf/
-		
+	private void readContacts(InputStream is, BeanHandler handler) throws IOException, FileReaderException {
+		try {
+			final List<VCard> vCards = Ezvcard.parse(is).all();
+			readContacts(vCards, handler);
+		} catch(IOException ex) {
+			throw new FileReaderException(ex, "Unable to read stream");
+		}
+	}
+	
+	private void readContacts(Collection<VCard> vCards, BeanHandler handler) throws IOException, FileReaderException {
 		final VCardInput input = new VCardInput();
-		List<VCard> vcs = Ezvcard.parse(is).all();
-		for (VCard vc : vcs) {
+		//TODO: move BeanHandler code into VCardInput in order to avoid duplicated code here
+		
+		for (VCard vc : vCards) {
 			LogEntries log = new LogEntries();
-			ContactReadResult result = null;
+			ContactInput result = null;
 			try {
-				LogEntries vclog = new LogEntries();
-				result = readVCard(input, vclog, vc);
-				if (!vclog.isEmpty()) {
+				final LogEntries ilog = new LogEntries();
+				result = input.fromVCard(vc, ilog);
+				if (result.contact.trimFieldLengths()) {
+					ilog.add(new MessageLogEntry(LogEntry.Level.WARN, "Some fields were truncated due to max-length"));
+				}
+				if (!ilog.isEmpty()) {
 					log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "VCARD [{0}]", vc.getUid()));
-					log.addAll(vclog);
+					log.addAll(ilog);
 				}
 			} catch(Throwable t) {
 				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
 			} finally {
 				try {
-					beanHandler.handle(result, log);
+					handler.handle(result, log);
 				} catch(Exception ex) {
 					throw new FileReaderException(ex);
 				}
 			}
 		}
-	}
-	
-	public ContactReadResult readVCard(VCardInput input, LogEntries log, VCard vCard) throws WTException {
-		ContactInput ci = input.fromVCard(vCard, log);
-		return new ContactReadResult(ci.contact, ci.picture);
 	}
 }
