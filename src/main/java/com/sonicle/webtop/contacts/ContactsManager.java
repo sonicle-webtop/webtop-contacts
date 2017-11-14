@@ -1325,15 +1325,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					} else { // Partial update
 						params.syncToken = dbook.getSyncToken();
 						
-						ContactDAO contDao = ContactDAO.getInstance();
-						Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
-						
 						logger.debug("Retrieving changes [{}, {}]", params.url.toString(), savedSyncToken);
 						List<DavSyncStatus> changes = dav.getAddressbookChanges(params.url.toString(), savedSyncToken);
 						logger.debug("Endpoint returns {} items", changes.size());
 						
 						try {
 							if (!changes.isEmpty()) {
+								ContactDAO contDao = ContactDAO.getInstance();
+								Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
+								
 								// Process changes...
 								logger.debug("Processing changes...");
 								HashSet<String> hrefs = new HashSet<>();
