@@ -678,12 +678,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public void addContact(Contact contact, ContactPicture picture) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
+		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			checkRightsOnCategoryElements(contact.getCategoryId(), "CREATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
+			
+			Category category = createCategory(catDao.selectById(con, contact.getCategoryId()));
+			if (category == null) throw new WTException("Unable to retrieve category [{}]", contact.getCategoryId());
+			if (category.isRemoteProvider()) throw new WTException("Category is read only");
+			
 			OContact result = doContactInsert(coreMgr, con, false, contact, picture);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_INSERT", String.valueOf(result.getContactId()));
@@ -713,6 +719,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
+			//TODO: controllare se categoryId non è readonly (remoto)
 			doContactUpdate(coreMgr, con, false, contact, picture);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
@@ -905,12 +912,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public void addContactsList(ContactsList list) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
+		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(list.getCategoryId(), "CREATE"); // Rights check!
+			checkRightsOnCategoryElements(list.getCategoryId(), "CREATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
+			
+			Category category = createCategory(catDao.selectById(con, list.getCategoryId()));
+			if (category == null) throw new WTException("Unable to retrieve category [{}]", list.getCategoryId());
+			if (category.isRemoteProvider()) throw new WTException("Category is read only");
+			
 			OContact result = doInsertContactsList(coreMgr, con, list);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_INSERT", String.valueOf(result.getContactId()));
