@@ -42,6 +42,7 @@ Ext.define('Sonicle.webtop.contacts.model.CategoryLkp', {
 		WTF.field('name', 'string', false),
 		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
 		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
+		WTF.field('_writable', 'boolean', false),
 		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
 			return rec.get('userId') + '@' + rec.get('domainId');
 		})

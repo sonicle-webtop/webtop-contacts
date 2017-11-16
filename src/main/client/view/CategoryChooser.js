@@ -116,7 +116,12 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 					store: {
 						autoLoad: true,
 						model: me.mys.preNs('model.CategoryLkp'),
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
+						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
+						filters: [{
+							filterFn: function(rec) {
+								return (rec.get('_writable') === true);
+							}
+						}]
 					},
 					colorField: 'color',
 					fieldLabel: me.mys.res('categoryChooser.fld-category.lbl'),
@@ -128,7 +133,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	
 	onOkClick: function() {
 		var me = this;
-		if(!me.lref('fldowner').isValid() || !me.lref('fldcategory').isValid()) return;
+		if (!me.lref('fldowner').isValid() || !me.lref('fldcategory').isValid()) return;
 		me.fireEvent('viewok', me);
 		me.closeView(false);
 	},
@@ -143,9 +148,12 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 				sto = fld.getStore();
 		
 		sto.clearFilter();
-		sto.addFilter({
+		sto.addFilter([{
 			property: '_profileId',
 			value: owner
-		});
+		}, {
+			property: '_writable',
+			value: true
+		}]);
 	}
 });
