@@ -55,6 +55,10 @@ public class JsIncomingCategory {
 		this.ownerDisplayName = udata.getDisplayName();
 		this.categoryId = folder.getCategory().getCategoryId();
 		this.categoryName = folder.getCategory().getName();
-		this.readOnly = !SharePermsElements.full().toString().equals(folder.getElementsPerms().toString());
+		if (folder.getCategory().isRemoteProvider()) {
+			this.readOnly = true;
+		} else {
+			this.readOnly = !SharePermsElements.full().toString().equals(folder.getElementsPerms().toString());
+		}
 	}
 }

@@ -112,6 +112,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 						width: 210
 					},
 					WTF.lookupCombo('id', 'desc', {
+						reference: 'fldsync',
 						bind: '{record.sync}',
 						store: Ext.create('Sonicle.webtop.contacts.store.Sync', {
 							autoLoad: true
@@ -186,7 +187,20 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	onViewLoad: function(s, success) {
 		if(!success) return;
 		var me = this;
+		me.updateSyncFilters();
 		me.lref('fldname').focus(true);
+	},
+	
+	updateSyncFilters: function() {
+		var me = this,
+				isRem = me.self.isRemote(me.getModel().get('provider')),
+				sto = me.lref('fldsync').getStore();
+		sto.clearFilter();
+		sto.addFilter([{
+			filterFn: function(rec) {
+				return (isRem && (rec.getId() === 'W')) ? false : true;
+			}
+		}]);
 	},
 	
 	syncRemoteCategoryUI: function(categoryId, full) {
