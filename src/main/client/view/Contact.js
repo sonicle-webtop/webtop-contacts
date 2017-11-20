@@ -96,7 +96,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					labelWidth: 75,
 					listeners: {
 						select: function(s, rec) {
-							me.updateCategoryFilters(rec.get('id'));
+							me.updateCategoryFilters();
 						}
 					}
 				}),
@@ -104,8 +104,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					xtype: 'socolorcombo',
 					reference: 'fldcategory',
 					bind: '{record.categoryId}',
+					autoLoadOnValue: true,
 					store: {
-						autoLoad: true,
 						model: me.mys.preNs('model.CategoryLkp'),
 						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
 					},
@@ -476,7 +476,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		var me = this,
 				owner = me.lref('fldowner');
 		
-		me.updateCategoryFilters(owner.getValue());
+		me.updateCategoryFilters();
 		if(me.isMode(me.MODE_NEW)) {
 			me.getAct('saveClose').setDisabled(false);
 			me.getAct('delete').setDisabled(true);
@@ -499,16 +499,24 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		this.mys.cleanupUploadedFiles(s.getId());
 	},
 	
-	updateCategoryFilters: function(owner) {
+	updateCategoryFilters: function() {
 		var me = this,
-				fld = me.lref('fldcategory'),
-				sto = fld.getStore();
-		
+				mo = me.getModel(),
+				sto = me.lref('fldcategory').getStore();
 		sto.clearFilter();
-		sto.addFilter({
-			property: '_profileId',
-			value: owner
-		});
+		sto.addFilter([{
+				property: '_profileId',
+				value: mo.get('_profileId')
+			}, {
+				filterFn: function(rec) {
+					if (rec.get('_writable') === false) {
+						if (me.isMode(me.MODE_NEW)) return false;
+						return rec.getId() === mo.get('categoryId');
+					} else {
+						return true;
+					}
+				}
+		}]);
 	},
 	
 	deleteContact: function() {

@@ -416,7 +416,6 @@ public class Service extends BaseService {
 				for (CategoryRoot root : roots.values()) {
 					if (foldersByRoot.containsKey(root.getShareId())) {
 						for (CategoryFolder fold : foldersByRoot.get(root.getShareId())) {
-							if (!fold.getElementsPerms().implies("CREATE")) continue;
 							items.add(new JsCategoryLkp(fold));
 						}
 					}

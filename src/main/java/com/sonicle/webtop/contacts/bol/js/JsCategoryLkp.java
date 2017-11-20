@@ -48,6 +48,7 @@ public class JsCategoryLkp {
 	public String name;
 	public Boolean isDefault;
 	public String color;
+	public Boolean _writable;
 	
 	public JsCategoryLkp(Category cat) {
 		categoryId = cat.getCategoryId();
@@ -64,5 +65,6 @@ public class JsCategoryLkp {
 			CategoryFolderData data = (CategoryFolderData)folder.getData();
 			if (!StringUtils.isBlank(data.color)) color = data.color;
 		}
+		_writable = folder.getElementsPerms().implies("CREATE");
 	}
 }

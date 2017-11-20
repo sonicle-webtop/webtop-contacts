@@ -91,7 +91,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					data: {
 						categoryId: pl.categoryId
 					}
-				}, {callbackService: ok});
+				}/*, {callbackService: ok}*/);
+				if (ok) me.reloadContacts();
 			}
 		});
 		
