@@ -36,6 +36,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	requires: [
 		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.form.field.Image',
+		'WTA.ux.UploadBar',
 		'WTA.ux.field.SuggestCombo',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
@@ -208,6 +209,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					uploadTriggerCls: 'wtcon-add-trigger',
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
 						extraParams: {tag: me.getId()},
+						maxFileSize: 1048576, // 1MB
 						mimeTypes: [
 							{title: 'Image files', extensions: 'jpeg,jpg,png'}
 						]
@@ -219,8 +221,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						uploadcomplete: function() {
 							me.unwait();
 						},
-						uploaderror: function() {
+						uploaderror: function(s, file, cause) {
 							me.unwait();
+							WTA.ux.UploadBar.handleUploadError(s, file, cause);
 						},
 						fileuploaded: function(s, file, json) {
 							me.getModel().set('picture', json.data.uploadId);
