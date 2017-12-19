@@ -33,8 +33,8 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
-import com.sonicle.commons.MailUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.dav.CardDav;
@@ -2075,9 +2075,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getLastname(), value));
 							
 						} else {
-							if (fieldType.equals(RecipientFieldType.EMAIL) && !MailUtils.isAddressValid(value)) continue;
+							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
-							final String personal = MailUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
+							final String personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
 							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value));
 						}
 					}
@@ -2108,7 +2108,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					List<OListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
 					for (OListRecipient recipient : recipients) {
 						Recipient.Type rcptType = EnumUtils.forSerializedName(recipient.getRecipientType(), Recipient.Type.class);
-						InternetAddress ia = MailUtils.buildInternetAddress(recipient.getRecipient());
+						InternetAddress ia = InternetAddressUtils.toInternetAddress(recipient.getRecipient());
 						if (ia != null) {
 							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LISTITEM, ia.getPersonal(), ia.getAddress(), rcptType));
 						}
