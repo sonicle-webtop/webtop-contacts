@@ -95,6 +95,7 @@ import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
 import com.sonicle.webtop.core.sdk.interfaces.IRecipientsProvidersSource;
+import com.sonicle.webtop.core.util.ICalendarUtils;
 import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
@@ -1313,12 +1314,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							HashSet<String> hrefs = new HashSet<>();
 							doDeleteContactsByCategory2(con, categoryId, false);
 							for (DavAddressbookCard dcard : dcards) {
+								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
 								if (hrefs.contains(dcard.getPath())) {
 									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
 									continue;
 								}
 								
-								final ContactInput ci = icalInput.fromVCard(dcard.getCard(), null);
+								final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
 								ci.contact.setCategoryId(categoryId);
 								ci.contact.setHref(dcard.getPath());
 								ci.contact.setEtag(dcard.geteTag());
@@ -1368,11 +1370,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								// Inserts/Updates data...
 								logger.debug("Inserting/Updating events...");
 								for (DavAddressbookCard dcard : dcards) {
+									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
 									final Integer contactId = contactIdsByHref.get(dcard.getPath());
 									if (contactId != null) {
 										doDeleteContact(con, contactId, false);
 									}
-									final ContactInput ci = icalInput.fromVCard(dcard.getCard(), null);
+									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
 									ci.contact.setCategoryId(categoryId);
 									ci.contact.setHref(dcard.getPath());
 									ci.contact.setEtag(dcard.geteTag());
