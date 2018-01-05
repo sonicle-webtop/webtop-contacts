@@ -525,7 +525,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		var onItemClick = function(s) {
 			var node = me.getSelectedFolder(me.trFolders());
-			if (node && s.checked) me.updateCategorySyncUI(node, s.getItemId());
+			if (node && s.checked) me.updateCategoryPropSyncUI(node, s.getItemId());
 		};
 		me.addAct('categorySync', {
 			text: me.res('mni-categorySync.lbl'),
