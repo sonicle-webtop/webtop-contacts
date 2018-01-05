@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.webtop.contacts.bol.model.CategoryFolderData;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.CategoryFolder;
+import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -59,7 +59,7 @@ public class JsCategoryLkp {
 		color = cat.getColor();
 	}
 	
-	public JsCategoryLkp(CategoryFolder folder) {
+	public JsCategoryLkp(ShareFolderCategory folder) {
 		this(folder.getCategory());
 		if (folder.getData() != null) {
 			CategoryFolderData data = (CategoryFolderData)folder.getData();

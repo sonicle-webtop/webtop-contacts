@@ -34,8 +34,8 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.webtop.contacts.bol.js.rest.JsIncomingCategory;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.CategoryFolder;
-import com.sonicle.webtop.contacts.model.CategoryRoot;
+import com.sonicle.webtop.contacts.model.ShareFolderCategory;
+import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.BaseRestApiEndpoint;
@@ -61,8 +61,8 @@ public class RestApi extends BaseRestApiEndpoint {
 		ContactsManager manager = getManager();
 		
 		ArrayList<JsIncomingCategory> items = new ArrayList<>();
-		for (CategoryRoot root : manager.listIncomingCategoryRoots()) {
-			for (CategoryFolder fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
+		for (ShareRootCategory root : manager.listIncomingCategoryRoots()) {
+			for (ShareFolderCategory fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
 				if (Category.Sync.OFF.equals(fold.getCategory().getSync())) continue;
 				
 				items.add(new JsIncomingCategory(root, fold));

@@ -49,9 +49,9 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
-import com.sonicle.webtop.contacts.bol.model.MyCategoryRoot;
-import com.sonicle.webtop.contacts.model.CategoryFolder;
-import com.sonicle.webtop.contacts.model.CategoryRoot;
+import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
+import com.sonicle.webtop.contacts.model.ShareFolderCategory;
+import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactsList;
@@ -86,6 +86,8 @@ import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.model.MasterData;
 import com.sonicle.webtop.core.model.RecipientFieldCategory;
 import com.sonicle.webtop.core.model.RecipientFieldType;
+import com.sonicle.webtop.core.sdk.AbstractMapCache;
+import com.sonicle.webtop.core.sdk.AbstractShareCache;
 import com.sonicle.webtop.core.sdk.AuthException;
 import com.sonicle.webtop.core.sdk.BaseReminder;
 import com.sonicle.webtop.core.sdk.ReminderEmail;
@@ -95,7 +97,6 @@ import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
 import com.sonicle.webtop.core.sdk.interfaces.IRecipientsProvidersSource;
-import com.sonicle.webtop.core.util.ICalendarUtils;
 import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
@@ -115,7 +116,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -128,7 +128,6 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import javax.mail.internet.InternetAddress;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.collections.map.MultiValueMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.imgscalr.Scalr;
@@ -147,16 +146,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private static final String GROUPNAME_CATEGORY = "CATEGORY";
 	private static final Pattern PATTERN_VIRTUALRCPT_LIST = Pattern.compile("^" + RCPT_ORIGIN_LIST + "-(\\d+)$");
 	
-	private final HashSet<String> cacheReady = new HashSet<>();
-	private final HashMap<UserProfileId, CategoryRoot> cacheOwnerToRootShare = new HashMap<>();
-	private final HashMap<UserProfileId, String> cacheOwnerToWildcardFolderShare = new HashMap<>();
-	private final MultiValueMap cacheRootShareToFolderShare = MultiValueMap.decorate(new HashMap<String, Integer>());
-	private final HashMap<Integer, String> cacheCategoryToFolderShare = new HashMap<>();
-	private final HashMap<Integer, String> cacheCategoryToWildcardFolderShare = new HashMap<>();
-	private final HashMap<Integer, UserProfileId> cacheCategoryToOwner = new HashMap<>();
+	private final OwnerCache ownerCache = new OwnerCache();
+	private final ShareCache shareCache = new ShareCache();
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
+		if (!fastInit) {
+			shareCache.init();
+		}
 	}
 	
 	private ContactsServiceSettings getServiceSettings() {
@@ -171,105 +168,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private void buildShareCache() {
-		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		
-		try {
-			cacheOwnerToRootShare.clear();
-			cacheOwnerToWildcardFolderShare.clear();
-			cacheRootShareToFolderShare.clear();
-			cacheCategoryToFolderShare.clear();
-			cacheCategoryToWildcardFolderShare.clear();
-			for(CategoryRoot root : listIncomingCategoryRoots()) {
-				cacheOwnerToRootShare.put(root.getOwnerProfileId(), root);
-				for(OShare folder : core.listIncomingShareFolders(root.getShareId(), GROUPNAME_CATEGORY)) {
-					if(folder.hasWildcard()) {
-						UserProfileId ownerPid = core.userUidToProfileId(folder.getUserUid());
-						cacheOwnerToWildcardFolderShare.put(ownerPid, folder.getShareId().toString());
-						for(Category category : listCategories(ownerPid)) {
-							cacheRootShareToFolderShare.put(root.getShareId(), category.getCategoryId());
-							cacheCategoryToWildcardFolderShare.put(category.getCategoryId(), folder.getShareId().toString());
-						}
-					} else {
-						cacheRootShareToFolderShare.put(root.getShareId(), Integer.valueOf(folder.getInstance()));
-						cacheCategoryToFolderShare.put(Integer.valueOf(folder.getInstance()), folder.getShareId().toString());
-					}
-				}
-			}
-			cacheReady.add("shareCache");
-		} catch(WTException ex) {
-			throw new WTRuntimeException(ex.getMessage());
+	private List<ShareRootCategory> internalListIncomingCategoryShareRoots() throws WTException {
+		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
+		List<ShareRootCategory> roots = new ArrayList();
+		HashSet<String> hs = new HashSet<>();
+		for (IncomingShareRoot share : coreMgr.listIncomingShareRoots(SERVICE_ID, GROUPNAME_CATEGORY)) {
+			final SharePermsRoot perms = coreMgr.getShareRootPermissions(share.getShareId());
+			ShareRootCategory root = new ShareRootCategory(share, perms);
+			if (hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
+			hs.add(root.getShareId());
+			roots.add(root);
 		}
-	}
-	
-	private List<CategoryRoot> getCategoryRoots() {
-		synchronized(cacheReady) {
-			if(!cacheReady.contains("shareCache")) buildShareCache();
-			return new ArrayList<>(cacheOwnerToRootShare.values());
-		}
-	}
-	
-	private CategoryRoot ownerToRootShare(UserProfileId owner) {
-		synchronized(cacheReady) {
-			if(!cacheReady.contains("shareCache") || !cacheOwnerToRootShare.containsKey(owner)) buildShareCache();
-			return cacheOwnerToRootShare.get(owner);
-		}
-	}
-	
-	private String ownerToRootShareId(UserProfileId owner) {
-		CategoryRoot root = ownerToRootShare(owner);
-		return (root != null) ? root.getShareId() : null;
-	}
-	
-	private String ownerToWildcardFolderShareId(UserProfileId ownerPid) {
-		synchronized(cacheReady) {
-			if (!cacheReady.contains("shareCache") || (!cacheOwnerToWildcardFolderShare.containsKey(ownerPid) && cacheOwnerToRootShare.isEmpty())) buildShareCache();
-			return cacheOwnerToWildcardFolderShare.get(ownerPid);
-		}
-	}
-	
-	private String categoryToFolderShareId(int category) {
-		synchronized(cacheReady) {
-			if (!cacheReady.contains("shareCache") || !cacheCategoryToFolderShare.containsKey(category)) buildShareCache();
-			return cacheCategoryToFolderShare.get(category);
-		}
-	}
-	
-	private UserProfileId categoryToOwner(int categoryId) {
-		synchronized(cacheCategoryToOwner) {
-			if (cacheCategoryToOwner.containsKey(categoryId)) {
-				return cacheCategoryToOwner.get(categoryId);
-			} else {
-				try {
-					UserProfileId owner = findCategoryOwner(categoryId);
-					if (owner != null) cacheCategoryToOwner.put(categoryId, owner);
-					return owner;
-				} catch(WTException ex) {
-					throw new WTRuntimeException(ex.getMessage());
-				}
-			}
-		}
-	}
-	
-	private List<Integer> cachedCategoryFolderKeys() {
-		List<Integer> keys = new ArrayList<>();
-		synchronized(cacheReady) {
-			if (!cacheReady.contains("shareCache")) buildShareCache();
-			keys.addAll(cacheCategoryToFolderShare.keySet());
-			keys.addAll(cacheCategoryToWildcardFolderShare.keySet());
-		}
-		return keys;
-	}
-	
-	private List<Integer> rootShareToCategoryFolderIds(String rootShareId) {
-		List<Integer> keys = new ArrayList<>();
-		synchronized(cacheReady) {
-			if (!cacheReady.contains("shareCache")) buildShareCache();
-			if (cacheRootShareToFolderShare.containsKey(rootShareId)) {
-				keys.addAll(cacheRootShareToFolderShare.getCollection(rootShareId));
-			}
-		}
-		return keys;
+		return roots;
 	}
 	
 	@Override
@@ -278,8 +188,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			ArrayList<RecipientsProviderBase> providers = new ArrayList<>();
 			UserProfile.Data ud = WT.getUserData(getTargetProfileId());
 			providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), ud.getDisplayName(), getTargetProfileId(), listCategoryIds()));
-			for(CategoryRoot root : getCategoryRoots()) {
-				final List<Integer> catIds = rootShareToCategoryFolderIds(root.getShareId());
+			for(ShareRootCategory root : shareCache.getShareRoots()) {
+				final List<Integer> catIds = shareCache.getFolderIdsByShareRoot(root.getShareId());
 				providers.add(new RootRecipientsProvider(root.getOwnerProfileId().toString(), root.getDescription(), root.getOwnerProfileId(), catIds));
 			}
 			return providers;
@@ -313,6 +223,23 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
+	public String buildSharingId(int categoryId) throws WTException {
+		UserProfileId targetPid = getTargetProfileId();
+		
+		// Skip rights check if running user is resource's owner
+		UserProfileId owner = ownerCache.get(categoryId);
+		if (owner == null) throw new WTException("owner({0}) -> null", categoryId);
+		
+		String rootShareId = null;
+		if (owner.equals(targetPid)) {
+			rootShareId = MyShareRootCategory.SHARE_ID;
+		} else {
+			rootShareId = shareCache.getShareRootIdByFolderId(categoryId);
+		}
+		if (rootShareId == null) throw new WTException("Unable to find a root share [{0}]", categoryId);
+		return new CompositeId().setTokens(rootShareId, categoryId).toString();
+	}
+	
 	public Sharing getSharing(String shareId) throws WTException {
 		CoreManager core = WT.getCoreManager(getTargetProfileId());
 		return core.getSharing(SERVICE_ID, GROUPNAME_CATEGORY, shareId);
@@ -324,78 +251,33 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	public UserProfileId getCategoryOwner(int categoryId) throws WTException {
-		return categoryToOwner(categoryId);
-	}
-	
-	public String buildCategoryFolderShareId(int categoryId) throws WTException {
-		UserProfileId targetPid = getTargetProfileId();
-		
-		UserProfileId ownerPid = categoryToOwner(categoryId);
-		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
-		
-		String rootShareId = null;
-		if (ownerPid.equals(targetPid)) {
-			rootShareId = MyCategoryRoot.SHARE_ID;
-		} else {
-			for (CategoryRoot root : listIncomingCategoryRoots()) {
-				HashMap<Integer, CategoryFolder> folders = listIncomingCategoryFolders(root.getShareId());
-				if (folders.containsKey(categoryId)) {
-					rootShareId = root.getShareId();
-					break;
-				}
-			}
-		}
-		
-		if (rootShareId == null) throw new WTException("Unable to find a root share [{0}]", categoryId);
-		return new CompositeId().setTokens(rootShareId, categoryId).toString();
+		return ownerCache.get(categoryId);
 	}
 	
 	@Override
-	public List<CategoryRoot> listIncomingCategoryRoots() throws WTException {
-		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		ArrayList<CategoryRoot> roots = new ArrayList();
-		HashSet<String> hs = new HashSet<>();
-		
-		List<IncomingShareRoot> shares = core.listIncomingShareRoots(SERVICE_ID, GROUPNAME_CATEGORY);
-		for (IncomingShareRoot share : shares) {
-			SharePermsRoot perms = core.getShareRootPermissions(share.getShareId());
-			CategoryRoot root = new CategoryRoot(share, perms);
-			if (hs.contains(root.getShareId())) continue; // Avoid duplicates ??????????????????????
-			hs.add(root.getShareId());
-			roots.add(root);
-		}
-		return roots;
+	public List<ShareRootCategory> listIncomingCategoryRoots() throws WTException {
+		return shareCache.getShareRoots();
 	}
 	
 	@Override
-	public HashMap<Integer, CategoryFolder> listIncomingCategoryFolders(String rootShareId) throws WTException {
-		CoreManager core = WT.getCoreManager(getTargetProfileId());
-		LinkedHashMap<Integer, CategoryFolder> folders = new LinkedHashMap<>();
+	public Map<Integer, ShareFolderCategory> listIncomingCategoryFolders(String rootShareId) throws WTException {
+		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
+		LinkedHashMap<Integer, ShareFolderCategory> folders = new LinkedHashMap<>();
 		
-		// Retrieves incoming folders (from sharing). This lookup already 
-		// returns readable shares (we don't need to test READ permission)
-		List<OShare> shares = core.listIncomingShareFolders(rootShareId, GROUPNAME_CATEGORY);
-		for (OShare share : shares) {
-			
-			List<Category> cats = null;
-			if (share.hasWildcard()) {
-				UserProfileId ownerId = core.userUidToProfileId(share.getUserUid());
-				cats = listCategories(ownerId);
+		for (Integer folderId : shareCache.getFolderIdsByShareRoot(rootShareId)) {
+			final String shareFolderId = shareCache.getShareFolderIdByFolderId(folderId);
+			if (StringUtils.isBlank(shareFolderId)) continue;
+			SharePermsFolder fperms = coreMgr.getShareFolderPermissions(shareFolderId);
+			SharePermsElements eperms = coreMgr.getShareElementsPermissions(shareFolderId);
+			if (folders.containsKey(folderId)) {
+				final ShareFolderCategory shareFolder = folders.get(folderId);
+				if (shareFolder == null) continue;
+				shareFolder.getPerms().merge(fperms);
+				shareFolder.getElementsPerms().merge(eperms);
 			} else {
-				cats = Arrays.asList(getCategory(Integer.valueOf(share.getInstance())));
-			}
-			
-			for (Category cat : cats) {
-				SharePermsFolder fperms = core.getShareFolderPermissions(share.getShareId().toString());
-				SharePermsElements eperms = core.getShareElementsPermissions(share.getShareId().toString());
-				
-				if (folders.containsKey(cat.getCategoryId())) {
-					CategoryFolder folder = folders.get(cat.getCategoryId());
-					folder.getPerms().merge(fperms);
-					folder.getElementsPerms().merge(eperms);
-				} else {
-					folders.put(cat.getCategoryId(), new CategoryFolder(share.getShareId().toString(), fperms, eperms, cat));
-				}
+				final Category category = getCategory(folderId);
+				if (category == null) continue;
+				folders.put(folderId, new ShareFolderCategory(shareFolderId, fperms, eperms, category));
 			}
 		}
 		return folders;
@@ -412,11 +294,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public List<Integer> listIncomingCategoryIds() throws WTException {
-		ArrayList<Integer> ids = new ArrayList<>();
-		for (CategoryRoot root : listIncomingCategoryRoots()) {
-			ids.addAll(listIncomingCategoryFolders(root.getShareId()).keySet());
-		}
-		return ids;
+		return shareCache.getFolderIds();
 	}
 	
 	@Override
@@ -581,8 +459,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategoryFolder(categoryId, "DELETE");
 			
 			// Retrieve sharing status (for later)
-			String shareId = buildCategoryFolderShareId(categoryId);
-			Sharing sharing = getSharing(shareId);
+			String sharingId = buildSharingId(categoryId);
+			Sharing sharing = getSharing(sharingId);
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			Category cat = createCategory(catDao.selectById(con, categoryId));
@@ -1647,14 +1525,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private void checkRightsOnCategoryRoot(UserProfileId ownerPid, String action) throws WTException {
+	private void checkRightsOnCategoryRoot(UserProfileId owner, String action) throws WTException {
 		UserProfileId targetPid = getTargetProfileId();
 		
 		if (RunContext.isWebTopAdmin()) return;
-		if (ownerPid.equals(targetPid)) return;
+		if (owner.equals(targetPid)) return;
 		
-		String shareId = ownerToRootShareId(ownerPid);
-		if (shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", ownerPid);
+		String shareId = shareCache.getShareRootIdByOwner(owner);
+		if (shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", owner);
 		CoreManager coreMgr = WT.getCoreManager(targetPid);
 		if (coreMgr.isShareRootPermitted(shareId, action)) return;
 		//if (core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
@@ -1680,20 +1558,20 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (RunContext.isWebTopAdmin()) return;
 		
 		// Skip rights check if running user is resource's owner
-		UserProfileId ownerPid = categoryToOwner(categoryId);
-		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
-		if (ownerPid.equals(targetPid)) return;
+		UserProfileId owner = ownerCache.get(categoryId);
+		if (owner == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
+		if (owner.equals(targetPid)) return;
 		
 		// Checks rights on the wildcard instance (if present)
 		CoreManager core = WT.getCoreManager(targetPid);
-		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
+		String wildcardShareId = shareCache.getWildcardShareFolderIdByOwner(owner);
 		if (wildcardShareId != null) {
 			if (core.isShareFolderPermitted(wildcardShareId, action)) return;
 			//if (core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on category instance
-		String shareId = categoryToFolderShareId(categoryId);
+		String shareId = shareCache.getShareFolderIdByFolderId(categoryId);
 		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
 		if (core.isShareFolderPermitted(shareId, action)) return;
 		//if (core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
@@ -1707,20 +1585,20 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (RunContext.isWebTopAdmin()) return;
 		
 		// Skip rights check if running user is resource's owner
-		UserProfileId ownerPid = categoryToOwner(categoryId);
-		if (ownerPid == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
-		if (ownerPid.equals(targetPid)) return;
+		UserProfileId owner = ownerCache.get(categoryId);
+		if (owner == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
+		if (owner.equals(targetPid)) return;
 		
 		// Checks rights on the wildcard instance (if present)
 		CoreManager core = WT.getCoreManager(targetPid);
-		String wildcardShareId = ownerToWildcardFolderShareId(ownerPid);
+		String wildcardShareId = shareCache.getWildcardShareFolderIdByOwner(owner);
 		if (wildcardShareId != null) {
 			if (core.isShareElementsPermitted(wildcardShareId, action)) return;
 			//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
 		// Checks rights on calendar instance
-		String shareId = categoryToFolderShareId(categoryId);
+		String shareId = shareCache.getShareFolderIdByFolderId(categoryId);
 		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
 		if (core.isShareElementsPermitted(shareId, action)) return;
 		//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
@@ -2209,6 +2087,56 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		public ProbeCategoryRemoteUrlResult(String displayName) {
 			this.displayName = displayName;
+		}
+	}
+	
+	private class OwnerCache extends AbstractMapCache<Integer, UserProfileId> {
+
+		@Override
+		protected void internalInitCache() {}
+
+		@Override
+		protected void internalMissKey(Integer key) {
+			try {
+				UserProfileId owner = findCategoryOwner(key);
+				if (owner == null) throw new WTException("Owner not found [{0}]", key);
+				put(key, owner);
+			} catch(WTException ex) {
+				throw new WTRuntimeException(ex.getMessage());
+			}
+		}
+	}
+	
+	private class ShareCache extends AbstractShareCache<Integer, ShareRootCategory> {
+
+		@Override
+		protected void internalInitCache() {
+			final CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
+			try {
+				for (ShareRootCategory root : internalListIncomingCategoryShareRoots()) {
+					shareRoots.add(root);
+					ownerToShareRoot.put(root.getOwnerProfileId(), root);
+					for (OShare folder : coreMgr.listIncomingShareFolders(root.getShareId(), GROUPNAME_CATEGORY)) {
+						if (folder.hasWildcard()) {
+							final UserProfileId ownerPid = coreMgr.userUidToProfileId(folder.getUserUid());
+							ownerToWildcardShareFolder.put(ownerPid, folder.getShareId().toString());
+							for (Category category : listCategories(ownerPid)) {
+								folderTo.add(category.getCategoryId());
+								rootShareToFolderShare.put(root.getShareId(), category.getCategoryId());
+								folderToWildcardShareFolder.put(category.getCategoryId(), folder.getShareId().toString());
+							}
+						} else {
+							int categoryId = Integer.valueOf(folder.getInstance());
+							folderTo.add(categoryId);
+							rootShareToFolderShare.put(root.getShareId(), categoryId);
+							folderToShareFolder.put(categoryId, folder.getShareId().toString());
+						}
+					}
+				}
+				ready = true;
+			} catch(WTException ex) {
+				throw new WTRuntimeException(ex.getMessage());
+			}
 		}
 	}
 	
