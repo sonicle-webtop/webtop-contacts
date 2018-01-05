@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> {
 
-	private static final long serialVersionUID = -346838317;
+	private static final long serialVersionUID = 339283384;
 
 	/**
 	 * The reference instance of <code>contacts.categories</code>
@@ -79,7 +79,7 @@ public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.conta
 	/**
 	 * The column <code>contacts.categories.provider</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PROVIDER = createField("provider", org.jooq.impl.SQLDataType.VARCHAR.length(20).nullable(false), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PROVIDER = createField("provider", org.jooq.impl.SQLDataType.VARCHAR.length(20).nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>contacts.categories.parameters</code>.

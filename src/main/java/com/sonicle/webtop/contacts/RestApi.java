@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.webtop.contacts.bol.js.rest.JsIncomingCategory;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.app.RunContext;
@@ -42,6 +43,8 @@ import com.sonicle.webtop.core.sdk.BaseRestApiEndpoint;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -60,12 +63,18 @@ public class RestApi extends BaseRestApiEndpoint {
 	public Response listIncomingCategories() throws WTException {
 		ContactsManager manager = getManager();
 		
+		List<Integer> incCatIds = manager.listIncomingCategoryIds();
+		Map<Integer, CategoryPropSet> psets = manager.getCategoryCustomProps(incCatIds);
+		
 		ArrayList<JsIncomingCategory> items = new ArrayList<>();
 		for (ShareRootCategory root : manager.listIncomingCategoryRoots()) {
 			for (ShareFolderCategory fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
-				if (Category.Sync.OFF.equals(fold.getCategory().getSync())) continue;
+				Category.Sync sync = Category.Sync.OFF;
+				CategoryPropSet pset = psets.get(fold.getCategory().getCategoryId());
+				if (pset != null) sync = pset.getSyncOrDefault(sync);
+				if (Category.Sync.OFF.equals(sync)) continue;
 				
-				items.add(new JsIncomingCategory(root, fold));
+				items.add(new JsIncomingCategory(root, fold, pset));
 			}
 		}
 		return ok(items);

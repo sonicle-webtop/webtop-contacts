@@ -32,6 +32,8 @@
  */
 package com.sonicle.webtop.contacts.bol.js.rest;
 
+import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.app.WT;
@@ -49,13 +51,15 @@ public class JsIncomingCategory {
 	public String categoryName;
 	public Boolean readOnly;
 	
-	public JsIncomingCategory(ShareRootCategory root, ShareFolderCategory folder) {
+	public JsIncomingCategory(ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps) {
 		UserProfile.Data udata = WT.getUserData(root.getOwnerProfileId());
 		this.ownerProfileId = root.getOwnerProfileId().toString();
 		this.ownerDisplayName = udata.getDisplayName();
 		this.categoryId = folder.getCategory().getCategoryId();
 		this.categoryName = folder.getCategory().getName();
 		if (folder.getCategory().isRemoteProvider()) {
+			this.readOnly = true;
+		} else if ((folderProps != null) && Category.Sync.READ.equals(folderProps.getSync())) {
 			this.readOnly = true;
 		} else {
 			this.readOnly = !SharePermsElements.full().toString().equals(folder.getElementsPerms().toString());

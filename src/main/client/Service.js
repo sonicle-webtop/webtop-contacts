@@ -500,6 +500,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			tooltip: null,
 			menu: {
 				showSeparator: false,
+				itemId: 'categoryColor',
 				items: [{
 						xtype: 'colorpicker',
 						colors: WT.getColorPalette(),
@@ -507,7 +508,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							select: function(s, color) {
 								var node = me.getSelectedFolder(me.trFolders());
 								me.getRef('cxmFolder').hide();
-								if (node) me.updateCategoryColorUI(node, '#'+color);
+								if (node) me.updateCategoryPropColorUI(node, '#'+color);
 							}
 						}
 					},
@@ -516,9 +517,46 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						tooltip: null,
 						handler: function() {
 							var node = me.getSelectedFolder(me.trFolders());
-							if (node) me.updateCategoryColorUI(node, null);
+							if (node) me.updateCategoryPropColorUI(node, null);
 						}
 					})
+				]
+			}
+		});
+		var onItemClick = function(s) {
+			var node = me.getSelectedFolder(me.trFolders());
+			if (node && s.checked) me.updateCategorySyncUI(node, s.getItemId());
+		};
+		me.addAct('categorySync', {
+			text: me.res('mni-categorySync.lbl'),
+			tooltip: null,
+			menu: {
+				itemId: 'categorySync',
+				items: [{
+						itemId: 'O',
+						text: me.res('store.sync.O'),
+						group: 'categorySync',
+						checked: false,
+						listeners: {
+							click: onItemClick
+						}
+					}, {
+						itemId: 'R',
+						text: me.res('store.sync.R'),
+						group: 'categorySync',
+						checked: false,
+						listeners: {
+							click: onItemClick
+						}
+					}, {
+						itemId: 'W',
+						text: me.res('store.sync.W'),
+						group: 'categorySync',
+						checked: false,
+						listeners: {
+							click: onItemClick
+						}
+					}
 				]
 			}
 		});
@@ -727,8 +765,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				},
 				'-',
 				me.getAct('editSharing'),
-				me.getAct('hideCategory'),
-				me.getAct('categoryColor'),
+				{
+					text: me.res('mni-customizeFolder.lbl'),
+					menu: {
+						items: [
+							me.getAct('hideCategory'),
+							me.getAct('categoryColor'),
+							me.getAct('categorySync')
+						]
+					}
+				},
 				me.getAct('syncRemoteCategory'),
 				'-',
 				me.getAct('addContact'),
@@ -753,8 +799,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					me.getAct('importContacts').setDisabled(!er.CREATE);
 					me.getAct('hideCategory').setDisabled(mine);
 					me.getAct('categoryColor').setDisabled(mine);
+					me.getAct('categorySync').setDisabled(mine);
 					me.getAct('syncRemoteCategory').setDisabled(!Sonicle.webtop.contacts.view.Category.isRemote(rec.get('_provider')));
-					if (!mine) s.down('colorpicker').select(rec.get('_color'), true);
+					if (!mine) {
+						s.down('menu#categoryColor').down('colorpicker').select(rec.get('_color'), true);
+						s.down('menu#categorySync').getComponent(rec.get('_sync')).setChecked(true);
+					}
 				}
 			}
 		}));
@@ -848,7 +898,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	loadFolderNode: function(pid) {
+	loadRootNode: function(pid, reloadItemsIf) {
 		var me = this,
 				sto = me.trFolders().getStore(),
 				node;
@@ -856,7 +906,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		node = sto.findNode('_pid', pid, false);
 		if (node) {
 			sto.load({node: node});
-			if(node.get('checked'))	me.reloadContacts();
+			if (reloadItemsIf && node.get('checked')) me.reloadContacts();
 		}
 	},
 	
@@ -901,7 +951,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		me.addCategory(domainId, userId, {
 			callback: function(success, model) {
-				if (success) me.loadFolderNode(model.get('_profileId'));
+				if (success) me.loadRootNode(model.get('_profileId'));
 			}
 		});
 	},
@@ -910,7 +960,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		me.setupRemoteCategory(profileId, {
 			callback: function(success, mo) {
-				if(success) me.loadFolderNode(profileId);
+				if (success) me.loadRootNode(profileId);
 			}
 		});
 	},
@@ -919,7 +969,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		me.editCategory(categoryId, {
 			callback: function(success, model) {
-				if (success) me.loadFolderNode(model.get('_profileId'));
+				if (success) me.loadRootNode(model.get('_profileId'), true);
 			}
 		});
 	},
@@ -950,7 +1000,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		vct.getView().on('viewcallback', function(s, success, json) {
 			if (success) {
 				Ext.iterate(json.data, function(pid) {
-					me.loadFolderNode(pid);
+					me.loadRootNode(pid);
 				});
 			}
 		});
@@ -964,7 +1014,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.updateCategoryVisibility(node.get('_catId'), true, {
 					callback: function(success) {
 						if(success) {
-							me.loadFolderNode(node.get('_pid'));
+							me.loadRootNode(node.get('_pid'));
 							me.showHideF3Node(node, false);
 						}
 					}
@@ -973,13 +1023,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}, this);
 	},
 	
-	updateCategoryColorUI: function(node, color) {
+	updateCategoryPropColorUI: function(node, color) {
 		var me = this;
-		me.updateCategoryColor(node.get('_catId'), color, {
+		me.updateCategoryPropColor(node.get('_catId'), color, {
 			callback: function(success) {
-				if(success) {
-					me.loadFolderNode(node.get('_pid'));
+				if (success) {
+					me.loadRootNode(node.get('_pid'));
 					if (node.get('_visible')) me.reloadContacts();
+				}
+			}
+		});
+	},
+	
+	updateCategoryPropSyncUI: function(node, sync) {
+		var me = this;
+		me.updateCategoryPropSync(node.get('_catId'), sync, {
+			callback: function(success) {
+				if (success) {
+					me.loadRootNode(node.get('_pid'));
 				}
 			}
 		});
@@ -1224,13 +1285,27 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	updateCategoryColor: function(categoryId, color, opts) {
+	updateCategoryPropColor: function(categoryId, color, opts) {
 		opts = opts || {};
 		var me = this;
-		WT.ajaxReq(me.ID, 'SetCategoryColor', {
+		WT.ajaxReq(me.ID, 'SetCategoryPropColor', {
 			params: {
 				id: categoryId,
 				color: color
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
+			}
+		});
+	},
+	
+	updateCategoryPropSync: function(categoryId, sync, opts) {
+		opts = opts || {};
+		var me = this;
+		WT.ajaxReq(me.ID, 'SetCategoryPropSync', {
+			params: {
+				id: categoryId,
+				sync: sync
 			},
 			callback: function(success, json) {
 				Ext.callback(opts.callback, opts.scope || me, [success, json]);

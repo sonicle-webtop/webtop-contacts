@@ -45,6 +45,7 @@ import com.sonicle.dav.carddav.DavAddressbook;
 import com.sonicle.dav.carddav.DavAddressbookCard;
 import com.sonicle.dav.impl.DavException;
 import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.contacts.bol.OCategoryPropSet;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
@@ -57,6 +58,7 @@ import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.dal.CategoryDAO;
+import com.sonicle.webtop.contacts.dal.CategoryPropsDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
@@ -64,6 +66,7 @@ import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
 import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.FolderContacts;
@@ -81,6 +84,7 @@ import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.dal.DAOException;
+import com.sonicle.webtop.core.dal.DAOIntegrityViolationException;
 import com.sonicle.webtop.core.io.BatchBeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.model.MasterData;
@@ -453,6 +457,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public boolean deleteCategory(int categoryId) throws WTException {
 		CategoryDAO catDao = CategoryDAO.getInstance();
+		CategoryPropsDAO psetDao = CategoryPropsDAO.getInstance();
 		Connection con = null;
 		
 		try {
@@ -467,6 +472,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (cat == null) return false;
 			
 			int ret = catDao.deleteById(con, categoryId);
+			psetDao.deleteByCategory(con, categoryId);
 			doDeleteContactsByCategory2(con, categoryId, !cat.isRemoteProvider());
 			
 			// Cleanup sharing, if necessary
@@ -491,6 +497,84 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} catch(Exception ex) {
 			DbUtils.rollbackQuietly(con);
 			throw ex;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public CategoryPropSet getCategoryCustomProps(int categoryId) throws WTException {
+		return getCategoryCustomProps(getTargetProfileId(), categoryId);
+	}
+	
+	private CategoryPropSet getCategoryCustomProps(UserProfileId profileId, int categoryId) throws WTException {
+		CategoryPropsDAO psetDao = CategoryPropsDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			OCategoryPropSet opset = psetDao.selectByProfileCategory(con, profileId.getDomainId(), profileId.getUserId(), categoryId);
+			return (opset == null) ? new CategoryPropSet() : createCategoryPropSet(opset);
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public Map<Integer, CategoryPropSet> getCategoryCustomProps(Collection<Integer> categoryIds) throws WTException {
+		return getCategoryCustomProps(getTargetProfileId(), categoryIds);
+	}
+	
+	public Map<Integer, CategoryPropSet> getCategoryCustomProps(UserProfileId profileId, Collection<Integer> categoryIds) throws WTException {
+		CategoryPropsDAO psetDao = CategoryPropsDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			LinkedHashMap<Integer, CategoryPropSet> psets = new LinkedHashMap<>(categoryIds.size());
+			Map<Integer, OCategoryPropSet> map = psetDao.selectByProfileCategoryIn(con, profileId.getDomainId(), profileId.getUserId(), categoryIds);
+			for (Integer categoryId : categoryIds) {
+				OCategoryPropSet opset = map.get(categoryId);
+				psets.put(categoryId, (opset == null) ? new CategoryPropSet() : createCategoryPropSet(opset));
+			}
+			return psets;
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public CategoryPropSet updateCategoryCustomProps(int categoryId, CategoryPropSet propertySet) throws WTException {
+		ensureUser();
+		return updateCategoryCustomProps(getTargetProfileId(), categoryId, propertySet);
+	}
+	
+	private CategoryPropSet updateCategoryCustomProps(UserProfileId profileId, int categoryId, CategoryPropSet propertySet) throws WTException {
+		CategoryPropsDAO psetDao = CategoryPropsDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			OCategoryPropSet opset = createOCategoryPropSet(propertySet);
+			opset.setDomainId(profileId.getDomainId());
+			opset.setUserId(profileId.getUserId());
+			opset.setCategoryId(categoryId);
+			
+			con = WT.getConnection(SERVICE_ID);
+			try {
+				psetDao.insert(con, opset);
+			} catch(DAOIntegrityViolationException ex1) {
+				psetDao.update(con, opset);
+			}
+			return propertySet;
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -942,6 +1026,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public void eraseData(boolean deep) throws WTException {
 		CategoryDAO catDao = CategoryDAO.getInstance();
+		CategoryPropsDAO psetDao = CategoryPropsDAO.getInstance();
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
@@ -968,6 +1053,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 			// Erase categories
+			psetDao.deleteByProfile(con, pid.getDomainId(), pid.getUserId());
 			catDao.deleteByProfile(con, pid.getDomainId(), pid.getUserId());
 			
 			DbUtils.commitQuietly(con);
@@ -1668,6 +1754,32 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (Category.Provider.CARDDAV.equals(provider)) {
 				fill.setIsDefault(false);
 			}
+		}
+		return fill;
+	}
+	
+	private CategoryPropSet createCategoryPropSet(OCategoryPropSet with) {
+		return fillCategoryPropSet(new CategoryPropSet(), with);
+	}
+	
+	private CategoryPropSet fillCategoryPropSet(CategoryPropSet fill, OCategoryPropSet with) {
+		if ((fill != null) && (with != null)) {
+			fill.setHidden(with.getHidden());
+			fill.setColor(with.getColor());
+			fill.setSync(EnumUtils.forSerializedName(with.getSync(), Category.Sync.class));
+		}
+		return fill;
+	}
+	
+	private OCategoryPropSet createOCategoryPropSet(CategoryPropSet with) {
+		return fillOCategoryPropSet(new OCategoryPropSet(), with);
+	}
+	
+	private OCategoryPropSet fillOCategoryPropSet(OCategoryPropSet fill, CategoryPropSet with) {
+		if ((fill != null) && (with != null)) {
+			fill.setHidden(with.getHidden());
+			fill.setColor(with.getColor());
+			fill.setSync(EnumUtils.toSerializedName(with.getSync()));
 		}
 		return fill;
 	}

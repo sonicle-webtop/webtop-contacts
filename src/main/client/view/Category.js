@@ -44,7 +44,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		title: '{category.tit}',
 		iconCls: 'wtcon-icon-category-xs',
 		width: 380,
-		height: 340
+		height: 360
 	},
 	fieldTitle: 'name',
 	modelName: 'Sonicle.webtop.contacts.model.Category',
