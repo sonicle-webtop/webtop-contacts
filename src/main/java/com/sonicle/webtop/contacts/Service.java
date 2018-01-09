@@ -319,8 +319,7 @@ public class Service extends BaseService {
 					} else {
 						if (foldersByRoot.containsKey(root.getShareId())) {
 							for (ShareFolderCategory fold : foldersByRoot.get(root.getShareId())) {
-								final CategoryPropSet pset = folderProps.get(fold.getCategory().getCategoryId());
-								final ExtTreeNode etn = createFolderNode(fold, pset, root.getPerms());
+								final ExtTreeNode etn = createFolderNode(fold, folderProps.get(fold.getCategory().getCategoryId()), root.getPerms());
 								if (etn != null) children.add(etn);
 							}
 						}
