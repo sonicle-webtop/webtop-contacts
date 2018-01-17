@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Sonicle S.r.l.
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,34 +28,16 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.model;
+package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.commons.web.json.JsonResult;
+import com.sonicle.webtop.contacts.jooq.tables.pojos.CategoryProps;
 
 /**
  *
  * @author malbinola
  */
-public class CategoryFolderData {
-	public Boolean hidden;
-	public String color;
+public class OCategoryPropSet extends CategoryProps {
 	
-	public void update(CategoryFolderData data) {
-		hidden = data.hidden;
-		color = data.color;
-	}
-	
-	public boolean isNull() {
-		return (hidden == null) && (color == null);
-	}
-
-	public static CategoryFolderData fromJson(String value) {
-		return JsonResult.gson.fromJson(value, CategoryFolderData.class);
-	}
-
-	public static String toJson(CategoryFolderData value) {
-		return JsonResult.gson.toJson(value, CategoryFolderData.class);
-	}
 }

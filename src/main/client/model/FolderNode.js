@@ -44,6 +44,7 @@ Ext.define('Sonicle.webtop.contacts.model.FolderNode', {
 		WTF.roField('_builtIn', 'boolean'),
 		WTF.roField('_provider', 'string'),
 		WTF.roField('_color', 'string'),
+		WTF.roField('_sync', 'string'),
 		WTF.roField('_default', 'boolean'),
 		WTF.field('_visible', 'boolean', false), // Same as checked
 		WTF.calcField('_domainId', 'string', '_pid', function(v, rec) {

@@ -32,18 +32,18 @@
  */
 package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.contacts.model.CategoryFolder;
-import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.core.model.SharePermsFolder;
-import com.sonicle.webtop.core.model.SharePermsElements;
+import com.sonicle.webtop.contacts.model.ShareRootCategory;
+import com.sonicle.webtop.core.model.SharePermsRoot;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 
 /**
  *
  * @author malbinola
  */
-public class MyCategoryFolder extends CategoryFolder {
-
-	public MyCategoryFolder(String shareId, Category category) {
-		super(shareId, SharePermsFolder.full(), SharePermsElements.full(), category);
+public class MyShareRootCategory extends ShareRootCategory {
+	public static final String SHARE_ID = "0";
+	
+	public MyShareRootCategory(UserProfileId ownerId) {
+		super(SHARE_ID, SharePermsRoot.full(), ownerId, null);
 	}
 }

@@ -36,7 +36,6 @@ import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
-import com.sonicle.webtop.contacts.bol.model.CategoryFolderData;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.text.MessageFormat;
@@ -135,21 +134,6 @@ public class ContactsUserSettings extends BaseUserSettings {
 		} else {
 			return setObject(key, sortInfo, SortMeta.class);
 		}
-	}
-	
-	public CategoryFolderData getCategoryFolderData(int categoryId) {
-		final String key = MessageFormat.format(CATEGORY_FOLDER_DATA, categoryId);
-		return getObject(key, new CategoryFolderData(), CategoryFolderData.class);
-	}
-	
-	public boolean setCategoryFolderData(int categoryId, CategoryFolderData value) {
-		final String key = MessageFormat.format(CATEGORY_FOLDER_DATA, categoryId);
-		return setObject(key, value, CategoryFolderData.class);
-	}
-	
-	public boolean clearCategoryFolderData(int categoryId) {
-		final String key = MessageFormat.format(CATEGORY_FOLDER_DATA, categoryId);
-		return clear(key);
 	}
 	
 	public static class CheckedRoots extends HashSet<String> {

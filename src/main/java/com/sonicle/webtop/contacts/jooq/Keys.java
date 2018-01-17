@@ -29,6 +29,7 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> CATEGORIES_PKEY = UniqueKeys0.CATEGORIES_PKEY;
+	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoryPropsRecord> CATEGORY_PROPS_PKEY = UniqueKeys0.CATEGORY_PROPS_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_PKEY = UniqueKeys0.CONTACTS_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord> CONTACTS_PICTURES_PKEY = UniqueKeys0.CONTACTS_PICTURES_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord> LIST_RECIPIENTS_PKEY = UniqueKeys0.LIST_RECIPIENTS_PKEY;
@@ -49,6 +50,7 @@ public class Keys {
 
 	private static class UniqueKeys0 extends org.jooq.impl.AbstractKeys {
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> CATEGORIES_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES, com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES.CATEGORY_ID);
+		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoryPropsRecord> CATEGORY_PROPS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS, com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS.DOMAIN_ID, com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS.USER_ID, com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS.CATEGORY_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS, com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS.CONTACT_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord> CONTACTS_PICTURES_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES, com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES.CONTACT_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord> LIST_RECIPIENTS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS.LIST_RECIPIENT_ID);

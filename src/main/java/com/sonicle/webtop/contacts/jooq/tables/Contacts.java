@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = -1494853329;
+	private static final long serialVersionUID = 911720941;
 
 	/**
 	 * The reference instance of <code>contacts.contacts</code>
@@ -39,32 +39,32 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	/**
 	 * The column <code>contacts.contacts.category_id</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> CATEGORY_ID = createField("category_id", org.jooq.impl.SQLDataType.INTEGER, this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> CATEGORY_ID = createField("category_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.revision_status</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> REVISION_STATUS = createField("revision_status", org.jooq.impl.SQLDataType.VARCHAR.length(1), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> REVISION_STATUS = createField("revision_status", org.jooq.impl.SQLDataType.VARCHAR.length(1).nullable(false), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.revision_timestamp</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, org.joda.time.DateTime> REVISION_TIMESTAMP = createField("revision_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP, this, "", new com.sonicle.webtop.core.jooq.DateTimeConverter());
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, org.joda.time.DateTime> REVISION_TIMESTAMP = createField("revision_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false), this, "", new com.sonicle.webtop.core.jooq.DateTimeConverter());
 
 	/**
 	 * The column <code>contacts.contacts.public_uid</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> PUBLIC_UID = createField("public_uid", org.jooq.impl.SQLDataType.VARCHAR.length(36), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> PUBLIC_UID = createField("public_uid", org.jooq.impl.SQLDataType.VARCHAR.length(255).nullable(false), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.is_list</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Boolean> IS_LIST = createField("is_list", org.jooq.impl.SQLDataType.BOOLEAN, this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Boolean> IS_LIST = createField("is_list", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.searchfield</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> SEARCHFIELD = createField("searchfield", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> SEARCHFIELD = createField("searchfield", org.jooq.impl.SQLDataType.VARCHAR.length(1024), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.title</code>.
@@ -74,12 +74,12 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	/**
 	 * The column <code>contacts.contacts.firstname</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> FIRSTNAME = createField("firstname", org.jooq.impl.SQLDataType.VARCHAR.length(60), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> FIRSTNAME = createField("firstname", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.lastname</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> LASTNAME = createField("lastname", org.jooq.impl.SQLDataType.VARCHAR.length(60), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> LASTNAME = createField("lastname", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.nickname</code>.

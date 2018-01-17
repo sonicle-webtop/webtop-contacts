@@ -22,6 +22,11 @@ public class Tables {
 	public static final com.sonicle.webtop.contacts.jooq.tables.Categories CATEGORIES = com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES;
 
 	/**
+	 * The table contacts.category_props
+	 */
+	public static final com.sonicle.webtop.contacts.jooq.tables.CategoryProps CATEGORY_PROPS = com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS;
+
+	/**
 	 * The table contacts.contacts
 	 */
 	public static final com.sonicle.webtop.contacts.jooq.tables.Contacts CONTACTS = com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS;

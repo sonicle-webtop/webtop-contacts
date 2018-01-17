@@ -32,10 +32,9 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.bol.model.CategoryFolderData;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.CategoryFolder;
-import org.apache.commons.lang3.StringUtils;
+import com.sonicle.webtop.contacts.model.CategoryPropSet;
+import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 
 /**
  *
@@ -59,12 +58,9 @@ public class JsCategoryLkp {
 		color = cat.getColor();
 	}
 	
-	public JsCategoryLkp(CategoryFolder folder) {
+	public JsCategoryLkp(ShareFolderCategory folder, CategoryPropSet folderProps) {
 		this(folder.getCategory());
-		if (folder.getData() != null) {
-			CategoryFolderData data = (CategoryFolderData)folder.getData();
-			if (!StringUtils.isBlank(data.color)) color = data.color;
-		}
+		if (folderProps != null) color = folderProps.getColorOrDefault(color);
 		_writable = folder.getElementsPerms().implies("CREATE");
 	}
 }
