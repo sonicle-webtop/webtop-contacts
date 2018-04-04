@@ -50,6 +50,7 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
+import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
@@ -1359,6 +1360,215 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				} catch(DavException ex) {
 					throw new WTException(ex, "CardDAV error");
 				}
+			}
+			
+		} catch(SQLException | DAOException ex) {
+			throw new WTException(ex, "DB error");
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public void syncRemoteCategory2(int categoryId, boolean full) throws WTException {
+		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
+		final VCardInput icalInput = new VCardInput();
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			//checkRightsOnCategoryFolder(calendarId, "READ");
+			
+			con = WT.getConnection(SERVICE_ID, false);
+			Category cal = createCategory(catDao.selectById(con, categoryId));
+			if (!Category.Provider.CARDDAV.equals(cal.getProvider())) {
+				throw new WTException("Specified category is not remote (CardDAV) [{0}]", categoryId);
+			}
+			
+			if (Category.Provider.CARDDAV.equals(cal.getProvider())) {
+				CategoryRemoteParameters params = LangUtils.deserialize(cal.getParameters(), CategoryRemoteParameters.class);
+				if (params == null) throw new WTException("Unable to deserialize remote parameters");
+				if (params.url == null) throw new WTException("Remote URL is undefined");
+				
+				CardDav dav = getCardDav(params.username, params.password);
+				
+				try {
+					DavAddressbook dbook = dav.getAddressbookSyncToken(params.url.toString());
+					if (dbook == null) throw new WTException("DAV addressbook not found");
+					
+					final boolean syncIsSupported = !StringUtils.isBlank(dbook.getSyncToken());
+					final String savedSyncToken = params.syncToken;
+					
+					if (full || (syncIsSupported && StringUtils.isBlank(savedSyncToken))) { // Full update
+						if (syncIsSupported) { // If supported, saves last sync-token issued by the server
+							params.syncToken = dbook.getSyncToken();
+						}
+						
+						// Retrieves events list from DAV endpoint
+						logger.debug("Retrieving whole list [{}]", params.url.toString());
+						List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString());
+						logger.debug("Endpoint returns {} items", dcards.size());
+						
+						// Inserts data...
+						try {
+							logger.debug("Processing results...");
+							// Define a simple map in order to check duplicates.
+							// eg. SOGo passes same card twice :(
+							HashSet<String> hrefs = new HashSet<>();
+							doDeleteContactsByCategory2(con, categoryId, false);
+							for (DavAddressbookCard dcard : dcards) {
+								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
+								if (hrefs.contains(dcard.getPath())) {
+									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
+									continue;
+								}
+								
+								final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
+								ci.contact.setCategoryId(categoryId);
+								ci.contact.setHref(dcard.getPath());
+								ci.contact.setEtag(dcard.geteTag());
+								doContactInsert(coreMgr, con, false, ci.contact, ci.picture);
+								
+								hrefs.add(dcard.getPath()); // Marks as processed!
+							}
+							
+							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
+							DbUtils.commitQuietly(con);
+							
+						} catch(Throwable t) {
+							DbUtils.rollbackQuietly(con);
+							throw new WTException(t, "Error importing vCard");
+						}
+						
+					} else if (syncIsSupported && !StringUtils.isBlank(savedSyncToken)) { // Partial update using sync
+						params.syncToken = dbook.getSyncToken();
+						
+						logger.debug("Retrieving changes [{}, {}]", params.url.toString(), savedSyncToken);
+						List<DavSyncStatus> changes = dav.getAddressbookChanges(params.url.toString(), savedSyncToken);
+						logger.debug("Endpoint returns {} items", changes.size());
+						
+						try {
+							if (!changes.isEmpty()) {
+								ContactDAO contDao = ContactDAO.getInstance();
+								Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
+								
+								// Process changes...
+								logger.debug("Processing changes...");
+								HashSet<String> hrefs = new HashSet<>();
+								for (DavSyncStatus change : changes) {
+									if (DavUtil.HTTP_SC_TEXT_OK.equals(change.getResponseStatus())) {
+										hrefs.add(change.getPath());
+
+									} else { // Event deleted
+										final Integer contactId = contactIdsByHref.get(change.getPath());
+										if (contactId == null) throw new WTException("Card path not found [{0}]", change.getPath());
+										doDeleteContact(con, contactId, false);
+									}
+								}
+
+								// Retrieves events list from DAV endpoint (using multiget)
+								logger.debug("Retrieving inserted/updated events [{}]", hrefs.size());
+								List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString(), hrefs);
+
+								// Inserts/Updates data...
+								logger.debug("Inserting/Updating events...");
+								for (DavAddressbookCard dcard : dcards) {
+									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
+									final Integer contactId = contactIdsByHref.get(dcard.getPath());
+									if (contactId != null) {
+										doDeleteContact(con, contactId, false);
+									}
+									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
+									ci.contact.setCategoryId(categoryId);
+									ci.contact.setHref(dcard.getPath());
+									ci.contact.setEtag(dcard.geteTag());
+									doContactInsert(coreMgr, con, false, ci.contact, ci.picture);
+								}
+							}
+							
+							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
+							DbUtils.commitQuietly(con);
+							
+						} catch(Throwable t) {
+							DbUtils.rollbackQuietly(con);
+							throw new WTException(t, "Error importing vCard");
+						}
+						
+					} else { // Partial update using manual hash
+						ContactDAO contDao = ContactDAO.getInstance();
+						
+						params.syncToken = null;
+						Map<String, VContactHrefSync> syncByHref = contDao.selectHrefSyncDataByCategory(con, categoryId);
+						
+						// Retrieves events list from DAV endpoint
+						logger.debug("Retrieving whole list [{}]", params.url.toString());
+						List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString());
+						logger.debug("Endpoint returns {} items", dcards.size());
+						
+						// Inserts data...
+						try {
+							// Define a simple map in order to check duplicates.
+							// eg. SOGo passes same card twice :(
+							HashSet<String> hrefs = new HashSet<>();
+							for (DavAddressbookCard dcard : dcards) {
+								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
+								if (hrefs.contains(dcard.getPath())) {
+									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
+									continue;
+								}
+								
+								boolean insert = false, update = false;
+								String hash = DigestUtils.md5Hex(dcard.getCard().toString());
+								logger.trace("Card hash: {}", hash);
+								if (syncByHref.containsKey(dcard.getPath())) { // Href found -> maybe updated item
+									syncByHref.remove(dcard.getPath());
+									VContactHrefSync hrefSync = syncByHref.get(dcard.getPath());
+									if (!StringUtils.equals(hrefSync.getEtag(), hash)) {
+										logger.trace("Card updated [{}]", dcard.getPath());
+										update = true;
+									} else {
+										logger.trace("Card not modified [{}]", dcard.getPath());
+									}
+								} else { // Href not found -> added item
+									insert = true;
+									logger.trace("Card newly added [{}]", dcard.getPath());
+								}
+								
+								if (insert || update) {
+									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
+									ci.contact.setCategoryId(categoryId);
+									ci.contact.setHref(dcard.getPath());
+									ci.contact.setEtag(hash);
+									
+									if (insert) {
+										doContactInsert(coreMgr, con, false, ci.contact, ci.picture);
+									} else {
+										doContactUpdate(coreMgr, con, false, ci.contact, ci.picture);
+									}
+								}
+								
+								hrefs.add(dcard.getPath()); // Marks as processed!
+							}
+							
+							// Remaining hrefs -> deleted items
+							for (VContactHrefSync hrefSync : syncByHref.values()) {
+								logger.trace("Card deleted [{}]", hrefSync.getHref());
+								doDeleteContact(con, hrefSync.getContactId(), false);
+							}
+							
+							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
+							DbUtils.commitQuietly(con);
+							
+						} catch(Throwable t) {
+							DbUtils.rollbackQuietly(con);
+							throw new WTException(t, "Error importing vCard");
+						}
+					}
+					
+				} catch(DavException ex) {
+					throw new WTException(ex, "CardDAV error");
+				}
+			} else {
+				throw new WTException("Unsupported provider [{0}]", cal.getProvider());
 			}
 			
 		} catch(SQLException | DAOException ex) {

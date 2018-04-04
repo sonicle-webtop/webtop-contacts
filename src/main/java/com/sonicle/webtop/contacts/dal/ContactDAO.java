@@ -36,6 +36,7 @@ import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.VContact;
+import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
@@ -308,6 +309,25 @@ public class ContactDAO extends BaseDAO {
 				)
 			)
 			.fetchMap(CONTACTS.HREF, CONTACTS.CONTACT_ID);
+	}
+	
+	public Map<String, VContactHrefSync> selectHrefSyncDataByCategory(Connection con, int categoryId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.HREF,
+				CONTACTS.ETAG
+			)
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CATEGORY_ID.equal(categoryId)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchMap(CONTACTS.HREF, VContactHrefSync.class);
 	}
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
