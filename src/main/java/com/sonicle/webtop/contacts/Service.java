@@ -724,7 +724,8 @@ public class Service extends BaseService {
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if(crud.equals(Crud.READ)) {
-				String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
+				//String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
+				String view = WORK_VIEW;
 				String letter = ServletUtils.getStringParameter(request, "letter", null);
 				String query = ServletUtils.getStringParameter(request, "query", null);
 				

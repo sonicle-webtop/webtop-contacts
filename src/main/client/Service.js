@@ -56,7 +56,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	],
 	
 	needsReload: true,
-	activeView: null,
+	//activeView: null,
+	activeView: 'w',
 	api: null,
 	
 	getApiInstance: function() {
@@ -68,7 +69,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	init: function() {
 		var me = this, ies, iitems = [];
 		
-		me.activeView = me.getVar('view');
+		//me.activeView = me.getVar('view');
+		me.activeView = 'w';
 		me.initActions();
 		me.initCxm();
 		
@@ -325,16 +327,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								me.txtSearch().setValue(null);
 							}
 						},
-/*						metachange: function(s, meta) {
+						metachange: function(s, meta) {
+							s.isReconfiguring = true;
+							
+							/*
 							var gp = me.gpContacts(),
 									colsInfo = [],
 									data = [];
 							
-							console.log("metachange: "+meta);
-							s.isReconfiguring = true;
 							if(meta.colsInfo) {
-								//var cm=gp.getColumnManager(),
-								//	hasState=cm.getColumns().length>0;
 								colsInfo.push({
 									xtype: 'soiconcolumn',
 									getIconCls: function(v,rec) {
@@ -367,11 +368,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 										col.format = WT.getShortDateFmt();
 									}
 									if (lastColState) {
-										//var hdr=cm.getHeaderByDataIndex(col.dataIndex);
-										//if (hdr) {
-										//	col.width=hdr.getWidth();
-										//	col.hidden=hdr.isHidden();
-										//}
 										if (Ext.isDefined(lastColState.width)) col.width=lastColState.width;
 										if (Ext.isDefined(lastColState.hidden)) col.hidden=lastColState.hidden;
 									}
@@ -379,11 +375,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								});
 								me.gpContacts().reconfigure(s, colsInfo);
 							}
+							*/
+						   
+						    var colsInfo=me.gpContacts().getColumns(),
+								data = [];
 							
 							// Fill group combo
 							Ext.iterate(colsInfo, function(col,i) {
 								if(col.groupable && !col.hidden) {
-									data.push({id: col.dataIndex, desc: col.header});
+									data.push({id: col.dataIndex, desc: col.text /*col.header*/});
 								}
 							});
 							
@@ -403,7 +403,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							}
 							
 							s.isReconfiguring = false;
-						}*/
+						}
 					}
 				},
 				selModel: {
@@ -1032,7 +1032,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	changeView: function(view) {
 		var me = this;
-		me.activeView = view;
+		//me.activeView = view;
 		me.reloadContacts('A');
 	},
 	
