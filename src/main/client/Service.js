@@ -56,7 +56,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	],
 	
 	needsReload: true,
-	//activeView: null,
 	activeView: 'w',
 	api: null,
 	
@@ -69,7 +68,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	init: function() {
 		var me = this, ies, iitems = [];
 		
-		//me.activeView = me.getVar('view');
 		me.activeView = 'w';
 		me.initActions();
 		me.initCxm();
@@ -430,6 +428,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.openContactItemUI(rec.get('isList'), er.UPDATE, rec.get('id'));
 					},
 					rowcontextmenu: function(s, rec, itm, i, e) {
+						var selection = s.getSelection();
+						me.getAct('sendContact').setDisabled(false)
+						Ext.each(selection,function(sel){
+							if(sel.get('isList')){
+								me.getAct('sendContact').setDisabled(true)
+							}
+						});
 						WT.showContextMenu(e, me.getRef('cxmGrid'), {
 							contact: rec,
 							contacts: s.getSelection()
