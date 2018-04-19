@@ -31,6 +31,8 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
+
+
 Ext.define('Sonicle.webtop.contacts.Service', {
 	extend: 'WTA.sdk.Service',
 	requires: [
@@ -54,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	],
 	
 	needsReload: true,
-	activeView: null,
+	activeView: 'w',
 	api: null,
 	
 	getApiInstance: function() {
@@ -66,7 +68,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	init: function() {
 		var me = this, ies, iitems = [];
 		
-		me.activeView = me.getVar('view');
+		me.activeView = 'w';
 		me.initActions();
 		me.initCxm();
 		
@@ -108,9 +110,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContact2'),
 				me.getAct('addContactsList2'),
 				'->',
-				me.getAct('workview'),
+/*				me.getAct('workview'),
 				me.getAct('homeview'),
-				'-',
+				'-',*/
 				me.addRef('cbogroup', Ext.create(WTF.lookupCombo('id', 'desc', {
 					queryMode: 'local',
 					store: {
@@ -216,6 +218,87 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				region: 'center',
 				xtype: 'gridpanel',
 				reference: 'gpcontacts',
+				stateful: {
+					width: true,
+					dataIndex: true
+				},
+				stateId: me.buildStateId('gpcontacts'),
+				columns: [
+					{
+						xtype: "soiconcolumn",
+						width: 30,
+						groupable: false,
+						getIconCls: function(v,rec) {
+							return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
+						},
+						iconSize: WTU.imgSizeToPx('xs'),
+					},
+					{
+						hidden: true,
+						dataIndex: "contactId",
+						groupable:false,
+						header: "ID",
+						flex:1
+					},
+					{
+						dataIndex: "categoryName",
+						groupable:false,
+						xtype:"socolorcolumn",
+						header: me.res('gpcontacts.category.lbl'),
+						colorField:"categoryColor",
+						displayField:"categoryName",
+						width:150,
+						hidden:false
+					},
+					{
+						dataIndex: "title",
+						groupable: false,
+						header: me.res('gpcontacts.title.lbl'),
+						width: 50
+					},
+					{
+						dataIndex: "firstName",
+						groupable: true,
+						header: me.res('gpcontacts.firstName.lbl'),
+						flex: 1
+					},
+					{
+						dataIndex: "lastName",
+						groupable: true,
+						header: me.res('gpcontacts.lastName.lbl'),
+						flex: 1
+					},
+					{
+						dataIndex: "company",
+						groupable: true,
+						header: me.res('gpcontacts.company.lbl'),
+						flex: 1
+					},
+					{
+						dataIndex: "function",
+						groupable: false,
+						header: me.res('gpcontacts.function.lbl'),
+						flex: 1
+					},
+					{
+						dataIndex: "workTelephone",
+						groupable: true,
+						header: me.res('gpcontacts.workTelephone.lbl'),
+						flex: 1
+					},
+					{
+						dataIndex: "workMobile",
+						groupable: false,
+						header: me.res('gpcontacts.workMobile.lbl'),
+						flex: 1
+					},
+					{
+						dataIndex: "workEmail",
+						groupable: true,
+						header: me.res('gpcontacts.workEmail.lbl'),
+						flex: 2
+					}
+				],
 				store: {
 					model: 'Sonicle.webtop.contacts.model.GridContact',
 					proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'contacts', {
@@ -230,7 +313,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							var pars = op.getProxy().getExtraParams(),
 									tb = me.getToolbar(),
 									tbi = me.tbIndex();
-							if(!Ext.isEmpty(pars.view)) tb.getComponent(pars.view).toggle(true);
+							//if(!Ext.isEmpty(pars.view)) tb.getComponent(pars.view).toggle(true);
 							if(pars.letter !== null) {
 								tbi.getComponent('chr'+pars.letter.charCodeAt(0)).toggle(true);
 								me.txtSearch().setValue(null);
@@ -243,11 +326,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							}
 						},
 						metachange: function(s, meta) {
+							s.isReconfiguring = true;
+							
+							/*
 							var gp = me.gpContacts(),
 									colsInfo = [],
 									data = [];
 							
-							s.isReconfiguring = true;
 							if(meta.colsInfo) {
 								colsInfo.push({
 									xtype: 'soiconcolumn',
@@ -260,36 +345,43 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								});
 								
 								Ext.iterate(meta.colsInfo, function(col,i) {
+									var lastColState=me.lastState&&me.lastState.columns.length>0?me.lastState.columns[i+1]:null;
 									if (col.dataIndex === 'categoryName') {
-										col.xtype = 'socolorcolumn',
+										col.xtype = 'socolorcolumn';
 										col.header = me.res('gpcontacts.category.lbl');
-										col.colorField = 'categoryColor',
-										col.displayField = 'categoryName',
-										col.width = 150;
-										col.hidden = false;
+										col.colorField = 'categoryColor';
+										col.displayField = 'categoryName';
+										if (!lastColState || !Ext.isDefined(lastColState.width)) col.width = 150;
+										if (!lastColState || !Ext.isDefined(lastColState.hidden)) col.hidden = false;
 									} else {
 										col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
-										if (col.dataIndex === 'title') {
-											col.width = 50;
-										} else if((col.dataIndex === 'workEmail') || (col.dataIndex === 'homeEmail')) {
-											col.flex = 2;
-										} else {
-											col.flex = 1;
+										if (!lastColState || !Ext.isDefined(lastColState.width)) {
+											if (col.dataIndex === 'title') col.width = 50;
+											else if((col.dataIndex === 'workEmail') || (col.dataIndex === 'homeEmail')) col.flex = 2;
+											else col.flex = 1;
 										}
 									}
 									
 									if(col.xtype === 'datecolumn') {
 										col.format = WT.getShortDateFmt();
 									}
+									if (lastColState) {
+										if (Ext.isDefined(lastColState.width)) col.width=lastColState.width;
+										if (Ext.isDefined(lastColState.hidden)) col.hidden=lastColState.hidden;
+									}
 									colsInfo.push(col);
 								});
 								me.gpContacts().reconfigure(s, colsInfo);
 							}
+							*/
+						   
+						    var colsInfo=me.gpContacts().getColumns(),
+								data = [];
 							
 							// Fill group combo
 							Ext.iterate(colsInfo, function(col,i) {
 								if(col.groupable && !col.hidden) {
-									data.push({id: col.dataIndex, desc: col.header});
+									data.push({id: col.dataIndex, desc: col.text /*col.header*/});
 								}
 							});
 							
@@ -316,7 +408,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					type: 'rowmodel',
 					mode : 'MULTI'
 				},
-				columns: [],
+				//columns: [],
 				features: [{
 					id: 'grouping',
 					ftype: 'grouping',
@@ -336,6 +428,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.openContactItemUI(rec.get('isList'), er.UPDATE, rec.get('id'));
 					},
 					rowcontextmenu: function(s, rec, itm, i, e) {
+						var selection = s.getSelection();
+						me.getAct('sendContact').setDisabled(false)
+						Ext.each(selection,function(sel){
+							if(sel.get('isList')){
+								me.getAct('sendContact').setDisabled(true)
+							}
+						});
 						WT.showContextMenu(e, me.getRef('cxmGrid'), {
 							contact: rec,
 							contacts: s.getSelection()
@@ -354,6 +453,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					sortchange: function(ct, col, dir) {
 						if(me.gpContacts().getStore().isReconfiguring) return;
 						me.saveSortInfo(col.dataIndex, dir);
+					},
+					staterestore: function(g, state, opts) {
+						me.lastState=state;
+					},
+					statesave: function(g, state, opts) {
+						if (state.columns.length>0) me.lastState=state;
 					}
 				}
 			}, {
@@ -372,7 +477,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	notificationCallback: function(type, tag, data) {
 		var me = this;
-		if (tag.startsWith(me.self.NOTAG_REMOTESYNC)) {
+		if (Ext.String.startsWith(tag, me.self.NOTAG_REMOTESYNC)) {
 			me.reloadContacts();
 		}
 	},
@@ -735,7 +840,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			listeners: {
 				beforeshow: function(s) {
 					var rec = s.menuData.folder,
-							mine = rec.getId().startsWith('0'),
+							mine = Ext.String.startsWith(rec.getId(), '0'),
 							rr = me.toRightsObj(rec.get('_rrights'));
 					me.getAct('addCategory').setDisabled(!rr.MANAGE);
 					me.getAct('addRemoteCategory').setDisabled(!rr.MANAGE);
@@ -785,7 +890,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			listeners: {
 				beforeshow: function(s) {
 					var rec = s.menuData.folder,
-							mine = rec.getId().startsWith('0'),
+							mine = Ext.String.startsWith(rec.getId(), '0'),
 							rr = me.toRightsObj(rec.get('_rrights')),
 							fr = me.toRightsObj(rec.get('_frights')),
 							er = me.toRightsObj(rec.get('_erights'));
@@ -932,7 +1037,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	changeView: function(view) {
 		var me = this;
-		me.activeView = view;
+		//me.activeView = view;
 		me.reloadContacts('A');
 	},
 	
