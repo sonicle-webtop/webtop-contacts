@@ -116,7 +116,6 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 	
 	private ContactInput readRow(LogEntries log, HashMap<String, Integer> headersIndexes, Row row) throws Exception {
 		Contact contact = new Contact();
-		contact.setHasPicture(false);
 		for(FileRowsReader.FieldMapping mapping : mappings) {
 			if(StringUtils.isBlank(mapping.source)) continue;
 			Integer index = headersIndexes.get(mapping.source);

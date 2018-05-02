@@ -64,6 +64,7 @@ DROP TABLE IF EXISTS "contacts"."contacts";
 CREATE TABLE "contacts"."contacts" (
 "contact_id" int4 DEFAULT nextval('"contacts".seq_contacts'::regclass) NOT NULL,
 "category_id" int4 NOT NULL,
+"creation_timestamp" timestamptz DEFAULT now() NOT NULL,
 "revision_status" varchar(1) NOT NULL,
 "revision_timestamp" timestamptz(6) NOT NULL,
 "revision_sequence" int4 DEFAULT 0 NOT NULL,
@@ -140,6 +141,18 @@ WITH (OIDS=FALSE)
 ;
 
 -- ----------------------------
+-- Table structure for contacts_vcards
+-- ----------------------------
+DROP TABLE IF EXISTS "contacts"."contacts_vcards";
+CREATE TABLE "contacts"."contacts_vcards" (
+"contact_id" int4 NOT NULL,
+"raw_data" text
+)
+WITH (OIDS=FALSE)
+
+;
+
+-- ----------------------------
 -- Table structure for list_recipients
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."list_recipients";
@@ -196,6 +209,11 @@ ALTER TABLE "contacts"."contacts" ADD PRIMARY KEY ("contact_id");
 -- Primary Key structure for table contacts_pictures
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
+
+-- ----------------------------
+-- Primary Key structure for table contacts_vcards
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_vcards" ADD PRIMARY KEY ("contact_id");
 
 -- ----------------------------
 -- Primary Key structure for table list_recipients

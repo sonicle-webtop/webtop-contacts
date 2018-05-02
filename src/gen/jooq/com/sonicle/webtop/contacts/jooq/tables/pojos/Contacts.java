@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts implements java.io.Serializable {
 
-	private static final long serialVersionUID = -1186552464;
+	private static final long serialVersionUID = -2044779498;
 
 	private java.lang.Integer       contactId;
 	private java.lang.Integer       categoryId;
@@ -75,6 +75,7 @@ public class Contacts implements java.io.Serializable {
 	private java.lang.Integer       revisionSequence;
 	private java.lang.String        href;
 	private java.lang.String        etag;
+	private org.joda.time.DateTime  creationTimestamp;
 
 	public Contacts() {}
 
@@ -135,7 +136,8 @@ public class Contacts implements java.io.Serializable {
 		java.lang.String        notes,
 		java.lang.Integer       revisionSequence,
 		java.lang.String        href,
-		java.lang.String        etag
+		java.lang.String        etag,
+		org.joda.time.DateTime  creationTimestamp
 	) {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
@@ -194,6 +196,7 @@ public class Contacts implements java.io.Serializable {
 		this.revisionSequence = revisionSequence;
 		this.href = href;
 		this.etag = etag;
+		this.creationTimestamp = creationTimestamp;
 	}
 
 	public java.lang.Integer getContactId() {
@@ -650,5 +653,13 @@ public class Contacts implements java.io.Serializable {
 
 	public void setEtag(java.lang.String etag) {
 		this.etag = etag;
+	}
+
+	public org.joda.time.DateTime getCreationTimestamp() {
+		return this.creationTimestamp;
+	}
+
+	public void setCreationTimestamp(org.joda.time.DateTime creationTimestamp) {
+		this.creationTimestamp = creationTimestamp;
 	}
 }

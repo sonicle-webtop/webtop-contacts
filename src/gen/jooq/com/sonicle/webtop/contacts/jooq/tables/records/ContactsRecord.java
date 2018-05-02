@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables.records;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = 2016071719;
+	private static final long serialVersionUID = -2012160923;
 
 	/**
 	 * Setter for <code>contacts.contacts.contact_id</code>.
@@ -816,6 +816,20 @@ public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicl
 		return (java.lang.String) getValue(56);
 	}
 
+	/**
+	 * Setter for <code>contacts.contacts.creation_timestamp</code>.
+	 */
+	public void setCreationTimestamp(org.joda.time.DateTime value) {
+		setValue(57, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.creation_timestamp</code>.
+	 */
+	public org.joda.time.DateTime getCreationTimestamp() {
+		return (org.joda.time.DateTime) getValue(57);
+	}
+
 	// -------------------------------------------------------------------------
 	// Primary key information
 	// -------------------------------------------------------------------------
@@ -842,7 +856,7 @@ public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicl
 	/**
 	 * Create a detached, initialised ContactsRecord
 	 */
-	public ContactsRecord(java.lang.Integer contactId, java.lang.Integer categoryId, java.lang.String revisionStatus, org.joda.time.DateTime revisionTimestamp, java.lang.String publicUid, java.lang.Boolean isList, java.lang.String searchfield, java.lang.String title, java.lang.String firstname, java.lang.String lastname, java.lang.String nickname, java.lang.String gender, java.lang.String company, java.lang.String function, java.lang.String workAddress, java.lang.String workCity, java.lang.String workState, java.lang.String workPostalcode, java.lang.String workCountry, java.lang.String workTelephone, java.lang.String workTelephone2, java.lang.String workFax, java.lang.String workMobile, java.lang.String workPager, java.lang.String workEmail, java.lang.String workIm, java.lang.String assistant, java.lang.String assistantTelephone, java.lang.String department, java.lang.String manager, java.lang.String homeAddress, java.lang.String homeCity, java.lang.String homeState, java.lang.String homePostalcode, java.lang.String homeCountry, java.lang.String homeTelephone, java.lang.String homeTelephone2, java.lang.String homeFax, java.lang.String homeMobile, java.lang.String homePager, java.lang.String homeEmail, java.lang.String homeIm, java.lang.String partner, org.joda.time.LocalDate birthday, org.joda.time.LocalDate anniversary, java.lang.String otherAddress, java.lang.String otherCity, java.lang.String otherState, java.lang.String otherPostalcode, java.lang.String otherCountry, java.lang.String otherEmail, java.lang.String otherIm, java.lang.String url, java.lang.String notes, java.lang.Integer revisionSequence, java.lang.String href, java.lang.String etag) {
+	public ContactsRecord(java.lang.Integer contactId, java.lang.Integer categoryId, java.lang.String revisionStatus, org.joda.time.DateTime revisionTimestamp, java.lang.String publicUid, java.lang.Boolean isList, java.lang.String searchfield, java.lang.String title, java.lang.String firstname, java.lang.String lastname, java.lang.String nickname, java.lang.String gender, java.lang.String company, java.lang.String function, java.lang.String workAddress, java.lang.String workCity, java.lang.String workState, java.lang.String workPostalcode, java.lang.String workCountry, java.lang.String workTelephone, java.lang.String workTelephone2, java.lang.String workFax, java.lang.String workMobile, java.lang.String workPager, java.lang.String workEmail, java.lang.String workIm, java.lang.String assistant, java.lang.String assistantTelephone, java.lang.String department, java.lang.String manager, java.lang.String homeAddress, java.lang.String homeCity, java.lang.String homeState, java.lang.String homePostalcode, java.lang.String homeCountry, java.lang.String homeTelephone, java.lang.String homeTelephone2, java.lang.String homeFax, java.lang.String homeMobile, java.lang.String homePager, java.lang.String homeEmail, java.lang.String homeIm, java.lang.String partner, org.joda.time.LocalDate birthday, org.joda.time.LocalDate anniversary, java.lang.String otherAddress, java.lang.String otherCity, java.lang.String otherState, java.lang.String otherPostalcode, java.lang.String otherCountry, java.lang.String otherEmail, java.lang.String otherIm, java.lang.String url, java.lang.String notes, java.lang.Integer revisionSequence, java.lang.String href, java.lang.String etag, org.joda.time.DateTime creationTimestamp) {
 		super(com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS);
 
 		setValue(0, contactId);
@@ -902,5 +916,6 @@ public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicl
 		setValue(54, revisionSequence);
 		setValue(55, href);
 		setValue(56, etag);
+		setValue(57, creationTimestamp);
 	}
 }

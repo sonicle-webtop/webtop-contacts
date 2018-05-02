@@ -33,7 +33,7 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.ContactItemEx;
 import com.sonicle.webtop.core.util.JRHelper;
 import java.awt.Image;
 import org.apache.commons.lang3.StringUtils;
@@ -59,7 +59,7 @@ public class RBAddressbook {
 	public String homeEmail;
 	public String company;
 	
-	public RBAddressbook(Category category, ContactEx contact) {
+	public RBAddressbook(Category category, ContactItemEx contact) {
 		this.isList = contact.getIsList();
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
