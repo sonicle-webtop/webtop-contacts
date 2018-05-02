@@ -218,7 +218,7 @@ public class ContactDAO extends BaseDAO {
 				patt2 = queryText;
 			} else {
 				patt1 = LangUtils.patternizeWords(queryText);
-				patt2 = "%" + queryText;
+				patt2 = "%" + queryText + "%";
 			}
 			
 			searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
