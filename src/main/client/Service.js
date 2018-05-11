@@ -281,22 +281,40 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						flex: 1
 					},
 					{
+						xtype: 'solinkcolumn',
 						dataIndex: "workTelephone",
 						groupable: true,
 						header: me.res('gpcontacts.workTelephone.lbl'),
-						flex: 1
+						flex: 1,
+						listeners: {
+							linkclick: function(s,idx,rec) {
+								WT.handlePbxCall(rec.get('workTelephone'));
+							}
+						}
 					},
 					{
+						xtype: 'solinkcolumn',
 						dataIndex: "workMobile",
 						groupable: false,
 						header: me.res('gpcontacts.workMobile.lbl'),
-						flex: 1
+						flex: 1,
+						listeners: {
+							linkclick: function(s,idx,rec) {
+								WT.handlePbxCall(rec.get('workMobile'));
+							}
+						}
 					},
 					{
+						xtype: 'solinkcolumn',
 						dataIndex: "workEmail",
 						groupable: true,
 						header: me.res('gpcontacts.workEmail.lbl'),
-						flex: 2
+						flex: 2,
+						listeners: {
+							linkclick: function(s,idx,rec) {
+								WT.handleMailAddress(rec.get('workEmail'));
+							}
+						}
 					}
 				],
 				store: {
@@ -417,6 +435,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				listeners: {
 					selectionchange: function() {
 						me.updateDisabled('showContact');
+						me.updateDisabled('callTelephone');
+						me.updateDisabled('callMobile');
 						me.updateDisabled('printContact');
 						me.updateDisabled('copyContact');
 						me.updateDisabled('moveContact');
@@ -777,6 +797,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (sel.length > 0) me.printSelContacts(sel);
 			}
 		});
+		me.addAct('callTelephone', {
+			text: me.res('act-call-telephone.lbl'),
+			tooltip: null,
+			iconCls: 'wt-icon-call-xs',
+			handler: function() {
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) WT.handlePbxCall(sel[0].get('workTelephone'));
+			}
+		});
+		me.addAct('callMobile', {
+			text: me.res('act-call-mobile.lbl'),
+			tooltip: null,
+			iconCls: 'wt-icon-call-xs',
+			handler: function() {
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) WT.handlePbxCall(sel[0].get('workMobile'));
+			}
+		});
 		me.addAct('printAddressbook', {
 			text: null,
 			tooltip: WT.res('act-print.lbl'),
@@ -924,6 +962,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						items: [
 							me.getAct('moveContact'),
 							me.getAct('copyContact')
+						]
+					}
+				},
+				{
+					text: WT.res('act-call.lbl'),
+					iconCls: 'wt-icon-call-xs',
+					menu: {
+						items: [
+							me.getAct('callTelephone'),
+							me.getAct('callMobile')
 						]
 					}
 				},
@@ -1762,9 +1810,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this,
 				dis = me.isDisabled(action);
 		
-		if(action === 'printContact') {
-			me.setActDisabled(action, dis);
-		} else if(action === 'deleteContact') {
+		if(action === 'deleteContact') {
 			me.setActDisabled(action, dis);
 			me.setActDisabled('deleteContact2', dis);
 		} else {
@@ -1790,6 +1836,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			case 'printContact':
 				sel = me.getSelectedContacts();
 				if(sel.length === 1 && (sel[0].get('isList') === false)) {
+					return false;
+				} else {
+					return true;
+				}
+				break;
+			case 'callTelephone':
+				sel = me.getSelectedContacts();
+				if(/*WT.getVar('pbxConfigured') &&*/ sel.length === 1 && sel[0].get('workTelephone') !== '') {
+					return false;
+				} else {
+					return true;
+				}
+				break;
+			case 'callMobile':
+				sel = me.getSelectedContacts();
+				if(/*WT.getVar('pbxConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
 					return false;
 				} else {
 					return true;
