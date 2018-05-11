@@ -141,6 +141,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.mail.internet.InternetAddress;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -327,7 +328,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return items;
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -339,23 +340,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			/* --> java8 syntax
+			
 			List<Integer> okCategoryIds = categoryIds.stream()
 					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
 					.collect(Collectors.toList());
-			*/
-			List<Integer> okCategoryIds = new ArrayList<>();
-			for (Integer categoryId : categoryIds) {
-				if (quietlyCheckRightsOnCategoryFolder(categoryId, "READ")) {
-					okCategoryIds.add(categoryId);
-				}
-			}
 			
 			con = WT.getConnection(SERVICE_ID);
 			return contDao.selectMaxRevTimestampByCategoriesType(con, okCategoryIds, false);
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -374,7 +368,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return createCategory(ocat);
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -394,7 +388,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return createCategory(ocat);
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -415,12 +409,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return category;
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -452,12 +446,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return cat;
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(Exception ex) {
+			throw wrapThrowable(ex);
+		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw ex;
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -476,19 +470,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (category == null) throw new NotFoundException("Category not found [{}]", categoryId);
 			
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_UPDATE", String.valueOf(category.getCategoryId()));
+			writeLog("CATEGORY_UPDATE", String.valueOf(categoryId));
 			
 			return category;
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(NotFoundException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -513,7 +504,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			int deleted = catDao.deleteById(con, categoryId);
 			psetDao.deleteByCategory(con, categoryId);
-			doContactsDeleteByCategory2(con, categoryId, !cat.isRemoteProvider());
+			doContactsDeleteByCategory2(con, categoryId, !cat.isProviderRemote());
 			
 			// Cleanup sharing, if necessary
 			if ((sharing != null) && !sharing.getRights().isEmpty()) {
@@ -529,15 +520,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			writeLog("CONTACT_DELETE", "*@"+ref);
 			writeLog("CONTACTLIST_DELETE", "*@"+ref);
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(NotFoundException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -558,7 +546,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return (opset == null) ? new CategoryPropSet() : createCategoryPropSet(opset);
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -584,7 +572,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return psets;
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -615,7 +603,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return propertySet;
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -633,12 +621,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			ArrayList<ContactCard> items = new ArrayList<>();
 			Map<String, VContactCard> vconts = contDao.viewCardsByCategory(con, categoryFolderIds);
 			for (VContactCard vcont : vconts.values()) {
-				items.add(prepareContactCard(con, vcont));
+				items.add(doContactCardPrepare(con, vcont));
 			}
 			return items;
 			
 		} catch (SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -682,7 +670,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return new CollectionChangeSet<>(inserted, updated, deleted);
 			
 		} catch (SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -708,30 +696,37 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				VContactCard vcont = vconts.get(href);
 				if (vcont == null) continue;
 				
-				items.add(prepareContactCard(con, vcont));
+				items.add(doContactCardPrepare(con, vcont));
 			}
 			return items;
 			
 		} catch (SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 	}
 	
 	public void addContactCard(int categoryFolderId, String href, VCard vCard) throws WTException {
-		VCardInput vci = new VCardInput();
-		ContactInput ci = vci.fromVCard(vCard, null);
+		VCardInput in = new VCardInput();
+		ContactInput ci = in.fromVCard(vCard, null);
 		ci.contact.setCategoryId(categoryFolderId);
 		ci.contact.setHref(href);
-		addContact(ci.contact, ci.picture, vCard);
+		
+		String rawData = null;
+		if (vCard != null) {
+			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+			rawData = new VCardOutput(prodId).write(vCard);
+		}
+		
+		addContact(ci.contact, ci.picture, rawData);
 	}
 	
 	public void updateContactCard(int categoryFolderId, String href, VCard vCard) throws WTException {
 		int contactId = getContactIdByCategoryHref(categoryFolderId, href);
 		
-		VCardInput vci = new VCardInput();
-		ContactInput ci = vci.fromVCard(vCard, null);
+		VCardInput in = new VCardInput();
+		ContactInput ci = in.fromVCard(vCard, null);
 		ci.contact.setContactId(contactId);
 		ci.contact.setCategoryId(categoryFolderId);
 		updateContact(ci.contact, ci.picture, true);
@@ -755,13 +750,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return ids.get(0);
 			
 		} catch (SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
 	}
 	
-	private ContactCard prepareContactCard(Connection con, VContactCard vcont) throws WTException {
+	private ContactCard doContactCardPrepare(Connection con, VContactCard vcont) throws WTException {
 		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
 		
 		Contact cont = fillContact(new Contact(), vcont);
@@ -770,31 +765,20 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			cpic = createContactPicture(cpicDao.select(con, vcont.getContactId()));
 		}
 		
-		VCardOutput vout = new VCardOutput();
-		VCard vCard = vout.toVCard(cont, cpic);
+		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+		VCardOutput out = new VCardOutput(prodId);
+		VCard vCard = out.toVCard(cont, cpic);
 		if (vcont.getHasVcard()) {
 			//TODO: in order to be fully compliant, merge generated vcard with the original one in db table!
 		}
 		
-		String raw = vout.write(vCard);
+		String raw = out.write(vCard);
 		
 		ContactCard cc = fillContactCard(new ContactCard(), vcont);
 		cc.setSize(raw.getBytes().length);
 		cc.setVcard(raw);
 		
 		return cc;
-	}
-	
-	private ContactCard fillContactCard(ContactCard tgt, VContactCard src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setContactId(src.getContactId());
-			tgt.setCategoryId(src.getCategoryId());
-			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), Contact.RevisionStatus.class));
-			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
-			tgt.setPublicUid(src.getPublicUid());
-			tgt.setHref(src.getHref());
-		}
-		return tgt;
 	}
 	
 	@Override
@@ -821,7 +805,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return foConts;
 			
 		} catch (SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -844,7 +828,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return createContactItem(ocont, hasPicture);
 		
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -860,36 +844,29 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return addContact(contact, picture, null);
 	}
 	
-	private Contact addContact(Contact contact, ContactPicture picture, VCard vCard) throws WTException {
+	private Contact addContact(Contact contact, ContactPicture picture, String vCardRawData) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			checkRightsOnCategoryElements(contact.getCategoryId(), "CREATE");
-			
 			con = WT.getConnection(SERVICE_ID, false);
 			
-			Category category = createCategory(catDao.selectById(con, contact.getCategoryId()));
-			if (category == null) throw new WTException("Unable to get category [{}]", contact.getCategoryId());
-			if (category.isRemoteProvider()) throw new WTException("Category is read only");
+			String provider = catDao.selectProviderById(con, contact.getCategoryId());
+			if (Category.isProviderRemote(provider)) throw new WTException("Calendar is remote and therefore read-only [{}]", contact.getCategoryId());
 			
-			String rawVCard = null;
-			if (vCard != null) {
-				rawVCard = new VCardOutput().write(vCard);
-			}
-			
-			OContact inserted = doContactInsert(coreMgr, con, false, contact, picture, rawVCard);
+			OContact inserted = doContactInsert(coreMgr, con, false, contact, picture, vCardRawData);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_INSERT", String.valueOf(inserted.getContactId()));
 			return fillContact(new Contact(), inserted);
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -908,24 +885,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE");
-			
 			con = WT.getConnection(SERVICE_ID, false);
 			
-			Category category = createCategory(catDao.selectById(con, contact.getCategoryId()));
-			if (category == null) throw new WTException("Unable to get category [{}]", contact.getCategoryId());
-			if (category.isRemoteProvider()) throw new WTException("Category is read only");
+			String provider = catDao.selectProviderById(con, contact.getCategoryId());
+			if (Category.isProviderRemote(provider)) throw new WTException("Calendar is remote and therefore read-only [{}]", contact.getCategoryId());
 			
 			boolean updated = doContactUpdate(coreMgr, con, false, contact, picture, deletePictureIfNull);
 			if (!updated) throw new WTException("Contact not found [{}]", contact.getContactId());
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -948,9 +923,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return createContactPicture(pic);
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
-			DbUtils.rollbackQuietly(con);
 			throw new WTException(t);
 		} finally {
 			DbUtils.closeQuietly(con);
@@ -975,12 +949,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_UPDATE", String.valueOf(contactId));
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -992,24 +966,23 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(SERVICE_ID);
+			con = WT.getConnection(SERVICE_ID, false);
 			
 			OContact cont = contDao.selectById(con, contactId);
 			//TODO: Speed-up below query...
 			if (cont == null || cont.getIsList()) throw new WTException("Contact not found [{0}]", contactId);
 			checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE");
 			
-			con.setAutoCommit(false);
 			doContactDelete(con, contactId, true);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_DELETE", String.valueOf(contactId));
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1035,12 +1008,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_DELETE", "*");
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1053,7 +1026,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(SERVICE_ID);
+			con = WT.getConnection(SERVICE_ID, false);
 			OContact ocont = contDao.selectById(con, contactId);
 			if (ocont == null || ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
@@ -1063,19 +1036,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
 				
 				Contact contact = fillContact(new Contact(), ocont);
-
-				con.setAutoCommit(false);
+				
 				doContactMove(coreMgr, con, copy, contact, targetCategoryId);
 				DbUtils.commitQuietly(con);
 				writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
 			}
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1098,7 +1070,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return createContactsList(cont, recipients);
 		
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1117,18 +1089,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			Category category = createCategory(catDao.selectById(con, list.getCategoryId()));
 			if (category == null) throw new WTException("Unable to get category [{}]", list.getCategoryId());
-			if (category.isRemoteProvider()) throw new WTException("Category is read only");
+			if (category.isProviderRemote()) throw new WTException("Category is read only");
 			
 			OContact result = doContactsListInsert(coreMgr, con, list);
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_INSERT", String.valueOf(result.getContactId()));
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1148,12 +1120,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_UPDATE", String.valueOf(list.getContactId()));
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1176,15 +1148,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_DELETE", String.valueOf(contactsListId));
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(NotFoundException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1210,15 +1179,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_DELETE", "*");
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(NotFoundException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1232,7 +1198,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			con = WT.getConnection(SERVICE_ID);
+			con = WT.getConnection(SERVICE_ID, false);
 			
 			OContact ocont = cdao.selectById(con, contactsListId);
 			if (ocont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
@@ -1246,21 +1212,17 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
 				ContactsList clist = createContactsList(ocont, recipients);
 
-				con.setAutoCommit(false);
 				doMoveContactsList(coreMgr, con, copy, clist, targetCategoryId);
 				DbUtils.commitQuietly(con);
 				writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
 			}	
 			
-		} catch(SQLException | DAOException ex) {
+		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
-		} catch(NotFoundException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw ex;
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1304,10 +1266,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 		} catch(SQLException | DAOException ex) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw new WTException(t);
+			throw t;
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1599,7 +1561,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								String etag = dcard.geteTag();
 								
 								if (syncByHref != null) { // Only if: !full && !syncIsSupported
-									String hash = DigestUtils.md5Hex(new VCardOutput().write(dcard.getCard(), true));
+									String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+									String hash = DigestUtils.md5Hex(new VCardOutput(prodId).write(dcard.getCard(), true));
 									
 									VContactHrefSync hrefSync = syncByHref.remove(dcard.getPath());
 									if (hrefSync != null) { // Href found -> maybe updated item
@@ -1660,7 +1623,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1814,7 +1777,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									continue;
 								}
 								
-								String hash = DigestUtils.md5Hex(new VCardOutput().write(dcard.getCard(), true));
+								String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+								String hash = DigestUtils.md5Hex(new VCardOutput(prodId).write(dcard.getCard(), true));
 								
 								boolean insertOrUpdate = false;
 								Integer contactId = null;
@@ -1873,7 +1837,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1895,11 +1859,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (ret != 1) return null;
 		}
 		return createCategory(ocat);
-	}
-
-	private String buildContactUid(int contactId, String internetName) {
-		String id = IdentifierUtils.getUUIDTimeBased(true) + "." + String.valueOf(contactId);
-		return VCardUtils.buildUid(DigestUtils.md5Hex(id), internetName);
 	}
 	
 	private int doBatchInsertContacts(CoreManager coreMgr, Connection con, int categoryId, ArrayList<Contact> contacts) throws WTException {
@@ -2008,7 +1967,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (copy) {
 			contact.setCategoryId(targetCategoryId);
 			ContactPicture pic = createContactPicture(cpicDao.select(con, contact.getContactId()));
-			OContactVCard ovca = vcaDao.select(con, contact.getContactId());
+			OContactVCard ovca = vcaDao.selectById(con, contact.getContactId());
 			String rawVCard = (ovca != null) ? ovca.getRawData() : null;
 			doContactInsert(coreMgr, con, false, contact, pic, rawVCard);
 			
@@ -2074,7 +2033,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private boolean doContactVCardDelete(Connection con, int contactId) throws DAOException {
 		ContactVCardDAO vcaDao = ContactVCardDAO.getInstance();
-		return vcaDao.delete(con, contactId) == 1;
+		return vcaDao.deleteById(con, contactId) == 1;
 	}
 	
 	private OContact doContactsListInsert(CoreManager coreMgr, Connection con, ContactsList list) throws DAOException {
@@ -2131,7 +2090,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return (owner == null) ? null : new UserProfileId(owner.getDomainId(), owner.getUserId());
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -2314,28 +2273,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return tgt;
 	}
 	
-	private String buildSearchfield(OContact contact) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(StringUtils.defaultString(contact.getLastname()));
-		sb.append(StringUtils.defaultString(contact.getFirstname()));
-		return sb.toString().toLowerCase();
-	}
-	
-	private String buildSearchfield(CoreManager coreMgr, OContact contact) {
-		StringBuilder sb = new StringBuilder();
-		sb.append(buildSearchfield(contact));
-		
-		String masterData = null;
-		if (!StringUtils.isEmpty(contact.getCompany())) {
-			try {
-				masterData = lookupMasterDataDescription(coreMgr, contact.getCompany());
-			} catch (WTException ex) {
-				logger.warn("Problems looking-up master data description", ex);
-			}
+	private ContactCard fillContactCard(ContactCard tgt, VContactCard src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setContactId(src.getContactId());
+			tgt.setCategoryId(src.getCategoryId());
+			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), Contact.RevisionStatus.class));
+			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
+			tgt.setPublicUid(src.getPublicUid());
+			tgt.setHref(src.getHref());
 		}
-		final String company = StringUtils.defaultIfBlank(masterData, contact.getCompany());
-		sb.append(StringUtils.defaultString(company).toLowerCase());
-		return sb.toString();
+		return tgt;
 	}
 	
 	private ContactsList createContactsList(OContact ocontlst, List<OListRecipient> olstrecs) {
@@ -2500,7 +2447,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private OContact fillDefaultsForInsert(OContact tgt) {
 		if (tgt != null) {
 			if (StringUtils.isBlank(tgt.getPublicUid())) {
-				tgt.setPublicUid(buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
+				tgt.setPublicUid(ManagerUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
 				tgt.setHref(tgt.getPublicUid() + ".vcf");
 			}
 		}
@@ -2531,6 +2478,30 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			tgt.setCategoryUserId(src.getCategoryUserId());
 		}
 		return tgt;
+	}
+	
+	private String buildSearchfield(OContact contact) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(StringUtils.defaultString(contact.getLastname()));
+		sb.append(StringUtils.defaultString(contact.getFirstname()));
+		return sb.toString().toLowerCase();
+	}
+	
+	private String buildSearchfield(CoreManager coreMgr, OContact contact) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(buildSearchfield(contact));
+		
+		String masterData = null;
+		if (!StringUtils.isEmpty(contact.getCompany())) {
+			try {
+				masterData = lookupMasterDataDescription(coreMgr, contact.getCompany());
+			} catch (WTException ex) {
+				logger.warn("Problems looking-up master data description", ex);
+			}
+		}
+		final String company = StringUtils.defaultIfBlank(masterData, contact.getCompany());
+		sb.append(StringUtils.defaultString(company).toLowerCase());
+		return sb.toString();
 	}
 	
 	private ReminderInApp createAnniversaryInAppReminder(Locale locale, boolean birthday, VContact contact, DateTime date) {
@@ -2848,7 +2819,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s imported!", count));
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(WTException ex) {
 			throw ex;
 		} finally {
@@ -2905,7 +2876,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s imported!", count));
 			
 		} catch(SQLException | DAOException ex) {
-			throw new WTException(ex, "DB error");
+			throw wrapThrowable(ex);
 		} catch(WTException ex) {
 			throw ex;
 		} finally {

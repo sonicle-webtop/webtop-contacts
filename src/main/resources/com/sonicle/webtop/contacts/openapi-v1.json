@@ -54,7 +54,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AddressBook"
+              "$ref": "#/definitions/AddressBookNew"
             }
           }
         ],
@@ -109,7 +109,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/AddressBook"
+              "$ref": "#/definitions/AddressBookUpdate"
             }
           }
         ],
@@ -141,6 +141,9 @@
           },
           "404": {
             "description": "Address book not found"
+          },
+          "405": {
+            "description": "Delete operation is not allowed"
           }
         }
       },
@@ -203,7 +206,7 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/Card"
+              "$ref": "#/definitions/CardNew"
             }
           }
         ],
@@ -398,97 +401,189 @@
     },
     "AddressBook": {
       "type": "object",
+      "required": [
+        "displayName",
+        "id",
+        "syncToken"
+      ],
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int32"
+          "format": "int32",
+          "description": "Unique ID"
         },
         "displayName": {
-          "type": "string"
+          "type": "string",
+          "description": "Display name"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "description": "Description"
         },
         "syncToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Current sync token"
         }
-      }
+      },
+      "description": "Bean for carry addressbook's fields"
+    },
+    "AddressBookNew": {
+      "type": "object",
+      "required": [
+        "displayName"
+      ],
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description"
+        }
+      },
+      "description": "Bean for carry addressbook's fields"
+    },
+    "AddressBookUpdate": {
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "New value for displayName"
+        },
+        "description": {
+          "type": "string",
+          "description": "New value for description"
+        },
+        "updatedFields": {
+          "type": "array",
+          "description": "Specifies which fields have been updated",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Bean for carry addressbook's updateable fields"
     },
     "Card": {
       "type": "object",
+      "required": [
+        "href",
+        "id",
+        "uid"
+      ],
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int32"
+          "format": "int32",
+          "description": "Unique ID"
         },
         "uid": {
-          "type": "string"
+          "type": "string",
+          "description": "Unique public ID"
         },
         "href": {
-          "type": "string"
+          "type": "string",
+          "description": "Reference URI"
         },
         "lastModified": {
           "type": "integer",
-          "format": "int64"
+          "format": "int64",
+          "description": "Last modification time (unix timestamp)"
         },
         "etag": {
-          "type": "string"
+          "type": "string",
+          "description": "Revision tag"
         },
         "size": {
-          "type": "integer"
+          "type": "integer",
+          "description": "Size (in bytes) of card data"
         },
         "vcard": {
-          "type": "string"
+          "type": "string",
+          "description": "Card data (vCard format)"
         }
-      }
+      },
+      "description": "Bean for carry card fields"
+    },
+    "CardNew": {
+      "type": "object",
+      "required": [
+        "href",
+        "vcard"
+      ],
+      "properties": {
+        "href": {
+          "type": "string",
+          "description": "Reference URI"
+        },
+        "vcard": {
+          "type": "string",
+          "description": "Card data (vCard format)"
+        }
+      },
+      "description": "Bean for carry new card fields"
     },
     "CardChanged": {
       "type": "object",
       "required": [
         "etag",
-        "href"
+        "href",
+        "id"
       ],
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int32"
+          "format": "int32",
+          "description": "Unique ID"
         },
         "href": {
-          "type": "string"
+          "type": "string",
+          "description": "Reference URI"
         },
         "etag": {
-          "type": "string"
+          "type": "string",
+          "description": "Revision tag"
         }
-      }
+      },
+      "description": "Bean for carry fields of card that have been changed"
     },
     "CardsChanges": {
       "type": "object",
+      "required": [
+        "deleted",
+        "inserted",
+        "syncToken",
+        "updated"
+      ],
       "properties": {
         "syncToken": {
-          "type": "string"
+          "type": "string",
+          "description": "Current sync token"
         },
         "inserted": {
           "type": "array",
-          "description": "Cards that have been inserted",
+          "description": "Items that have been inserted",
           "items": {
             "$ref": "#/definitions/CardChanged"
           }
         },
         "updated": {
           "type": "array",
-          "description": "Cards that have been updated",
+          "description": "Items that have been updated",
           "items": {
             "$ref": "#/definitions/CardChanged"
           }
         },
         "deleted": {
           "type": "array",
-          "description": "Cards that have been deleted",
+          "description": "Items that have been deleted",
           "items": {
             "$ref": "#/definitions/CardChanged"
           }
         }
-      }
+      },
+      "description": "Bean for carry card collection changes"
     }
   }
 }

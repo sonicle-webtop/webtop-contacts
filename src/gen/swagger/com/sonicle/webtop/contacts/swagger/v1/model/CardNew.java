@@ -6,42 +6,22 @@ import javax.validation.Valid;
 
 
 /**
- * Bean for carry fields of card that have been changed
+ * Bean for carry new card fields
  **/
 import io.swagger.annotations.*;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-@ApiModel(description = "Bean for carry fields of card that have been changed")
+@ApiModel(description = "Bean for carry new card fields")
 
-public class CardChanged   {
+public class CardNew   {
   
-  private @Valid Integer id = null;
   private @Valid String href = null;
-  private @Valid String etag = null;
-
-  /**
-   * Unique ID
-   **/
-  public CardChanged id(Integer id) {
-    this.id = id;
-    return this;
-  }
-
-  
-  @ApiModelProperty(required = true, value = "Unique ID")
-  @JsonProperty("id")
-  @NotNull
-  public Integer getId() {
-    return id;
-  }
-  public void setId(Integer id) {
-    this.id = id;
-  }
+  private @Valid String vcard = null;
 
   /**
    * Reference URI
    **/
-  public CardChanged href(String href) {
+  public CardNew href(String href) {
     this.href = href;
     return this;
   }
@@ -58,22 +38,22 @@ public class CardChanged   {
   }
 
   /**
-   * Revision tag
+   * Card data (vCard format)
    **/
-  public CardChanged etag(String etag) {
-    this.etag = etag;
+  public CardNew vcard(String vcard) {
+    this.vcard = vcard;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Revision tag")
-  @JsonProperty("etag")
+  @ApiModelProperty(required = true, value = "Card data (vCard format)")
+  @JsonProperty("vcard")
   @NotNull
-  public String getEtag() {
-    return etag;
+  public String getVcard() {
+    return vcard;
   }
-  public void setEtag(String etag) {
-    this.etag = etag;
+  public void setVcard(String vcard) {
+    this.vcard = vcard;
   }
 
 
@@ -85,25 +65,23 @@ public class CardChanged   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CardChanged cardChanged = (CardChanged) o;
-    return Objects.equals(id, cardChanged.id) &&
-        Objects.equals(href, cardChanged.href) &&
-        Objects.equals(etag, cardChanged.etag);
+    CardNew cardNew = (CardNew) o;
+    return Objects.equals(href, cardNew.href) &&
+        Objects.equals(vcard, cardNew.vcard);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, href, etag);
+    return Objects.hash(href, vcard);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CardChanged {\n");
+    sb.append("class CardNew {\n");
     
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    href: ").append(toIndentedString(href)).append("\n");
-    sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
+    sb.append("    vcard: ").append(toIndentedString(vcard)).append("\n");
     sb.append("}");
     return sb.toString();
   }

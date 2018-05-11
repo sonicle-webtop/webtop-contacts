@@ -60,7 +60,7 @@ public class CategoryDAO extends BaseDAO {
 		return nextID;
 	}
 	
-	public Owner selectOwnerById(Connection con, Integer categoryId) throws DAOException {
+	public Owner selectOwnerById(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -71,7 +71,20 @@ public class CategoryDAO extends BaseDAO {
 			.fetchOneInto(Owner.class);
 	}
 	
-	public OCategory selectById(Connection con, Integer categoryId) throws DAOException {
+	public String selectProviderById(Connection con, int categoryId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CATEGORIES.PROVIDER
+			)
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.CATEGORY_ID.equal(categoryId)
+			)
+			.fetchOneInto(String.class);
+	}
+	
+	public OCategory selectById(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()

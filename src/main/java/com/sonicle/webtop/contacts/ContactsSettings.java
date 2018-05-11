@@ -39,7 +39,14 @@ package com.sonicle.webtop.contacts;
 public class ContactsSettings {
 	
 	/**
-	 * [system+domain][default-only]
+	 * [system+domain][default]
+	 * [boolean]
+	 * Enable/Disable addressbook deletions through DAV rest-api interface.
+	 */
+	public static final String DAV_ADDRESSBOOK_DELETE_ENABLED = "dav.addressbook.delete.enabled";
+	
+	/**
+	 * [][default]
 	 * [enum]
 	 * The default value of the sync field for new categories.
 	 */

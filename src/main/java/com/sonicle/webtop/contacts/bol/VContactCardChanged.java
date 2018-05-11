@@ -40,9 +40,9 @@ import org.joda.time.DateTime;
  */
 public class VContactCardChanged {
 	protected Integer contactId;
-	protected DateTime creationTimestamp;
 	protected String revisionStatus;
 	protected DateTime revisionTimestamp;
+	protected DateTime creationTimestamp;
 	protected String href;
 
 	public Integer getContactId() {
@@ -51,14 +51,6 @@ public class VContactCardChanged {
 
 	public void setContactId(Integer contactId) {
 		this.contactId = contactId;
-	}
-
-	public DateTime getCreationTimestamp() {
-		return creationTimestamp;
-	}
-
-	public void setCreationTimestamp(DateTime creationTimestamp) {
-		this.creationTimestamp = creationTimestamp;
 	}
 
 	public String getRevisionStatus() {
@@ -75,6 +67,14 @@ public class VContactCardChanged {
 
 	public void setRevisionTimestamp(DateTime revisionTimestamp) {
 		this.revisionTimestamp = revisionTimestamp;
+	}
+	
+	public DateTime getCreationTimestamp() {
+		return creationTimestamp;
+	}
+
+	public void setCreationTimestamp(DateTime creationTimestamp) {
+		this.creationTimestamp = creationTimestamp;
 	}
 
 	public String getHref() {

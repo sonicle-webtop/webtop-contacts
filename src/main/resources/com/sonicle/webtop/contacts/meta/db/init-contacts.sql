@@ -64,10 +64,10 @@ DROP TABLE IF EXISTS "contacts"."contacts";
 CREATE TABLE "contacts"."contacts" (
 "contact_id" int4 DEFAULT nextval('"contacts".seq_contacts'::regclass) NOT NULL,
 "category_id" int4 NOT NULL,
-"creation_timestamp" timestamptz DEFAULT now() NOT NULL,
 "revision_status" varchar(1) NOT NULL,
 "revision_timestamp" timestamptz(6) NOT NULL,
 "revision_sequence" int4 DEFAULT 0 NOT NULL,
+"creation_timestamp" timestamptz DEFAULT now() NOT NULL,
 "public_uid" varchar(255) NOT NULL,
 "is_list" bool DEFAULT false NOT NULL,
 "searchfield" varchar(1024),
@@ -199,6 +199,7 @@ CREATE INDEX "contacts_ak2" ON "contacts"."contacts" USING btree ("category_id",
 CREATE INDEX "contacts_ak3" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "searchfield");
 CREATE INDEX "contacts_ak4" ON "contacts"."contacts" USING btree ("revision_status", "birthday");
 CREATE INDEX "contacts_ak5" ON "contacts"."contacts" USING btree ("revision_status", "anniversary");
+CREATE INDEX "contacts_ak6" ON "contacts"."contacts" USING btree ("category_id", "is_list", "revision_status", "href");
 
 -- ----------------------------
 -- Primary Key structure for table contacts
