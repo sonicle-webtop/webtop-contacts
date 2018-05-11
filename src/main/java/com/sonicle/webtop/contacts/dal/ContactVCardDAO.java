@@ -52,7 +52,7 @@ public class ContactVCardDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
-	public boolean hasVCard(Connection con, int contactId) throws DAOException {
+	public boolean hasVCardById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.selectCount()
@@ -63,7 +63,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.fetchOne(0, Integer.class) == 1;
 	}
 	
-	public OContactVCard select(Connection con, int contactId) throws DAOException {
+	public OContactVCard selectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -83,7 +83,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int delete(Connection con, int contactId) throws DAOException {
+	public int deleteById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_VCARDS)

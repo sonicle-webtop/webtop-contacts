@@ -1,16 +1,20 @@
 package com.sonicle.webtop.contacts.swagger.v1.model;
 
 import com.sonicle.webtop.contacts.swagger.v1.model.CardChanged;
+import io.swagger.annotations.ApiModel;
 import java.util.ArrayList;
 import java.util.List;
 import javax.validation.constraints.*;
 import javax.validation.Valid;
 
 
+/**
+ * Bean for carry card collection changes
+ **/
 import io.swagger.annotations.*;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+@ApiModel(description = "Bean for carry card collection changes")
 
 public class CardsChanges   {
   
@@ -20,6 +24,7 @@ public class CardsChanges   {
   private @Valid List<CardChanged> deleted = new ArrayList<CardChanged>();
 
   /**
+   * Current sync token
    **/
   public CardsChanges syncToken(String syncToken) {
     this.syncToken = syncToken;
@@ -27,8 +32,9 @@ public class CardsChanges   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Current sync token")
   @JsonProperty("syncToken")
+  @NotNull
   public String getSyncToken() {
     return syncToken;
   }
@@ -37,7 +43,7 @@ public class CardsChanges   {
   }
 
   /**
-   * Cards that have been inserted
+   * Items that have been inserted
    **/
   public CardsChanges inserted(List<CardChanged> inserted) {
     this.inserted = inserted;
@@ -45,8 +51,9 @@ public class CardsChanges   {
   }
 
   
-  @ApiModelProperty(value = "Cards that have been inserted")
+  @ApiModelProperty(required = true, value = "Items that have been inserted")
   @JsonProperty("inserted")
+  @NotNull
   public List<CardChanged> getInserted() {
     return inserted;
   }
@@ -55,7 +62,7 @@ public class CardsChanges   {
   }
 
   /**
-   * Cards that have been updated
+   * Items that have been updated
    **/
   public CardsChanges updated(List<CardChanged> updated) {
     this.updated = updated;
@@ -63,8 +70,9 @@ public class CardsChanges   {
   }
 
   
-  @ApiModelProperty(value = "Cards that have been updated")
+  @ApiModelProperty(required = true, value = "Items that have been updated")
   @JsonProperty("updated")
+  @NotNull
   public List<CardChanged> getUpdated() {
     return updated;
   }
@@ -73,7 +81,7 @@ public class CardsChanges   {
   }
 
   /**
-   * Cards that have been deleted
+   * Items that have been deleted
    **/
   public CardsChanges deleted(List<CardChanged> deleted) {
     this.deleted = deleted;
@@ -81,8 +89,9 @@ public class CardsChanges   {
   }
 
   
-  @ApiModelProperty(value = "Cards that have been deleted")
+  @ApiModelProperty(required = true, value = "Items that have been deleted")
   @JsonProperty("deleted")
+  @NotNull
   public List<CardChanged> getDeleted() {
     return deleted;
   }

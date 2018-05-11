@@ -57,7 +57,7 @@ public class JsIncomingCategory {
 		this.ownerDisplayName = udata.getDisplayName();
 		this.categoryId = folder.getCategory().getCategoryId();
 		this.categoryName = folder.getCategory().getName();
-		if (folder.getCategory().isRemoteProvider()) {
+		if (folder.getCategory().isProviderRemote()) {
 			this.readOnly = true;
 		} else if ((folderProps != null) && Category.Sync.READ.equals(folderProps.getSync())) {
 			this.readOnly = true;

@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,42 +28,27 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
 package com.sonicle.webtop.contacts;
 
-import static com.sonicle.webtop.contacts.ContactsSettings.*;
-import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.core.sdk.BaseServiceSettings;
+import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.util.IdentifierUtils;
+import com.sonicle.webtop.core.util.VCardUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  *
  * @author malbinola
  */
-public class ContactsServiceSettings extends BaseServiceSettings {
+public class ManagerUtils {
 	
-	public ContactsServiceSettings(String serviceId, String domainId) {
-		super(serviceId, domainId);
+	public static String getProductName() {
+		return WT.getPlatformName() + " Contacts";
 	}
 	
-	public boolean getDavAddressbookDeleteEnabled() {
-		Boolean value = getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, null);
-		return (value != null) ? value : getDefaultDavAddressbookDeleteEnabled();
-	}
-	
-	public boolean getDefaultDavAddressbookDeleteEnabled() {
-		return getBoolean(DEFAULT_PREFIX + DAV_ADDRESSBOOK_DELETE_ENABLED, false);
-	}
-	
-	public Category.Sync getDefaultCategorySync() {
-		return getEnum(Category.Sync.class, DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF);
-	}
-	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + VIEW, VIEW_WORK);
-	}
-	
-	public String getDefaultAnniversaryReminderDelivery() {
-		return getString(DEFAULT_PREFIX + ANNIVERSARY_REMINDER_DELIVERY, ANNIVERSARY_REMINDER_DELIVERY_APP);
+	public static String buildContactUid(int contactId, String internetName) {
+		String id = IdentifierUtils.getUUIDTimeBased(true) + "." + String.valueOf(contactId);
+		return VCardUtils.buildUid(DigestUtils.md5Hex(id), internetName);
 	}
 }

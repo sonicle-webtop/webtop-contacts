@@ -142,8 +142,6 @@ public class ContactDAO extends BaseDAO {
 	
 	/*
 
-CREATE INDEX "contacts_ak6" ON "contacts"."contacts" ("category_id", "is_list", "revision_status", "href");
-
 UPDATE contacts.contacts AS ccnts
 SET
 public_uid = md5(ccnts.public_uid || '.' || ccnts.contact_id) || '@' || cdoms.internet_name
@@ -215,9 +213,9 @@ AND (ccnts.href IS NULL)
 		return dsl
 			.select(
 				CONTACTS.CONTACT_ID,
-				CONTACTS.CREATION_TIMESTAMP,
 				CONTACTS.REVISION_STATUS,
 				CONTACTS.REVISION_TIMESTAMP,
+				CONTACTS.CREATION_TIMESTAMP,
 				CONTACTS.HREF
 			)
 			.from(CONTACTS)
@@ -242,9 +240,9 @@ AND (ccnts.href IS NULL)
 		return dsl
 			.select(
 				CONTACTS.CONTACT_ID,
-				CONTACTS.CREATION_TIMESTAMP,
 				CONTACTS.REVISION_STATUS,
 				CONTACTS.REVISION_TIMESTAMP,
+				CONTACTS.CREATION_TIMESTAMP,
 				CONTACTS.HREF
 			)
 			.from(CONTACTS)

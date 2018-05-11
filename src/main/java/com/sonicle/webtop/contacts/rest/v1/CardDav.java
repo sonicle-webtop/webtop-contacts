@@ -35,22 +35,25 @@ package com.sonicle.webtop.contacts.rest.v1;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactsManager;
+import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactCard;
 import com.sonicle.webtop.contacts.model.ContactCardChanged;
 import com.sonicle.webtop.contacts.swagger.v1.api.CarddavApi;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBook;
+import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookNew;
+import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookUpdate;
 import com.sonicle.webtop.contacts.swagger.v1.model.Card;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardChanged;
+import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardsChanges;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
-import com.sonicle.webtop.core.sdk.BaseRestApiResource;
-import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
+import com.sonicle.webtop.core.util.VCardUtils;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import java.io.IOException;
@@ -82,7 +85,7 @@ public class CardDav extends CarddavApi {
 			Map<Integer, Category> cats = manager.listCategories();
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
 			for (Category cat : cats.values()) {
-				if (cat.isRemoteProvider()) continue;
+				if (cat.isProviderRemote()) continue;
 				items.add(createAddressBook(cat, revisions.get(cat.getCategoryId())));
 			}
 			return respOk(items);
@@ -99,7 +102,7 @@ public class CardDav extends CarddavApi {
 		try {
 			Category cat = manager.getCategory(addressBookId);
 			if (cat == null) return respErrorNotFound();
-			if (cat.isRemoteProvider()) return respErrorBadRequest();
+			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(cat.getCategoryId()));
 			return respOk(createAddressBook(cat, revisions.get(cat.getCategoryId())));
@@ -110,7 +113,7 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response addAddressBook(AddressBook body) {
+	public Response addAddressBook(AddressBookNew body) {
 		ContactsManager manager = getManager();
 		
 		try {
@@ -126,16 +129,20 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response updateAddressBook(Integer addressBookId, AddressBook body) {
+	public Response updateAddressBook(Integer addressBookId, AddressBookUpdate body) {
 		ContactsManager manager = getManager();
 		
 		try {
 			Category cat = manager.getCategory(addressBookId);
 			if (cat == null) return respErrorNotFound();
-			if (cat.isRemoteProvider()) return respErrorBadRequest();
+			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			cat.setName(body.getDisplayName());
-			cat.setDescription(body.getDescription());
+			if (body.getUpdatedFields().contains("displayName")) {
+				cat.setName(body.getDisplayName());
+			}
+			if (body.getUpdatedFields().contains("description")) {
+				cat.setDescription(body.getDescription());
+			}
 			manager.updateCategory(cat);
 			return respOk();
 			
@@ -151,9 +158,13 @@ public class CardDav extends CarddavApi {
 		ContactsManager manager = getManager();
 		
 		try {
-			manager.deleteCategory(addressBookId);
-			//TODO: evaluate if block this operation for remote categories
-			return respErrorNotFound();
+			ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
+			if (css.getDavAddressbookDeleteEnabled()) {
+				manager.deleteCategory(addressBookId);
+				return respOkNoContent();
+			} else {
+				return respErrorNotAllowed();
+			}
 			
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
@@ -170,7 +181,7 @@ public class CardDav extends CarddavApi {
 		try {
 			Category cat = manager.getCategory(addressBookId);
 			if (cat == null) return respErrorBadRequest();
-			if (cat.isRemoteProvider()) return respErrorBadRequest();
+			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			if ((hrefs == null) || hrefs.isEmpty()) {
 				List<ContactCard> cards = manager.listContactCards(addressBookId);
@@ -198,7 +209,7 @@ public class CardDav extends CarddavApi {
 		try {
 			Category cat = manager.getCategory(addressBookId);
 			if (cat == null) return respErrorBadRequest();
-			if (cat.isRemoteProvider()) return respErrorBadRequest();
+			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(addressBookId));
 			if (revisions.isEmpty()) return respErrorNotFound();
@@ -224,7 +235,7 @@ public class CardDav extends CarddavApi {
 		try {
 			Category cat = manager.getCategory(addressBookId);
 			if (cat == null) return respErrorBadRequest();
-			if (cat.isRemoteProvider()) return respErrorBadRequest();
+			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			ContactCard card = manager.getContactCard(addressBookId, href);
 			if (card != null) {
@@ -239,7 +250,7 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response addCard(Integer addressBookId, Card body) {
+	public Response addCard(Integer addressBookId, CardNew body) {
 		ContactsManager manager = getManager();
 		
 		try {
@@ -285,20 +296,27 @@ public class CardDav extends CarddavApi {
 		}
 	}
 	
-	private VCard parseVCard(String s) throws WTException {
-		try {
-			return Ezvcard.parse(new StringReader(s)).first();
-		} catch(IOException ex) {
-			throw new WTException(ex, "Unable to parse vcard data");
-		}
+	private AddressBook createAddressBook(Category cat, DateTime lastRevisionTimestamp) {
+		return new AddressBook()
+				.id(cat.getCategoryId())
+				.displayName(cat.getName())
+				.description(cat.getDescription())
+				.syncToken(buildEtag(lastRevisionTimestamp));
 	}
 	
-	private String buildEtag(DateTime revisionTimestamp) {
-		if (revisionTimestamp != null) {
-			return ETAG_FORMATTER.print(revisionTimestamp);
-		} else {
-			return DEFAULT_ETAG;
-		}
+	private Card createCard(ContactCard card) {
+		return new Card()
+				.id(card.getContactId())
+				.uid(card.getPublicUid())
+				.href(card.getHref())
+				.lastModified(card.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
+				.etag(buildEtag(card.getRevisionTimestamp()))
+				.size(card.getSize());
+	}
+	
+	private Card createCardWithData(ContactCard card) {
+		return createCard(card)
+				.vcard(card.getVcard());
 	}
 	
 	private CardChanged createCardChanged(ContactCardChanged card) {
@@ -331,27 +349,20 @@ public class CardDav extends CarddavApi {
 				.deleted(deleted);
 	}
 	
-	private Card createCardWithData(ContactCard card) {
-		return createCard(card)
-				.vcard(card.getVcard());
+	private String buildEtag(DateTime revisionTimestamp) {
+		if (revisionTimestamp != null) {
+			return ETAG_FORMATTER.print(revisionTimestamp);
+		} else {
+			return DEFAULT_ETAG;
+		}
 	}
 	
-	private Card createCard(ContactCard card) {
-		return new Card()
-				.id(card.getContactId())
-				.uid(card.getPublicUid())
-				.href(card.getHref())
-				.lastModified(card.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
-				.etag(buildEtag(card.getRevisionTimestamp()))
-				.size(card.getSize());
-	}
-	
-	private AddressBook createAddressBook(Category cat, DateTime lastRevisionTimestamp) {
-		return new AddressBook()
-				.id(cat.getCategoryId())
-				.displayName(cat.getName())
-				.description(cat.getDescription())
-				.syncToken(buildEtag(lastRevisionTimestamp));
+	private VCard parseVCard(String s) throws WTException {
+		try {
+			return VCardUtils.parse(s, true).get(0);
+		} catch(IOException ex) {
+			throw new WTException(ex, "Unable to parse vcard data");
+		}
 	}
 	
 	private ContactsManager getManager() {
@@ -360,13 +371,5 @@ public class CardDav extends CarddavApi {
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
 		return (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
-	}
-	
-	private CoreManager getCoreManager() {
-		return getCoreManager(RunContext.getRunProfileId());
-	}
-	
-	private CoreManager getCoreManager(UserProfileId targetProfileId) {
-		return (CoreManager)WT.getCoreManager(targetProfileId);
 	}
 }

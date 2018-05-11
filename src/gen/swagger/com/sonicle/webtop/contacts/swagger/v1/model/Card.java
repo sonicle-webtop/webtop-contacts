@@ -1,13 +1,17 @@
 package com.sonicle.webtop.contacts.swagger.v1.model;
 
+import io.swagger.annotations.ApiModel;
 import javax.validation.constraints.*;
 import javax.validation.Valid;
 
 
+/**
+ * Bean for carry card fields
+ **/
 import io.swagger.annotations.*;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+@ApiModel(description = "Bean for carry card fields")
 
 public class Card   {
   
@@ -20,6 +24,7 @@ public class Card   {
   private @Valid String vcard = null;
 
   /**
+   * Unique ID
    **/
   public Card id(Integer id) {
     this.id = id;
@@ -27,8 +32,9 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Unique ID")
   @JsonProperty("id")
+  @NotNull
   public Integer getId() {
     return id;
   }
@@ -37,6 +43,7 @@ public class Card   {
   }
 
   /**
+   * Unique public ID
    **/
   public Card uid(String uid) {
     this.uid = uid;
@@ -44,8 +51,9 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Unique public ID")
   @JsonProperty("uid")
+  @NotNull
   public String getUid() {
     return uid;
   }
@@ -54,6 +62,7 @@ public class Card   {
   }
 
   /**
+   * Reference URI
    **/
   public Card href(String href) {
     this.href = href;
@@ -61,8 +70,9 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Reference URI")
   @JsonProperty("href")
+  @NotNull
   public String getHref() {
     return href;
   }
@@ -71,6 +81,7 @@ public class Card   {
   }
 
   /**
+   * Last modification time (unix timestamp)
    **/
   public Card lastModified(Long lastModified) {
     this.lastModified = lastModified;
@@ -78,7 +89,7 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Last modification time (unix timestamp)")
   @JsonProperty("lastModified")
   public Long getLastModified() {
     return lastModified;
@@ -88,6 +99,7 @@ public class Card   {
   }
 
   /**
+   * Revision tag
    **/
   public Card etag(String etag) {
     this.etag = etag;
@@ -95,7 +107,7 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Revision tag")
   @JsonProperty("etag")
   public String getEtag() {
     return etag;
@@ -105,6 +117,7 @@ public class Card   {
   }
 
   /**
+   * Size (in bytes) of card data
    **/
   public Card size(Integer size) {
     this.size = size;
@@ -112,7 +125,7 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Size (in bytes) of card data")
   @JsonProperty("size")
   public Integer getSize() {
     return size;
@@ -122,6 +135,7 @@ public class Card   {
   }
 
   /**
+   * Card data (vCard format)
    **/
   public Card vcard(String vcard) {
     this.vcard = vcard;
@@ -129,7 +143,7 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Card data (vCard format)")
   @JsonProperty("vcard")
   public String getVcard() {
     return vcard;

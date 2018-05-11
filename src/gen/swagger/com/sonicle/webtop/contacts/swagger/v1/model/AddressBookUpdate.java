@@ -1,56 +1,37 @@
 package com.sonicle.webtop.contacts.swagger.v1.model;
 
 import io.swagger.annotations.ApiModel;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 import javax.validation.Valid;
 
 
 /**
- * Bean for carry addressbook&#39;s fields
+ * Bean for carry addressbook&#39;s updateable fields
  **/
 import io.swagger.annotations.*;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-@ApiModel(description = "Bean for carry addressbook's fields")
+@ApiModel(description = "Bean for carry addressbook's updateable fields")
 
-public class AddressBook   {
+public class AddressBookUpdate   {
   
-  private @Valid Integer id = null;
   private @Valid String displayName = null;
   private @Valid String description = null;
-  private @Valid String syncToken = null;
+  private @Valid List<String> updatedFields = new ArrayList<String>();
 
   /**
-   * Unique ID
+   * New value for displayName
    **/
-  public AddressBook id(Integer id) {
-    this.id = id;
-    return this;
-  }
-
-  
-  @ApiModelProperty(required = true, value = "Unique ID")
-  @JsonProperty("id")
-  @NotNull
-  public Integer getId() {
-    return id;
-  }
-  public void setId(Integer id) {
-    this.id = id;
-  }
-
-  /**
-   * Display name
-   **/
-  public AddressBook displayName(String displayName) {
+  public AddressBookUpdate displayName(String displayName) {
     this.displayName = displayName;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Display name")
+  @ApiModelProperty(value = "New value for displayName")
   @JsonProperty("displayName")
-  @NotNull
   public String getDisplayName() {
     return displayName;
   }
@@ -59,15 +40,15 @@ public class AddressBook   {
   }
 
   /**
-   * Description
+   * New value for description
    **/
-  public AddressBook description(String description) {
+  public AddressBookUpdate description(String description) {
     this.description = description;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Description")
+  @ApiModelProperty(value = "New value for description")
   @JsonProperty("description")
   public String getDescription() {
     return description;
@@ -77,22 +58,21 @@ public class AddressBook   {
   }
 
   /**
-   * Current sync token
+   * Specifies which fields have been updated
    **/
-  public AddressBook syncToken(String syncToken) {
-    this.syncToken = syncToken;
+  public AddressBookUpdate updatedFields(List<String> updatedFields) {
+    this.updatedFields = updatedFields;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Current sync token")
-  @JsonProperty("syncToken")
-  @NotNull
-  public String getSyncToken() {
-    return syncToken;
+  @ApiModelProperty(value = "Specifies which fields have been updated")
+  @JsonProperty("updatedFields")
+  public List<String> getUpdatedFields() {
+    return updatedFields;
   }
-  public void setSyncToken(String syncToken) {
-    this.syncToken = syncToken;
+  public void setUpdatedFields(List<String> updatedFields) {
+    this.updatedFields = updatedFields;
   }
 
 
@@ -104,27 +84,25 @@ public class AddressBook   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddressBook addressBook = (AddressBook) o;
-    return Objects.equals(id, addressBook.id) &&
-        Objects.equals(displayName, addressBook.displayName) &&
-        Objects.equals(description, addressBook.description) &&
-        Objects.equals(syncToken, addressBook.syncToken);
+    AddressBookUpdate addressBookUpdate = (AddressBookUpdate) o;
+    return Objects.equals(displayName, addressBookUpdate.displayName) &&
+        Objects.equals(description, addressBookUpdate.description) &&
+        Objects.equals(updatedFields, addressBookUpdate.updatedFields);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, displayName, description, syncToken);
+    return Objects.hash(displayName, description, updatedFields);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddressBook {\n");
+    sb.append("class AddressBookUpdate {\n");
     
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
-    sb.append("    syncToken: ").append(toIndentedString(syncToken)).append("\n");
+    sb.append("    updatedFields: ").append(toIndentedString(updatedFields)).append("\n");
     sb.append("}");
     return sb.toString();
   }

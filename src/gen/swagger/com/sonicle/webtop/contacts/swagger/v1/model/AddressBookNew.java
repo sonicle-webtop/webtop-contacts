@@ -13,36 +13,15 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 @ApiModel(description = "Bean for carry addressbook's fields")
 
-public class AddressBook   {
+public class AddressBookNew   {
   
-  private @Valid Integer id = null;
   private @Valid String displayName = null;
   private @Valid String description = null;
-  private @Valid String syncToken = null;
-
-  /**
-   * Unique ID
-   **/
-  public AddressBook id(Integer id) {
-    this.id = id;
-    return this;
-  }
-
-  
-  @ApiModelProperty(required = true, value = "Unique ID")
-  @JsonProperty("id")
-  @NotNull
-  public Integer getId() {
-    return id;
-  }
-  public void setId(Integer id) {
-    this.id = id;
-  }
 
   /**
    * Display name
    **/
-  public AddressBook displayName(String displayName) {
+  public AddressBookNew displayName(String displayName) {
     this.displayName = displayName;
     return this;
   }
@@ -61,7 +40,7 @@ public class AddressBook   {
   /**
    * Description
    **/
-  public AddressBook description(String description) {
+  public AddressBookNew description(String description) {
     this.description = description;
     return this;
   }
@@ -76,25 +55,6 @@ public class AddressBook   {
     this.description = description;
   }
 
-  /**
-   * Current sync token
-   **/
-  public AddressBook syncToken(String syncToken) {
-    this.syncToken = syncToken;
-    return this;
-  }
-
-  
-  @ApiModelProperty(required = true, value = "Current sync token")
-  @JsonProperty("syncToken")
-  @NotNull
-  public String getSyncToken() {
-    return syncToken;
-  }
-  public void setSyncToken(String syncToken) {
-    this.syncToken = syncToken;
-  }
-
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -104,27 +64,23 @@ public class AddressBook   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddressBook addressBook = (AddressBook) o;
-    return Objects.equals(id, addressBook.id) &&
-        Objects.equals(displayName, addressBook.displayName) &&
-        Objects.equals(description, addressBook.description) &&
-        Objects.equals(syncToken, addressBook.syncToken);
+    AddressBookNew addressBookNew = (AddressBookNew) o;
+    return Objects.equals(displayName, addressBookNew.displayName) &&
+        Objects.equals(description, addressBookNew.description);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, displayName, description, syncToken);
+    return Objects.hash(displayName, description);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddressBook {\n");
+    sb.append("class AddressBookNew {\n");
     
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
-    sb.append("    syncToken: ").append(toIndentedString(syncToken)).append("\n");
     sb.append("}");
     return sb.toString();
   }

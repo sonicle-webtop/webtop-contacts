@@ -105,6 +105,7 @@ import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.LogEntries;
+import com.sonicle.webtop.core.util.VCardUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -1267,7 +1268,8 @@ public class Service extends BaseService {
 			String tag = ServletUtils.getStringParameter(request, "uploadTag", true);
 			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
-			VCardOutput vout = new VCardOutput();
+			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+			VCardOutput vcout = new VCardOutput(prodId);
 			for (Integer id : ids) {
 				final ContactItem contact = manager.getContact(id);
 				if (contact == null) continue;
@@ -1282,7 +1284,7 @@ public class Service extends BaseService {
 				}
 				
 				final String filename = buildContactFilename(contact) + ".vcf";
-				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vout.write(vout.toVCard(contact, contactPicture))));
+				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contact, contactPicture))));
 				
 				items.add(new MapItem()
 					.add("uploadId", upfile.getUploadId())

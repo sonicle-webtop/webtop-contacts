@@ -1,7 +1,10 @@
 package com.sonicle.webtop.contacts.swagger.v1.api;
 
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBook;
+import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookNew;
+import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookUpdate;
 import com.sonicle.webtop.contacts.swagger.v1.model.Card;
+import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardsChanges;
 
 import javax.ws.rs.*;
@@ -16,7 +19,7 @@ import javax.validation.Valid;
 
 @Path("/carddav")
 @Api(description = "the carddav API")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2018-05-02T11:39:48.952+02:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2018-05-11T09:33:42.918+02:00")
 public class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -28,7 +31,7 @@ public class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource 
     }, tags={ "dav-addressbooks",  })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Success", response = AddressBook.class) })
-    public Response addAddressBook(@Valid AddressBook body) {
+    public Response addAddressBook(@Valid AddressBookNew body) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -40,7 +43,7 @@ public class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource 
     }, tags={ "dav-cards",  })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Success", response = Void.class) })
-    public Response addCard(@PathParam("addressBookId") Integer addressBookId,@Valid Card body) {
+    public Response addCard(@PathParam("addressBookId") Integer addressBookId,@Valid CardNew body) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -52,7 +55,8 @@ public class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource 
     @ApiResponses(value = { 
         @ApiResponse(code = 204, message = "Success", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
-        @ApiResponse(code = 404, message = "Address book not found", response = Void.class) })
+        @ApiResponse(code = 404, message = "Address book not found", response = Void.class),
+        @ApiResponse(code = 405, message = "Delete operation is not allowed", response = Void.class) })
     public Response deleteAddressBook(@PathParam("addressBookId") @ApiParam("Address book ID") Integer addressBookId) {
         return Response.ok().entity("magic!").build();
     }
@@ -145,7 +149,7 @@ public class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource 
         @ApiResponse(code = 200, message = "Success", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Address book not found", response = Void.class) })
-    public Response updateAddressBook(@PathParam("addressBookId") @ApiParam("Address book ID") Integer addressBookId,@Valid AddressBook body) {
+    public Response updateAddressBook(@PathParam("addressBookId") @ApiParam("Address book ID") Integer addressBookId,@Valid AddressBookUpdate body) {
         return Response.ok().entity("magic!").build();
     }
 
