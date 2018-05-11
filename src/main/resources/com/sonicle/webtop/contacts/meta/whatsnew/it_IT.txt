@@ -1,0 +1,18 @@
+$	5.2.0
+	%	Versione 5.2.0
+	*	<h1>Integrazione centralino telefonico NethVoice</h1>
+		<p>L'amministratore di sistema può configurare l'integrazione con centrilini
+		telefonici di tipo NethVoice. Con un solo click, o con il menu contestuale,
+		è possibile eseguire la chiamata al contatto, che viene automaticamente
+		indirizzata al proprio telefono grazie al riconoscimento dell'utente WebTop.
+		</p>
+		<img src="5.2.0_clicktocall.png"/>
+	*	<h1>Salvataggio layout contatti</h1>
+		<p>La griglia dei contatti ora ricorda le posizioni, le dimensioni e la 
+		visibilità delle colonne scelte dall'utente durante l'ultima sessione.<br>
+		Uscendo e rientrando, a parità di device e browser, il layout verrà ripristinato.
+		</p>
+		<img src="5.2.0_savelayout.png"/>
+	*	<h1>Email con un click</h1>
+		<p>La colonna email di un contatto è ora cliccabile, aprendo subito una
+		email in composizione</p>
