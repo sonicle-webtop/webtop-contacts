@@ -39,22 +39,22 @@ package com.sonicle.webtop.contacts;
 public class ContactsSettings {
 	
 	/**
-	 * [system+domain][default]
-	 * [boolean]
-	 * Enable/Disable addressbook deletions through DAV rest-api interface.
+	 * [system+domain]
+	 * [boolean](false)
+	 * Enable/Disable addressbooks deletions through DAV rest-api interface.
 	 */
 	public static final String DAV_ADDRESSBOOK_DELETE_ENABLED = "dav.addressbook.delete.enabled";
 	
 	/**
 	 * [][default]
-	 * [enum]
+	 * [enum {O:OFF, R:READ, W:WRITE}] (O)
 	 * The default value of the sync field for new categories.
 	 */
 	public static final String CATEGORY_SYNC = "category.sync";
 	
 	/**
 	 * [user][default]
-	 * [string]
+	 * [enum {w:WORK, h:HOME}](w)
 	 * Contacts grid view (w:work, h:home)
 	 */
 	public static final String VIEW = "view";

@@ -404,13 +404,18 @@
       "required": [
         "displayName",
         "id",
+        "uid",
         "syncToken"
       ],
       "properties": {
         "id": {
           "type": "integer",
           "format": "int32",
-          "description": "Unique ID"
+          "description": "Internal unique ID"
+        },
+        "uid": {
+          "type": "string",
+          "description": "Public unique ID"
         },
         "displayName": {
           "type": "string",
@@ -476,11 +481,11 @@
         "id": {
           "type": "integer",
           "format": "int32",
-          "description": "Unique ID"
+          "description": "Internal unique ID"
         },
         "uid": {
           "type": "string",
-          "description": "Unique public ID"
+          "description": "Public unique ID"
         },
         "href": {
           "type": "string",
@@ -535,7 +540,7 @@
         "id": {
           "type": "integer",
           "format": "int32",
-          "description": "Unique ID"
+          "description": "Internal unique ID"
         },
         "href": {
           "type": "string",

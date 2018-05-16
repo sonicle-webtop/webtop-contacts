@@ -32,10 +32,12 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.Base58;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.VCardUtils;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -47,8 +49,20 @@ public class ManagerUtils {
 		return WT.getPlatformName() + " Contacts";
 	}
 	
+	public static int decodeAsCategoryId(String categoryPublicUid) {
+		return Integer.valueOf(new String(Base58.decode(categoryPublicUid)));
+	}
+	
+	public static String encodeAsCategoryUid(int categoryId) {
+		return Base58.encode(StringUtils.leftPad(String.valueOf(categoryId), 10, "0").getBytes());
+	}
+	
 	public static String buildContactUid(int contactId, String internetName) {
 		String id = IdentifierUtils.getUUIDTimeBased(true) + "." + String.valueOf(contactId);
 		return VCardUtils.buildUid(DigestUtils.md5Hex(id), internetName);
+	}
+	
+	public static String buildHref(String publicUid) {
+		return publicUid + ".vcf";
 	}
 }

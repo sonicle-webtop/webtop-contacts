@@ -162,11 +162,11 @@ AND (ccnts.href IS NULL)
 
 	*/
 	
-	public Map<String, VContactCard> viewCardsByCategory(Connection con, int categoryId) throws DAOException {
+	public Map<String, List<VContactCard>> viewCardsByCategory(Connection con, int categoryId) throws DAOException {
 		return viewCardsByCategoryHrefs(con, categoryId, null);
 	}
 	
-	public Map<String, VContactCard> viewCardsByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
+	public Map<String, List<VContactCard>> viewCardsByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		Condition inHrefsCndt = DSL.trueCondition();
@@ -183,15 +183,9 @@ AND (ccnts.href IS NULL)
 				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(
-				CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
-			)
-			.leftOuterJoin(CONTACTS_PICTURES).on(
-				CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID)
-			)
-			.leftOuterJoin(CONTACTS_VCARDS).on(
-				CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID)
-			)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
@@ -204,7 +198,7 @@ AND (ccnts.href IS NULL)
 			.orderBy(
 				CONTACTS.CONTACT_ID.asc()
 			)
-			.fetchMap(CONTACTS.HREF, VContactCard.class);
+			.fetchGroups(CONTACTS.HREF, VContactCard.class);
 	}
 	
 	public List<VContactCardChanged> viewChangedByCategory(Connection con, int categoryId, int limit) throws DAOException {
@@ -249,7 +243,7 @@ AND (ccnts.href IS NULL)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
-				.and(CONTACTS.REVISION_TIMESTAMP.greaterOrEqual(since))
+				.and(CONTACTS.REVISION_TIMESTAMP.greaterThan(since))
 			)
 			.orderBy(
 				CONTACTS.CREATION_TIMESTAMP
@@ -303,12 +297,8 @@ AND (ccnts.href IS NULL)
 				CATEGORIES.USER_ID.as("category_user_id")
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(
-					CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
-			)
-			.leftOuterJoin(MASTER_DATA).on(
-					CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID)
-			)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(
@@ -381,12 +371,8 @@ AND (ccnts.href IS NULL)
 				MASTER_DATA.DESCRIPTION.as("company_as_master_data_id")
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(
-					CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
-			)
-			.leftOuterJoin(MASTER_DATA).on(
-				CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID)
-			)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(
@@ -441,9 +427,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CONTACT_ID
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(
-				CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
-			)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
@@ -452,6 +436,9 @@ AND (ccnts.href IS NULL)
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 				.and(CONTACTS.HREF.equal(href))
+			)
+			.orderBy(
+				CONTACTS.CONTACT_ID.asc()
 			)
 			.fetchInto(Integer.class);
 	}
@@ -474,7 +461,7 @@ AND (ccnts.href IS NULL)
 			.fetchMap(CONTACTS.CATEGORY_ID, DSL.max(CONTACTS.REVISION_TIMESTAMP));
 	}
 	
-	public Map<String, Integer> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {
+	public Map<String, List<Integer>> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -489,7 +476,10 @@ AND (ccnts.href IS NULL)
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 			)
-			.fetchMap(CONTACTS.HREF, CONTACTS.CONTACT_ID);
+			.orderBy(
+				CONTACTS.CONTACT_ID.asc()
+			)
+			.fetchGroups(CONTACTS.HREF, CONTACTS.CONTACT_ID);
 	}
 	
 	public Map<Integer, OContact> selectByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
@@ -499,9 +489,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS.fields()
 			)
 			.from(CONTACTS)
-			.join(CATEGORIES).on(
-				CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID)
-			)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
@@ -519,10 +507,10 @@ AND (ccnts.href IS NULL)
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setCreationTimestamp(revisionTimestamp);
 		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
+		item.setCreationTimestamp(revisionTimestamp);
 		ContactsRecord record = dsl.newRecord(CONTACTS, item);
 		return dsl
 			.insertInto(CONTACTS)
@@ -535,10 +523,10 @@ AND (ccnts.href IS NULL)
 		DSLContext dsl = getDSL(con);
 		ArrayList<ContactsRecord> records = new ArrayList<>();
 		for (OContact item : items) {
-			item.setCreationTimestamp(revisionTimestamp);
 			item.setRevisionStatus(NEW);
 			item.setRevisionTimestamp(revisionTimestamp);
 			item.setRevisionSequence(0);
+			item.setCreationTimestamp(revisionTimestamp);
 			records.add(dsl.newRecord(CONTACTS, item));
 		}
 		dsl.batchInsert(records).execute();
@@ -603,7 +591,6 @@ AND (ccnts.href IS NULL)
 			.set(CONTACTS.OTHER_IM, item.getOtherIm())
 			.set(CONTACTS.URL, item.getUrl())
 			.set(CONTACTS.NOTES, item.getNotes())
-			//.set(CONTACTS.HREF, item.getHref())
 			.set(CONTACTS.ETAG, item.getEtag())
 			.where(
 				CONTACTS.CONTACT_ID.equal(item.getContactId())

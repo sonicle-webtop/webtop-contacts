@@ -32,10 +32,12 @@
  */
 package com.sonicle.webtop.contacts.rest.v1;
 
+import com.sonicle.commons.Base58;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
+import com.sonicle.webtop.contacts.ManagerUtils;
 import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactCard;
@@ -48,22 +50,19 @@ import com.sonicle.webtop.contacts.swagger.v1.model.Card;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardChanged;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardsChanges;
-import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.VCardUtils;
-import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.Response;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -73,8 +72,8 @@ import org.joda.time.format.DateTimeFormatter;
  * @author malbinola
  */
 public class CardDav extends CarddavApi {
-	private static final String DEFAULT_ETAG = "19700101000000";
-	private static final DateTimeFormatter ETAG_FORMATTER = DateTimeUtils.createFormatter("yyyyMMddHHmmss", DateTimeZone.UTC);
+	private static final String DEFAULT_ETAG = "19700101000000000";
+	private static final DateTimeFormatter ETAG_FORMATTER = DateTimeUtils.createFormatter("yyyyMMddHHmmssSSS", DateTimeZone.UTC);
 	
 	@Override
 	public Response getAddressBooks() {
@@ -208,11 +207,10 @@ public class CardDav extends CarddavApi {
 		
 		try {
 			Category cat = manager.getCategory(addressBookId);
-			if (cat == null) return respErrorBadRequest();
+			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(addressBookId));
-			if (revisions.isEmpty()) return respErrorNotFound();
 			
 			DateTime since = null;
 			if (!StringUtils.isBlank(syncToken)) {
@@ -299,6 +297,7 @@ public class CardDav extends CarddavApi {
 	private AddressBook createAddressBook(Category cat, DateTime lastRevisionTimestamp) {
 		return new AddressBook()
 				.id(cat.getCategoryId())
+				.uid(ManagerUtils.encodeAsCategoryUid(cat.getCategoryId()))
 				.displayName(cat.getName())
 				.description(cat.getDescription())
 				.syncToken(buildEtag(lastRevisionTimestamp));

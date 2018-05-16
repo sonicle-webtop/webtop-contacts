@@ -619,8 +619,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategoryFolder(categoryFolderIds, "READ");
 			
 			ArrayList<ContactCard> items = new ArrayList<>();
-			Map<String, VContactCard> vconts = contDao.viewCardsByCategory(con, categoryFolderIds);
-			for (VContactCard vcont : vconts.values()) {
+			Map<String, List<VContactCard>> vcontMap = contDao.viewCardsByCategory(con, categoryFolderIds);
+			for (List<VContactCard> vconts : vcontMap.values()) {
+				if (vconts.isEmpty()) continue;
+				VContactCard vcont = vconts.get(vconts.size()-1);
+				if (vconts.size() > 1) {
+					logger.trace("Many Cards ({}) found for same href [{} -> {}]", vconts.size(), vcont.getHref(), vcont.getContactId());
+				}
+				
 				items.add(doContactCardPrepare(con, vcont));
 			}
 			return items;
@@ -691,10 +697,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategoryFolder(categoryFolderId, "READ");
 			
 			ArrayList<ContactCard> items = new ArrayList<>();
-			Map<String, VContactCard> vconts = contDao.viewCardsByCategoryHrefs(con, categoryFolderId, hrefs);
+			Map<String, List<VContactCard>> vcontMap = contDao.viewCardsByCategoryHrefs(con, categoryFolderId, hrefs);
 			for (String href : hrefs) {
-				VContactCard vcont = vconts.get(href);
-				if (vcont == null) continue;
+				List<VContactCard> vconts = vcontMap.get(href);
+				if (vconts == null) continue;
+				if (vconts.isEmpty()) continue;
+				VContactCard vcont = vconts.get(vconts.size()-1);
+				if (vconts.size() > 1) {
+					logger.trace("Many Cards ({}) found for same href [{} -> {}]", vconts.size(), vcont.getHref(), vcont.getContactId());
+				}
 				
 				items.add(doContactCardPrepare(con, vcont));
 			}
@@ -723,7 +734,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	public void updateContactCard(int categoryFolderId, String href, VCard vCard) throws WTException {
-		int contactId = getContactIdByCategoryHref(categoryFolderId, href);
+		int contactId = getContactIdByCategoryHref(categoryFolderId, href, true);
 		
 		VCardInput in = new VCardInput();
 		ContactInput ci = in.fromVCard(vCard, null);
@@ -733,11 +744,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	public void deleteContactCard(int categoryFolderId, String href) throws WTException {
-		int contactId = getContactIdByCategoryHref(categoryFolderId, href);
+		int contactId = getContactIdByCategoryHref(categoryFolderId, href, true);
 		deleteContact(contactId);
 	}
 	
-	private int getContactIdByCategoryHref(int categoryFolderId, String href) throws WTException {
+	private int getContactIdByCategoryHref(int categoryFolderId, String href, boolean throwExIfManyMatchesFound) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -746,8 +757,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			List<Integer> ids = contDao.selectAliveIdsByCategoryHrefs(con, categoryFolderId, href);
 			if (ids.isEmpty()) throw new NotFoundException("Contact card not found [{}, {}]", categoryFolderId, href);
-			if (ids.size() > 1) throw new WTException("Many matches for href [{}]", href);
-			return ids.get(0);
+			if (throwExIfManyMatchesFound && (ids.size() > 1)) throw new WTException("Many matches for href [{}]", href);
+			return ids.get(ids.size()-1);
 			
 		} catch (SQLException | DAOException ex) {
 			throw wrapThrowable(ex);
@@ -1476,7 +1487,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						try {
 							if (!changes.isEmpty()) {
 								ContactDAO contDao = ContactDAO.getInstance();
-								Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
+								Map<String, List<Integer>> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
 								
 								// Process changes...
 								logger.debug("Processing changes...");
@@ -1486,8 +1497,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 										hrefs.add(change.getPath());
 
 									} else { // Event deleted
-										final Integer contactId = contactIdsByHref.get(change.getPath());
-										if (contactId == null) throw new WTException("Card path not found [{0}]", change.getPath());
+										List<Integer> contactIds = contactIdsByHref.get(change.getPath());
+										Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
+										if (contactId == null) {
+											logger.warn("Deletion not possible. Card path not found [{}]", change.getPath());
+											continue;
+										}
 										doContactDelete(con, contactId, false);
 									}
 								}
@@ -1500,7 +1515,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								logger.debug("Inserting/Updating events...");
 								for (DavAddressbookCard dcard : dcards) {
 									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-									final Integer contactId = contactIdsByHref.get(dcard.getPath());
+									List<Integer> contactIds = contactIdsByHref.get(dcard.getPath());
+									Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
+									
 									if (contactId != null) {
 										doContactDelete(con, contactId, false);
 									}
@@ -1710,7 +1727,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						try {
 							if (!changes.isEmpty()) {
 								ContactDAO contDao = ContactDAO.getInstance();
-								Map<String, Integer> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
+								Map<String, List<Integer>> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
 								
 								// Process changes...
 								logger.debug("Processing changes...");
@@ -1720,8 +1737,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 										hrefs.add(change.getPath());
 
 									} else { // Event deleted
-										final Integer contactId = contactIdsByHref.get(change.getPath());
-										if (contactId == null) throw new WTException("Card path not found [{0}]", change.getPath());
+										List<Integer> contactIds = contactIdsByHref.get(change.getPath());
+										Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
+										if (contactId == null) {
+											logger.warn("Deletion not possible. Card path not found [{}]", change.getPath());
+											continue;
+										}
 										doContactDelete(con, contactId, false);
 									}
 								}
@@ -1734,7 +1755,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								logger.debug("Inserting/Updating events...");
 								for (DavAddressbookCard dcard : dcards) {
 									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-									final Integer contactId = contactIdsByHref.get(dcard.getPath());
+									List<Integer> contactIds = contactIdsByHref.get(dcard.getPath());
+									Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
+									
 									if (contactId != null) {
 										doContactDelete(con, contactId, false);
 									}
@@ -2448,8 +2471,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (tgt != null) {
 			if (StringUtils.isBlank(tgt.getPublicUid())) {
 				tgt.setPublicUid(ManagerUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
-				tgt.setHref(tgt.getPublicUid() + ".vcf");
 			}
+			tgt.setHref(ManagerUtils.buildHref(tgt.getPublicUid()));
 		}
 		return tgt;
 	}

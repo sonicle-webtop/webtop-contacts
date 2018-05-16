@@ -47,12 +47,7 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 	}
 	
 	public boolean getDavAddressbookDeleteEnabled() {
-		Boolean value = getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, null);
-		return (value != null) ? value : getDefaultDavAddressbookDeleteEnabled();
-	}
-	
-	public boolean getDefaultDavAddressbookDeleteEnabled() {
-		return getBoolean(DEFAULT_PREFIX + DAV_ADDRESSBOOK_DELETE_ENABLED, false);
+		return getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, false);
 	}
 	
 	public Category.Sync getDefaultCategorySync() {

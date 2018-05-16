@@ -16,12 +16,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AddressBook   {
   
   private @Valid Integer id = null;
+  private @Valid String uid = null;
   private @Valid String displayName = null;
   private @Valid String description = null;
   private @Valid String syncToken = null;
 
   /**
-   * Unique ID
+   * Internal unique ID
    **/
   public AddressBook id(Integer id) {
     this.id = id;
@@ -29,7 +30,7 @@ public class AddressBook   {
   }
 
   
-  @ApiModelProperty(required = true, value = "Unique ID")
+  @ApiModelProperty(required = true, value = "Internal unique ID")
   @JsonProperty("id")
   @NotNull
   public Integer getId() {
@@ -37,6 +38,25 @@ public class AddressBook   {
   }
   public void setId(Integer id) {
     this.id = id;
+  }
+
+  /**
+   * Public unique ID
+   **/
+  public AddressBook uid(String uid) {
+    this.uid = uid;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "Public unique ID")
+  @JsonProperty("uid")
+  @NotNull
+  public String getUid() {
+    return uid;
+  }
+  public void setUid(String uid) {
+    this.uid = uid;
   }
 
   /**
@@ -106,6 +126,7 @@ public class AddressBook   {
     }
     AddressBook addressBook = (AddressBook) o;
     return Objects.equals(id, addressBook.id) &&
+        Objects.equals(uid, addressBook.uid) &&
         Objects.equals(displayName, addressBook.displayName) &&
         Objects.equals(description, addressBook.description) &&
         Objects.equals(syncToken, addressBook.syncToken);
@@ -113,7 +134,7 @@ public class AddressBook   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, displayName, description, syncToken);
+    return Objects.hash(id, uid, displayName, description, syncToken);
   }
 
   @Override
@@ -122,6 +143,7 @@ public class AddressBook   {
     sb.append("class AddressBook {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    uid: ").append(toIndentedString(uid)).append("\n");
     sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    syncToken: ").append(toIndentedString(syncToken)).append("\n");
