@@ -22,7 +22,7 @@ public class AddressBook   {
   private @Valid String syncToken = null;
 
   /**
-   * Internal unique ID
+   * AddressBook ID (internal)
    **/
   public AddressBook id(Integer id) {
     this.id = id;
@@ -30,7 +30,7 @@ public class AddressBook   {
   }
 
   
-  @ApiModelProperty(required = true, value = "Internal unique ID")
+  @ApiModelProperty(required = true, value = "AddressBook ID (internal)")
   @JsonProperty("id")
   @NotNull
   public Integer getId() {
@@ -41,7 +41,7 @@ public class AddressBook   {
   }
 
   /**
-   * Public unique ID
+   * AddressBook UID (public)
    **/
   public AddressBook uid(String uid) {
     this.uid = uid;
@@ -49,7 +49,7 @@ public class AddressBook   {
   }
 
   
-  @ApiModelProperty(required = true, value = "Public unique ID")
+  @ApiModelProperty(required = true, value = "AddressBook UID (public)")
   @JsonProperty("uid")
   @NotNull
   public String getUid() {

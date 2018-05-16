@@ -68,7 +68,7 @@
         }
       }
     },
-    "/carddav/addressbooks/{addressBookId}": {
+    "/carddav/addressbooks/{addressBookUid}": {
       "get": {
         "tags": [
           "dav-addressbooks"
@@ -149,16 +149,16 @@
       },
       "parameters": [
         {
-          "name": "addressBookId",
+          "name": "addressBookUid",
           "in": "path",
           "required": true,
-          "type": "integer",
-          "description": "Address book ID",
+          "type": "string",
+          "description": "Address book UID",
           "x-example": 1234
         }
       ]
     },
-    "/carddav/addressbooks/{addressBookId}/cards": {
+    "/carddav/addressbooks/{addressBookUid}/cards": {
       "get": {
         "tags": [
           "dav-cards"
@@ -218,15 +218,16 @@
       },
       "parameters": [
         {
-          "name": "addressBookId",
+          "name": "addressBookUid",
           "in": "path",
           "required": true,
-          "type": "integer",
+          "type": "string",
+          "description": "Address book UID",
           "x-example": 1234
         }
       ]
     },
-    "/carddav/addressbooks/{addressBookId}/cards/changes": {
+    "/carddav/addressbooks/{addressBookUid}/cards/changes": {
       "get": {
         "tags": [
           "dav-cards"
@@ -269,15 +270,16 @@
       },
       "parameters": [
         {
-          "name": "addressBookId",
+          "name": "addressBookUid",
           "in": "path",
           "required": true,
-          "type": "integer",
+          "type": "string",
+          "description": "Address book UID",
           "x-example": 1234
         }
       ]
     },
-    "/carddav/addressbooks/{addressBookId}/cards/{href}": {
+    "/carddav/addressbooks/{addressBookUid}/cards/{href}": {
       "get": {
         "tags": [
           "dav-cards"
@@ -355,16 +357,18 @@
       },
       "parameters": [
         {
-          "name": "addressBookId",
+          "name": "addressBookUid",
           "in": "path",
           "required": true,
-          "type": "integer",
+          "type": "string",
+          "description": "Address book UID",
           "x-example": 1234
         },
         {
           "name": "href",
           "in": "path",
           "required": true,
+          "description": "Card reference URI",
           "type": "string"
         }
       ]
@@ -410,12 +414,11 @@
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int32",
-          "description": "Internal unique ID"
+          "description": "AddressBook ID (internal)"
         },
         "uid": {
           "type": "string",
-          "description": "Public unique ID"
+          "description": "AddressBook UID (public)"
         },
         "displayName": {
           "type": "string",
@@ -480,12 +483,11 @@
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int32",
-          "description": "Internal unique ID"
+          "description": "Card ID (internal)"
         },
         "uid": {
           "type": "string",
-          "description": "Public unique ID"
+          "description": "Card UID (public)"
         },
         "href": {
           "type": "string",
@@ -539,8 +541,7 @@
       "properties": {
         "id": {
           "type": "integer",
-          "format": "int32",
-          "description": "Internal unique ID"
+          "description": "Card ID (internal)"
         },
         "href": {
           "type": "string",

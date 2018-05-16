@@ -32,7 +32,6 @@
  */
 package com.sonicle.webtop.contacts.rest.v1;
 
-import com.sonicle.commons.Base58;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactsManager;
@@ -95,11 +94,12 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response getAddressBook(Integer addressBookId) {
+	public Response getAddressBook(String addressBookUid) {
 		ContactsManager manager = getManager();
 		
 		try {
-			Category cat = manager.getCategory(addressBookId);
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
@@ -128,11 +128,12 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response updateAddressBook(Integer addressBookId, AddressBookUpdate body) {
+	public Response updateAddressBook(String addressBookUid, AddressBookUpdate body) {
 		ContactsManager manager = getManager();
 		
 		try {
-			Category cat = manager.getCategory(addressBookId);
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
@@ -153,13 +154,14 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response deleteAddressBook(Integer addressBookId) {
+	public Response deleteAddressBook(String addressBookUid) {
 		ContactsManager manager = getManager();
 		
 		try {
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
 			ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
 			if (css.getDavAddressbookDeleteEnabled()) {
-				manager.deleteCategory(addressBookId);
+				manager.deleteCategory(categoryId);
 				return respOkNoContent();
 			} else {
 				return respErrorNotAllowed();
@@ -173,24 +175,25 @@ public class CardDav extends CarddavApi {
 	}
 	
 	@Override
-	public Response getCards(Integer addressBookId, List<String> hrefs) {
+	public Response getCards(String addressBookUid, List<String> hrefs) {
 		ContactsManager manager = getManager();
 		List<Card> items = new ArrayList<>();
 		
 		try {
-			Category cat = manager.getCategory(addressBookId);
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			if ((hrefs == null) || hrefs.isEmpty()) {
-				List<ContactCard> cards = manager.listContactCards(addressBookId);
+				List<ContactCard> cards = manager.listContactCards(categoryId);
 				for (ContactCard card : cards) {
 					items.add(createCardWithData(card));
 				}
 				return respOk(items);
 				
 			} else {
-				List<ContactCard> cards = manager.getContactCards(addressBookId, hrefs);
+				List<ContactCard> cards = manager.getContactCards(categoryId, hrefs);
 				for (ContactCard card : cards) {
 					items.add(createCardWithData(card));
 				}
@@ -202,15 +205,16 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response getCardsChanges(Integer addressBookId, String syncToken, Integer limit) {
+	public Response getCardsChanges(String addressBookUid, String syncToken, Integer limit) {
 		ContactsManager manager = getManager();
 		
 		try {
-			Category cat = manager.getCategory(addressBookId);
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(addressBookId));
+			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(categoryId));
 			
 			DateTime since = null;
 			if (!StringUtils.isBlank(syncToken)) {
@@ -218,8 +222,8 @@ public class CardDav extends CarddavApi {
 				if (since == null) return respErrorBadRequest();
 			}
 			
-			CollectionChangeSet<ContactCardChanged> changes = manager.listContactCardsChanges(addressBookId, since, limit);
-			return respOk(createCardsChanges(revisions.get(addressBookId), changes));
+			CollectionChangeSet<ContactCardChanged> changes = manager.listContactCardsChanges(categoryId, since, limit);
+			return respOk(createCardsChanges(revisions.get(categoryId), changes));
 			
 		} catch(WTException ex) {
 			return respError(ex);
@@ -227,15 +231,16 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response getCard(Integer addressBookId, String href) {
+	public Response getCard(String addressBookUid, String href) {
 		ContactsManager manager = getManager();
 		
 		try {
-			Category cat = manager.getCategory(addressBookId);
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactCard card = manager.getContactCard(addressBookId, href);
+			ContactCard card = manager.getContactCard(categoryId, href);
 			if (card != null) {
 				return respOk(createCardWithData(card));
 			} else {
@@ -248,13 +253,14 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response addCard(Integer addressBookId, CardNew body) {
+	public Response addCard(String addressBookUid, CardNew body) {
 		ContactsManager manager = getManager();
 		
 		try {
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
 			// Manager's call is already ro protected for remoteProviders
 			VCard vCard = parseVCard(body.getVcard());
-			manager.addContactCard(addressBookId, body.getHref(), vCard);
+			manager.addContactCard(categoryId, body.getHref(), vCard);
 			return respOk();
 			
 		} catch(WTException ex) {
@@ -263,13 +269,14 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response updateCard(Integer addressBookId, String href, String body) {
+	public Response updateCard(String addressBookUid, String href, String body) {
 		ContactsManager manager = getManager();
 		
 		try {
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
 			// Manager's call is already ro protected for remoteProviders
 			VCard vCard = parseVCard(body);
-			manager.updateContactCard(addressBookId, href, vCard);
+			manager.updateContactCard(categoryId, href, vCard);
 			return respOkNoContent();
 			
 		} catch(NotFoundException ex) {
@@ -280,11 +287,12 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response deleteCard(Integer addressBookId, String href) {
+	public Response deleteCard(String addressBookUid, String href) {
 		ContactsManager manager = getManager();
 		
 		try {
-			manager.deleteContactCard(addressBookId, href);
+			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			manager.deleteContactCard(categoryId, href);
 			return respOkNoContent();
 			
 		} catch(NotFoundException ex) {

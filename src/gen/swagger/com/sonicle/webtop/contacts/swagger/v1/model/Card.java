@@ -24,7 +24,7 @@ public class Card   {
   private @Valid String vcard = null;
 
   /**
-   * Internal unique ID
+   * Card ID (internal)
    **/
   public Card id(Integer id) {
     this.id = id;
@@ -32,7 +32,7 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(required = true, value = "Internal unique ID")
+  @ApiModelProperty(required = true, value = "Card ID (internal)")
   @JsonProperty("id")
   @NotNull
   public Integer getId() {
@@ -43,7 +43,7 @@ public class Card   {
   }
 
   /**
-   * Public unique ID
+   * Card UID (public)
    **/
   public Card uid(String uid) {
     this.uid = uid;
@@ -51,7 +51,7 @@ public class Card   {
   }
 
   
-  @ApiModelProperty(required = true, value = "Public unique ID")
+  @ApiModelProperty(required = true, value = "Card UID (public)")
   @JsonProperty("uid")
   @NotNull
   public String getUid() {

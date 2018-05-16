@@ -20,7 +20,7 @@ public class CardChanged   {
   private @Valid String etag = null;
 
   /**
-   * Internal unique ID
+   * Card ID (internal)
    **/
   public CardChanged id(Integer id) {
     this.id = id;
@@ -28,7 +28,7 @@ public class CardChanged   {
   }
 
   
-  @ApiModelProperty(required = true, value = "Internal unique ID")
+  @ApiModelProperty(required = true, value = "Card ID (internal)")
   @JsonProperty("id")
   @NotNull
   public Integer getId() {
