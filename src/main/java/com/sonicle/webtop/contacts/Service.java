@@ -55,6 +55,7 @@ import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
+import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
@@ -118,6 +119,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
@@ -488,12 +490,20 @@ public class Service extends BaseService {
 				toggleCheckedFolder(pl.data.categoryId, false);
 				new JsonResult().printTo(out);
 				
+			} else if (crud.equals("readLinks")) {
+				int id = ServletUtils.getIntParameter(request, "id", true);
+				
+				ShareFolderCategory fold = folders.get(id);
+				if (fold == null) throw new WTException("Category not found [{}]", id);
+				Map<String, String> links = manager.getCategoryLinks(id);
+				new JsonResult(new JsCategoryLinks(id, fold.getCategory().getName(), links)).printTo(out);
+				
 			} else if (crud.equals("sync")) {
 				int id = ServletUtils.getIntParameter(request, "id", true);
 				boolean full = ServletUtils.getBooleanParameter(request, "full", false);
 				
 				item = manager.getCategory(id);
-				if (item == null) throw new WTException("Category not found [{0}]", id);
+				if (item == null) throw new WTException("Category not found [{}]", id);
 				runSyncRemoteCategory(id, item.getName(), full);
 				
 				new JsonResult().printTo(out);

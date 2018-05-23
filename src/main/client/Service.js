@@ -46,6 +46,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	uses: [
 		'Sonicle.webtop.contacts.view.Sharing',
 		'Sonicle.webtop.contacts.view.Category',
+		'Sonicle.webtop.contacts.view.CategoryLinks',
 		'Sonicle.webtop.contacts.view.Contact',
 		'Sonicle.webtop.contacts.view.ContactsList',
 		'Sonicle.webtop.contacts.view.CategoryChooser',
@@ -231,7 +232,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						getIconCls: function(v,rec) {
 							return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
 						},
-						iconSize: WTU.imgSizeToPx('xs'),
+						iconSize: WTU.imgSizeToPx('xs')
 					},
 					{
 						hidden: true,
@@ -592,6 +593,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.addRemoteCategoryUI(node.get('_pid'));
 			}
 		});
+		me.addAct('viewCategoryLinks', {
+			tooltip: null,
+			handler: function() {
+				var node = me.getSelectedFolder(me.trFolders());
+				if (node) me.viewCategoryLinks(node.get('_catId'));
+			}
+		});
 		me.addAct('editCategory', {
 			tooltip: null,
 			handler: function() {
@@ -908,6 +916,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				},
 				'-',
 				me.getAct('editSharing'),
+				me.getAct('viewCategoryLinks'),
 				{
 					text: me.res('mni-customizeFolder.lbl'),
 					menu: {
@@ -1389,6 +1398,23 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			Ext.callback(opts.callback, opts.scope || me, [true, s.getVMData()]);
 		});
 		vct.show();
+	},
+	
+	viewCategoryLinks: function(categoryId, opts) {
+		opts = opts || {};
+		var me = this,
+				vct = WT.createView(me.ID, 'view.CategoryLinks');
+		
+		vct.getView().on('viewclose', function(s, success, model) {
+			Ext.callback(opts.callback, opts.scope || me, [success, model]);
+		});
+		vct.show(false, function() {
+			vct.getView().begin('view', {
+				data: {
+					categoryId: categoryId
+				}
+			});
+		});
 	},
 	
 	editCategory: function(categoryId, opts) {

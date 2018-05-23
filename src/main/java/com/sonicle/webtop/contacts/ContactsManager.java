@@ -36,6 +36,7 @@ import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
+import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.dav.CardDav;
@@ -392,6 +393,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
+	}
+	
+	public Map<String, String> getCategoryLinks(int categoryId) throws WTException {
+		checkRightsOnCategoryFolder(categoryId, "READ");
+		
+		UserProfile.Data ud = WT.getUserData(getTargetProfileId());
+		String davServerBaseUrl = WT.getDavServerBaseUrl(getTargetProfileId().getDomainId());
+		String categoryUid = ManagerUtils.encodeAsCategoryUid(categoryId);
+		String addressbookUrl = MessageFormat.format(ManagerUtils.CARDDAV_ADDRESSBOOK_URL, ud.getProfileEmailAddress(), categoryUid);
+		
+		LinkedHashMap<String, String> links = new LinkedHashMap<>();
+		links.put(ManagerUtils.CATEGORY_LINK_CARDDAV, PathUtils.concatPathParts(davServerBaseUrl, addressbookUrl));
+		return links;
 	}
 	
 	@Override

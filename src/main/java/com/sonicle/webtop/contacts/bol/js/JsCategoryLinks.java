@@ -30,47 +30,23 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.commons.Base58;
-import com.sonicle.webtop.core.app.WT;
-import com.sonicle.webtop.core.sdk.WTException;
-import com.sonicle.webtop.core.util.IdentifierUtils;
-import com.sonicle.webtop.core.util.VCardUtils;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
+import com.sonicle.webtop.contacts.ManagerUtils;
+import java.util.Map;
 
 /**
  *
  * @author malbinola
  */
-public class ManagerUtils {
+public class JsCategoryLinks {
+	public Integer categoryId;
+	public String name;
+	public String cardDavUrl;
 	
-	public static final String CARDDAV_ADDRESSBOOK_URL = "/addressbooks/{0}/{1}";
-	public static final String CATEGORY_LINK_CARDDAV = "cardDav";
-	
-	public static String getProductName() {
-		return WT.getPlatformName() + " Contacts";
-	}
-	
-	public static int decodeAsCategoryId(String categoryPublicUid) throws WTException {
-		try {
-			return Integer.valueOf(new String(Base58.decode(categoryPublicUid)));
-		} catch(RuntimeException ex) { // Not a Base58 input
-			throw new WTException(ex, "Invalid category UID encoding");
-		}
-	}
-	
-	public static String encodeAsCategoryUid(int categoryId) {
-		return Base58.encode(StringUtils.leftPad(String.valueOf(categoryId), 10, "0").getBytes());
-	}
-	
-	public static String buildContactUid(int contactId, String internetName) {
-		String id = IdentifierUtils.getUUIDTimeBased(true) + "." + String.valueOf(contactId);
-		return VCardUtils.buildUid(DigestUtils.md5Hex(id), internetName);
-	}
-	
-	public static String buildHref(String publicUid) {
-		return publicUid + ".vcf";
+	public JsCategoryLinks(int categoryId, String name, Map<String, String> links) {
+		this.categoryId = categoryId;
+		this.name = name;
+		this.cardDavUrl = links.get(ManagerUtils.CATEGORY_LINK_CARDDAV);
 	}
 }
