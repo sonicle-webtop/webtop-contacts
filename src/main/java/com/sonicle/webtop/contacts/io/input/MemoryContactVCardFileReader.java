@@ -147,7 +147,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		// ADR
 		if(!vc.getAddresses().isEmpty()) {
 			for(Address ad : vc.getAddresses()) {
-				Set<AddressType> types = ad.getTypes();
+				List<AddressType> types = ad.getTypes();
 				if(types.contains(AddressType.WORK)) {
 					contact.setWorkAddress(deflt(ad.getStreetAddress()));
 					contact.setWorkPostalCode(deflt(ad.getPostalCode()));
@@ -173,7 +173,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		// TEL
 		if(!vc.getTelephoneNumbers().isEmpty()) {
 			for(Telephone te : vc.getTelephoneNumbers()) {
-				Set<TelephoneType> types = te.getTypes();
+				List<TelephoneType> types = te.getTypes();
 				if(types.contains(TelephoneType.WORK)) {
 					if(types.contains(TelephoneType.VOICE)) {
 						contact.setWorkTelephone(deflt(te.getText()));
@@ -205,7 +205,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		// EMAIL
 		if(!vc.getEmails().isEmpty()) {
 			for(Email em : vc.getEmails()) {
-				Set<EmailType> types = em.getTypes();
+				List<EmailType> types = em.getTypes();
 				if(types.contains(EmailType.WORK)) {
 					contact.setWorkEmail(deflt(em.getValue()));
 				} else if(types.contains(EmailType.HOME)) {
@@ -219,7 +219,7 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		// IMPP -> InstantMsg
 		if(!vc.getImpps().isEmpty()) {
 			for(Impp im : vc.getImpps()) {
-				Set<ImppType> types = im.getTypes();
+				List<ImppType> types = im.getTypes();
 				URI uri = im.getUri();
 				if(uri == null) continue;
 				if(types.contains(ImppType.WORK)) {
@@ -284,8 +284,6 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 			Photo po = vc.getPhotos().get(0);
 			picture = new ContactPicture(po.getContentType().getMediaType(), po.getData());
 			if(vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many PHOTO properties found"));
-		} else {
-			contact.setHasPicture(false);
 		}
 		
 		return new ContactInput(contact, picture);

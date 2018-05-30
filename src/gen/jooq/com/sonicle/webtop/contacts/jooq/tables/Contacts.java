@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = 911720941;
+	private static final long serialVersionUID = -1520139336;
 
 	/**
 	 * The reference instance of <code>contacts.contacts</code>
@@ -315,6 +315,11 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	 * The column <code>contacts.contacts.etag</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> ETAG = createField("etag", org.jooq.impl.SQLDataType.VARCHAR.length(2048), this, "");
+
+	/**
+	 * The column <code>contacts.contacts.creation_timestamp</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, org.joda.time.DateTime> CREATION_TIMESTAMP = createField("creation_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false).defaulted(true), this, "", new com.sonicle.webtop.core.jooq.DateTimeConverter());
 
 	/**
 	 * Create a <code>contacts.contacts</code> table reference

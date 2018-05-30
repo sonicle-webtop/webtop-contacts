@@ -55,6 +55,7 @@ import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
+import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
@@ -76,7 +77,8 @@ import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
-import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.ContactItemEx;
+import com.sonicle.webtop.contacts.model.ContactItem;
 import com.sonicle.webtop.contacts.model.FolderContacts;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
@@ -104,6 +106,7 @@ import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.LogEntries;
+import com.sonicle.webtop.core.util.VCardUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -116,6 +119,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
@@ -241,7 +245,7 @@ public class Service extends BaseService {
 			for(ShareRootCategory root : roots.values()) {
 				foldersByRoot.put(root.getShareId(), new ArrayList<ShareFolderCategory>());
 				if(root instanceof MyShareRootCategory) {
-					for(Category cat : manager.listCategories()) {
+					for(Category cat : manager.listCategories().values()) {
 						final MyShareFolderCategory fold = new MyShareFolderCategory(root.getShareId(), cat);
 						foldersByRoot.get(root.getShareId()).add(fold);
 						folders.put(cat.getCategoryId(), fold);
@@ -312,7 +316,7 @@ public class Service extends BaseService {
 					ShareRootCategory root = roots.get(node);
 					
 					if (root instanceof MyShareRootCategory) {
-						for (Category cal : manager.listCategories()) {
+						for (Category cal : manager.listCategories().values()) {
 							MyShareFolderCategory folder = new MyShareFolderCategory(node, cal);
 							children.add(createFolderNode(folder, null, root.getPerms()));
 						}
@@ -486,12 +490,20 @@ public class Service extends BaseService {
 				toggleCheckedFolder(pl.data.categoryId, false);
 				new JsonResult().printTo(out);
 				
+			} else if (crud.equals("readLinks")) {
+				int id = ServletUtils.getIntParameter(request, "id", true);
+				
+				ShareFolderCategory fold = folders.get(id);
+				if (fold == null) throw new WTException("Category not found [{}]", id);
+				Map<String, String> links = manager.getCategoryLinks(id);
+				new JsonResult(new JsCategoryLinks(id, fold.getCategory().getName(), links)).printTo(out);
+				
 			} else if (crud.equals("sync")) {
 				int id = ServletUtils.getIntParameter(request, "id", true);
 				boolean full = ServletUtils.getBooleanParameter(request, "full", false);
 				
 				item = manager.getCategory(id);
-				if (item == null) throw new WTException("Category not found [{0}]", id);
+				if (item == null) throw new WTException("Category not found [{}]", id);
 				runSyncRemoteCategory(id, item.getName(), full);
 				
 				new JsonResult().printTo(out);
@@ -739,7 +751,7 @@ public class Service extends BaseService {
 					if (fold == null) continue;
 					CategoryPropSet pset = folderProps.get(foContactsObj.folder.getCategoryId());
 					
-					for (ContactEx ce : foContactsObj.contacts) {
+					for (ContactItemEx ce : foContactsObj.contacts) {
 						final MapItem item = new MapItem();
 						item.put("id", Contact.buildUid(ce.getContactId()));
 						item.put("contactId", ce.getContactId());
@@ -853,51 +865,48 @@ public class Service extends BaseService {
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
-			if(crud.equals(Crud.READ)) {
+			if (crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
 				int contactId = Integer.parseInt(id);
-				Contact contact = manager.getContact(contactId);
+				ContactItem contact = manager.getContact(contactId);
 				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
 				item = new JsContact(ownerId, contact);
 				
 				new JsonResult(item).printTo(out);
 				
-			} else if(crud.equals(Crud.CREATE)) {
+			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
 				Contact contact = JsContact.buildContact(pl.data);
 				ContactPicture picture = null;
-				if(contact.getHasPicture() && hasUploadedFile(pl.data.picture)) {
+				if (!StringUtils.isEmpty(pl.data.picture) && hasUploadedFile(pl.data.picture)) {
 					picture = getUploadedContactPicture(pl.data.picture);
 				}
 				
-				if(picture != null) {
-					manager.addContact(contact, picture);
-				} else {
-					manager.addContact(contact);
-				}
+				manager.addContact(contact, picture);
 				
 				new JsonResult().printTo(out);
 				
-			} else if(crud.equals(Crud.UPDATE)) {
+			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
 				Contact contact = JsContact.buildContact(pl.data);
 				ContactPicture picture = null;
-				if(contact.getHasPicture() && hasUploadedFile(pl.data.picture)) {
-					picture = getUploadedContactPicture(pl.data.picture);
-				}
-				
-				if(picture != null) {
-					manager.updateContact(contact, picture);
+				if (StringUtils.isEmpty(pl.data.picture)) {
+					manager.updateContact(contact, null, true);
 				} else {
-					manager.updateContact(contact);
+					if (hasUploadedFile(pl.data.picture)) {
+						picture = getUploadedContactPicture(pl.data.picture);
+						manager.updateContact(contact, picture, true);
+					} else {
+						manager.updateContact(contact, null, false);
+					}
 				}
 				
 				new JsonResult().printTo(out);
 				
-			} else if(crud.equals(Crud.DELETE)) {
+			} else if (crud.equals(Crud.DELETE)) {
 				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 				
 				if (ids.size() == 1) {
@@ -908,7 +917,7 @@ public class Service extends BaseService {
 				
 				new JsonResult().printTo(out);
 				
-			} else if(crud.equals(Crud.MOVE)) {
+			} else if (crud.equals(Crud.MOVE)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
 				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
@@ -1213,7 +1222,7 @@ public class Service extends BaseService {
 				final ShareFolderCategory fold = folders.get(foContactsObj.folder.getCategoryId());
 				if (fold == null) continue;
 
-				for (ContactEx ce : foContactsObj.contacts) {
+				for (ContactItemEx ce : foContactsObj.contacts) {
 					items.add(new RBAddressbook(fold.getCategory(), ce));
 				}
 			}
@@ -1239,14 +1248,13 @@ public class Service extends BaseService {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
 			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
-			Contact contact = null;
-			ContactPicture picture = null;
 			Category category = null;
-			for(Integer id : ids) {
-				picture = null;
-				contact = manager.getContact(id);
+			for (Integer id : ids) {
+				ContactItem contact = manager.getContact(id);
+				ContactPicture picture = null;
+				
 				category = manager.getCategory(contact.getCategoryId());
-				if(contact.getHasPicture()) picture = manager.getContactPicture(id);
+				if (contact.getHasPicture()) picture = manager.getContactPicture(id);
 				items.add(new RBContactDetail(core, category, contact, picture));
 			}
 			
@@ -1270,9 +1278,10 @@ public class Service extends BaseService {
 			String tag = ServletUtils.getStringParameter(request, "uploadTag", true);
 			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
-			VCardOutput vout = new VCardOutput();
+			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+			VCardOutput vcout = new VCardOutput(prodId);
 			for (Integer id : ids) {
-				final Contact contact = manager.getContact(id);
+				final ContactItem contact = manager.getContact(id);
 				if (contact == null) continue;
 				
 				ContactPicture contactPicture = null;
@@ -1285,7 +1294,7 @@ public class Service extends BaseService {
 				}
 				
 				final String filename = buildContactFilename(contact) + ".vcf";
-				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vout.write(vout.toVCard(contact, contactPicture))));
+				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contact, contactPicture))));
 				
 				items.add(new MapItem()
 					.add("uploadId", upfile.getUploadId())

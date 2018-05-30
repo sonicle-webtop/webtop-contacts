@@ -111,7 +111,6 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 		try {
 			final LogEntries ilog = new LogEntries();
 			contact = new Contact();
-			contact.setHasPicture(false);
 			for (FileRowsReader.FieldMapping mapping : mappings) {
 				if (StringUtils.isBlank(mapping.source)) continue;
 				if (!columnIndexes.containsKey(mapping.source)) throw new Exception("Index not found");

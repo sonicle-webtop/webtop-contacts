@@ -46,6 +46,10 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 		super(serviceId, domainId);
 	}
 	
+	public boolean getDavAddressbookDeleteEnabled() {
+		return getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, false);
+	}
+	
 	public Category.Sync getDefaultCategorySync() {
 		return getEnum(Category.Sync.class, DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF);
 	}

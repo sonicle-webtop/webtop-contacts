@@ -67,6 +67,7 @@ CREATE TABLE "contacts"."contacts" (
 "revision_status" varchar(1) NOT NULL,
 "revision_timestamp" timestamptz(6) NOT NULL,
 "revision_sequence" int4 DEFAULT 0 NOT NULL,
+"creation_timestamp" timestamptz DEFAULT now() NOT NULL,
 "public_uid" varchar(255) NOT NULL,
 "is_list" bool DEFAULT false NOT NULL,
 "searchfield" varchar(1024),
@@ -140,6 +141,18 @@ WITH (OIDS=FALSE)
 ;
 
 -- ----------------------------
+-- Table structure for contacts_vcards
+-- ----------------------------
+DROP TABLE IF EXISTS "contacts"."contacts_vcards";
+CREATE TABLE "contacts"."contacts_vcards" (
+"contact_id" int4 NOT NULL,
+"raw_data" text
+)
+WITH (OIDS=FALSE)
+
+;
+
+-- ----------------------------
 -- Table structure for list_recipients
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."list_recipients";
@@ -186,6 +199,7 @@ CREATE INDEX "contacts_ak2" ON "contacts"."contacts" USING btree ("category_id",
 CREATE INDEX "contacts_ak3" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "searchfield");
 CREATE INDEX "contacts_ak4" ON "contacts"."contacts" USING btree ("revision_status", "birthday");
 CREATE INDEX "contacts_ak5" ON "contacts"."contacts" USING btree ("revision_status", "anniversary");
+CREATE INDEX "contacts_ak6" ON "contacts"."contacts" USING btree ("category_id", "is_list", "revision_status", "href");
 
 -- ----------------------------
 -- Primary Key structure for table contacts
@@ -196,6 +210,11 @@ ALTER TABLE "contacts"."contacts" ADD PRIMARY KEY ("contact_id");
 -- Primary Key structure for table contacts_pictures
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
+
+-- ----------------------------
+-- Primary Key structure for table contacts_vcards
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_vcards" ADD PRIMARY KEY ("contact_id");
 
 -- ----------------------------
 -- Primary Key structure for table list_recipients

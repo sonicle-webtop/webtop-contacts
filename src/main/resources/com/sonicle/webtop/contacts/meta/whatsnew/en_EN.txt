@@ -1,0 +1,17 @@
+$	5.2.0
+	%	Version 5.2.0
+	*	<h1>NethVoice Switchboard Integration</h1>
+		<p>System administrators can now configure the integration with NethVoice
+		PBX Switchboards. With just one click, or through the context menu,
+		it's now possible to immediatly run a phone call to the selected contact, that will
+		be automatically routed to your phone, as recognized from your WebTop user.</p>
+		<img src="5.2.0_clicktocall.png"/>
+	*	<h1>Remembering the contacts grid layout</h1>
+		<p>The contacts grid now remebers positions, dimensions and visibility
+		of the columns left by the user during his last session.<br>
+		Logging out and back in, on the same device and brwoser, the layout will be
+		restored atomatically.</p>
+		<img src="5.2.0_savelayout.png"/>
+	*	<h1>One click email</h1>
+		<p>The email column of a contact is now active on click, allowing to
+		quickly start a new email composition</p>

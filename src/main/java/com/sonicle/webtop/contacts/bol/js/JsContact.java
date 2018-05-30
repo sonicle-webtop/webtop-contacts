@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Contact;
+import com.sonicle.webtop.contacts.model.ContactItem;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
@@ -97,7 +98,7 @@ public class JsContact {
 	
 	public JsContact() {}
 	
-	public JsContact(UserProfileId ownerId, Contact contact) {
+	public JsContact(UserProfileId ownerId, ContactItem contact) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
 		id = contact.getContactId();
@@ -204,7 +205,6 @@ public class JsContact {
 		if(!StringUtils.isEmpty(js.anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(js.anniversary));
 		item.setUrl(js.url);
 		item.setNotes(js.notes);
-		item.setHasPicture(!StringUtils.isEmpty(js.picture));
 		return item;
 	}
 }

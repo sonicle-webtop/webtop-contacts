@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sonicle.webtop</groupId>
 	<artifactId>webtop-contacts</artifactId>
-	<version>5.1.8</version>
+	<version>5.2.1</version>
 	<packaging>jar</packaging>
 	<name>webtop-contacts</name>
 	
@@ -14,12 +14,17 @@
 	</parent>
 	
 	<properties>
+		<!-- OVERRIDE DEFAULT JAVA VERSION (remove when whole transition is completed) -->
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		
 		<!-- WEBTOP SERVICE CONFIGURATION -->
 		<webtop.service.package>com.sonicle.webtop.contacts</webtop.service.package>
 		<webtop.service.jsPackage>Sonicle.webtop.contacts</webtop.service.jsPackage>
 		<webtop.service.i18n.languages>en,it,es,de</webtop.service.i18n.languages>
 		<webtop.service.i18n.tx.push.languages>it</webtop.service.i18n.tx.push.languages>
 		<webtop.service.i18n.tx.pull.languages>es,de</webtop.service.i18n.tx.pull.languages>
+		<webtop.service.restApi.oas>openapi-v1.json</webtop.service.restApi.oas>
 	</properties>
 	
 	<dependencies>
@@ -38,30 +43,5 @@
 			<artifactId>imgscalr-lib</artifactId>
 			<version>4.2</version>
 		</dependency>
-		<dependency>
-			<groupId>com.googlecode.ez-vcard</groupId>
-			<artifactId>ez-vcard</artifactId>
-			<version>0.9.8</version>
-		</dependency>
 	</dependencies>
-	
-	<!--
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.jooq</groupId>
-				<artifactId>jooq-codegen-maven</artifactId>
-				<version>${jooq-codegen-maven.version}</version>
-				<configuration>
-					<jdbc>
-						<driver>org.postgresql.Driver</driver>
-						<url>jdbc:postgresql://www.sonicle.com/webtop5</url>
-						<user>sonicle</user>
-						<password>sonicle</password>
-					</jdbc>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	-->
 </project>

@@ -89,7 +89,7 @@ public class JsCategory {
 		cat.setIsDefault(js.isDefault);
 		//cal.setIsPrivate(js.isPrivate);
 		
-		if (cat.isRemoteProvider()) {
+		if (cat.isProviderRemote()) {
 			CategoryRemoteParameters params = LangUtils.deserialize(origParameters, new CategoryRemoteParameters(), CategoryRemoteParameters.class);
 			params.url = URIUtils.createURIQuietly(js.remoteUrl);
 			params.username = js.remoteUsername;
