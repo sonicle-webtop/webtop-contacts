@@ -518,7 +518,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			int deleted = catDao.deleteById(con, categoryId);
 			psetDao.deleteByCategory(con, categoryId);
-			doContactsDeleteByCategory2(con, categoryId, !cat.isProviderRemote());
+			doContactsDeleteByCategory(con, categoryId, !cat.isProviderRemote());
 			
 			// Cleanup sharing, if necessary
 			if ((sharing != null) && !sharing.getRights().isEmpty()) {
@@ -1314,7 +1314,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 
 			if (mode.equals("copy")) {
 				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Cleaning contacts..."));
-				int del = doContactsDeleteByCategory2(con, categoryId, true);
+				int del = doContactsDeleteByCategory(con, categoryId, true);
 				log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "{0} contact/s deleted!", del));
 			}
 
@@ -1510,7 +1510,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									if (DavUtil.HTTP_SC_TEXT_OK.equals(change.getResponseStatus())) {
 										hrefs.add(change.getPath());
 
-									} else { // Event deleted
+									} else { // Card deleted
 										List<Integer> contactIds = contactIdsByHref.get(change.getPath());
 										Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
 										if (contactId == null) {
@@ -1522,11 +1522,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								}
 
 								// Retrieves events list from DAV endpoint (using multiget)
-								logger.debug("Retrieving inserted/updated events [{}]", hrefs.size());
+								logger.debug("Retrieving inserted/updated cards [{}]", hrefs.size());
 								List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString(), hrefs);
 
 								// Inserts/Updates data...
-								logger.debug("Inserting/Updating events...");
+								logger.debug("Inserting/Updating cards...");
 								for (DavAddressbookCard dcard : dcards) {
 									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
 									List<Integer> contactIds = contactIdsByHref.get(dcard.getPath());
@@ -1568,7 +1568,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							Map<String, VContactHrefSync> syncByHref = null;
 							
 							if (full) {
-								doContactsDeleteByCategory2(con, categoryId, false);
+								doContactsDeleteByCategory(con, categoryId, false);
 							}
 							if (!full && !syncIsSupported) {
 								// This hash-map is only needed when syncing using hashes
@@ -1706,7 +1706,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							// Define a simple map in order to check duplicates.
 							// eg. SOGo passes same card twice :(
 							HashSet<String> hrefs = new HashSet<>();
-							doContactsDeleteByCategory2(con, categoryId, false);
+							doContactsDeleteByCategory(con, categoryId, false);
 							for (DavAddressbookCard dcard : dcards) {
 								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
 								if (hrefs.contains(dcard.getPath())) {
@@ -1979,7 +1979,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private int doContactsDeleteByCategory2(Connection con, int categoryId, boolean logicDelete) throws DAOException {
+	private int doContactsDeleteByCategory(Connection con, int categoryId, boolean logicDelete) throws DAOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		
 		if (logicDelete) {
