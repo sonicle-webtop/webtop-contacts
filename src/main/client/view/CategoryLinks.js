@@ -65,7 +65,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryLinks', {
 			items: [{
 				xtype: 'textfield',
 				bind: '{record.cardDavUrl}',
-				fieldLabel: me.mys.res('categoryLinks.fld-cardDav.lbl')
+				fieldLabel: me.mys.res('categoryLinks.fld-davAddUrl.lbl')
 			}]
 		});
 	}
