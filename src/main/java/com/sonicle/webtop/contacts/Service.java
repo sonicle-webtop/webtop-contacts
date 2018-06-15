@@ -72,6 +72,7 @@ import com.sonicle.webtop.contacts.bol.model.RBContactDetail;
 import com.sonicle.webtop.contacts.bol.model.SetupDataCategoryRemote;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
+import com.sonicle.webtop.contacts.io.input.ContactLDIFFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.model.Category;
@@ -110,8 +111,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,6 +126,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
+import org.ldaptive.io.LdifReader;
 import org.slf4j.Logger;
 import org.supercsv.prefs.CsvPreference;
 
@@ -1178,6 +1182,32 @@ public class Service extends BaseService {
 			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
 			ContactVCardFileReader rea = new ContactVCardFileReader();
+			
+			if(crud.equals("do")) {
+				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				
+				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
+				removeUploadedFile(uploadId);
+				new JsonResult(new JsWizardData(log.print())).printTo(out);
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ImportContactsFromVCard", ex);
+			new JsonResult(false, ex.getMessage()).printTo(out);
+		}
+	}
+		public void processImportContactsFromLDIF(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			String crud = ServletUtils.getStringParameter(request, "op", true);
+			
+			UploadedFile upl = getUploadedFile(uploadId);
+			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			File file = new File(WT.getTempFolder(), upl.getUploadId());
+
+			ContactLDIFFileReader  rea = new ContactLDIFFileReader();
 			
 			if(crud.equals("do")) {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
