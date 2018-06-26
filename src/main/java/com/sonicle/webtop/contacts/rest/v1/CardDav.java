@@ -65,12 +65,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author malbinola
  */
 public class CardDav extends CarddavApi {
+	private static final Logger logger = LoggerFactory.getLogger(CardDav.class);
 	private static final String DEFAULT_ETAG = "19700101000000000";
 	private static final DateTimeFormatter ETAG_FORMATTER = DateTimeUtils.createFormatter("yyyyMMddHHmmssSSS", DateTimeZone.UTC);
 	
@@ -78,6 +81,10 @@ public class CardDav extends CarddavApi {
 	public Response getAddressBooks() {
 		ContactsManager manager = getManager();
 		List<AddressBook> items = new ArrayList<>();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] getAddressBooks()", RunContext.getRunProfileId());
+		}
 		
 		try {
 			Map<Integer, Category> cats = manager.listCategories();
@@ -89,6 +96,7 @@ public class CardDav extends CarddavApi {
 			return respOk(items);
 			
 		} catch(WTException ex) {
+			logger.error("[{}] getAddressBooks()", ex, RunContext.getRunProfileId());
 			return respError(ex);
 		}
 	}
@@ -96,6 +104,10 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response getAddressBook(String addressBookUid) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] getAddressBook({})", RunContext.getRunProfileId(), addressBookUid);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -107,6 +119,7 @@ public class CardDav extends CarddavApi {
 			return respOk(createAddressBook(cat, revisions.get(cat.getCategoryId())));
 			
 		} catch(WTException ex) {
+			logger.error("[{}] getAddressBook({})", ex, RunContext.getRunProfileId(), addressBookUid);
 			return respError(ex);
 		}
 	}
@@ -114,6 +127,11 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response addAddressBook(AddressBookNew body) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] addAddressBook(...)", RunContext.getRunProfileId());
+			logger.debug("{}", body);
+		}
 		
 		try {
 			Category cat = new Category();
@@ -123,6 +141,7 @@ public class CardDav extends CarddavApi {
 			return respOkCreated(createAddressBook(cat, null));
 			
 		} catch(WTException ex) {
+			logger.error("[{}] addAddressBook(...)", ex, RunContext.getRunProfileId());
 			return respError(ex);
 		}
 	}
@@ -130,6 +149,11 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response updateAddressBook(String addressBookUid, AddressBookUpdate body) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] updateAddressBook({}, ...)", RunContext.getRunProfileId(), addressBookUid);
+			logger.debug("{}", body);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -149,6 +173,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
+			logger.error("[{}] updateAddressBook({}, ...)", ex, RunContext.getRunProfileId(), addressBookUid);
 			return respError(ex);
 		}
 	}
@@ -156,6 +181,10 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response deleteAddressBook(String addressBookUid) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] deleteAddressBook({})", RunContext.getRunProfileId(), addressBookUid);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -170,6 +199,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
+			logger.error("[{}] deleteAddressBook({})", ex, RunContext.getRunProfileId(), addressBookUid);
 			return respError(ex);
 		}
 	}
@@ -178,6 +208,10 @@ public class CardDav extends CarddavApi {
 	public Response getCards(String addressBookUid, List<String> hrefs) {
 		ContactsManager manager = getManager();
 		List<Card> items = new ArrayList<>();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -200,6 +234,7 @@ public class CardDav extends CarddavApi {
 				return respOk(items);
 			}
 		} catch(WTException ex) {
+			logger.error("[{}] getCards({})", ex, RunContext.getRunProfileId(), addressBookUid);
 			return respError(ex);
 		}
 	}
@@ -207,6 +242,10 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response getCardsChanges(String addressBookUid, String syncToken, Integer limit) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] getCardsChanges({}, {}, {})", RunContext.getRunProfileId(), addressBookUid, syncToken, limit);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -226,6 +265,7 @@ public class CardDav extends CarddavApi {
 			return respOk(createCardsChanges(revisions.get(categoryId), changes));
 			
 		} catch(WTException ex) {
+			logger.error("[{}] getCardsChanges({}, {}, {})", ex, RunContext.getRunProfileId(), addressBookUid, syncToken, limit);
 			return respError(ex);
 		}
 	}
@@ -233,6 +273,10 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response getCard(String addressBookUid, String href) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] getCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -248,6 +292,7 @@ public class CardDav extends CarddavApi {
 			}
 			
 		} catch(WTException ex) {
+			logger.error("[{}] getCard({}, {})", ex, RunContext.getRunProfileId(), addressBookUid, href);
 			return respError(ex);
 		}
 	}
@@ -255,6 +300,11 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response addCard(String addressBookUid, CardNew body) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] addCard({}, ...)", RunContext.getRunProfileId(), addressBookUid);
+			logger.debug("{}", body);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -264,6 +314,7 @@ public class CardDav extends CarddavApi {
 			return respOk();
 			
 		} catch(WTException ex) {
+			logger.error("[{}] addCard({}, ...)", ex, RunContext.getRunProfileId(), addressBookUid);
 			return respError(ex);
 		}
 	}
@@ -271,6 +322,11 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response updateCard(String addressBookUid, String href, String body) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] updateCard({}, {}, ...)", RunContext.getRunProfileId(), addressBookUid, href);
+			logger.debug("{}", body);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -282,6 +338,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
+			logger.error("[{}] updateCard({}, {}, ...)", ex, RunContext.getRunProfileId(), addressBookUid, href);
 			return respError(ex);
 		}
 	}
@@ -289,6 +346,10 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response deleteCard(String addressBookUid, String href) {
 		ContactsManager manager = getManager();
+		
+		if (logger.isDebugEnabled()) {
+			logger.debug("[{}] deleteCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href);
+		}
 		
 		try {
 			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
@@ -298,6 +359,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
+			logger.error("[{}] deleteCard({}, {})", ex, RunContext.getRunProfileId(), addressBookUid, href);
 			return respError(ex);
 		}
 	}
