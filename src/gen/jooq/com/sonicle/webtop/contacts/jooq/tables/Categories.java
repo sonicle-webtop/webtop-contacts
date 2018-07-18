@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> {
 
-	private static final long serialVersionUID = 339283384;
+	private static final long serialVersionUID = -620848673;
 
 	/**
 	 * The reference instance of <code>contacts.categories</code>
@@ -85,6 +85,21 @@ public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.conta
 	 * The column <code>contacts.categories.parameters</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PARAMETERS = createField("parameters", org.jooq.impl.SQLDataType.CLOB, this, "");
+
+	/**
+	 * The column <code>contacts.categories.remote_sync_frequency</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Short> REMOTE_SYNC_FREQUENCY = createField("remote_sync_frequency", org.jooq.impl.SQLDataType.SMALLINT, this, "");
+
+	/**
+	 * The column <code>contacts.categories.remote_sync_timestamp</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, org.joda.time.DateTime> REMOTE_SYNC_TIMESTAMP = createField("remote_sync_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP, this, "", new com.sonicle.webtop.core.jooq.DateTimeConverter());
+
+	/**
+	 * The column <code>contacts.categories.remote_sync_tag</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> REMOTE_SYNC_TAG = createField("remote_sync_tag", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
 
 	/**
 	 * Create a <code>contacts.categories</code> table reference

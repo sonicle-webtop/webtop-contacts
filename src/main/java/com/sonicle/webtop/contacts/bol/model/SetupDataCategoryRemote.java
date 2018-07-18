@@ -32,7 +32,6 @@
  */
 package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
 import com.sonicle.webtop.core.sdk.UserProfileId;
@@ -50,6 +49,7 @@ public class SetupDataCategoryRemote {
 	protected URI url;
 	protected String username;
 	protected String password;
+	protected Short syncFrequency;
 	
 	public SetupDataCategoryRemote() {}
 
@@ -105,6 +105,14 @@ public class SetupDataCategoryRemote {
 		this.password = password;
 	}
 	
+	public Short getSyncFrequency() {
+		return this.syncFrequency;
+	}
+	
+	public void setSyncFrequency(Short syncFrequency) {
+		this.syncFrequency = syncFrequency;
+	}
+	
 	public Category toCategory() {
 		Category cat = new Category();
 		if (profileId != null) cat.setProfileId(new UserProfileId(profileId));
@@ -113,7 +121,8 @@ public class SetupDataCategoryRemote {
 		cat.setName(name);
 		cat.setColor(color);
 		cat.setSync(Category.Sync.OFF);
-		cat.setParameters(LangUtils.serialize(toCategoryRemoteParameters(), CategoryRemoteParameters.class));
+		cat.setParametersAsObject(toCategoryRemoteParameters(), CategoryRemoteParameters.class);
+		cat.setRemoteSyncFrequency(syncFrequency);
 		return cat;
 	}
 	

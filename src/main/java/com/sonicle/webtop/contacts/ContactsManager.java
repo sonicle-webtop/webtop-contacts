@@ -38,6 +38,7 @@ import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.db.DbUtils;
+import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.dav.CardDav;
 import com.sonicle.dav.CardDavFactory;
@@ -134,18 +135,22 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.mail.internet.InternetAddress;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.imgscalr.Scalr;
@@ -166,6 +171,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
+	
+	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
@@ -324,7 +331,27 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			for (OCategory ocat : catDao.selectByProfile(con, pid.getDomainId(), pid.getUserId())) {
-				items.put(ocat.getCategoryId(), createCategory(ocat));
+				items.put(ocat.getCategoryId(), ManagerUtils.createCategory(ocat));
+			}
+			return items;
+			
+		} catch(SQLException | DAOException ex) {
+			throw wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public List<Category> listRemoteCategoriesToBeSynchronized() throws WTException {
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		ArrayList<Category> items = new ArrayList<>();
+		Connection con = null;
+		
+		try {
+			ensureSysAdmin();
+			con = WT.getConnection(SERVICE_ID);
+			for (OCategory ocat : catDao.selectByProvider(con, Arrays.asList(Category.Provider.CARDDAV))) {
+				items.add(ManagerUtils.createCategory(ocat));
 			}
 			return items;
 			
@@ -341,7 +368,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			
 			List<Integer> okCategoryIds = categoryIds.stream()
 					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
 					.collect(Collectors.toList());
@@ -366,7 +392,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			con = WT.getConnection(SERVICE_ID);
 			OCategory ocat = catDao.selectById(con, categoryId);
-			return createCategory(ocat);
+			return ManagerUtils.createCategory(ocat);
 			
 		} catch(SQLException | DAOException ex) {
 			throw wrapThrowable(ex);
@@ -386,7 +412,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (ocat == null) return null;
 			checkRightsOnCategoryFolder(ocat.getCategoryId(), "READ");
 			
-			return createCategory(ocat);
+			return ManagerUtils.createCategory(ocat);
 			
 		} catch(SQLException | DAOException ex) {
 			throw wrapThrowable(ex);
@@ -513,7 +539,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Sharing sharing = getSharing(sharingId);
 			
 			con = WT.getConnection(SERVICE_ID, false);
-			Category cat = createCategory(catDao.selectById(con, categoryId));
+			Category cat = ManagerUtils.createCategory(catDao.selectById(con, categoryId));
 			if (cat == null) throw new NotFoundException("Category not found [{}]", categoryId);
 			
 			int deleted = catDao.deleteById(con, categoryId);
@@ -557,7 +583,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			OCategoryPropSet opset = psetDao.selectByProfileCategory(con, profileId.getDomainId(), profileId.getUserId(), categoryId);
-			return (opset == null) ? new CategoryPropSet() : createCategoryPropSet(opset);
+			return (opset == null) ? new CategoryPropSet() : ManagerUtils.createCategoryPropSet(opset);
 			
 		} catch(SQLException | DAOException ex) {
 			throw wrapThrowable(ex);
@@ -581,7 +607,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Map<Integer, OCategoryPropSet> map = psetDao.selectByProfileCategoryIn(con, profileId.getDomainId(), profileId.getUserId(), categoryIds);
 			for (Integer categoryId : categoryIds) {
 				OCategoryPropSet opset = map.get(categoryId);
-				psets.put(categoryId, (opset == null) ? new CategoryPropSet() : createCategoryPropSet(opset));
+				psets.put(categoryId, (opset == null) ? new CategoryPropSet() : ManagerUtils.createCategoryPropSet(opset));
 			}
 			return psets;
 			
@@ -603,7 +629,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			OCategoryPropSet opset = createOCategoryPropSet(propertySet);
+			OCategoryPropSet opset = ManagerUtils.createOCategoryPropSet(propertySet);
 			opset.setDomainId(profileId.getDomainId());
 			opset.setUserId(profileId.getUserId());
 			opset.setCategoryId(categoryId);
@@ -825,7 +851,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				for (VContact vcont : vconts) {
 					conts.add(fillContactEx(new ContactItemEx(), vcont));
 				}
-				foConts.add(new FolderContacts(createCategory(ocat), conts));
+				foConts.add(new FolderContacts(ManagerUtils.createCategory(ocat), conts));
 			}
 			return foConts;
 			
@@ -879,7 +905,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			String provider = catDao.selectProviderById(con, contact.getCategoryId());
-			if (Category.isProviderRemote(provider)) throw new WTException("Calendar is remote and therefore read-only [{}]", contact.getCategoryId());
+			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
 			OContact inserted = doContactInsert(coreMgr, con, false, contact, picture, vCardRawData);
 			DbUtils.commitQuietly(con);
@@ -913,7 +939,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			String provider = catDao.selectProviderById(con, contact.getCategoryId());
-			if (Category.isProviderRemote(provider)) throw new WTException("Calendar is remote and therefore read-only [{}]", contact.getCategoryId());
+			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
 			boolean updated = doContactUpdate(coreMgr, con, false, contact, picture, deletePictureIfNull);
 			if (!updated) throw new WTException("Contact not found [{}]", contact.getContactId());
@@ -1112,7 +1138,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			
-			Category category = createCategory(catDao.selectById(con, list.getCategoryId()));
+			Category category = ManagerUtils.createCategory(catDao.selectById(con, list.getCategoryId()));
 			if (category == null) throw new WTException("Unable to get category [{}]", list.getCategoryId());
 			if (category.isProviderRemote()) throw new WTException("Category is read only");
 			
@@ -1457,25 +1483,29 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public void syncRemoteCategory(int calendarId) throws WTException {
-		syncRemoteCategory(calendarId, false);
-	}
-	
 	public void syncRemoteCategory(int categoryId, boolean full) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
-		final VCardInput icalInput = new VCardInput();
 		CategoryDAO catDao = CategoryDAO.getInstance();
+		final String PENDING_KEY = String.valueOf(categoryId);
+		final VCardInput icalInput = new VCardInput();
 		Connection con = null;
 		
+		if (pendingRemoteCategorySyncs.putIfAbsent(PENDING_KEY, RunContext.getRunProfileId()) != null) {
+			throw new ConcurrentSyncException("Sync activity is already running [{}, {}]", categoryId, RunContext.getRunProfileId());
+		}
+		
 		try {
-			//checkRightsOnCategoryFolder(calendarId, "READ");
+			//checkRightsOnCategoryFolder(categoryId, "READ");
 			
 			con = WT.getConnection(SERVICE_ID, false);
-			Category cat = createCategory(catDao.selectById(con, categoryId));
-			if (cat == null) throw new WTException("Category not found [{0}]", categoryId);
+			Category cat = ManagerUtils.createCategory(catDao.selectById(con, categoryId));
+			if (cat == null) throw new WTException("Category not found [{}]", categoryId);
 			if (!Category.Provider.CARDDAV.equals(cat.getProvider())) {
-				throw new WTException("Specified category is not remote (CardDAV) [{0}]", categoryId);
+				throw new WTException("Specified category is not remote (CardDAV) [{}]", categoryId);
 			}
+			
+			// Force a full update if last-sync date is null
+			if (cat.getRemoteSyncTimestamp() == null) full = true;
 			
 			if (Category.Provider.CARDDAV.equals(cat.getProvider())) {
 				CategoryRemoteParameters params = LangUtils.deserialize(cat.getParameters(), CategoryRemoteParameters.class);
@@ -1489,14 +1519,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					if (dbook == null) throw new WTException("DAV addressbook not found");
 					
 					final boolean syncIsSupported = !StringUtils.isBlank(dbook.getSyncToken());
-					final String savedSyncToken = params.syncToken;
+					final DateTime newLastSync = DateTimeUtils.now();
 					
-					if (!full && (syncIsSupported && !StringUtils.isBlank(savedSyncToken))) { // Partial update using SYNC mode
-						params.syncToken = dbook.getSyncToken();
+					if (!full && (syncIsSupported && !StringUtils.isBlank(cat.getRemoteSyncTag()))) { // Partial update using SYNC mode
+						String newSyncToken = dbook.getSyncToken();
 						
-						logger.debug("Retrieving changes [{}, {}]", params.url.toString(), savedSyncToken);
-						List<DavSyncStatus> changes = dav.getAddressbookChanges(params.url.toString(), savedSyncToken);
-						logger.debug("Endpoint returns {} items", changes.size());
+						logger.debug("Querying CardDAV endpoint for changes [{}, {}]", params.url.toString(), cat.getRemoteSyncTag());
+						List<DavSyncStatus> changes = dav.getAddressbookChanges(params.url.toString(), cat.getRemoteSyncTag());
+						logger.debug("Returned {} items", changes.size());
 						
 						try {
 							if (!changes.isEmpty()) {
@@ -1507,14 +1537,17 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								logger.debug("Processing changes...");
 								HashSet<String> hrefs = new HashSet<>();
 								for (DavSyncStatus change : changes) {
+									String href = FilenameUtils.getName(change.getPath());
+									//String href = change.getPath();
+									
 									if (DavUtil.HTTP_SC_TEXT_OK.equals(change.getResponseStatus())) {
-										hrefs.add(change.getPath());
+										hrefs.add(href);
 
 									} else { // Card deleted
-										List<Integer> contactIds = contactIdsByHref.get(change.getPath());
+										List<Integer> contactIds = contactIdsByHref.get(href);
 										Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
 										if (contactId == null) {
-											logger.warn("Deletion not possible. Card path not found [{}]", change.getPath());
+											logger.warn("Deletion not possible. Card path not found [{}]", PathUtils.concatPaths(dbook.getPath(), FilenameUtils.getName(href)));
 											continue;
 										}
 										doContactDelete(con, contactId, false);
@@ -1523,13 +1556,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 
 								// Retrieves events list from DAV endpoint (using multiget)
 								logger.debug("Retrieving inserted/updated cards [{}]", hrefs.size());
-								List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString(), hrefs);
+								Collection<String> paths = hrefs.stream().map(href -> PathUtils.concatPaths(dbook.getPath(), FilenameUtils.getName(href))).collect(Collectors.toList());
+								List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString(), paths);
+								//List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString(), hrefs);
 
 								// Inserts/Updates data...
 								logger.debug("Inserting/Updating cards...");
 								for (DavAddressbookCard dcard : dcards) {
+									String href = FilenameUtils.getName(dcard.getPath());
+									//String href = dcard.getPath();
+									
 									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-									List<Integer> contactIds = contactIdsByHref.get(dcard.getPath());
+									List<Integer> contactIds = contactIdsByHref.get(href);
 									Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
 									
 									if (contactId != null) {
@@ -1537,13 +1575,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									}
 									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
 									ci.contact.setCategoryId(categoryId);
-									ci.contact.setHref(dcard.getPath());
+									ci.contact.setHref(href);
 									ci.contact.setEtag(dcard.geteTag());
 									doContactInsert(coreMgr, con, false, ci.contact, ci.picture, null);
 								}
 							}
 							
-							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
+							catDao.updateRemoteSyncById(con, categoryId, newLastSync, newSyncToken);
 							DbUtils.commitQuietly(con);
 							
 						} catch(Throwable t) {
@@ -1552,11 +1590,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						}
 						
 					} else { // Full update or partial computing hashes
+						String newSyncToken = null;
 						if (syncIsSupported) { // If supported, saves last sync-token issued by the server
-							params.syncToken = dbook.getSyncToken();
-						} else {
-							params.syncToken = null;
-						}	
+							newSyncToken = dbook.getSyncToken();
+						}
 						
 						// Retrieves cards from DAV endpoint
 						logger.debug("Retrieving whole list [{}]", params.url.toString());
@@ -1569,8 +1606,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							
 							if (full) {
 								doContactsDeleteByCategory(con, categoryId, false);
-							}
-							if (!full && !syncIsSupported) {
+							} else if (!full && !syncIsSupported) {
 								// This hash-map is only needed when syncing using hashes
 								ContactDAO contDao = ContactDAO.getInstance();
 								syncByHref = contDao.viewHrefSyncDataByCategory(con, categoryId);
@@ -1581,32 +1617,35 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							// eg. SOGo passes same card twice :(
 							HashSet<String> hrefs = new HashSet<>();
 							for (DavAddressbookCard dcard : dcards) {
+								String href = FilenameUtils.getName(dcard.getPath());
+								//String href = dcard.getPath();
+								String etag = dcard.geteTag();
+								
 								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-								if (hrefs.contains(dcard.getPath())) {
-									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
+								if (hrefs.contains(href)) {
+									logger.trace("Card duplicated. Skipped! [{}]", href);
 									continue;
 								}
 								
 								boolean skip = false;
-								Integer contactId = null;
-								String etag = dcard.geteTag();
+								Integer matchingContactId = null;
 								
-								if (syncByHref != null) { // Only if: !full && !syncIsSupported
+								if (syncByHref != null) { // Only if... (!full && !syncIsSupported) see above!
 									String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 									String hash = DigestUtils.md5Hex(new VCardOutput(prodId).write(dcard.getCard(), true));
 									
-									VContactHrefSync hrefSync = syncByHref.remove(dcard.getPath());
+									VContactHrefSync hrefSync = syncByHref.remove(href);
 									if (hrefSync != null) { // Href found -> maybe updated item
 										if (!StringUtils.equals(hrefSync.getEtag(), hash)) {
-											contactId = hrefSync.getContactId();
+											matchingContactId = hrefSync.getContactId();
 											etag = hash;
-											logger.trace("Card updated [{}, {}]", dcard.getPath(), hash);
+											logger.trace("Card updated [{}, {}]", href, hash);
 										} else {
 											skip = true;
-											logger.trace("Card not modified [{}, {}]", dcard.getPath(), hash);
+											logger.trace("Card not modified [{}, {}]", href, hash);
 										}
 									} else { // Href not found -> added item
-										logger.trace("Card newly added [{}]", dcard.getPath());
+										logger.trace("Card newly added [{}, {}]", href, hash);
 										etag = hash;
 									}
 								}
@@ -1614,22 +1653,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								if (!skip) {
 									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
 									ci.contact.setCategoryId(categoryId);
-									ci.contact.setHref(dcard.getPath());
+									ci.contact.setHref(href);
 									ci.contact.setEtag(etag);
 									
-									if (contactId == null) {
+									if (matchingContactId == null) {
 										doContactInsert(coreMgr, con, false, ci.contact, ci.picture, null);
 									} else {
-										ci.contact.setContactId(contactId);
+										ci.contact.setContactId(matchingContactId);
 										boolean updated = doContactUpdate(coreMgr, con, false, ci.contact, ci.picture, true);
 										if (!updated) throw new WTException("Contact not found [{}]", ci.contact.getContactId());
 									}
 								}
 								
-								hrefs.add(dcard.getPath()); // Marks as processed!
+								hrefs.add(href); // Marks as processed!
 							}
 							
-							if (syncByHref != null) { // Only if: !full && !syncIsSupported
+							if (syncByHref != null) { // Only if... (!full && !syncIsSupported) see above!
 								// Remaining hrefs -> deleted items
 								for (VContactHrefSync hrefSync : syncByHref.values()) {
 									logger.trace("Card deleted [{}]", hrefSync.getHref());
@@ -1637,7 +1676,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 								}
 							}	
 							
-							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
+							catDao.updateRemoteSyncById(con, categoryId, newLastSync, newSyncToken);
 							DbUtils.commitQuietly(con);
 							
 						} catch(Throwable t) {
@@ -1657,233 +1696,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			throw wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
-		}
-	}
-	
-	public void syncRemoteCategory9999(int categoryId, boolean full) throws WTException {
-		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
-		final VCardInput icalInput = new VCardInput();
-		CategoryDAO catDao = CategoryDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			//checkRightsOnCategoryFolder(calendarId, "READ");
-			
-			con = WT.getConnection(SERVICE_ID, false);
-			Category cat = createCategory(catDao.selectById(con, categoryId));
-			if (cat == null) throw new WTException("Category not found [{0}]", categoryId);
-			if (!Category.Provider.CARDDAV.equals(cat.getProvider())) {
-				throw new WTException("Specified category is not remote (CardDAV) [{0}]", categoryId);
-			}
-			
-			if (Category.Provider.CARDDAV.equals(cat.getProvider())) {
-				CategoryRemoteParameters params = LangUtils.deserialize(cat.getParameters(), CategoryRemoteParameters.class);
-				if (params == null) throw new WTException("Unable to deserialize remote parameters");
-				if (params.url == null) throw new WTException("Remote URL is undefined");
-				
-				CardDav dav = getCardDav(params.username, params.password);
-				
-				try {
-					DavAddressbook dbook = dav.getAddressbookSyncToken(params.url.toString());
-					if (dbook == null) throw new WTException("DAV addressbook not found");
-					
-					final boolean syncIsSupported = !StringUtils.isBlank(dbook.getSyncToken());
-					final String savedSyncToken = params.syncToken;
-					
-					if (full || (syncIsSupported && StringUtils.isBlank(savedSyncToken))) { // Full update
-						if (syncIsSupported) { // If supported, saves last sync-token issued by the server
-							params.syncToken = dbook.getSyncToken();
-						}
-						
-						// Retrieves cards list from DAV endpoint
-						logger.debug("Retrieving whole list [{}]", params.url.toString());
-						List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString());
-						logger.debug("Endpoint returns {} items", dcards.size());
-						
-						// Inserts data...
-						try {
-							logger.debug("Processing results...");
-							// Define a simple map in order to check duplicates.
-							// eg. SOGo passes same card twice :(
-							HashSet<String> hrefs = new HashSet<>();
-							doContactsDeleteByCategory(con, categoryId, false);
-							for (DavAddressbookCard dcard : dcards) {
-								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-								if (hrefs.contains(dcard.getPath())) {
-									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
-									continue;
-								}
-								
-								final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
-								ci.contact.setCategoryId(categoryId);
-								ci.contact.setHref(dcard.getPath());
-								ci.contact.setEtag(dcard.geteTag());
-								doContactInsert(coreMgr, con, false, ci.contact, ci.picture, null);
-								
-								hrefs.add(dcard.getPath()); // Marks as processed!
-							}
-							
-							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
-							DbUtils.commitQuietly(con);
-							
-						} catch(Throwable t) {
-							DbUtils.rollbackQuietly(con);
-							throw new WTException(t, "Error importing vCard");
-						}
-						
-					} else if (syncIsSupported && !StringUtils.isBlank(savedSyncToken)) { // Partial update using sync
-						params.syncToken = dbook.getSyncToken();
-						
-						logger.debug("Retrieving changes [{}, {}]", params.url.toString(), savedSyncToken);
-						List<DavSyncStatus> changes = dav.getAddressbookChanges(params.url.toString(), savedSyncToken);
-						logger.debug("Endpoint returns {} items", changes.size());
-						
-						try {
-							if (!changes.isEmpty()) {
-								ContactDAO contDao = ContactDAO.getInstance();
-								Map<String, List<Integer>> contactIdsByHref = contDao.selectHrefsByByCategory(con, categoryId);
-								
-								// Process changes...
-								logger.debug("Processing changes...");
-								HashSet<String> hrefs = new HashSet<>();
-								for (DavSyncStatus change : changes) {
-									if (DavUtil.HTTP_SC_TEXT_OK.equals(change.getResponseStatus())) {
-										hrefs.add(change.getPath());
-
-									} else { // Event deleted
-										List<Integer> contactIds = contactIdsByHref.get(change.getPath());
-										Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
-										if (contactId == null) {
-											logger.warn("Deletion not possible. Card path not found [{}]", change.getPath());
-											continue;
-										}
-										doContactDelete(con, contactId, false);
-									}
-								}
-
-								// Retrieves events list from DAV endpoint (using multiget)
-								logger.debug("Retrieving inserted/updated events [{}]", hrefs.size());
-								List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString(), hrefs);
-
-								// Inserts/Updates data...
-								logger.debug("Inserting/Updating events...");
-								for (DavAddressbookCard dcard : dcards) {
-									if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-									List<Integer> contactIds = contactIdsByHref.get(dcard.getPath());
-									Integer contactId = (contactIds != null) ? contactIds.get(contactIds.size()-1) : null;
-									
-									if (contactId != null) {
-										doContactDelete(con, contactId, false);
-									}
-									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
-									ci.contact.setCategoryId(categoryId);
-									ci.contact.setHref(dcard.getPath());
-									ci.contact.setEtag(dcard.geteTag());
-									doContactInsert(coreMgr, con, false, ci.contact, ci.picture, null);
-								}
-							}
-							
-							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
-							DbUtils.commitQuietly(con);
-							
-						} catch(Throwable t) {
-							DbUtils.rollbackQuietly(con);
-							throw new WTException(t, "Error importing vCard");
-						}
-						
-					} else { // Partial update using manual hash
-						ContactDAO contDao = ContactDAO.getInstance();
-						
-						params.syncToken = null;
-						Map<String, VContactHrefSync> syncByHref = contDao.viewHrefSyncDataByCategory(con, categoryId);
-						
-						// Retrieves events list from DAV endpoint
-						logger.debug("Retrieving whole list [{}]", params.url.toString());
-						List<DavAddressbookCard> dcards = dav.listAddressbookCards(params.url.toString());
-						logger.debug("Endpoint returns {} items", dcards.size());
-						
-						// Inserts data...
-						try {
-							// Define a simple map in order to check duplicates.
-							// eg. SOGo passes same card twice :(
-							HashSet<String> hrefs = new HashSet<>();
-							for (DavAddressbookCard dcard : dcards) {
-								if (logger.isTraceEnabled()) logger.trace("{}", VCardUtils.print(dcard.getCard()));
-								if (hrefs.contains(dcard.getPath())) {
-									logger.trace("Card duplicated. Skipped! [{}]", dcard.getPath());
-									continue;
-								}
-								
-								String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
-								String hash = DigestUtils.md5Hex(new VCardOutput(prodId).write(dcard.getCard(), true));
-								
-								boolean insertOrUpdate = false;
-								Integer contactId = null;
-								VContactHrefSync hrefSync = syncByHref.remove(dcard.getPath());
-								if (hrefSync != null) { // Href found -> maybe updated item
-									if (!StringUtils.equals(hrefSync.getEtag(), hash)) {
-										insertOrUpdate = true;
-										contactId = hrefSync.getContactId();
-										logger.trace("Card updated [{}, {}]", dcard.getPath(), hash);
-									} else {
-										logger.trace("Card not modified [{}, {}]", dcard.getPath(), hash);
-									}
-								} else { // Href not found -> added item
-									insertOrUpdate = true;
-									logger.trace("Card newly added [{}]", dcard.getPath());
-								}
-								
-								if (insertOrUpdate) {
-									final ContactInput ci = icalInput.fromVCardFile(dcard.getCard(), null);
-									ci.contact.setContactId(contactId);
-									ci.contact.setCategoryId(categoryId);
-									ci.contact.setHref(dcard.getPath());
-									ci.contact.setEtag(hash);
-									
-									if (contactId == null) {
-										doContactInsert(coreMgr, con, false, ci.contact, ci.picture, null);
-									} else {
-										boolean updated = doContactUpdate(coreMgr, con, false, ci.contact, ci.picture, true);
-										if (!updated) throw new WTException("Contact not found [{}]", ci.contact.getContactId());
-									}
-								}
-								
-								hrefs.add(dcard.getPath()); // Marks as processed!
-							}
-							
-							// Remaining hrefs -> deleted items
-							for (VContactHrefSync hrefSync : syncByHref.values()) {
-								logger.trace("Card deleted [{}]", hrefSync.getHref());
-								doContactDelete(con, hrefSync.getContactId(), false);
-							}
-							
-							catDao.updateParametersById(con, categoryId, LangUtils.serialize(params, CategoryRemoteParameters.class));
-							DbUtils.commitQuietly(con);
-							
-						} catch(Throwable t) {
-							DbUtils.rollbackQuietly(con);
-							throw new WTException(t, "Error importing vCard");
-						}
-					}
-					
-				} catch(DavException ex) {
-					throw new WTException(ex, "CardDAV error");
-				}
-			} else {
-				throw new WTException("Unsupported provider [{0}]", cat.getProvider());
-			}
-			
-		} catch(SQLException | DAOException ex) {
-			throw wrapThrowable(ex);
-		} finally {
-			DbUtils.closeQuietly(con);
+			pendingRemoteCategorySyncs.remove(PENDING_KEY);
 		}
 	}
 	
 	private Category doCategoryUpdate(boolean insert, Connection con, Category cat) throws DAOException, WTException {
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		
-		OCategory ocat = createOCategory(cat);
+		OCategory ocat = ManagerUtils.createOCategory(cat);
 		if (insert) {
 			ocat.setCategoryId(catDao.getSequence(con).intValue());
 		}
@@ -1895,7 +1715,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			int ret = catDao.update(con, ocat);
 			if (ret != 1) return null;
 		}
-		return createCategory(ocat);
+		return ManagerUtils.createCategory(ocat);
 	}
 	
 	private int doBatchInsertContacts(CoreManager coreMgr, Connection con, int categoryId, ArrayList<Contact> contacts) throws WTException {
@@ -2205,61 +2025,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
 		}
 		
-		// Checks rights on calendar instance
+		// Checks rights on category instance
 		String shareId = shareCache.getShareFolderIdByFolderId(categoryId);
 		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
 		if (core.isShareElementsPermitted(shareId, action)) return;
 		//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
 		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
-	}
-	
-	private Category createCategory(OCategory src) {
-		if (src == null) return null;
-		return fillCategory(new Category(), src);
-	}
-	
-	private Category fillCategory(Category tgt, OCategory src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setCategoryId(src.getCategoryId());
-			tgt.setDomainId(src.getDomainId());
-			tgt.setUserId(src.getUserId());
-			tgt.setBuiltIn(src.getBuiltIn());
-			tgt.setProvider(EnumUtils.forSerializedName(src.getProvider(), Category.Provider.class));
-			tgt.setName(src.getName());
-			tgt.setDescription(src.getDescription());
-			tgt.setColor(src.getColor());
-			tgt.setSync(EnumUtils.forSerializedName(src.getSync(), Category.Sync.class));
-			tgt.setIsDefault(src.getIsDefault());
-			// TODO: aggiungere supporto campo is_private
-			//cat.setIsPrivate(ocat.getIsPrivate());
-			tgt.setParameters(src.getParameters());
-		}
-		return tgt;
-	}
-	
-	private OCategory createOCategory(Category src) {
-		if (src == null) return null;
-		return fillOCategory(new OCategory(), src);
-	}
-	
-	private OCategory fillOCategory(OCategory tgt, Category src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setCategoryId(src.getCategoryId());
-			tgt.setDomainId(src.getDomainId());
-			tgt.setUserId(src.getUserId());
-			tgt.setBuiltIn(src.getBuiltIn());
-			tgt.setProvider(EnumUtils.toSerializedName(src.getProvider()));
-			tgt.setName(src.getName());
-			tgt.setDescription(src.getDescription());
-			tgt.setColor(src.getColor());
-			tgt.setSync(EnumUtils.toSerializedName(src.getSync()));
-			tgt.setIsDefault(src.getIsDefault());
-			// TODO: aggiungere supporto campo is_private
-			//ocat.setIsPrivate(cat.getIsPrivate());
-			tgt.setParameters(src.getParameters());
-		}
-		return tgt;
 	}
 	
 	private OCategory fillOCategoryWithDefaults(OCategory tgt) {
@@ -2278,34 +2050,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (Category.Provider.CARDDAV.equals(provider)) {
 				tgt.setIsDefault(false);
 			}
-		}
-		return tgt;
-	}
-	
-	private CategoryPropSet createCategoryPropSet(OCategoryPropSet src) {
-		if (src == null) return null;
-		return fillCategoryPropSet(new CategoryPropSet(), src);
-	}
-	
-	private CategoryPropSet fillCategoryPropSet(CategoryPropSet tgt, OCategoryPropSet src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setHidden(src.getHidden());
-			tgt.setColor(src.getColor());
-			tgt.setSync(EnumUtils.forSerializedName(src.getSync(), Category.Sync.class));
-		}
-		return tgt;
-	}
-	
-	private OCategoryPropSet createOCategoryPropSet(CategoryPropSet src) {
-		if (src == null) return null;
-		return fillOCategoryPropSet(new OCategoryPropSet(), src);
-	}
-	
-	private OCategoryPropSet fillOCategoryPropSet(OCategoryPropSet tgt, CategoryPropSet src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setHidden(src.getHidden());
-			tgt.setColor(src.getColor());
-			tgt.setSync(EnumUtils.toSerializedName(src.getSync()));
 		}
 		return tgt;
 	}
@@ -2486,7 +2230,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (StringUtils.isBlank(tgt.getPublicUid())) {
 				tgt.setPublicUid(ManagerUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
 			}
-			tgt.setHref(ManagerUtils.buildHref(tgt.getPublicUid()));
+			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ManagerUtils.buildHref(tgt.getPublicUid()));
 		}
 		return tgt;
 	}
