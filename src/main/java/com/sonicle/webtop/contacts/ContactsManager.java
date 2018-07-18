@@ -1348,7 +1348,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			try {
 				rea.readContacts(file, handler);
 				handler.flush();
-				
+				 
 				Throwable lex = handler.getLastException();
 				if (lex != null) {
 					if (lex.getCause() instanceof BatchUpdateException) {
