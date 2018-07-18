@@ -117,7 +117,7 @@ public class RemoteCategorySyncJob extends BaseJobServiceTask {
 	private boolean isCategoryRemoteSyncEnabled(Map<String, Boolean> cache, String domainId) {
 		if (!cache.containsKey(domainId)) {
 			ContactsServiceSettings css = new ContactsServiceSettings(jobService.SERVICE_ID, domainId);
-			cache.put(domainId, css.getCategoryRemoteSyncEnabled());
+			cache.put(domainId, css.getCategoryRemoteAutoSyncEnabled());
 		}
 		return cache.get(domainId);
 	}
@@ -125,7 +125,7 @@ public class RemoteCategorySyncJob extends BaseJobServiceTask {
 	private boolean isRemoteSyncOnlyWhenOnline(Map<String, Boolean> cache, String domainId) {
 		if (!cache.containsKey(domainId)) {
 			ContactsServiceSettings css = new ContactsServiceSettings(jobService.SERVICE_ID, domainId);
-			cache.put(domainId, css.getCategoryRemoteSyncOnlyWhenOnline());
+			cache.put(domainId, css.getCategoryRemoteAutoSyncOnlyWhenOnline());
 		}
 		return cache.get(domainId);
 	}

@@ -194,7 +194,7 @@ public class Service extends BaseService {
 	@Override
 	public ServiceVars returnServiceVars() {
 		ServiceVars co = new ServiceVars();
-		co.put("categoryRemoteSyncEnabled", ss.getCategoryRemoteSyncEnabled());
+		co.put("categoryRemoteSyncEnabled", ss.getCategoryRemoteAutoSyncEnabled());
 		co.put("defaultCategorySync", EnumUtils.toSerializedName(ss.getDefaultCategorySync()));
 		co.put("view", us.getView());
 		return co;
