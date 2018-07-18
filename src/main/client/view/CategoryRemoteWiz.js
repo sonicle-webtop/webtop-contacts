@@ -37,7 +37,8 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 		'Sonicle.plugin.NoAutocomplete',
 		'Sonicle.form.field.Palette',
 		'WTA.ux.panel.Form',
-		'Sonicle.webtop.contacts.store.ProviderRemote'
+		'Sonicle.webtop.contacts.store.ProviderRemote',
+		'Sonicle.webtop.contacts.store.RemoteSyncFreq'
 	],
 	
 	dockableConfig: {
@@ -56,7 +57,8 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 			username: null,
 			password: null,
 			name: null,
-			color: '#FFFFFF'
+			color: '#FFFFFF',
+			syncFrequency: null
 		}
 	},
 	
@@ -72,6 +74,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 		if (!Ext.isEmpty(data.password)) me.getVM().set('password', data.password);
 		if (!Ext.isEmpty(data.name)) me.getVM().set('name', data.name);
 		if (!Ext.isEmpty(data.color)) me.getVM().set('color', data.color);
+		if (!Ext.isEmpty(data.syncFrequency)) me.getVM().set('syncFrequency', data.syncFrequency);
 		me.callParent(arguments);
 		me.on('beforenavigate', me.onBeforeNavigate);
 	},
@@ -109,7 +112,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 						autoLoad: true
 					}),
 					fieldLabel: me.mys.res('categoryRemoteWiz.fld-provider.lbl'),
-					width: 250
+					width: 80+170
 				}),	
 				{
 					xtype: 'textfield',
@@ -128,14 +131,14 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 					bind: '{username}',
 					plugins: 'sonoautocomplete',
 					fieldLabel: me.mys.res('categoryRemoteWiz.fld-username.lbl'),
-					width: 280
+					width: 80+200
 				}, {
 					xtype: 'textfield',
 					bind: '{password}',
 					inputType: 'password',
 					plugins: 'sonoautocomplete',
 					fieldLabel: me.mys.res('categoryRemoteWiz.fld-password.lbl'),
-					width: 280
+					width: 80+200
 				}]
 			}]
 		}, {
@@ -162,14 +165,30 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 					bind: '{name}',
 					allowBlank: false,
 					fieldLabel: me.mys.res('categoryRemoteWiz.fld-name.lbl'),
-					width: 400
+					anchor: '100%'
 				}, {
 					xtype: 'sopalettefield',
 					bind: '{color}',
 					allowBlank: false,
 					colors: WT.getColorPalette(),
 					fieldLabel: me.mys.res('categoryRemoteWiz.fld-color.lbl'),
-					width: 210
+					width: 80+100
+				}, {
+					xtype: 'combo',
+					bind: '{syncFrequency}',
+					editable: false,
+					store: Ext.create('Sonicle.webtop.contacts.store.RemoteSyncFreq', {
+						autoLoad: true
+					}),
+					valueField: 'id',
+					displayField: 'desc',
+					triggers: {
+						clear: WTF.clearTrigger()
+					},
+					hidden: !me.mys.getVar('categoryRemoteSyncEnabled', false),
+					fieldLabel: me.mys.res('categoryRemoteWiz.fld-syncFrequency.lbl'),
+					emptyText: me.mys.res('categoryRemoteWiz.fld-syncFrequency.emp'),
+					width: 80+140
 				}]
 			}]
 		}, {
@@ -230,7 +249,8 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 					tag: vm.get('tag'),
 					profileId: vm.get('profileId'),
 					name: vm.get('name'),
-					color: vm.get('color')
+					color: vm.get('color'),
+					syncFrequency: vm.get('syncFrequency')
 				},
 				callback: function(success, json) {
 					if (success) {

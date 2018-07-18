@@ -50,6 +50,14 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 		return getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, false);
 	}
 	
+	public boolean getCategoryRemoteSyncEnabled() {
+		return getBoolean(CATEGORY_REMOTE_SYNC_ENABLED, false);
+	}
+	
+	public boolean getCategoryRemoteSyncOnlyWhenOnline() {
+		return getBoolean(CATEGORY_REMOTE_SYNC_ONLYWHENONLINE, true);
+	}
+	
 	public Category.Sync getDefaultCategorySync() {
 		return getEnum(Category.Sync.class, DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF);
 	}

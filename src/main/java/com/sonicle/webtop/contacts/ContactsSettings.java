@@ -46,6 +46,20 @@ public class ContactsSettings {
 	public static final String DAV_ADDRESSBOOK_DELETE_ENABLED = "dav.addressbook.delete.enabled";
 	
 	/**
+	 * [system+domain]
+	 * [boolean](true)
+	 * Enable/Disable remote category sync.
+	 */
+	public static final String CATEGORY_REMOTE_SYNC_ENABLED = "category.remote.sync.enabled";
+	
+	/**
+	 * [system+domain]
+	 * [boolean](true)
+	 * Enable/Disable remote sync only when category owner is online.
+	 */
+	public static final String CATEGORY_REMOTE_SYNC_ONLYWHENONLINE = "category.remote.sync.onlywhenonline";
+	
+	/**
 	 * [][default]
 	 * [enum {O:OFF, R:READ, W:WRITE}] (O)
 	 * The default value of the sync field for new categories.

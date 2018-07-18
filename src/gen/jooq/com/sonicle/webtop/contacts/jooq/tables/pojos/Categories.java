@@ -16,34 +16,40 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories implements java.io.Serializable {
 
-	private static final long serialVersionUID = 1379108929;
+	private static final long serialVersionUID = -859429899;
 
-	private java.lang.Integer categoryId;
-	private java.lang.String  domainId;
-	private java.lang.String  userId;
-	private java.lang.Boolean builtIn;
-	private java.lang.String  name;
-	private java.lang.String  description;
-	private java.lang.String  color;
-	private java.lang.String  sync;
-	private java.lang.Boolean isDefault;
-	private java.lang.String  provider;
-	private java.lang.String  parameters;
+	private java.lang.Integer      categoryId;
+	private java.lang.String       domainId;
+	private java.lang.String       userId;
+	private java.lang.Boolean      builtIn;
+	private java.lang.String       name;
+	private java.lang.String       description;
+	private java.lang.String       color;
+	private java.lang.String       sync;
+	private java.lang.Boolean      isDefault;
+	private java.lang.String       provider;
+	private java.lang.String       parameters;
+	private java.lang.Short        remoteSyncFrequency;
+	private org.joda.time.DateTime remoteSyncTimestamp;
+	private java.lang.String       remoteSyncTag;
 
 	public Categories() {}
 
 	public Categories(
-		java.lang.Integer categoryId,
-		java.lang.String  domainId,
-		java.lang.String  userId,
-		java.lang.Boolean builtIn,
-		java.lang.String  name,
-		java.lang.String  description,
-		java.lang.String  color,
-		java.lang.String  sync,
-		java.lang.Boolean isDefault,
-		java.lang.String  provider,
-		java.lang.String  parameters
+		java.lang.Integer      categoryId,
+		java.lang.String       domainId,
+		java.lang.String       userId,
+		java.lang.Boolean      builtIn,
+		java.lang.String       name,
+		java.lang.String       description,
+		java.lang.String       color,
+		java.lang.String       sync,
+		java.lang.Boolean      isDefault,
+		java.lang.String       provider,
+		java.lang.String       parameters,
+		java.lang.Short        remoteSyncFrequency,
+		org.joda.time.DateTime remoteSyncTimestamp,
+		java.lang.String       remoteSyncTag
 	) {
 		this.categoryId = categoryId;
 		this.domainId = domainId;
@@ -56,6 +62,9 @@ public class Categories implements java.io.Serializable {
 		this.isDefault = isDefault;
 		this.provider = provider;
 		this.parameters = parameters;
+		this.remoteSyncFrequency = remoteSyncFrequency;
+		this.remoteSyncTimestamp = remoteSyncTimestamp;
+		this.remoteSyncTag = remoteSyncTag;
 	}
 
 	public java.lang.Integer getCategoryId() {
@@ -144,5 +153,29 @@ public class Categories implements java.io.Serializable {
 
 	public void setParameters(java.lang.String parameters) {
 		this.parameters = parameters;
+	}
+
+	public java.lang.Short getRemoteSyncFrequency() {
+		return this.remoteSyncFrequency;
+	}
+
+	public void setRemoteSyncFrequency(java.lang.Short remoteSyncFrequency) {
+		this.remoteSyncFrequency = remoteSyncFrequency;
+	}
+
+	public org.joda.time.DateTime getRemoteSyncTimestamp() {
+		return this.remoteSyncTimestamp;
+	}
+
+	public void setRemoteSyncTimestamp(org.joda.time.DateTime remoteSyncTimestamp) {
+		this.remoteSyncTimestamp = remoteSyncTimestamp;
+	}
+
+	public java.lang.String getRemoteSyncTag() {
+		return this.remoteSyncTag;
+	}
+
+	public void setRemoteSyncTag(java.lang.String remoteSyncTag) {
+		this.remoteSyncTag = remoteSyncTag;
 	}
 }

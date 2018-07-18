@@ -1,6 +1,5 @@
 /*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
- * Copyright (C) 2014 Sonicle S.r.l.
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -11,7 +10,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -19,7 +18,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
+ * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -27,16 +26,40 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-Ext.define('Sonicle.webtop.contacts.model.ServiceVars', {
-	extend: 'WTA.sdk.model.ServiceVars',
+package com.sonicle.webtop.contacts;
+
+import com.sonicle.webtop.contacts.job.RemoteCategorySyncJob;
+import com.sonicle.webtop.core.sdk.BaseJobService;
+import java.util.Arrays;
+import java.util.List;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
+
+/**
+ *
+ * @author malbinola
+ */
+public class JobService extends BaseJobService {
 	
-	fields: [
-		WTF.field('categoryRemoteSyncEnabled', 'boolean', true),
-		WTF.field('defaultCategorySync', 'string', true),
-		WTF.field('view', 'string', true)
-	]
-});
+	@Override
+	public void initialize() throws Exception {}
+
+	@Override
+	public void cleanup() throws Exception {}
+
+	@Override
+	public List<TaskDefinition> returnTasks() {
+		Trigger rcsTrigger = TriggerBuilder.newTrigger()
+				.withSchedule(SimpleScheduleBuilder.repeatMinutelyForever(15))
+				.build();
+		
+		return Arrays.asList(
+				new TaskDefinition(RemoteCategorySyncJob.class, rcsTrigger)
+		);
+	}
+}

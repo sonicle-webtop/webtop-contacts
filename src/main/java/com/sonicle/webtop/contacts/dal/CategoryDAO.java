@@ -32,16 +32,20 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord;
+import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
+import org.joda.time.DateTime;
 import org.jooq.DSLContext;
 
 /**
@@ -186,6 +190,22 @@ public class CategoryDAO extends BaseDAO {
 			.fetchInto(OCategory.class);
 	}
 	
+	public List<OCategory> selectByProvider(Connection con, Collection<Category.Provider> providers) throws DAOException {
+		List<String> providerList = providers.stream().map(prov -> EnumUtils.toSerializedName(prov)).collect(Collectors.toList());
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select()
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.PROVIDER.in(providerList)
+				.and(CATEGORIES.REMOTE_SYNC_FREQUENCY.isNotNull())
+			)
+			.orderBy(
+				CATEGORIES.CATEGORY_ID.asc()
+			)
+			.fetchInto(OCategory.class);
+	}
+	
 	public int insert(Connection con, OCategory item) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		CategoriesRecord record = dsl.newRecord(CATEGORIES, item);
@@ -204,6 +224,8 @@ public class CategoryDAO extends BaseDAO {
 			.set(CATEGORIES.COLOR, item.getColor())
 			.set(CATEGORIES.SYNC, item.getSync())
 			.set(CATEGORIES.IS_DEFAULT, item.getIsDefault())
+			.set(CATEGORIES.PARAMETERS, item.getParameters())
+			.set(CATEGORIES.REMOTE_SYNC_FREQUENCY, item.getRemoteSyncFrequency())
 			.where(
 				CATEGORIES.CATEGORY_ID.equal(item.getCategoryId())
 			)
@@ -221,11 +243,12 @@ public class CategoryDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int updateParametersById(Connection con, int categoryId, String parameters) throws DAOException {
+	public int updateRemoteSyncById(Connection con, int categoryId, DateTime syncTimestamp, String syncTag) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CATEGORIES)
-			.set(CATEGORIES.PARAMETERS, parameters)
+			.set(CATEGORIES.REMOTE_SYNC_TIMESTAMP, syncTimestamp)
+			.set(CATEGORIES.REMOTE_SYNC_TAG, syncTag)
 			.where(
 				CATEGORIES.CATEGORY_ID.equal(categoryId)
 			)
