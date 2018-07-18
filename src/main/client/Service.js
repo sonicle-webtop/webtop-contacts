@@ -438,6 +438,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('showContact');
 						me.updateDisabled('callTelephone');
 						me.updateDisabled('callMobile');
+						me.updateDisabled('sendSMS');
 						me.updateDisabled('printContact');
 						me.updateDisabled('copyContact');
 						me.updateDisabled('moveContact');
@@ -823,6 +824,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (sel.length > 0) WT.handlePbxCall(sel[0].get('workMobile'));
 			}
 		});
+		me.addAct('sendSMS', {
+			text: me.res('act-send-sms.lbl'),
+			tooltip: null,
+			iconCls: 'wt-icon-sms-xs',
+			handler: function() {
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) WT.handleSendSMS(sel[0].get('workMobile'));
+			}
+		});
 		me.addAct('printAddressbook', {
 			text: null,
 			tooltip: WT.res('act-print.lbl'),
@@ -984,6 +994,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						]
 					}
 				},
+				me.getAct('sendSMS'),
 				me.getAct('printContact'),
 				'-',
 				me.getAct('deleteContact'),
@@ -1878,6 +1889,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			case 'callMobile':
 				sel = me.getSelectedContacts();
 				if(/*WT.getVar('pbxConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
+					return false;
+				} else {
+					return true;
+				}
+				break;
+			case 'sendSMS':
+				sel = me.getSelectedContacts();
+				if(/*WT.getVar('smsConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
 					return false;
 				} else {
 					return true;
