@@ -830,7 +830,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iconCls: 'wt-icon-sms-xs',
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if (sel.length > 0) WT.handleSendSMS(sel[0].get('workMobile'));
+				if (sel.length > 0) WT.handleSendSMS(
+						sel[0].get('firstName')+" "+sel[0].get('lastName'),
+						sel[0].get('workMobile')
+				);
 			}
 		});
 		me.addAct('printAddressbook', {
