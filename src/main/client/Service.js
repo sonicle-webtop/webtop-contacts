@@ -536,7 +536,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('refresh', {
 			text: '',
 			tooltip: WT.res('act-refresh.lbl'),
-			iconCls: 'wt-icon-refresh-xs',
+			iconCls: 'wt-icon-refresh',
 			handler: function() {
 				me.reloadContacts();
 			}
@@ -779,7 +779,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('deleteContact', {
 			text: WT.res('act-delete.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-delete-xs',
+			iconCls: 'wt-icon-delete',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if(sel.length > 0) me.deleteSelContacts(sel);
@@ -800,7 +800,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('printContact', {
 			text: WT.res('act-print.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-print-xs',
+			iconCls: 'wt-icon-print',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if (sel.length > 0) me.printSelContacts(sel);
@@ -839,7 +839,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('printAddressbook', {
 			text: null,
 			tooltip: WT.res('act-print.lbl'),
-			iconCls: 'wt-icon-print-xs',
+			iconCls: 'wt-icon-print',
 			handler: function() {
 				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
 				delete params.action;
@@ -850,7 +850,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('deleteContact2', {
 			text: null,
 			tooltip: WT.res('act-delete.tip'),
-			iconCls: 'wt-icon-delete-xs',
+			iconCls: 'wt-icon-delete',
 			handler: function() {
 				me.getAct('deleteContact').execute();
 			}

@@ -191,7 +191,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 					{
 						xtype: 'splitbutton',
 						tooltip: me.mys.res('category.btn-syncnow.tip'),
-						iconCls: 'wt-icon-refresh-xs',
+						iconCls: 'wt-icon-refresh',
 						handler: function() {
 							me.syncRemoteCategoryUI(me.getModel().get('categoryId'), false);
 						},

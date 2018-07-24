@@ -67,7 +67,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				me.addAct('delete', {
 					text: null,
 					tooltip: WT.res('act-delete.lbl'),
-					iconCls: 'wt-icon-delete-xs',
+					iconCls: 'wt-icon-delete',
 					handler: function() {
 						me.delectContactsList();
 					}
