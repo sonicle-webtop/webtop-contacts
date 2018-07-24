@@ -43,7 +43,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	
 	dockableConfig: {
 		title: '{contactsList.tit}',
-		iconCls: 'wtcon-icon-contacts-list-xs',
+		iconCls: 'wtcon-icon-contactsList',
 		width: 650,
 		height: 450
 	},
@@ -134,22 +134,23 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			xtype: 'wtrecipientsgrid',
 			reference: 'gprecipients',
 			region: 'center',
+			border: false,
+			bind: {
+				store: '{record.recipients}'
+			},
+			fields: { recipientType: 'recipientType', email: 'recipient' },
 			tbar: [
+				'->',
 				me.addAct('pasteList', {
 					text: null,
-					tooltip: me.mys.res('act-pasteList.tip'),
-					iconCls: 'wtcon-icon-paste-list-xs',
+					iconCls: 'wt-icon-clipboard-paste',
 					handler: function() {
 						//Ext.defer(function() {
 							me.pasteList();
 						//},100);
 					}
 				})
-			],
-			fields: { recipientType: 'recipientType', email: 'recipient' },
-			bind: {
-				store: '{record.recipients}'
-			}
+			]
 		});
 		
 		me.on('viewload', me.onViewLoad);

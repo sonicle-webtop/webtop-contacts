@@ -45,7 +45,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	
 	dockableConfig: {
 		title: '{contact.tit}',
-		iconCls: 'wtcon-icon-contact-xs',
+		iconCls: 'wtcon-icon-contact',
 		width: 650,
 		height: 550
 	},

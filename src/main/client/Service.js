@@ -111,7 +111,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContact2'),
 				me.getAct('addContactsList2'),
 				'->',
-/*				me.getAct('workview'),
+				/*
+				me.getAct('workview'),
 				me.getAct('homeview'),
 				'-',*/
 				me.addRef('cbogroup', Ext.create(WTF.lookupCombo('id', 'desc', {
@@ -230,7 +231,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						width: 30,
 						groupable: false,
 						getIconCls: function(v,rec) {
-							return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
+							return me.cssIconCls((rec.get('isList') === true) ? 'contactsList' : 'contact');
 						},
 						iconSize: WTU.imgSizeToPx('xs')
 					},
@@ -524,11 +525,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		
 		me.addAct('new', 'newContact', {
+			useSvg: true,
 			handler: function() {
 				me.getAct('addContact').execute();
 			}
 		});
 		me.addAct('new', 'newContactsList', {
+			useSvg: true,
 			handler: function() {
 				me.getAct('addContactsList').execute();
 			}
@@ -560,7 +563,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('editSharing', {
 			text: WT.res('sharing.tit'),
 			tooltip: null,
-			iconCls: WTF.cssIconCls(WT.XID, 'sharing', 'xs'),
+			iconCls: 'wt-icon-sharing',
 			handler: function() {
 				var node = me.getSelectedNode(me.trFolders());
 				if (node) me.editShare(node.getId());
@@ -581,6 +584,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addCategory', {
+			useSvg: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -602,6 +606,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('editCategory', {
+			useSvg: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -609,6 +614,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('deleteCategory', {
+			useSvg: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -696,7 +702,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('viewThisFolderOnly', {
 			tooltip: null,
-			iconCls: 'wt-icon-select-one-xs',
+			iconCls: 'wt-icon-select-one',
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
 				if(node) me.showOneF3FolderOnly(me.getSelectedRootFolder(me.trFolders()), node.getId());
@@ -704,7 +710,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('viewAllFolders', {
 			tooltip: null,
-			iconCls: 'wt-icon-select-all-xs',
+			iconCls: 'wt-icon-select-all',
 			handler: function() {
 				var node = me.getSelectedRootFolder(me.trFolders());
 				if (node) {
@@ -718,7 +724,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('viewNoneFolders', {
 			tooltip: null,
-			iconCls: 'wt-icon-select-none-xs',
+			iconCls: 'wt-icon-select-none',
 			handler: function() {
 				var node = me.getSelectedRootFolder(me.trFolders());
 				if (node) {
@@ -742,6 +748,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContact', {
+			useSvg: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -749,6 +756,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContactsList', {
+			useSvg: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -858,7 +866,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('addContact2', {
 			text: null,
 			tooltip: me.res('act-addContact.lbl'),
-			iconCls: me.cssIconCls('addContact', 'xs'),
+			iconCls: me.cssIconCls('addContact'),
 			handler: function() {
 				me.getAct('addContact').execute();
 			}
@@ -866,7 +874,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('addContactsList2', {
 			text: null,
 			tooltip: me.res('act-addContactsList.lbl'),
-			iconCls: me.cssIconCls('addContactsList', 'xs'),
+			iconCls: me.cssIconCls('addContactsList'),
 			handler: function() {
 				me.getAct('addContactsList').execute();
 			}

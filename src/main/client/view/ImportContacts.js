@@ -36,7 +36,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	dockableConfig: {
 		title: '{importContacts.tit}',
-		iconCls: 'wtcon-icon-import-xs',
+		iconCls: 'wtcon-icon-import',
 		width: 480,
 		height: 380
 	},

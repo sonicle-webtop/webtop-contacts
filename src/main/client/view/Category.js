@@ -43,7 +43,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 	
 	dockableConfig: {
 		title: '{category.tit}',
-		iconCls: 'wtcon-icon-category-xs',
+		iconCls: 'wtcon-icon-category',
 		width: 440,
 		height: 360
 	},
