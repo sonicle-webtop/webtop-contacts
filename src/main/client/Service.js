@@ -522,29 +522,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	initActions: function() {
-		var me = this;
+		var me = this,
+				hdscale = WT.getHeaderScale();
 		
 		me.addAct('new', 'newContact', {
-			useSvg: true,
+			ignoreSize: true,
 			handler: function() {
 				me.getAct('addContact').execute();
 			}
 		});
 		me.addAct('new', 'newContactsList', {
-			useSvg: true,
+			ignoreSize: true,
 			handler: function() {
 				me.getAct('addContactsList').execute();
 			}
 		});
-		me.addAct('refresh', {
-			text: '',
-			tooltip: WT.res('act-refresh.lbl'),
-			iconCls: 'wt-icon-refresh',
-			handler: function() {
-				me.reloadContacts();
-			}
-		});
+		
 		me.addAct('workview', {
+			scale: hdscale,
 			text: null,
 			itemId: 'w',
 			toggleGroup: 'view',
@@ -553,6 +548,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('homeview', {
+			scale: hdscale,
 			text: null,
 			itemId: 'h',
 			toggleGroup: 'view',
@@ -584,7 +580,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addCategory', {
-			useSvg: true,
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -606,7 +602,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('editCategory', {
-			useSvg: true,
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -614,7 +610,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('deleteCategory', {
-			useSvg: true,
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -748,7 +744,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContact', {
-			useSvg: true,
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -756,7 +752,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContactsList', {
-			useSvg: true,
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -844,7 +840,18 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				);
 			}
 		});
+		
+		me.addAct('refresh', {
+			scale: hdscale,
+			text: '',
+			tooltip: WT.res('act-refresh.lbl'),
+			iconCls: 'wt-icon-refresh',
+			handler: function() {
+				me.reloadContacts();
+			}
+		});
 		me.addAct('printAddressbook', {
+			scale: hdscale,
 			text: null,
 			tooltip: WT.res('act-print.lbl'),
 			iconCls: 'wt-icon-print',
@@ -856,6 +863,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('deleteContact2', {
+			scale: hdscale,
 			text: null,
 			tooltip: WT.res('act-delete.tip'),
 			iconCls: 'wt-icon-delete',
@@ -864,6 +872,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContact2', {
+			scale: hdscale,
 			text: null,
 			tooltip: me.res('act-addContact.lbl'),
 			iconCls: me.cssIconCls('addContact'),
@@ -872,6 +881,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContactsList2', {
+			scale: hdscale,
 			text: null,
 			tooltip: me.res('act-addContactsList.lbl'),
 			iconCls: me.cssIconCls('addContactsList'),
