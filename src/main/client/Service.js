@@ -102,6 +102,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.setToolbar(Ext.create({
 			xtype: 'toolbar',
 			referenceHolder: true,
+			defaults: {
+				scale: WT.serviceToolbarScale
+			},			
 			items: [
 				'-',
 				me.getAct('refresh'),
