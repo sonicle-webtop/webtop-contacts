@@ -149,7 +149,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						}
 					},
 					width: 200
-				}
+				},
+				'->'
 			]
 		}));
 		
