@@ -1528,9 +1528,9 @@ public class Service extends BaseService {
 	
 	private ExtTreeNode createRootNode(ShareRootCategory root) {
 		if(root instanceof MyShareRootCategory) {
-			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-category-my").setExpanded(true);
+			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-categoryMy").setExpanded(true);
 		} else {
-			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-category-incoming");
+			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-categoryIncoming");
 		}
 	}
 	

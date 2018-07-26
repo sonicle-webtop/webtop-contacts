@@ -43,7 +43,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 	
 	dockableConfig: {
 		title: '{categoryRemoteWiz.tit}',
-		iconCls: 'wtcon-icon-category-remote',
+		iconCls: 'wtcon-icon-categoryRemote',
 		width: 450,
 		height: 300
 	},
