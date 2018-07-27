@@ -108,7 +108,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('printAddressbook'),
 				me.getAct('deleteContact2'),
 				'-',
-				me.getAct('addContact2'),
+				//me.getAct('addContact2'),
 				me.getAct('addContactsList2'),
 				'->',
 				/*
@@ -872,6 +872,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('deleteContact').execute();
 			}
 		});
+		/*
 		me.addAct('addContact2', {
 			scale: hdscale,
 			text: null,
@@ -881,6 +882,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContact').execute();
 			}
 		});
+		*/
 		me.addAct('addContactsList2', {
 			scale: hdscale,
 			text: null,
