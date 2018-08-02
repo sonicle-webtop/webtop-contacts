@@ -35,7 +35,10 @@ CREATE TABLE "contacts"."categories" (
 "color" varchar(20),
 "sync" varchar(1) NOT NULL,
 "is_default" bool DEFAULT false NOT NULL,
-"parameters" text
+"parameters" text,
+"remote_sync_frequency" int2,
+"remote_sync_timestamp" timestamptz,
+"remote_sync_tag" varchar(255)
 )
 WITH (OIDS=FALSE)
 
@@ -175,6 +178,7 @@ WITH (OIDS=FALSE)
 -- ----------------------------
 CREATE INDEX "categories_ak1" ON "contacts"."categories" USING btree ("domain_id", "user_id", "built_in");
 CREATE UNIQUE INDEX "categories_ak2" ON "contacts"."categories" USING btree ("domain_id", "user_id", "name");
+CREATE INDEX "categories_ak3" ON "contacts"."categories" ("provider", "remote_sync_frequency");
 
 -- ----------------------------
 -- Primary Key structure for table categories
@@ -226,4 +230,4 @@ ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.2.0');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.3.0');

@@ -73,6 +73,7 @@ import com.sonicle.webtop.contacts.bol.model.RBContactDetail;
 import com.sonicle.webtop.contacts.bol.model.SetupDataCategoryRemote;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
+import com.sonicle.webtop.contacts.io.input.ContactLDIFFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.model.Category;
@@ -111,8 +112,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Reader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,6 +128,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
+import org.ldaptive.io.LdifReader;
 import org.slf4j.Logger;
 import org.supercsv.prefs.CsvPreference;
 
@@ -190,6 +194,7 @@ public class Service extends BaseService {
 	@Override
 	public ServiceVars returnServiceVars() {
 		ServiceVars co = new ServiceVars();
+		co.put("categoryRemoteSyncEnabled", ss.getCategoryRemoteAutoSyncEnabled());
 		co.put("defaultCategorySync", EnumUtils.toSerializedName(ss.getDefaultCategorySync()));
 		co.put("view", us.getView());
 		return co;
@@ -200,15 +205,12 @@ public class Service extends BaseService {
 	}
 	
 	private void runSyncRemoteCategory(int categoryId, String categoryName, boolean full) throws WTException {
-		synchronized(syncRemoteCategoryAAs) {
-			if (syncRemoteCategoryAAs.containsKey(categoryId)) {
-				logger.debug("SyncRemoteCategory run skipped [{}]", categoryId);
-				return;
-			}
-			final SyncRemoteCategoryAA aa = new SyncRemoteCategoryAA(categoryId, categoryName, full);
-			syncRemoteCategoryAAs.put(categoryId, aa);
-			aa.start(RunContext.getSubject(), RunContext.getRunProfileId());
+		SyncRemoteCategoryAA aa = new SyncRemoteCategoryAA(categoryId, categoryName, full);
+		if (syncRemoteCategoryAAs.putIfAbsent(categoryId, aa) != null) {
+			logger.debug("SyncRemoteCategory run skipped [{}]", categoryId);
+			return;
 		}
+		aa.start(RunContext.getSubject(), RunContext.getRunProfileId());
 	}
 	
 	private void initFolders() throws WTException {
@@ -463,12 +465,12 @@ public class Service extends BaseService {
 				int id = ServletUtils.getIntParameter(request, "id", true);
 				
 				item = manager.getCategory(id);
-				new JsonResult(new JsCategory(item)).printTo(out);
+				new JsonResult(new JsCategory(item, getEnv().getProfile().getTimeZone())).printTo(out);
 				
 			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				item = manager.addCategory(JsCategory.createCategory(pl.data, null));
+				item = manager.addCategory(JsCategory.createCategory(pl.data));
 				updateFoldersCache();
 				toggleCheckedFolder(item.getCategoryId(), true);
 				new JsonResult().printTo(out);
@@ -476,9 +478,7 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				item = manager.getCategory(pl.data.categoryId);
-				if (item == null) throw new WTException("Category not found [{0}]", pl.data.categoryId);
-				manager.updateCategory(JsCategory.createCategory(pl.data, item.getParameters()));
+				manager.updateCategory(JsCategory.createCategory(pl.data));
 				updateFoldersCache();
 				new JsonResult().printTo(out);
 				
@@ -533,7 +533,7 @@ public class Service extends BaseService {
 				URI uri = URIUtils.createURI(url);
 				
 				ContactsManager.ProbeCategoryRemoteUrlResult result = manager.probeCategoryRemoteUrl(remoteProvider, uri, username, password);
-				if (result == null) throw new WTException("URL problem");
+				if (result == null) throw new CategoryProbeException(this.lookupResource("setupCategoryRemote.error.probe"));
 				
 				SetupDataCategoryRemote setup = new SetupDataCategoryRemote();
 				setup.setProfileId(profileId);
@@ -550,11 +550,13 @@ public class Service extends BaseService {
 				String tag = ServletUtils.getStringParameter(request, "tag", true);
 				String name = ServletUtils.getStringParameter(request, "name", true);
 				String color = ServletUtils.getStringParameter(request, "color", true);
+				Short syncFrequency = ServletUtils.getShortParameter(request, "syncFrequency", null);
 				
 				wts.hasPropertyOrThrow(SERVICE_ID, PROPERTY_PREFIX+tag);
 				SetupDataCategoryRemote setup = (SetupDataCategoryRemote) wts.getProperty(SERVICE_ID, PROPERTY_PREFIX+tag);
 				setup.setName(name);
 				setup.setColor(color);
+				setup.setSyncFrequency(syncFrequency);
 				
 				Category cal = manager.addCategory(setup.toCategory());
 				wts.clearProperty(SERVICE_ID, PROPERTY_PREFIX+tag);
@@ -565,9 +567,11 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 			}
 			
+		} catch (CategoryProbeException ex) {
+			new JsonResult(ex).printTo(out);
 		} catch (Exception ex) {
-			logger.error("Error in SetupCalendarRemote", ex);
-			new JsonResult(false, ex.getMessage()).printTo(out);
+			logger.error("Error in SetupCategoryRemote", ex);
+			new JsonResult(ex).printTo(out);
 		}
 	}
 	
@@ -1203,6 +1207,32 @@ public class Service extends BaseService {
 			new JsonResult(false, ex.getMessage()).printTo(out);
 		}
 	}
+		public void processImportContactsFromLDIF(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+			String crud = ServletUtils.getStringParameter(request, "op", true);
+			
+			UploadedFile upl = getUploadedFile(uploadId);
+			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			File file = new File(WT.getTempFolder(), upl.getUploadId());
+
+			ContactLDIFFileReader  rea = new ContactLDIFFileReader();
+			
+			if(crud.equals("do")) {
+				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
+				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				
+				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
+				removeUploadedFile(uploadId);
+				new JsonResult(new JsWizardData(log.print())).printTo(out);
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in action ImportContactsFromVCard", ex);
+			new JsonResult(false, ex.getMessage()).printTo(out);
+		}
+	}
 	
 	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBAddressbook> items = new ArrayList<>();
@@ -1498,9 +1528,9 @@ public class Service extends BaseService {
 	
 	private ExtTreeNode createRootNode(ShareRootCategory root) {
 		if(root instanceof MyShareRootCategory) {
-			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-root-my-xs").setExpanded(true);
+			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-categoryMy").setExpanded(true);
 		} else {
-			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-root-incoming-xs");
+			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-categoryIncoming");
 		}
 	}
 	
@@ -1586,19 +1616,36 @@ public class Service extends BaseService {
 					.setCategoryName(categoryName)
 					.setSuccess(true)
 				);
-				
+			
+			} catch(ConcurrentSyncException ex) {
+				logger.debug("SyncRemoteCategoryAA already running", ex);
+				//TODO: add localized message for this well known situation
+				getWts().notify(new RemoteSyncResult(false)
+					.setCategoryId(categoryId)
+					.setCategoryName(categoryName)
+					.setThrowable(ex, true)
+				);
 			} catch(Throwable t) {
-				logger.error("Remote sync failure", t);
+				logger.error("SyncRemoteCategoryAA failure", t);
 				getWts().notify(new RemoteSyncResult(false)
 					.setCategoryId(categoryId)
 					.setCategoryName(categoryName)
 					.setThrowable(t, true)
 				);
 			} finally {
+				syncRemoteCategoryAAs.remove(categoryId);
+				/*
 				synchronized(syncRemoteCategoryAAs) {
 					syncRemoteCategoryAAs.remove(categoryId);
 				}
+				*/
 			}
+		}
+	}
+	
+	private static class CategoryProbeException extends WTException {
+		public CategoryProbeException(String message, Object... arguments) {
+			super(message, arguments);
 		}
 	}
 	

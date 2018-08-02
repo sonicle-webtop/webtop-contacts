@@ -101,17 +101,18 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		
 		me.setToolbar(Ext.create({
 			xtype: 'toolbar',
-			referenceHolder: true,
+			referenceHolder: true,			
 			items: [
 				'-',
 				me.getAct('refresh'),
 				me.getAct('printAddressbook'),
 				me.getAct('deleteContact2'),
 				'-',
-				me.getAct('addContact2'),
+				//me.getAct('addContact2'),
 				me.getAct('addContactsList2'),
 				'->',
-/*				me.getAct('workview'),
+				/*
+				me.getAct('workview'),
 				me.getAct('homeview'),
 				'-',*/
 				me.addRef('cbogroup', Ext.create(WTF.lookupCombo('id', 'desc', {
@@ -148,7 +149,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						}
 					},
 					width: 200
-				}
+				},
+				'->'
 			]
 		}));
 		
@@ -230,7 +232,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						width: 30,
 						groupable: false,
 						getIconCls: function(v,rec) {
-							return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
+							return me.cssIconCls((rec.get('isList') === true) ? 'contactsList' : 'contact');
 						},
 						iconSize: WTU.imgSizeToPx('xs')
 					},
@@ -438,6 +440,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('showContact');
 						me.updateDisabled('callTelephone');
 						me.updateDisabled('callMobile');
+						me.updateDisabled('sendSMS');
 						me.updateDisabled('printContact');
 						me.updateDisabled('copyContact');
 						me.updateDisabled('moveContact');
@@ -520,27 +523,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	initActions: function() {
-		var me = this;
+		var me = this,
+				hdscale = WT.getHeaderScale();
 		
 		me.addAct('new', 'newContact', {
+			ignoreSize: true,
 			handler: function() {
 				me.getAct('addContact').execute();
 			}
 		});
 		me.addAct('new', 'newContactsList', {
+			ignoreSize: true,
 			handler: function() {
 				me.getAct('addContactsList').execute();
 			}
 		});
-		me.addAct('refresh', {
-			text: '',
-			tooltip: WT.res('act-refresh.lbl'),
-			iconCls: 'wt-icon-refresh-xs',
-			handler: function() {
-				me.reloadContacts();
-			}
-		});
+		
 		me.addAct('workview', {
+			scale: hdscale,
 			text: null,
 			itemId: 'w',
 			toggleGroup: 'view',
@@ -549,6 +549,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('homeview', {
+			scale: hdscale,
 			text: null,
 			itemId: 'h',
 			toggleGroup: 'view',
@@ -559,7 +560,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('editSharing', {
 			text: WT.res('sharing.tit'),
 			tooltip: null,
-			iconCls: WTF.cssIconCls(WT.XID, 'sharing', 'xs'),
+			iconCls: 'wt-icon-sharing',
 			handler: function() {
 				var node = me.getSelectedNode(me.trFolders());
 				if (node) me.editShare(node.getId());
@@ -580,6 +581,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addCategory', {
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -601,6 +603,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('editCategory', {
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -608,6 +611,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('deleteCategory', {
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -695,7 +699,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('viewThisFolderOnly', {
 			tooltip: null,
-			iconCls: 'wt-icon-select-one-xs',
+			iconCls: 'wt-icon-select-one',
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
 				if(node) me.showOneF3FolderOnly(me.getSelectedRootFolder(me.trFolders()), node.getId());
@@ -703,7 +707,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('viewAllFolders', {
 			tooltip: null,
-			iconCls: 'wt-icon-select-all-xs',
+			iconCls: 'wt-icon-select-all',
 			handler: function() {
 				var node = me.getSelectedRootFolder(me.trFolders());
 				if (node) {
@@ -717,7 +721,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('viewNoneFolders', {
 			tooltip: null,
-			iconCls: 'wt-icon-select-none-xs',
+			iconCls: 'wt-icon-select-none',
 			handler: function() {
 				var node = me.getSelectedRootFolder(me.trFolders());
 				if (node) {
@@ -741,6 +745,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContact', {
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -748,6 +753,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContactsList', {
+			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders());
@@ -778,7 +784,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('deleteContact', {
 			text: WT.res('act-delete.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-delete-xs',
+			iconCls: 'wt-icon-delete',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if(sel.length > 0) me.deleteSelContacts(sel);
@@ -799,7 +805,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('printContact', {
 			text: WT.res('act-print.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-print-xs',
+			iconCls: 'wt-icon-print',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if (sel.length > 0) me.printSelContacts(sel);
@@ -823,10 +829,33 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (sel.length > 0) WT.handlePbxCall(sel[0].get('workMobile'));
 			}
 		});
+		me.addAct('sendSMS', {
+			text: me.res('act-send-sms.lbl'),
+			tooltip: null,
+			iconCls: 'wt-icon-sms-xs',
+			handler: function() {
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) WT.handleSendSMS(
+						sel[0].get('firstName')+" "+sel[0].get('lastName'),
+						sel[0].get('workMobile')
+				);
+			}
+		});
+		
+		me.addAct('refresh', {
+			scale: hdscale,
+			text: '',
+			tooltip: WT.res('act-refresh.lbl'),
+			iconCls: 'wt-icon-refresh',
+			handler: function() {
+				me.reloadContacts();
+			}
+		});
 		me.addAct('printAddressbook', {
+			scale: hdscale,
 			text: null,
 			tooltip: WT.res('act-print.lbl'),
-			iconCls: 'wt-icon-print-xs',
+			iconCls: 'wt-icon-print',
 			handler: function() {
 				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
 				delete params.action;
@@ -835,25 +864,30 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('deleteContact2', {
+			scale: hdscale,
 			text: null,
 			tooltip: WT.res('act-delete.tip'),
-			iconCls: 'wt-icon-delete-xs',
+			iconCls: 'wt-icon-delete',
 			handler: function() {
 				me.getAct('deleteContact').execute();
 			}
 		});
+		/*
 		me.addAct('addContact2', {
+			scale: hdscale,
 			text: null,
 			tooltip: me.res('act-addContact.lbl'),
-			iconCls: me.cssIconCls('addContact', 'xs'),
+			iconCls: me.cssIconCls('addContact'),
 			handler: function() {
 				me.getAct('addContact').execute();
 			}
 		});
+		*/
 		me.addAct('addContactsList2', {
+			scale: hdscale,
 			text: null,
 			tooltip: me.res('act-addContactsList.lbl'),
-			iconCls: me.cssIconCls('addContactsList', 'xs'),
+			iconCls: me.cssIconCls('addContactsList'),
 			handler: function() {
 				me.getAct('addContactsList').execute();
 			}
@@ -984,6 +1018,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						]
 					}
 				},
+				me.getAct('sendSMS'),
 				me.getAct('printContact'),
 				'-',
 				me.getAct('deleteContact'),
@@ -1878,6 +1913,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			case 'callMobile':
 				sel = me.getSelectedContacts();
 				if(/*WT.getVar('pbxConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
+					return false;
+				} else {
+					return true;
+				}
+				break;
+			case 'sendSMS':
+				sel = me.getSelectedContacts();
+				if(/*WT.getVar('smsConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
 					return false;
 				} else {
 					return true;

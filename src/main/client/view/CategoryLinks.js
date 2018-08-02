@@ -35,7 +35,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryLinks', {
 	
 	dockableConfig: {
 		title: '{categoryLinks.tit}',
-		iconCls: 'wtcon-icon-category-xs',
+		iconCls: 'wtcon-icon-category',
 		width: 600,
 		height: 150,
 		modal: true,

@@ -33,10 +33,11 @@
 package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.EnumUtils;
-import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.URIUtils;
+import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
+import org.joda.time.DateTimeZone;
 
 /**
  *
@@ -56,8 +57,10 @@ public class JsCategory {
 	public String remoteUrl;
 	public String remoteUsername;
 	public String remotePassword;
+	public Short remoteSyncFrequency;
+	public String remoteLastSync;
 	
-	public JsCategory(Category cat) {
+	public JsCategory(Category cat, DateTimeZone utz) {
 		categoryId = cat.getCategoryId();
 		domainId = cat.getDomainId();
 		userId = cat.getUserId();
@@ -69,13 +72,19 @@ public class JsCategory {
 		sync = EnumUtils.toSerializedName(cat.getSync());
 		isDefault = cat.getIsDefault();
 		
-		CategoryRemoteParameters params = LangUtils.deserialize(cat.getParameters(), new CategoryRemoteParameters(), CategoryRemoteParameters.class);
-		remoteUrl = URIUtils.toString(params.url);
-		remoteUsername = params.username;
-		remotePassword = params.password;
+		if (cat.isProviderRemote()) {
+			CategoryRemoteParameters params = cat.getParametersAsObject(new CategoryRemoteParameters(), CategoryRemoteParameters.class);
+			remoteUrl = URIUtils.toString(params.url);
+			remoteUsername = params.username;
+			remotePassword = params.password;
+			remoteSyncFrequency = cat.getRemoteSyncFrequency();
+			if (cat.getRemoteSyncTimestamp() != null) {
+				remoteLastSync = DateTimeUtils.createYmdHmsFormatter(utz).print(cat.getRemoteSyncTimestamp());
+			}
+		}
 	}
 		
-	public static Category createCategory(JsCategory js, String origParameters) {
+	public static Category createCategory(JsCategory js) {
 		Category cat = new Category();
 		cat.setCategoryId(js.categoryId);
 		cat.setDomainId(js.domainId);
@@ -90,13 +99,12 @@ public class JsCategory {
 		//cal.setIsPrivate(js.isPrivate);
 		
 		if (cat.isProviderRemote()) {
-			CategoryRemoteParameters params = LangUtils.deserialize(origParameters, new CategoryRemoteParameters(), CategoryRemoteParameters.class);
+			CategoryRemoteParameters params = new CategoryRemoteParameters();
 			params.url = URIUtils.createURIQuietly(js.remoteUrl);
 			params.username = js.remoteUsername;
 			params.password = js.remotePassword;
-			cat.setParameters(LangUtils.serialize(params, CategoryRemoteParameters.class));
-		} else {
-			cat.setParameters(null);
+			cat.setParametersAsObject(params, CategoryRemoteParameters.class);
+			cat.setRemoteSyncFrequency(js.remoteSyncFrequency);
 		}
 		
 		return cat;

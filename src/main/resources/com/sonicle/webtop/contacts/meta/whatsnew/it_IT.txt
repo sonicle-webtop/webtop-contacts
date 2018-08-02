@@ -1,3 +1,13 @@
+$	5.3.0
+	%	Versione 5.3.0
+	*	<h1>Importazione da file LDIF</h1>
+		<p>Una nuova funzione consente di importare contatti da file di tipo LDIF.</p>
+		<img src="5.3.0_importldif.png"/>
+	*	<h1>Integrazione servizi SMS</h1>
+		<p>E' ora possibile configurare servizi SMS forniti da SMS Hosting o Twilio
+		per spedire SMS direttamente dai contatti che hanno un numero di cellulare.</p>
+		<img src="5.3.0_menusms.png"/>
+		<img src="5.3.0_sms.png"/>
 $	5.2.0
 	%	Versione 5.2.0
 	*	<h1>Integrazione centralino telefonico NethVoice</h1>

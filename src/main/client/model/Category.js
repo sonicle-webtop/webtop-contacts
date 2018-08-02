@@ -56,6 +56,8 @@ Ext.define('Sonicle.webtop.contacts.model.Category', {
 		}),
 		WTF.field('remoteUsername', 'string', true),
 		WTF.field('remotePassword', 'string', true),
+		WTF.field('remoteSyncFrequency', 'int', true),
+		WTF.roField('remoteLastSync', 'date', {dateFormat: 'Y-m-d H:i:s'}),
 		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
 			return rec.get('userId') + '@' + rec.get('domainId');
 		})

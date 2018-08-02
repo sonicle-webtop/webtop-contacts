@@ -12,18 +12,15 @@
 		<companyWebSite>http://www.sonicle.com</companyWebSite>
 		<supportEmail>sonicle@sonicle.com</supportEmail>
 		
-		<controller name=".ContactsController" />
-		<manager name=".ContactsManager" />
-		<!--
-		<controllerClassName>ContactsController</controllerClassName>
-		<managerClassName>ContactsManager</managerClassName>
-		-->
+		<controller className=".ContactsController" />
+		<manager className=".ContactsManager" />
 		<serviceClassName>Service</serviceClassName>
 		<userOptions>
 			<serviceClassName>UserOptionsService</serviceClassName>
 			<viewJsClassName>view.UserOptions</viewJsClassName>
 			<modelJsClassName>model.UserOptions</modelJsClassName>
 		</userOptions>
+		<jobService className=".JobService" />
 		
 		<restApiEndpoint name=".RestApi" />
 		<restApis>

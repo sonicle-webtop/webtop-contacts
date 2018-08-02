@@ -46,6 +46,14 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 		super(serviceId, domainId);
 	}
 	
+	public boolean getCategoryRemoteAutoSyncEnabled() {
+		return getBoolean(CATEGORY_REMOTE_AUTOSYNC_ENABLED, false);
+	}
+	
+	public boolean getCategoryRemoteAutoSyncOnlyWhenOnline() {
+		return getBoolean(CATEGORY_REMOTE_AUTOSYNC_ONLYWHENONLINE, true);
+	}
+	
 	public boolean getDavAddressbookDeleteEnabled() {
 		return getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, false);
 	}

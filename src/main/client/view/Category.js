@@ -37,13 +37,14 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		'Sonicle.form.field.Palette',
 		'Sonicle.form.RadioGroup',
 		'Sonicle.webtop.contacts.store.Provider',
-		'Sonicle.webtop.contacts.store.Sync'
+		'Sonicle.webtop.contacts.store.Sync',
+		'Sonicle.webtop.contacts.store.RemoteSyncFreq'
 	],
 	
 	dockableConfig: {
 		title: '{category.tit}',
-		iconCls: 'wtcon-icon-category-xs',
-		width: 380,
+		iconCls: 'wtcon-icon-category',
+		width: 440,
 		height: 360
 	},
 	fieldTitle: 'name',
@@ -54,10 +55,13 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		me.callParent([cfg]);
 		
 		WTU.applyFormulas(me.getVM(), {
+			isDefault: WTF.checkboxBind('record', 'isDefault'),
 			foIsRemote: WTF.foGetFn('record', 'provider', function(v) {
 				return Sonicle.webtop.contacts.view.Category.isRemote(v);
 			}),
-			isDefault: WTF.checkboxBind('record', 'isDefault')
+			foRemoteLastSync: WTF.foGetFn('record', 'remoteLastSync', function(v) {
+				return Ext.isEmpty(v) ? WT.res('word.na') : Ext.Date.format(v, WT.getShortDateFmt() + ' ' + WT.getShortTimeFmt());
+			})
 		});
 	},
 	
@@ -83,7 +87,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 							autoLoad: true
 						}),
 						fieldLabel: me.mys.res('category.fld-provider.lbl'),
-						width: 250
+						width: 110+140
 					}),
 					{
 						xtype: 'textfield',
@@ -109,7 +113,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 						bind: '{record.color}',
 						colors: WT.getColorPalette(),
 						fieldLabel: me.mys.res('category.fld-color.lbl'),
-						width: 210
+						width: 110+100
 					},
 					WTF.lookupCombo('id', 'desc', {
 						reference: 'fldsync',
@@ -118,7 +122,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 							autoLoad: true
 						}),
 						fieldLabel: me.mys.res('category.fld-sync.lbl'),
-						width: 250
+						width: 110+140
 					})
 					
 				]
@@ -148,36 +152,63 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 					bind: '{record.remoteUsername}',
 					plugins: 'sonoautocomplete',
 					fieldLabel: me.mys.res('category.fld-remoteUsername.lbl'),
-					width: 280
+					width: 90+190
 				}, {
 					xtype: 'textfield',
 					bind: '{record.remotePassword}',
 					inputType: 'password',
 					plugins: 'sonoautocomplete',
 					fieldLabel: me.mys.res('category.fld-remotePassword.lbl'),
-					width: 280
-				}],
-				tbar: ['->', {
-					xtype: 'splitbutton',
-					tooltip: me.mys.res('category.btn-syncnow.tip'),
-					iconCls: 'wt-icon-refresh-xs',
-					handler: function() {
-						me.syncRemoteCategoryUI(me.getModel().get('categoryId'), false);
+					width: 90+190
+				}, {
+					xtype: 'combo',
+					bind: '{record.remoteSyncFrequency}',
+					editable: false,
+					store: Ext.create('Sonicle.webtop.contacts.store.RemoteSyncFreq', {
+						autoLoad: true
+					}),
+					valueField: 'id',
+					displayField: 'desc',
+					triggers: {
+						clear: WTF.clearTrigger()
 					},
-					menu: {
-						items: [{
-							itemId: 'partial',
-							text: me.mys.res('category.btn-syncnow.partial.lbl')
-						}, {
-							itemId: 'full',
-							text: me.mys.res('category.btn-syncnow.full.lbl')
-						}],
-						listeners: {
-							click: function(s, itm) {
-								me.syncRemoteCategoryUI(me.getModel().get('categoryId'), itm.getItemId() === 'full');
+					hidden: !me.mys.getVar('categoryRemoteSyncEnabled', false),
+					fieldLabel: me.mys.res('category.fld-remoteSyncFrequency.lbl'),
+					emptyText: me.mys.res('category.fld-remoteSyncFrequency.emp'),
+					width: 90+140
+				}],
+				tbar: [{
+						xtype: 'tbtext',
+						cls: 'x-unselectable',
+						html: me.mys.res('category.tbi-lastSync.lbl')
+					}, {
+						xtype: 'tbtext',
+						bind: {
+							html: '{foRemoteLastSync}'
+						}
+					},
+					'->',
+					{
+						xtype: 'splitbutton',
+						tooltip: me.mys.res('category.btn-syncnow.tip'),
+						iconCls: 'wt-icon-refresh',
+						handler: function() {
+							me.syncRemoteCategoryUI(me.getModel().get('categoryId'), false);
+						},
+						menu: {
+							items: [{
+								itemId: 'partial',
+								text: me.mys.res('category.btn-syncnow.partial.lbl')
+							}, {
+								itemId: 'full',
+								text: me.mys.res('category.btn-syncnow.full.lbl')
+							}],
+							listeners: {
+								click: function(s, itm) {
+									me.syncRemoteCategoryUI(me.getModel().get('categoryId'), itm.getItemId() === 'full');
+								}
 							}
 						}
-					}
 				}]
 			}]
 		});

@@ -1,25 +1,23 @@
-.wtcon-icon-service-xs { background-image: url('service_16.png') !important; }
-.wtcon-icon-service-s { background-image: url('service_24.png') !important; }
-.wtcon-icon-service-m { background-image: url('service_32.png') !important; }
-.wtcon-icon-service-l { background-image: url('service_48.png') !important; }
-.wtcon-icon-workview-xs { background-image: url('view-work_16.png') !important; }
-.wtcon-icon-homeview-xs { background-image: url('view-home_16.png') !important; }
-.wtcon-icon-root-my-xs { background-image: url('root-my_16.png') !important; }
-.wtcon-icon-root-incoming-xs { background-image: url('root-incoming_16.png') !important; }
-.wtcon-icon-category-xs { background-image: url('category_16.png') !important; }
-.wtcon-icon-category-remote-xs { background-image: url('category-remote_16.png') !important; }
-.wtcon-icon-addCategory-xs { background-image: url('category-add_16.png') !important; }
-.wtcon-icon-editCategory-xs { background-image: url('category-edit_16.png') !important; }
-.wtcon-icon-deleteCategory-xs { background-image: url('category-delete_16.png') !important; }
-.wtcon-icon-contact-xs { background-image: url('contact_16.png') !important; }
-.wtcon-icon-contacts-list-xs { background-image: url('contacts-list_16.png') !important; }
-.wtcon-icon-newContact-xs { background-image: url('contact-new_16.png') !important; }
-.wtcon-icon-newContactsList-xs { background-image: url('contacts-list-new_16.png') !important; }
-.wtcon-icon-addContact-xs { background-image: url('contact-add_16.png') !important; }
-.wtcon-icon-addContactsList-xs { background-image: url('contacts-list-add_16.png') !important; }
-.wtcon-icon-birthday-xs { background-image: url('birthday_16.png') !important; }
-.wtcon-icon-anniversary-xs { background-image: url('anniversary_16.png') !important; }
-.wtcon-icon-import-xs { background-image: url('import_16.png') !important; }
-.wtcon-icon-paste-list-xs { background-image: url('paste-list_16.png') !important; }
+.wtcon-icon-service { background-image: url('service_16.svg') !important; background-size: contain; }
+.wtcon-icon-service-xs { background-image: url('service_16.svg') !important; background-size: contain; }
+.wtcon-icon-service-s { background-image: url('service_16.svg') !important; background-size: contain; }
+.wtcon-icon-service-m { background-image: url('service_32.svg') !important; background-size: contain; }
+.wtcon-icon-service-l { background-image: url('service_32.svg') !important; background-size: contain; }
+.wtcon-icon-category { background-image: url('category_16.svg') !important; background-size: contain; }
+.wtcon-icon-categoryMy { background-image: url('category-my_16.svg') !important; background-size: contain; }
+.wtcon-icon-categoryIncoming { background-image: url('category-incoming_16.svg') !important; background-size: contain; }
+.wtcon-icon-categoryRemote { background-image: url('category-remote_16.svg') !important; background-size: contain; }
+.wtcon-icon-addCategory { background-image: url('category-add_16.svg') !important; background-size: contain; }
+.wtcon-icon-editCategory { background-image: url('category-edit_16.svg') !important; background-size: contain; }
+.wtcon-icon-deleteCategory { background-image: url('category-delete_16.svg') !important; background-size: contain; }
+.wtcon-icon-contact { background-image: url('contact_16.svg') !important; background-size: contain; }
+.wtcon-icon-contactsList { background-image: url('contacts-list_16.svg') !important; background-size: contain; }
+.wtcon-icon-newContact { background-image: url('contact-new_16.svg') !important; background-size: contain; }
+.wtcon-icon-newContactsList { background-image: url('contacts-list-new_16.svg') !important; background-size: contain; }
+.wtcon-icon-addContact { background-image: url('contact-add_16.svg') !important; background-size: contain; }
+.wtcon-icon-addContactsList { background-image: url('contacts-list-add_16.svg') !important; background-size: contain; }
+.wtcon-icon-import { background-image: url('import_16.svg') !important; background-size: contain; }
+.wtcon-icon-reminder-birthday { background-image: url('birthday_16.png') !important; background-size: contain; }
+.wtcon-icon-reminder-anniversary { background-image: url('anniversary_16.png') !important; background-size: contain; }
 .wtcon-trash-trigger { background-image: url('trash-trigger.png') !important; }
 .wtcon-add-trigger { background-image: url('add-trigger.png') !important; }

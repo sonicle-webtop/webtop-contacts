@@ -33,6 +33,11 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.Base58;
+import com.sonicle.commons.EnumUtils;
+import com.sonicle.webtop.contacts.bol.OCategory;
+import com.sonicle.webtop.contacts.bol.OCategoryPropSet;
+import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.IdentifierUtils;
@@ -72,5 +77,87 @@ public class ManagerUtils {
 	
 	public static String buildHref(String publicUid) {
 		return publicUid + ".vcf";
+	}
+	
+	public static Category createCategory(OCategory src) {
+		if (src == null) return null;
+		return fillCategory(new Category(), src);
+	}
+	
+	public static Category fillCategory(Category tgt, OCategory src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setCategoryId(src.getCategoryId());
+			tgt.setDomainId(src.getDomainId());
+			tgt.setUserId(src.getUserId());
+			tgt.setBuiltIn(src.getBuiltIn());
+			tgt.setProvider(EnumUtils.forSerializedName(src.getProvider(), Category.Provider.class));
+			tgt.setName(src.getName());
+			tgt.setDescription(src.getDescription());
+			tgt.setColor(src.getColor());
+			tgt.setSync(EnumUtils.forSerializedName(src.getSync(), Category.Sync.class));
+			tgt.setIsDefault(src.getIsDefault());
+			// TODO: aggiungere supporto campo is_private
+			//cat.setIsPrivate(ocat.getIsPrivate());
+			tgt.setParameters(src.getParameters());
+			tgt.setRemoteSyncFrequency(src.getRemoteSyncFrequency());
+			tgt.setRemoteSyncTimestamp(src.getRemoteSyncTimestamp());
+			tgt.setRemoteSyncTag(src.getRemoteSyncTag());
+		}
+		return tgt;
+	}
+	
+	public static OCategory createOCategory(Category src) {
+		if (src == null) return null;
+		return fillOCategory(new OCategory(), src);
+	}
+	
+	public static OCategory fillOCategory(OCategory tgt, Category src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setCategoryId(src.getCategoryId());
+			tgt.setDomainId(src.getDomainId());
+			tgt.setUserId(src.getUserId());
+			tgt.setBuiltIn(src.getBuiltIn());
+			tgt.setProvider(EnumUtils.toSerializedName(src.getProvider()));
+			tgt.setName(src.getName());
+			tgt.setDescription(src.getDescription());
+			tgt.setColor(src.getColor());
+			tgt.setSync(EnumUtils.toSerializedName(src.getSync()));
+			tgt.setIsDefault(src.getIsDefault());
+			// TODO: aggiungere supporto campo is_private
+			//ocat.setIsPrivate(cat.getIsPrivate());
+			tgt.setParameters(src.getParameters());
+			tgt.setRemoteSyncFrequency(src.getRemoteSyncFrequency());
+			tgt.setRemoteSyncTimestamp(src.getRemoteSyncTimestamp());
+			tgt.setRemoteSyncTag(src.getRemoteSyncTag());
+		}
+		return tgt;
+	}
+	
+	public static CategoryPropSet createCategoryPropSet(OCategoryPropSet src) {
+		if (src == null) return null;
+		return fillCategoryPropSet(new CategoryPropSet(), src);
+	}
+	
+	public static CategoryPropSet fillCategoryPropSet(CategoryPropSet tgt, OCategoryPropSet src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setHidden(src.getHidden());
+			tgt.setColor(src.getColor());
+			tgt.setSync(EnumUtils.forSerializedName(src.getSync(), Category.Sync.class));
+		}
+		return tgt;
+	}
+	
+	public static OCategoryPropSet createOCategoryPropSet(CategoryPropSet src) {
+		if (src == null) return null;
+		return fillOCategoryPropSet(new OCategoryPropSet(), src);
+	}
+	
+	public static OCategoryPropSet fillOCategoryPropSet(OCategoryPropSet tgt, CategoryPropSet src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setHidden(src.getHidden());
+			tgt.setColor(src.getColor());
+			tgt.setSync(EnumUtils.toSerializedName(src.getSync()));
+		}
+		return tgt;
 	}
 }

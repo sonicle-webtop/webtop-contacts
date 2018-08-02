@@ -36,7 +36,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	dockableConfig: {
 		title: '{importContacts.tit}',
-		iconCls: 'wtcon-icon-import-xs',
+		iconCls: 'wtcon-icon-import',
 		width: 480,
 		height: 380
 	},
@@ -51,7 +51,8 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	initPages: function() {
 		return Ext.apply(this.callParent(), {
-			vcf: ['upload','mode','end']
+			vcf: ['upload','mode','end'],
+			ldif:['upload','mode','end']
 		});
 	},
 	
@@ -59,24 +60,27 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 		return {
 			txt: 'ImportContactsFromText',
 			xls: 'ImportContactsFromExcel',
-			vcf: 'ImportContactsFromVCard'
+			vcf: 'ImportContactsFromVCard',
+			ldif:'ImportContactsFromLDIF'
 		};
 	},
 	
 	initFiles: function() {
 		return Ext.apply(this.callParent(), {
-			vcf: {label: this.mys.res('importContacts.path.fld-path.vcf'), extensions: 'vcf,vcard'}
+			vcf:  {label: this.mys.res('importContacts.path.fld-path.vcf'), extensions: 'vcf,vcard'},
+			ldif: {label: this.mys.res('importContacts.path.fld-path.ldif'), extensions: 'ldif'}
 		});
 	},
 	
 	addPathPage: function() {
 		this.callParent();
 		this.getVM().set('path', 'vcf');
+		this.getVM().set('path', 'ldif');
 	},
 	
 	createPages: function(path) {
 		var me = this;
-		if(path === 'vcf') {
+		if(path === 'vcf' || path === 'ldif') {
 			me.getVM().set('importmode', 'append');
 			
 			return [
@@ -102,7 +106,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 		
 		if(me.callParent(arguments) === false) return false;
 		
-		if(path === 'vcf') {
+		if(path === 'vcf' || path === 'ldif') {
 			if(pp === 'upload') {
 				ret = ppcmp.down('wtform').isValid();
 			}
@@ -113,7 +117,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	buildDoParams: function(path) {
 		var vm = this.getVM();
-		if(path === 'vcf') {
+		if(path === 'vcf' || path=== 'ldif') {
 			return {
 				path: path,
 				uploadId: vm.get('file'),

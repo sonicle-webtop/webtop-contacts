@@ -41,7 +41,21 @@ public class ContactsSettings {
 	/**
 	 * [system+domain]
 	 * [boolean](false)
-	 * Enable/Disable addressbooks deletions through DAV rest-api interface.
+	 * Enable/Disable remote categories auto-sync functionality. Defaults to ``false``.
+	 */
+	public static final String CATEGORY_REMOTE_AUTOSYNC_ENABLED = "category.remote.autosync.enabled";
+	
+	/**
+	 * [system+domain]
+	 * [boolean](true)
+	 * Enable/Disable remote auto-sync only when category's owner is online. Defaults to ``true``.
+	 */
+	public static final String CATEGORY_REMOTE_AUTOSYNC_ONLYWHENONLINE = "category.remote.autosync.onlywhenonline";
+	
+	/**
+	 * [system+domain]
+	 * [boolean](false)
+	 * Enable/Disable addressbooks deletions through DAV rest-api interface. Defaults to ``false``.
 	 */
 	public static final String DAV_ADDRESSBOOK_DELETE_ENABLED = "dav.addressbook.delete.enabled";
 	

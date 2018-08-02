@@ -45,7 +45,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	
 	dockableConfig: {
 		title: '{contact.tit}',
-		iconCls: 'wtcon-icon-contact-xs',
+		iconCls: 'wtcon-icon-contact',
 		width: 650,
 		height: 550
 	},
@@ -69,7 +69,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				me.addAct('delete', {
 					text: null,
 					tooltip: WT.res('act-delete.lbl'),
-					iconCls: 'wt-icon-delete-xs',
+					iconCls: 'wt-icon-delete',
 					handler: function() {
 						me.deleteContact();
 					}
@@ -78,7 +78,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				me.addAct('print', {
 					text: null,
 					tooltip: WT.res('act-print.lbl'),
-					iconCls: 'wt-icon-print-xs',
+					iconCls: 'wt-icon-print',
 					handler: function() {
 						//TODO: aggiungere l'azione 'salva' permettendo così la stampa senza chiudere la form
 						me.printContact(me.getModel().getId());
