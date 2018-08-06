@@ -37,6 +37,7 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.PathUtils;
+import com.sonicle.commons.beans.VirtualAddress;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
@@ -167,7 +168,6 @@ import org.slf4j.Logger;
 public class ContactsManager extends BaseManager implements IContactsManager, IRecipientsProvidersSource {
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String GROUPNAME_CATEGORY = "CATEGORY";
-	private static final Pattern PATTERN_VIRTUALRCPT_LIST = Pattern.compile("^" + RCPT_ORIGIN_LIST + "-(\\d+)$");
 	
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
@@ -1156,6 +1156,35 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.closeQuietly(con);
 		}
 	}
+
+	@Override
+	public void addToContactsList(int contactsListId, ContactsList list) throws WTException {
+		ContactDAO condao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID, false);
+			
+			OContact cont = condao.selectById(con, contactsListId);
+			if (cont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
+			if (!cont.getIsList()) throw new WTException("Not a contacts list");
+			checkRightsOnCategoryElements(cont.getCategoryId(), "UPDATE");
+			
+			boolean updated = doContactsListAddTo(con, list);
+			if (!updated) throw new WTException("Contacts list cannot be updated [{}]", list.getContactId());
+			DbUtils.commitQuietly(con);
+			writeLog("CONTACTLIST_ADDTO", String.valueOf(contactsListId));
+			
+		} catch(SQLException | DAOException | WTException ex) {
+			DbUtils.rollbackQuietly(con);
+			throw wrapThrowable(ex);
+		} catch(Throwable t) {
+			DbUtils.rollbackQuietly(con);
+			throw t;
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
 	
 	@Override
 	public void updateContactsList(ContactsList list) throws WTException {
@@ -1455,11 +1484,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} 
 		return alerts;
 	}
-	
-	
-	
-	
-	
 	
 	
 	public ProbeCategoryRemoteUrlResult probeCategoryRemoteUrl(Category.Provider provider, URI url, String username, String password) throws WTException {
@@ -1921,6 +1945,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return true;
 	}
 	
+	private boolean doContactsListAddTo(Connection con, ContactsList list) throws DAOException {
+		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
+		
+		for (ContactsListRecipient rcpt : list.getRecipients()) {
+			OListRecipient olrec = new OListRecipient(rcpt);
+			olrec.setContactId(list.getContactId());
+			olrec.setListRecipientId(lrecDao.getSequence(con).intValue());
+			lrecDao.insert(con, olrec);
+		}
+		return true;
+	}
+	
 	private boolean doMoveContactsList(CoreManager coreMgr, Connection con, boolean copy, ContactsList clist, int targetCategoryId) throws DAOException, WTException {
 		clist.setCategoryId(targetCategoryId);
 		if (copy) {
@@ -2336,6 +2372,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			ArrayList<Recipient> items = new ArrayList<>();
 			Connection con = null;
 			
+			boolean listsOnly=fieldType.equals(RecipientFieldType.LIST);
+			if (listsOnly) fieldType=RecipientFieldType.EMAIL;
+			
 			try {
 				con = WT.getConnection(SERVICE_ID);
 				
@@ -2352,7 +2391,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						if (vcont.getIsList() && fieldCategory.equals(RecipientFieldCategory.WORK) && fieldType.equals(RecipientFieldType.EMAIL)) {
 							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getLastname(), value));
 							
-						} else {
+						} else if (!listsOnly) {
 							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
 							final String personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
@@ -2379,9 +2418,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			try {
 				con = WT.getConnection(SERVICE_ID);
-				Matcher matcher = PATTERN_VIRTUALRCPT_LIST.matcher(virtualRecipient);
-				if (matcher.matches()) {
-					int contactId = Integer.valueOf(matcher.group(1));
+				int contactId=ManagerUtils.getListIdFromVirtualRecipient(virtualRecipient);
+				if (contactId>=0) {
 					UserProfileId pid = new UserProfileId(getId());
 					List<OListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
 					for (OListRecipient recipient : recipients) {

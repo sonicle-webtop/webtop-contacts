@@ -80,6 +80,7 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactItemEx;
 import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.FolderContacts;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
@@ -123,6 +124,9 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
@@ -993,6 +997,31 @@ public class Service extends BaseService {
 			
 		} catch(Exception ex) {
 			logger.error("Error in ManageContactsLists", ex);
+			new JsonResult(false, "Error").printTo(out);
+		}
+	}
+	
+	public void processAddToContactsList(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			String list = ServletUtils.getStringParameter(request, "list", true);
+			String recipientType = ServletUtils.getStringParameter(request, "recipientType", true);
+			ArrayList<String> emails=ServletUtils.getStringParameters(request, "emails");
+			
+			int idlist=ManagerUtils.getListIdFromInternetAddress(new InternetAddress(list));
+			
+			ContactsList cl=new ContactsList();
+			cl.setContactId(idlist);
+			for(String email: emails) {
+				ContactsListRecipient rcpt = new ContactsListRecipient();
+				rcpt.setRecipient(email);
+				rcpt.setRecipientType(recipientType);
+				cl.getRecipients().add(rcpt);
+			}
+			manager.addToContactsList(idlist, cl);
+			
+			new JsonResult().printTo(out);
+		} catch(Exception ex) {
+			logger.error("Error in AddToContactsList", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}

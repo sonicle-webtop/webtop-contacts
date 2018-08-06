@@ -34,6 +34,8 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.Base58;
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.beans.VirtualAddress;
+import static com.sonicle.webtop.contacts.IContactsManager.RCPT_ORIGIN_LIST;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OCategoryPropSet;
 import com.sonicle.webtop.contacts.model.Category;
@@ -42,6 +44,9 @@ import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.VCardUtils;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.mail.internet.InternetAddress;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -53,6 +58,7 @@ public class ManagerUtils {
 	
 	public static final String CARDDAV_ADDRESSBOOK_URL = "/addressbooks/{0}/{1}";
 	public static final String CATEGORY_LINK_CARDDAV = "cardDav";
+	private static final Pattern PATTERN_VIRTUALRCPT_LIST = Pattern.compile("^" + RCPT_ORIGIN_LIST + "-(\\d+)$");
 	
 	public static String getProductName() {
 		return WT.getPlatformName() + " Contacts";
@@ -160,4 +166,21 @@ public class ManagerUtils {
 		}
 		return tgt;
 	}
+	
+	public static int getListIdFromInternetAddress(InternetAddress ia) {
+		VirtualAddress va=new VirtualAddress(ia.getAddress());
+		return getListIdFromVirtualRecipient(va.getLocal());
+	}
+	
+	public static int getListIdFromVirtualRecipient(String virtualRecipient) {
+		Matcher matcher = PATTERN_VIRTUALRCPT_LIST.matcher(virtualRecipient);
+		int contactId=-1;
+		if (matcher.matches()) {
+			contactId = Integer.valueOf(matcher.group(1));
+		}
+		return contactId;
+	}
+	
+	
+	
 }
