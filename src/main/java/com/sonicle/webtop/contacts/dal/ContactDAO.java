@@ -362,6 +362,7 @@ AND (ccnts.href IS NULL)
 		
 		return dsl
 			.select(
+				CONTACTS.CONTACT_ID,
 				CONTACTS.IS_LIST,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,

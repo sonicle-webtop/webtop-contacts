@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.webtop.contacts.bol.OListRecipient;
+import com.sonicle.webtop.contacts.bol.VListRecipient;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_LIST_RECIPIENTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
@@ -61,38 +62,68 @@ public class ListRecipientDAO extends BaseDAO {
 		return nextID;
 	}
 	
-	public OListRecipient select(Connection con, Integer listRecipientId) throws DAOException {
+	public VListRecipient select(Connection con, Integer listRecipientId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.select()
+			.select(
+					LIST_RECIPIENTS.fields()
+			)
+			.select(
+					CONTACTS.FIRSTNAME,
+					CONTACTS.LASTNAME,
+					CONTACTS.WORK_EMAIL,
+					CONTACTS.HOME_EMAIL,
+					CONTACTS.OTHER_EMAIL
+			)
 			.from(LIST_RECIPIENTS)
+			.leftOuterJoin(CONTACTS).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS.CONTACT_ID))
 			.where(
 				LIST_RECIPIENTS.LIST_RECIPIENT_ID.equal(listRecipientId)
 			)
-			.fetchOneInto(OListRecipient.class);
+			.fetchOneInto(VListRecipient.class);
 	}
 	
-	public List<OListRecipient> selectByContact(Connection con, int contactId) throws DAOException {
+	public List<VListRecipient> viewByContact(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.select()
+			.select(
+					LIST_RECIPIENTS.fields()
+			)
+			.select(
+					CONTACTS.FIRSTNAME,
+					CONTACTS.LASTNAME,
+					CONTACTS.WORK_EMAIL,
+					CONTACTS.HOME_EMAIL,
+					CONTACTS.OTHER_EMAIL
+			)
 			.from(LIST_RECIPIENTS)
+			.leftOuterJoin(CONTACTS).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS.CONTACT_ID))
 			.where(
 				LIST_RECIPIENTS.CONTACT_ID.equal(contactId)
 			)
 			.orderBy(
 				LIST_RECIPIENTS.RECIPIENT.asc()
 			)
-			.fetchInto(OListRecipient.class);
+			.fetchInto(VListRecipient.class);
 	}
 	
-	public List<OListRecipient> selectByProfileContact(Connection con, String domainId, String userId, int contactId) throws DAOException {
+	public List<VListRecipient> selectByProfileContact(Connection con, String domainId, String userId, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.select()
+			.select(
+					LIST_RECIPIENTS.fields()
+			)
+			.select(
+					CONTACTS.FIRSTNAME,
+					CONTACTS.LASTNAME,
+					CONTACTS.WORK_EMAIL,
+					CONTACTS.HOME_EMAIL,
+					CONTACTS.OTHER_EMAIL
+			)
 			.from(LIST_RECIPIENTS)
 			.join(CONTACTS).on(LIST_RECIPIENTS.CONTACT_ID.equal(CONTACTS.CONTACT_ID))
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(CONTACTS).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS.CONTACT_ID))
 			.where(
 				CATEGORIES.DOMAIN_ID.equal(domainId)
 				.and(CATEGORIES.USER_ID.equal(userId))
@@ -101,7 +132,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.orderBy(
 				LIST_RECIPIENTS.RECIPIENT.asc()
 			)
-			.fetchInto(OListRecipient.class);
+			.fetchInto(VListRecipient.class);
 	}
 	
 	public int insert(Connection con, OListRecipient item) throws DAOException {

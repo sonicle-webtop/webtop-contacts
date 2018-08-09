@@ -16,12 +16,13 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ListRecipients implements java.io.Serializable {
 
-	private static final long serialVersionUID = -696654305;
+	private static final long serialVersionUID = -1686586805;
 
 	private java.lang.Integer listRecipientId;
 	private java.lang.Integer contactId;
 	private java.lang.String  recipient;
 	private java.lang.String  recipientType;
+	private java.lang.Integer recipientContactId;
 
 	public ListRecipients() {}
 
@@ -29,12 +30,14 @@ public class ListRecipients implements java.io.Serializable {
 		java.lang.Integer listRecipientId,
 		java.lang.Integer contactId,
 		java.lang.String  recipient,
-		java.lang.String  recipientType
+		java.lang.String  recipientType,
+		java.lang.Integer recipientContactId
 	) {
 		this.listRecipientId = listRecipientId;
 		this.contactId = contactId;
 		this.recipient = recipient;
 		this.recipientType = recipientType;
+		this.recipientContactId = recipientContactId;
 	}
 
 	public java.lang.Integer getListRecipientId() {
@@ -67,5 +70,13 @@ public class ListRecipients implements java.io.Serializable {
 
 	public void setRecipientType(java.lang.String recipientType) {
 		this.recipientType = recipientType;
+	}
+
+	public java.lang.Integer getRecipientContactId() {
+		return this.recipientContactId;
+	}
+
+	public void setRecipientContactId(java.lang.Integer recipientContactId) {
+		this.recipientContactId = recipientContactId;
 	}
 }

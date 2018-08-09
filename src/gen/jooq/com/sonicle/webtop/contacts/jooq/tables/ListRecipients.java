@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ListRecipients extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord> {
 
-	private static final long serialVersionUID = -10927686;
+	private static final long serialVersionUID = 701796625;
 
 	/**
 	 * The reference instance of <code>contacts.list_recipients</code>
@@ -50,6 +50,11 @@ public class ListRecipients extends org.jooq.impl.TableImpl<com.sonicle.webtop.c
 	 * The column <code>contacts.list_recipients.recipient_type</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, java.lang.String> RECIPIENT_TYPE = createField("recipient_type", org.jooq.impl.SQLDataType.VARCHAR.length(3), this, "");
+
+	/**
+	 * The column <code>contacts.list_recipients.recipient_contact_id</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, java.lang.Integer> RECIPIENT_CONTACT_ID = createField("recipient_contact_id", org.jooq.impl.SQLDataType.INTEGER, this, "");
 
 	/**
 	 * Create a <code>contacts.list_recipients</code> table reference

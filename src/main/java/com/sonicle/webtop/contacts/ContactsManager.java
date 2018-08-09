@@ -58,6 +58,7 @@ import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactCard;
 import com.sonicle.webtop.contacts.bol.VContactCardChanged;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
+import com.sonicle.webtop.contacts.bol.VListRecipient;
 import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
@@ -1117,7 +1118,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if(cont == null || !cont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ"); // Rights check!
 			
-			List<OListRecipient> recipients = lrecDao.selectByContact(con, contactId);
+			List<VListRecipient> recipients = lrecDao.viewByContact(con, contactId);
 			return createContactsList(cont, recipients);
 		
 		} catch(SQLException | DAOException ex) {
@@ -1289,7 +1290,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
 				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
 				
-				List<OListRecipient> recipients = lrdao.selectByContact(con, contactsListId);
+				List<VListRecipient> recipients = lrdao.viewByContact(con, contactsListId);
 				ContactsList clist = createContactsList(ocont, recipients);
 
 				doMoveContactsList(coreMgr, con, copy, clist, targetCategoryId);
@@ -2102,7 +2103,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return tgt;
 	}
 	
-	private ContactsList createContactsList(OContact ocontlst, List<OListRecipient> olstrecs) {
+	private ContactsList createContactsList(OContact ocontlst, List<VListRecipient> olstrecs) {
 		if (ocontlst == null) return null;
 		ContactsList item = new ContactsList();
 		item.setContactId(ocontlst.getContactId());
@@ -2120,6 +2121,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		lstrec.setListRecipientId(src.getListRecipientId());
 		lstrec.setRecipient(src.getRecipient());
 		lstrec.setRecipientType(src.getRecipientType());
+		lstrec.setRecipientContactId(src.getRecipientContactId());
 		return lstrec;
 	}
 	
@@ -2388,14 +2390,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					final List<VContact> vconts = dao.viewRecipientsByFieldCategoryQuery(con, fieldType, fieldCategory, categoryIds, queryText);
 					for(VContact vcont : vconts) {
 						final String value = vcont.getValueBy(fieldType, fieldCategory);
+						final String recipientId=vcont.getContactId()!=null?vcont.getContactId().toString():null;
 						if (vcont.getIsList() && fieldCategory.equals(RecipientFieldCategory.WORK) && fieldType.equals(RecipientFieldType.EMAIL)) {
-							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getLastname(), value));
+							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getLastname(), value, Recipient.Type.TO, recipientId));
 							
 						} else if (!listsOnly) {
 							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
 							final String personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
-							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value));
+							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value, Recipient.Type.TO, recipientId));
 						}
 					}
 				}
@@ -2421,8 +2424,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				int contactId=ManagerUtils.getListIdFromVirtualRecipient(virtualRecipient);
 				if (contactId>=0) {
 					UserProfileId pid = new UserProfileId(getId());
-					List<OListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
-					for (OListRecipient recipient : recipients) {
+					List<VListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
+					for (VListRecipient recipient : recipients) {
 						Recipient.Type rcptType = EnumUtils.forSerializedName(recipient.getRecipientType(), Recipient.Type.class);
 						InternetAddress ia = InternetAddressUtils.toInternetAddress(recipient.getRecipient());
 						if (ia != null) {

@@ -32,20 +32,80 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.contacts.model.ContactsListRecipient;
-import com.sonicle.webtop.contacts.jooq.tables.pojos.ListRecipients;
+import com.sonicle.commons.LangUtils;
+import java.util.Arrays;
+import org.codehaus.plexus.util.StringUtils;
 
 /**
  *
  * @author malbinola
  */
-public class OListRecipient extends ListRecipients {
+public class VListRecipient extends OListRecipient {
 	
-	public OListRecipient() {}
-	
-	public OListRecipient(ContactsListRecipient clr) {
-		setRecipient(clr.getRecipient());
-		setRecipientType(clr.getRecipientType());
-		setRecipientContactId(clr.getRecipientContactId());
+	private String firstname;
+	private String lastname;
+	private String workEmail;
+	private String homeEmail;
+	private String otherEmail;
+
+	@Override
+	public String getRecipient() {
+		String recipient=super.getRecipient();
+		Integer rcid=getRecipientContactId();
+		if (rcid!=null && rcid>0) {
+			String email=LangUtils.coalesceStrings(workEmail,homeEmail,otherEmail);
+			if (email!=null) {
+				String name=StringUtils.join(new String[] { firstname, lastname}, " ");
+				if (!StringUtils.isEmpty(name)) email=name+" <"+email+">";
+				recipient=email;
+			}
+		}
+		return recipient;
 	}
+	
+	
+	// added fields getters and setters	
+
+	public String getFirstname() {
+		return firstname;
+	}
+
+	public void setFirstname(String firstname) {
+		this.firstname = firstname;
+	}
+
+	public String getLastname() {
+		return lastname;
+	}
+
+	public void setLastname(String lastname) {
+		this.lastname = lastname;
+	}
+
+	public String getWorkEmail() {
+		return workEmail;
+	}
+
+	public void setWorkEmail(String workEmail) {
+		this.workEmail = workEmail;
+	}
+
+	public String getHomeEmail() {
+		return homeEmail;
+	}
+
+	public void setHomeEmail(String homeEmail) {
+		this.homeEmail = homeEmail;
+	}
+
+	public String getOtherEmail() {
+		return otherEmail;
+	}
+
+	public void setOtherEmail(String otherEmail) {
+		this.otherEmail = otherEmail;
+	}
+	
+
+	
 }

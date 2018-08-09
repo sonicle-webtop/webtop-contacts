@@ -68,6 +68,7 @@ public class JsContactsList {
 		public Integer listRecipientId;
 		public String recipient;
 		public String recipientType;
+		public Integer recipientContactId;
 		
 		public Recipient() {}
 		
@@ -76,6 +77,7 @@ public class JsContactsList {
 			listRecipientId = rcpt.getListRecipientId();
 			recipient = rcpt.getRecipient();
 			recipientType = rcpt.getRecipientType();
+			recipientContactId = rcpt.getRecipientContactId();
 		}
 	}
 	
@@ -90,6 +92,7 @@ public class JsContactsList {
 				rcpt.setListRecipientId(jsRcpt.listRecipientId);
 				rcpt.setRecipient(jsRcpt.recipient);
 				rcpt.setRecipientType(jsRcpt.recipientType);
+				rcpt.setRecipientContactId(jsRcpt.recipientContactId);
 				cl.getRecipients().add(rcpt);
 			}
 		}

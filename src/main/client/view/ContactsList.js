@@ -139,6 +139,8 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				store: '{record.recipients}'
 			},
 			fields: { recipientType: 'recipientType', email: 'recipient' },
+			autoLast: true,
+			showContactLink: true,
 			tbar: [
 				'->',
 				me.addAct('pasteList', {
