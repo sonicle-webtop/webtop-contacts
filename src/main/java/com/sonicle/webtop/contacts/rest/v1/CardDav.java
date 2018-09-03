@@ -36,7 +36,7 @@ import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
-import com.sonicle.webtop.contacts.ManagerUtils;
+import com.sonicle.webtop.contacts.ContactsUtils;
 import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactCard;
@@ -110,7 +110,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
@@ -156,7 +156,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
@@ -187,7 +187,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
 			if (css.getDavAddressbookDeleteEnabled()) {
 				manager.deleteCategory(categoryId);
@@ -214,7 +214,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
@@ -248,7 +248,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
@@ -279,7 +279,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			Category cat = manager.getCategory(categoryId);
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
@@ -307,7 +307,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			// Manager's call is already ro protected for remoteProviders
 			VCard vCard = parseVCard(body.getVcard());
 			manager.addContactCard(categoryId, body.getHref(), vCard);
@@ -329,7 +329,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			// Manager's call is already ro protected for remoteProviders
 			VCard vCard = parseVCard(body);
 			manager.updateContactCard(categoryId, href, vCard);
@@ -352,7 +352,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			int categoryId = ManagerUtils.decodeAsCategoryId(addressBookUid);
+			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			manager.deleteContactCard(categoryId, href);
 			return respOkNoContent();
 			
@@ -367,7 +367,7 @@ public class CardDav extends CarddavApi {
 	private AddressBook createAddressBook(Category cat, DateTime lastRevisionTimestamp) {
 		return new AddressBook()
 				.id(cat.getCategoryId())
-				.uid(ManagerUtils.encodeAsCategoryUid(cat.getCategoryId()))
+				.uid(ContactsUtils.encodeAsCategoryUid(cat.getCategoryId()))
 				.displayName(cat.getName())
 				.description(cat.getDescription())
 				.syncToken(buildEtag(lastRevisionTimestamp));

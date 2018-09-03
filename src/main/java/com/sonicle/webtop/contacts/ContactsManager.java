@@ -37,7 +37,6 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.PathUtils;
-import com.sonicle.commons.beans.VirtualAddress;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
@@ -115,7 +114,6 @@ import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.sdk.WTRuntimeException;
 import com.sonicle.webtop.core.sdk.interfaces.IRecipientsProvidersSource;
-import com.sonicle.webtop.core.util.IdentifierUtils;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
@@ -137,17 +135,13 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.mail.internet.InternetAddress;
@@ -427,11 +421,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		UserProfile.Data ud = WT.getUserData(getTargetProfileId());
 		String davServerBaseUrl = WT.getDavServerBaseUrl(getTargetProfileId().getDomainId());
-		String categoryUid = ManagerUtils.encodeAsCategoryUid(categoryId);
-		String addressbookUrl = MessageFormat.format(ManagerUtils.CARDDAV_ADDRESSBOOK_URL, ud.getProfileEmailAddress(), categoryUid);
+		String categoryUid = ContactsUtils.encodeAsCategoryUid(categoryId);
+		String addressbookUrl = MessageFormat.format(ContactsUtils.CARDDAV_ADDRESSBOOK_URL, ud.getProfileEmailAddress(), categoryUid);
 		
 		LinkedHashMap<String, String> links = new LinkedHashMap<>();
-		links.put(ManagerUtils.CATEGORY_LINK_CARDDAV, PathUtils.concatPathParts(davServerBaseUrl, addressbookUrl));
+		links.put(ContactsUtils.CATEGORY_LINK_CARDDAV, PathUtils.concatPathParts(davServerBaseUrl, addressbookUrl));
 		return links;
 	}
 	
@@ -2266,9 +2260,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private OContact fillDefaultsForInsert(OContact tgt) {
 		if (tgt != null) {
 			if (StringUtils.isBlank(tgt.getPublicUid())) {
-				tgt.setPublicUid(ManagerUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
+				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
 			}
-			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ManagerUtils.buildHref(tgt.getPublicUid()));
+			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ContactsUtils.buildHref(tgt.getPublicUid()));
 		}
 		return tgt;
 	}
@@ -2421,7 +2415,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			try {
 				con = WT.getConnection(SERVICE_ID);
-				int contactId=ManagerUtils.getListIdFromVirtualRecipient(virtualRecipient);
+				int contactId=ContactsUtils.getListIdFromVirtualRecipient(virtualRecipient);
 				if (contactId>=0) {
 					UserProfileId pid = new UserProfileId(getId());
 					List<VListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);

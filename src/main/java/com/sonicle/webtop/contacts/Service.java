@@ -113,10 +113,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -124,15 +122,12 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
-import org.ldaptive.io.LdifReader;
 import org.slf4j.Logger;
 import org.supercsv.prefs.CsvPreference;
 
@@ -1007,7 +1002,7 @@ public class Service extends BaseService {
 			String recipientType = ServletUtils.getStringParameter(request, "recipientType", true);
 			ArrayList<String> emails=ServletUtils.getStringParameters(request, "emails");
 			
-			int idlist=ManagerUtils.getListIdFromInternetAddress(new InternetAddress(list));
+			int idlist=ContactsUtils.getListIdFromInternetAddress(new InternetAddress(list));
 			
 			ContactsList cl=new ContactsList();
 			cl.setContactId(idlist);
