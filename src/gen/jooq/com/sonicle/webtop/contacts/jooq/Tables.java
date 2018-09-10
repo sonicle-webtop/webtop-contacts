@@ -32,6 +32,16 @@ public class Tables {
 	public static final com.sonicle.webtop.contacts.jooq.tables.Contacts CONTACTS = com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS;
 
 	/**
+	 * The table contacts.contacts_attachments
+	 */
+	public static final com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments CONTACTS_ATTACHMENTS = com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS;
+
+	/**
+	 * The table contacts.contacts_attachments_data
+	 */
+	public static final com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData CONTACTS_ATTACHMENTS_DATA = com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA;
+
+	/**
 	 * The table contacts.contacts_pictures
 	 */
 	public static final com.sonicle.webtop.contacts.jooq.tables.ContactsPictures CONTACTS_PICTURES = com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES;

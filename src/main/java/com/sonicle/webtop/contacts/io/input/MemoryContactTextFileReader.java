@@ -120,7 +120,7 @@ public class MemoryContactTextFileReader extends TextFileReader implements Memor
 			Integer index = headersIndexes.get(mapping.source);
 			fillContactByMapping(contact, mapping.target, line.get(index));
 		}
-		return new ContactInput(contact, null);
+		return new ContactInput(contact);
 	}
 	
 	private void fillContactByMapping(Contact contact, String target, String value) {

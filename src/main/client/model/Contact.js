@@ -33,7 +33,15 @@
  */
 Ext.define('Sonicle.webtop.contacts.model.Contact', {
 	extend: 'WTA.ux.data.BaseModel',
-	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContacts'),
+	requires: [
+		'Sonicle.webtop.contacts.model.ContactAttachment'
+	],
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageContacts', 'data', {
+		writer: {
+			type: 'sojson',
+			writeAssociations: true
+		}
+	}),
 	
 	identifier: 'negative',
 	idProperty: 'id',
@@ -88,5 +96,8 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('notes', 'string', true),
 		WTF.field('picture', 'string', true),
 		WTF.field('_profileId', 'string', false)
+	],
+	hasMany: [
+		WTF.hasMany('attachments', 'Sonicle.webtop.contacts.model.ContactAttachment')
 	]
 });

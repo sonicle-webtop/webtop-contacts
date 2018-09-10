@@ -421,6 +421,17 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(OContact.class);
 	}
 	
+	public Integer selectCategoryId(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CATEGORY_ID
+			)
+			.from(CONTACTS)
+			.where(CONTACTS.CONTACT_ID.equal(contactId))
+			.fetchOneInto(Integer.class);
+	}
+	
 	public List<Integer> selectAliveIdsByCategoryHrefs(Connection con, int categoryId, String href) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl

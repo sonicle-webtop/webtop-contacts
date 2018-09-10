@@ -91,8 +91,8 @@ public class JsContactsList {
 				ContactsListRecipient rcpt = new ContactsListRecipient();
 				rcpt.setListRecipientId(jsRcpt.listRecipientId);
 				rcpt.setRecipient(jsRcpt.recipient);
-				rcpt.setRecipientType(jsRcpt.recipientType);
 				rcpt.setRecipientContactId(jsRcpt.recipientContactId);
+				rcpt.setRecipientType(jsRcpt.recipientType);
 				cl.getRecipients().add(rcpt);
 			}
 		}

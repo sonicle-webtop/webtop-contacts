@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.io.input;
 
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactPicture;
+import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
@@ -64,7 +64,6 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
@@ -110,57 +109,56 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 	
 	public ContactInput readVCard(LogEntries log, VCard vc) throws Exception {
 		Contact contact = new Contact();
-		ContactPicture picture = null;
 		
 		// UID
-		if(vc.getUid() != null) {
+		if (vc.getUid() != null) {
 			contact.setPublicUid(deflt(vc.getUid().getValue()));
 		}
 		
 		// TITLE
-		if(!vc.getTitles().isEmpty()) {
+		if (!vc.getTitles().isEmpty()) {
 			Title ti = vc.getTitles().get(0);
 			contact.setTitle(deflt(ti.getValue()));
-			if(vc.getTitles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many TITLE properties found"));
+			if (vc.getTitles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many TITLE properties found"));
 		}
 		
 		// N -> FirstName/LastName
-		if(!vc.getStructuredNames().isEmpty()) {
+		if (!vc.getStructuredNames().isEmpty()) {
 			StructuredName sn = vc.getStructuredNames().get(0);
 			contact.setFirstName(deflt(sn.getGiven()));
 			contact.setLastName(deflt(sn.getFamily()));
-			if(vc.getStructuredNames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many N properties found"));
+			if (vc.getStructuredNames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many N properties found"));
 		}
 		
 		// NICKNAME
-		if(!vc.getNicknames().isEmpty()) {
+		if (!vc.getNicknames().isEmpty()) {
 			Nickname ni = vc.getNicknames().get(0);
 			contact.setNickname(deflt(flatten(ni)));
-			if(vc.getNicknames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many NICKNAME properties found"));
+			if (vc.getNicknames().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many NICKNAME properties found"));
 		}
 		
 		// GENDER
-		if(vc.getGender() != null) {
+		if (vc.getGender() != null) {
 			contact.setGender(parseGender(vc.getGender()));
 		}
 		
 		// ADR
-		if(!vc.getAddresses().isEmpty()) {
-			for(Address ad : vc.getAddresses()) {
+		if (!vc.getAddresses().isEmpty()) {
+			for (Address ad : vc.getAddresses()) {
 				List<AddressType> types = ad.getTypes();
-				if(types.contains(AddressType.WORK)) {
+				if (types.contains(AddressType.WORK)) {
 					contact.setWorkAddress(deflt(ad.getStreetAddress()));
 					contact.setWorkPostalCode(deflt(ad.getPostalCode()));
 					contact.setWorkCity(deflt(ad.getLocality()));
 					contact.setWorkState(deflt(ad.getRegion()));
 					contact.setWorkCountry(deflt(ad.getCountry()));
-				} else if(types.contains(AddressType.HOME)) {
+				} else if (types.contains(AddressType.HOME)) {
 					contact.setHomeAddress(deflt(ad.getStreetAddress()));
 					contact.setHomePostalCode(deflt(ad.getPostalCode()));
 					contact.setHomeCity(deflt(ad.getLocality()));
 					contact.setHomeState(deflt(ad.getRegion()));
 					contact.setHomeCountry(deflt(ad.getCountry()));
-				} else if(!types.contains(AddressType.WORK) && !types.contains(AddressType.HOME)) {
+				} else if (!types.contains(AddressType.WORK) && !types.contains(AddressType.HOME)) {
 					contact.setOtherAddress(deflt(ad.getStreetAddress()));
 					contact.setOtherPostalCode(deflt(ad.getPostalCode()));
 					contact.setOtherCity(deflt(ad.getLocality()));
@@ -171,31 +169,31 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		}
 		
 		// TEL
-		if(!vc.getTelephoneNumbers().isEmpty()) {
-			for(Telephone te : vc.getTelephoneNumbers()) {
+		if (!vc.getTelephoneNumbers().isEmpty()) {
+			for (Telephone te : vc.getTelephoneNumbers()) {
 				List<TelephoneType> types = te.getTypes();
-				if(types.contains(TelephoneType.WORK)) {
-					if(types.contains(TelephoneType.VOICE)) {
+				if (types.contains(TelephoneType.WORK)) {
+					if (types.contains(TelephoneType.VOICE)) {
 						contact.setWorkTelephone(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.CELL)) {
+					} else if (types.contains(TelephoneType.CELL)) {
 						contact.setWorkMobile(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.FAX)) {
+					} else if (types.contains(TelephoneType.FAX)) {
 						contact.setWorkFax(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.PAGER)) {
+					} else if (types.contains(TelephoneType.PAGER)) {
 						contact.setWorkPager(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.TEXT)) {
+					} else if (types.contains(TelephoneType.TEXT)) {
 						contact.setWorkTelephone2(deflt(te.getText()));
 					}
-				} else if(types.contains(TelephoneType.HOME)) {
-					if(types.contains(TelephoneType.VOICE)) {
+				} else if (types.contains(TelephoneType.HOME)) {
+					if (types.contains(TelephoneType.VOICE)) {
 						contact.setHomeTelephone(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.FAX)) {
+					} else if (types.contains(TelephoneType.FAX)) {
 						contact.setHomeFax(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.PAGER)) {
+					} else if (types.contains(TelephoneType.PAGER)) {
 						contact.setHomePager(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.CELL)) {
+					} else if (types.contains(TelephoneType.CELL)) {
 						contact.setHomeTelephone2(deflt(te.getText()));
-					} else if(types.contains(TelephoneType.TEXT)) {
+					} else if (types.contains(TelephoneType.TEXT)) {
 						contact.setHomeTelephone2(deflt(te.getText()));
 					}
 				}
@@ -203,49 +201,49 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		}
 		
 		// EMAIL
-		if(!vc.getEmails().isEmpty()) {
-			for(Email em : vc.getEmails()) {
+		if (!vc.getEmails().isEmpty()) {
+			for (Email em : vc.getEmails()) {
 				List<EmailType> types = em.getTypes();
-				if(types.contains(EmailType.WORK)) {
+				if (types.contains(EmailType.WORK)) {
 					contact.setWorkEmail(deflt(em.getValue()));
-				} else if(types.contains(EmailType.HOME)) {
+				} else if (types.contains(EmailType.HOME)) {
 					contact.setHomeEmail(deflt(em.getValue()));
-				} else if(!types.contains(EmailType.WORK) && !types.contains(EmailType.HOME)) {
+				} else if (!types.contains(EmailType.WORK) && !types.contains(EmailType.HOME)) {
 					contact.setOtherEmail(deflt(em.getValue()));
 				}
 			}
 		}
 		
 		// IMPP -> InstantMsg
-		if(!vc.getImpps().isEmpty()) {
-			for(Impp im : vc.getImpps()) {
+		if (!vc.getImpps().isEmpty()) {
+			for (Impp im : vc.getImpps()) {
 				List<ImppType> types = im.getTypes();
 				URI uri = im.getUri();
-				if(uri == null) continue;
-				if(types.contains(ImppType.WORK)) {
+				if (uri == null) continue;
+				if (types.contains(ImppType.WORK)) {
 					contact.setWorkInstantMsg(deflt(uri.toString()));
-				} else if(types.contains(ImppType.HOME)) {
+				} else if (types.contains(ImppType.HOME)) {
 					contact.setHomeInstantMsg(deflt(uri.toString()));
-				} else if(!types.contains(ImppType.WORK) && !types.contains(ImppType.HOME)) {
+				} else if (!types.contains(ImppType.WORK) && !types.contains(ImppType.HOME)) {
 					contact.setOtherInstantMsg(deflt(uri.toString()));
 				}
 			}
 		}
 		
 		// ORG -> Company/Department
-		if(vc.getOrganization() != null) {
+		if (vc.getOrganization() != null) {
 			List<String> values = vc.getOrganization().getValues();
-			if(!values.isEmpty()) {
+			if (!values.isEmpty()) {
 				contact.setCompany(deflt(values.get(0)));
 				contact.setDepartment(deflt(values.get(1)));
 			}
 		}
 		
 		// ROLE -> Function
-		if(!vc.getRoles().isEmpty()) {
+		if (!vc.getRoles().isEmpty()) {
 			Role ro = vc.getRoles().get(0);
 			contact.setFunction(deflt(ro.getValue()));
-			if(vc.getRoles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many ROLE properties found"));
+			if (vc.getRoles().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many ROLE properties found"));
 		}
 		
 		//TODO: come riempiamo il campo manager?
@@ -258,21 +256,21 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		}
 		
 		// ANNIVERSARY
-		if(vc.getAnniversary()!= null) {
+		if (vc.getAnniversary()!= null) {
 			contact.setAnniversary(new LocalDate(vc.getAnniversary().getDate()));
 		}
 		
 		// URL
-		if(!vc.getUrls().isEmpty()) {
+		if (!vc.getUrls().isEmpty()) {
 			Url ur = vc.getUrls().get(0);
 			contact.setUrl(deflt(ur.getValue()));
-			if(vc.getUrls().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many URL properties found"));
+			if (vc.getUrls().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many URL properties found"));
 		}
 		
 		// NOTE
-		if(!vc.getNotes().isEmpty()) {
+		if (!vc.getNotes().isEmpty()) {
 			StringBuilder sb = new StringBuilder();
-			for(Note no : vc.getNotes()) {
+			for (Note no : vc.getNotes()) {
 				sb.append(no.getValue());
 				sb.append("\n");
 			}
@@ -280,13 +278,16 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 		}
 		
 		// PHOTO
-		if(!vc.getPhotos().isEmpty()) {
+		if (!vc.getPhotos().isEmpty()) {
 			Photo po = vc.getPhotos().get(0);
-			picture = new ContactPicture(po.getContentType().getMediaType(), po.getData());
-			if(vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many PHOTO properties found"));
+			
+			ContactPictureWithBytes picture = new ContactPictureWithBytes(po.getData());
+			picture.setMediaType(po.getContentType().getMediaType());
+			contact.setPicture(picture);
+			if (vc.getPhotos().size() > 1) log.add(new MessageLogEntry(LogEntry.Level.WARN, "Many PHOTO properties found"));
 		}
 		
-		return new ContactInput(contact, picture);
+		return new ContactInput(contact);
 	}
 	
 	public static Contact.Gender parseGender(Gender ge) {

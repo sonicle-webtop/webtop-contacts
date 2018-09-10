@@ -174,6 +174,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
+	/*
 	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -191,4 +192,5 @@ public class ListRecipientDAO extends BaseDAO {
 			)
 			.execute();
 	}
+	*/
 }

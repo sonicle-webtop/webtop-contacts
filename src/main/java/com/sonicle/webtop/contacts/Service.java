@@ -64,7 +64,7 @@ import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactPicture;
+import com.sonicle.webtop.contacts.model.ContactPictureWithBytesOld;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyShareFolderCategory;
 import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
@@ -78,8 +78,12 @@ import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
+import com.sonicle.webtop.contacts.model.ContactAttachment;
+import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
+import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactItemEx;
 import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.FolderContacts;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
@@ -114,6 +118,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.util.ArrayList;
@@ -872,7 +877,7 @@ public class Service extends BaseService {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
 				int contactId = Integer.parseInt(id);
-				ContactItem contact = manager.getContact(contactId);
+				Contact contact = manager.getContact(contactId);
 				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
 				item = new JsContact(ownerId, contact);
 				
@@ -882,30 +887,60 @@ public class Service extends BaseService {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
 				Contact contact = JsContact.buildContact(pl.data);
-				ContactPicture picture = null;
-				if (!StringUtils.isEmpty(pl.data.picture) && hasUploadedFile(pl.data.picture)) {
-					picture = getUploadedContactPicture(pl.data.picture);
-				}
 				
-				manager.addContact(contact, picture);
+				// We reuse picture field passing the uploaded file ID.
+				// Due to different formats we can be sure that IDs don't collide.
+				if (hasUploadedFile(pl.data.picture)) {
+					// If found, new picture has been uploaded!
+					contact.setPicture(getUploadedContactPicture(pl.data.picture));
+				}
+				for (JsContact.Attachment jsatt : pl.data.attachments) {
+					UploadedFile upFile = getUploadedFileOrThrow(jsatt._uplId);
+					ContactAttachmentWithStream att = new ContactAttachmentWithStream(upFile.getFile());
+					att.setAttachmentId(jsatt.id);
+					att.setFilename(upFile.getFilename());
+					att.setSize(upFile.getSize());
+					att.setMediaType(upFile.getMediaType());
+					contact.getAttachments().add(att);
+				}
+				manager.addContact(contact);
 				
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
+				boolean processPicture = false;
 				Contact contact = JsContact.buildContact(pl.data);
-				ContactPicture picture = null;
-				if (StringUtils.isEmpty(pl.data.picture)) {
-					manager.updateContact(contact, null, true);
+				
+				// We reuse picture field passing the uploaded file ID.
+				// Due to different formats we can be sure that IDs don't collide.
+				if (hasUploadedFile(pl.data.picture)) {
+					// If found, new picture has been uploaded!
+					processPicture = true;
+					contact.setPicture(getUploadedContactPicture(pl.data.picture));
 				} else {
-					if (hasUploadedFile(pl.data.picture)) {
-						picture = getUploadedContactPicture(pl.data.picture);
-						manager.updateContact(contact, picture, true);
+					// If blank, picture has been deleted!
+					if (StringUtils.isBlank(pl.data.picture)) processPicture = true;
+				}
+				for (JsContact.Attachment jsatt : pl.data.attachments) {
+					if (!StringUtils.isBlank(jsatt._uplId)) {
+						UploadedFile upFile = getUploadedFileOrThrow(jsatt._uplId);
+						ContactAttachmentWithStream att = new ContactAttachmentWithStream(upFile.getFile());
+						att.setAttachmentId(jsatt.id);
+						att.setFilename(upFile.getFilename());
+						att.setSize(upFile.getSize());
+						att.setMediaType(upFile.getMediaType());
+						contact.getAttachments().add(att);
 					} else {
-						manager.updateContact(contact, null, false);
+						ContactAttachment att = new ContactAttachment();
+						att.setAttachmentId(jsatt.id);
+						att.setFilename(jsatt.name);
+						att.setSize(jsatt.size);
+						contact.getAttachments().add(att);
 					}
 				}
+				manager.updateContact(contact, processPicture);
 				
 				new JsonResult().printTo(out);
 				
@@ -932,8 +967,66 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error in action ManageContacts", ex);
+			logger.error("Error in ManageContacts", ex);
 			new JsonResult(false, "Error").printTo(out);	
+		}
+	}
+	
+	public void processGetContactPicture(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String id = ServletUtils.getStringParameter(request, "id", true);
+			
+			ContactPictureWithBytes picture = null;
+			if (hasUploadedFile(id)) {
+				picture = getUploadedContactPicture(id);
+			} else {
+				int contactId = Integer.parseInt(id);
+				picture = manager.getContactPicture(contactId);
+			}
+			if (picture != null) {
+				try (ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
+					ServletUtils.writeContent(response, bais, picture.getMediaType());
+				}
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in GetContactPicture", ex);
+		}
+	}
+	
+	public void processDownloadContactAttachment(HttpServletRequest request, HttpServletResponse response) {
+		
+		try {
+			boolean inline = ServletUtils.getBooleanParameter(request, "inline", false);
+			String attachmentId = ServletUtils.getStringParameter(request, "attachmentId", null);
+			
+			if (!StringUtils.isBlank(attachmentId)) {
+				Integer contactId = ServletUtils.getIntParameter(request, "contactId", true);
+				
+				ContactAttachmentWithBytes attch = manager.getContactAttachment(contactId, attachmentId);
+				InputStream is = null;
+				try {
+					is = new ByteArrayInputStream(attch.getBytes());
+					ServletUtils.writeFileResponse(response, inline, attch.getFilename(), null, attch.getSize(), is);
+				} finally {
+					IOUtils.closeQuietly(is);
+				}
+			} else {
+				String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
+				
+				UploadedFile uplFile = getUploadedFileOrThrow(uploadId);
+				InputStream is = null;
+				try {
+					is = new FileInputStream(uplFile.getFile());
+					ServletUtils.writeFileResponse(response, inline, uplFile.getFilename(), null, uplFile.getSize(), is);
+				} finally {
+					IOUtils.closeQuietly(is);
+				}
+			}
+			
+		} catch(Exception ex) {
+			logger.error("Error in DownloadContactAttachment", ex);
+			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
 		}
 	}
 	
@@ -1018,78 +1111,6 @@ public class Service extends BaseService {
 		} catch(Exception ex) {
 			logger.error("Error in AddToContactsList", ex);
 			new JsonResult(false, "Error").printTo(out);
-		}
-	}
-	
-	public void processGetContactPicture(HttpServletRequest request, HttpServletResponse response) {
-		
-		try {
-			String id = ServletUtils.getStringParameter(request, "id", true);
-			
-			ContactPicture picture = null;
-			if(hasUploadedFile(id)) {
-				picture = getUploadedContactPicture(id);
-			} else {
-				int contactId = Integer.parseInt(id);
-				picture = manager.getContactPicture(contactId);
-			}
-			
-			if(picture != null) {
-				try(ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
-					ServletUtils.writeContent(response, bais, picture.getMediaType());
-				}
-			}
-			
-			
-			/*
-			File photoFile = null;
-			
-			if(hasUploadedFile(id)) {
-				UploadedFile uploaded = getUploadedFile(id);
-				if(uploaded == null) throw new Exception();
-				File tempFolder = WT.getTempFolder();
-				photoFile = new File(tempFolder, uploaded.id);
-				
-				try(FileInputStream fis = new FileInputStream(photoFile)) {
-					ServletUtils.writeContent(response, fis, "");
-					//ServletUtils.writeInputStream(response, fis);
-				}
-				
-			} else {
-				ContactPicture pic = manager.getContactPicture(id);
-				try(ByteArrayInputStream bais = new ByteArrayInputStream(pic.getBytes())) {
-					ServletUtils.writeContent(response, bais, pic.getMimeType());
-				}
-				
-				//byte[] photo = manager.getContactPhoto(id);
-				//try(ByteArrayInputStream bais = new ByteArrayInputStream(photo)) {
-				//	ServletUtils.writeContent(response, bais, "image/png");
-					//ServletUtils.writeInputStream(response, bais);
-				//}
-			}
-			*/
-			
-			/*
-			if(Validator.isInteger(id)) {
-				manager.getContactPhoto(id)
-				
-				//TODO: 
-				
-				
-			} else {
-				UploadedFile uploaded = getUploadedFile(id);
-				if(uploaded == null) throw new Exception();
-				File tempFolder = WT.getTempFolder();
-				photoFile = new File(tempFolder, uploaded.id);
-			}
-			
-			try(FileInputStream fis = new FileInputStream(photoFile)) {
-				ServletUtils.writeInputStream(response, fis);
-			}
-			*/
-			
-		} catch(Exception ex) {
-			logger.error("Error in action GetContactPicture", ex);
 		}
 	}
 	
@@ -1304,11 +1325,11 @@ public class Service extends BaseService {
 			
 			Category category = null;
 			for (Integer id : ids) {
-				ContactItem contact = manager.getContact(id);
-				ContactPicture picture = null;
+				Contact contact = manager.getContact(id);
+				ContactPictureWithBytes picture = null;
 				
 				category = manager.getCategory(contact.getCategoryId());
-				if (contact.getHasPicture()) picture = manager.getContactPicture(id);
+				if (contact.hasPicture()) picture = manager.getContactPicture(id);
 				items.add(new RBContactDetail(core, category, contact, picture));
 			}
 			
@@ -1335,20 +1356,20 @@ public class Service extends BaseService {
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 			VCardOutput vcout = new VCardOutput(prodId);
 			for (Integer id : ids) {
-				final ContactItem contact = manager.getContact(id);
+				final Contact contact = manager.getContact(id);
 				if (contact == null) continue;
 				
-				ContactPicture contactPicture = null;
-				if (contact.getHasPicture()) {
-					try {
-						contactPicture = manager.getContactPicture(id);
-					} catch(Throwable t) {
-						logger.warn("Unable to extract picture [{}]", t, id);
+				if (contact.hasPicture()) {
+					ContactPictureWithBytes picture = manager.getContactPicture(id);
+					if (picture != null) {
+						contact.setPicture(picture);
+					} else {
+						logger.warn("Unable to extract picture [{}]", id);
 					}
 				}
 				
 				final String filename = buildContactFilename(contact) + ".vcf";
-				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contact, contactPicture))));
+				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contact))));
 				
 				items.add(new MapItem()
 					.add("uploadId", upfile.getUploadId())
@@ -1364,15 +1385,15 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private ContactPicture getUploadedContactPicture(String id) throws WTException {
-		UploadedFile upl = getUploadedFile(id);
-		if(upl == null) throw new WTException("Uploaded file not found [{0}]", id);
-		
-		ContactPicture pic = null;
+	private ContactPictureWithBytes getUploadedContactPicture(String uploadId) throws WTException {
+		UploadedFile upl = getUploadedFileOrThrow(uploadId);
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(upl.getFile());
-			pic = new ContactPicture("image/png", IOUtils.toByteArray(fis));
+			ContactPictureWithBytes pic = new ContactPictureWithBytes(IOUtils.toByteArray(fis));
+			pic.setMediaType(upl.getMediaType());
+			return pic;
+			
 		} catch (FileNotFoundException ex) {
 			throw new WTException(ex, "File not found {0}");
 		} catch (IOException ex) {
@@ -1380,7 +1401,6 @@ public class Service extends BaseService {
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
-		return pic;
 	}
 	
 	private ReportConfig.Builder reportConfigBuilder() {

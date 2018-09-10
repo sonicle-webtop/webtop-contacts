@@ -34,8 +34,8 @@ package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.model.MasterData;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -102,7 +102,7 @@ public class RBContactDetail {
 	public String notes;
 	public Image picture;
 		
-	public RBContactDetail(CoreManager coreMgr, Category category, Contact contact, ContactPicture picture) throws WTException {
+	public RBContactDetail(CoreManager coreMgr, Category category, Contact contact, ContactPictureWithBytes picture) throws WTException {
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
 		this.categoryColor = Category.getHexColor(category.getColor());
