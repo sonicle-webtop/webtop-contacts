@@ -50,6 +50,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.view.Contact',
 		'Sonicle.webtop.contacts.view.ContactsList',
 		'Sonicle.webtop.contacts.view.CategoryChooser',
+		'Sonicle.webtop.contacts.view.ListChooser',
 		'Sonicle.webtop.contacts.view.HiddenCategories'
 	],
 	mixins: [
@@ -107,9 +108,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('refresh'),
 				me.getAct('printAddressbook'),
 				me.getAct('deleteContact2'),
-				'-',
-				//me.getAct('addContact2'),
-				me.getAct('addContactsList2'),
 				'->',
 				/*
 				me.getAct('workview'),
@@ -446,6 +444,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('moveContact');
 						me.updateDisabled('deleteContact');
 						me.updateDisabled('addContactsListFromSel');
+						me.updateDisabled('addToContactsListFromSel');
 					},
 					rowdblclick: function(s, rec) {
 						var er = me.toRightsObj(rec.get('_erights'));
@@ -781,6 +780,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			}
 		});
+		me.addAct('addToContactsListFromSel', {
+			tooltip: null,
+			handler: function() {
+				var emails = me.buildEmails(me.activeView, me.getSelectedContacts());
+				
+				me.addToContactsListUI(emails);
+			}
+		});
 		me.addAct('deleteContact', {
 			text: WT.res('act-delete.lbl'),
 			tooltip: null,
@@ -1024,6 +1031,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('deleteContact'),
 				'-',
 				me.getAct('addContactsListFromSel'),
+				me.getAct('addToContactsListFromSel'),
 				'-',
 				me.getAct('sendContact')
 			]
@@ -1050,6 +1058,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('moveContact');
 		me.updateDisabled('deleteContact');
 		me.updateDisabled('addContactsListFromSel');
+		me.updateDisabled('addToContactsListFromSel');
 	},
 	
 	loadCboGroup: function(data, value) {
@@ -1291,6 +1300,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (success) me.reloadContacts();
 			}
 		});
+	},
+	
+	addToContactsListUI: function(emails) {
+		var me = this,
+				vct = me.createListChooser('');
+		
+		vct.getView().on('viewok', function(s,list,recipientType) {
+			WT.ajaxReq(me.ID, 'AddToContactsList', {
+				params: {
+					list: list,
+					recipientType: recipientType,
+					emails: emails
+				}
+			});
+		});
+		vct.show();
 	},
 	
 	deleteSelContacts: function(sel) {
@@ -1949,7 +1974,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 					return false;
 				}
+				break;
 			case 'addContactsListFromSel':
+			case 'addToContactsListFromSel':
 				sel = me.getSelectedContacts();
 				if(sel.length === 0) {
 					return true;
@@ -1958,8 +1985,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					for(var i=0; i<sel.length; i++) {
 						if(sel[i].get('isList') !== isl) return true;
 					}
-					return false;
+					return isl;
 				}
+				break;
 		}
 	},
 	
@@ -1973,6 +2001,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if(!Ext.isEmpty(email)) rcpts.push({recipientType:'to', recipient: email});
 		});
 		return rcpts;
+	},
+	
+	/**
+	 * @private
+	 */
+	buildEmails: function(view, recs) {
+		var emails = [], email, name;
+		Ext.iterate(recs, function(rec) {
+			email = (view === 'w') ? rec.get('workEmail') : rec.get('homeEmail');
+			name = Sonicle.String.join(' ', rec.get('firstName'), rec.get('lastName'));
+			if(!Ext.isEmpty(name)) email=name+" <"+email+">";
+			if(!Ext.isEmpty(email)) emails.push(email);
+		});
+		return emails;
 	},
 	
 	/**
@@ -2003,6 +2045,21 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				},
 				ownerId: ownerId,
 				categoryId: catId
+			}
+		});
+	},
+	
+	/**
+	 * @private
+	 */
+	createListChooser: function(list) {
+		var me = this;
+		return WT.createView(me.ID, 'view.ListChooser', {
+			viewCfg: {
+				dockableConfig: {
+					title: me.res('act-addToContactsListFromSel.lbl')
+				},
+				list: list
 			}
 		});
 	},

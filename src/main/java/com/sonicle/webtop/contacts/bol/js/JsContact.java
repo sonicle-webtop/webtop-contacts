@@ -35,8 +35,9 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.core.sdk.UserProfileId;
+import java.util.ArrayList;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -94,11 +95,14 @@ public class JsContact {
 	public String url;
 	public String notes;
 	public String picture;
+	public ArrayList<Attachment> attachments;
+	
+	// Read-only fields
 	public String _profileId;
 	
 	public JsContact() {}
 	
-	public JsContact(UserProfileId ownerId, ContactItem contact) {
+	public JsContact(UserProfileId ownerId, Contact contact) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
 		id = contact.getContactId();
@@ -149,7 +153,18 @@ public class JsContact {
 		anniversary = (contact.getAnniversary() != null) ? ymdFmt.print(contact.getAnniversary()) : null;
 		url = contact.getUrl();
 		notes = contact.getNotes();
-		picture = contact.getHasPicture() ? String.valueOf(id) : null;
+		picture = contact.hasPicture() ? String.valueOf(id) : null;
+		
+		attachments = new ArrayList<>();
+		for (ContactAttachment att : contact.getAttachments()) {
+			Attachment jsatt = new Attachment();
+			jsatt.id = att.getAttachmentId();
+			//jsatt.lastModified = DateTimeUtils.printYmdHmsWithZone(att.getRevisionTimestamp(), profileTz);
+			jsatt.name = att.getFilename();
+			jsatt.size = att.getSize();
+			attachments.add(jsatt);
+		}
+		
 		_profileId = ownerId.toString();
 	}
 	
@@ -201,10 +216,19 @@ public class JsContact {
 		item.setAssistant(js.assistant);
 		item.setAssistantTelephone(js.assistantTelephone);
 		item.setPartner(js.partner);
-		if(!StringUtils.isEmpty(js.birthday)) item.setBirthday(ymdFmt.parseLocalDate(js.birthday));
-		if(!StringUtils.isEmpty(js.anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(js.anniversary));
+		if (!StringUtils.isEmpty(js.birthday)) item.setBirthday(ymdFmt.parseLocalDate(js.birthday));
+		if (!StringUtils.isEmpty(js.anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(js.anniversary));
 		item.setUrl(js.url);
 		item.setNotes(js.notes);
+		
+		// Attachment needs to be treated outside this class in order to have complete access to their streams
 		return item;
+	}
+	
+	public static class Attachment {
+		public String id;
+		public String name;
+		public Long size;
+		public String _uplId;
 	}
 }

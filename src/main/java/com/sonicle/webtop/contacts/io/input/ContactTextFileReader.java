@@ -127,7 +127,7 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 		} catch(Throwable t) {
 			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
 		} finally {
-			beanHandler.handle(new ContactInput(contact, null), log);
+			beanHandler.handle(new ContactInput(contact), log);
 		}
 	}
 	

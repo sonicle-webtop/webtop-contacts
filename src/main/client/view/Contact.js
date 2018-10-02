@@ -36,8 +36,10 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	requires: [
 		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.form.field.Image',
+		'Sonicle.plugin.FileDrop',
 		'WTA.ux.UploadBar',
 		'WTA.ux.field.SuggestCombo',
+		'WTA.ux.grid.Attachments',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.Contact'
@@ -54,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	modelName: 'Sonicle.webtop.contacts.model.Contact',
 	
 	initComponent: function() {
-		var me = this, main, work, more, home, other, notes;
+		var me = this;
 		Ext.apply(me, {
 			tbar: [
 				me.addAct('saveClose', {
@@ -116,7 +118,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		me.callParent(arguments);
 		
-		main = Ext.create({
+		var main, work, more, home, other, notes, attachs;
+		main = {
 			xtype: 'wtform',
 			layout: 'column',
 			title: me.mys.res('contact.main.tit'),
@@ -205,10 +208,10 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					geometry: 'circle',
 					imageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
 					blankImageUrl: me.mys.resourceUrl('contact-placeholder.png'),
-					clearTriggerCls: 'wtcon-trash-trigger',
-					uploadTriggerCls: 'wtcon-add-trigger',
+					clearTriggerCls: WT.plTags.touchtheme ? 'wtcon-trash-trigger-touch' : 'wtcon-trash-trigger',
+					uploadTriggerCls: WT.plTags.touchtheme ? 'wtcon-add-trigger-touch' : 'wtcon-add-trigger',
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
-						extraParams: {tag: me.getId()},
+						extraParams: { tag: WT.uiid(me.getId()) },
 						maxFileSize: 1048576, // 1MB
 						mimeTypes: [
 							{title: 'Image files', extensions: 'jpeg,jpg,png'}
@@ -231,9 +234,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					}
 				}]
 			}]
-		});
+		};
 		
-		work = Ext.create({
+		work = {
 			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.work.tit'),
@@ -302,9 +305,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				bind: '{record.assistantTelephone}',
 				fieldLabel: me.mys.res('contact.fld-assistantTelephone.lbl')
 			}]
-		});
+		};
 		
-		home = Ext.create({
+		home = {
 			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.home.tit'),
@@ -362,9 +365,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				bind: '{record.homeInstantMsg}',
 				fieldLabel: me.mys.res('contact.fld-instantMsg.lbl')
 			}]
-		});
+		};
 		
-		other = Ext.create({
+		other = {
 			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.other.tit'),
@@ -401,9 +404,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				bind: '{record.otherInstantMsg}',
 				fieldLabel: me.mys.res('contact.fld-instantMsg.lbl')
 			}]
-		});
+		};
 		
-		more = Ext.create({
+		more = {
 			xtype: 'wtform',
 			modelValidation: true,
 			title: me.mys.res('contact.more.tit'),
@@ -451,9 +454,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				format: WT.getShortDateFmt(),
 				fieldLabel: me.mys.res('contact.fld-anniversary.lbl')
 			}]
-		});
+		};
 		
-		notes = Ext.create({
+		notes = {
 			xtype: 'wtform',
 			layout: 'fit',
 			modelValidation: true,
@@ -462,12 +465,46 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				xtype: 'textarea',
 				bind: '{record.notes}'
 			}]
-		});
+		};
+		
+		attachs = {
+			xtype: 'wtattachmentsgrid',
+			title: me.mys.res('contact.attachments.tit'),
+			bind: {
+				store: '{record.attachments}'
+			},
+			sid: me.mys.ID,
+			uploadContext: 'ContactAttachment',
+			uploadTag: WT.uiid(me.getId()),
+			dropElementId: null,
+			highlightDrop: true,
+			typeField: 'ext',
+			listeners: {
+				attachmentlinkclick: function(s, rec) {
+					me.openAttachmentUI(rec, false);
+				},
+				attachmentdownloadclick: function(s, rec) {
+					me.openAttachmentUI(rec, true);
+				},
+				attachmentdeleteclick: function(s, rec) {
+					s.getStore().remove(rec);
+				},
+				attachmentuploaded: function(s, uploadId, file) {
+					var sto = s.getStore();
+					sto.add(sto.createModel({
+						name: file.name,
+						size: file.size,
+						_uplId: uploadId
+					}));
+					me.getComponent(0).getLayout().setActiveItem(s);
+				}
+			}
+		};
 		
 		me.add({
 			region: 'center',
 			xtype: 'wttabpanel',
-			items: [main, work, home, other, more, notes]
+			items: [main, work, home, other, more, notes, attachs]
 		});
 		
 		me.on('viewload', me.onViewLoad);
@@ -475,21 +512,21 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	
 	onViewLoad: function(s, success) {
-		if(!success) return;
+		if (!success) return;
 		var me = this,
 				owner = me.lref('fldowner');
 		
 		me.updateCategoryFilters();
-		if(me.isMode(me.MODE_NEW)) {
+		if (me.isMode(me.MODE_NEW)) {
 			me.getAct('saveClose').setDisabled(false);
 			me.getAct('delete').setDisabled(true);
 			owner.setDisabled(false);
-		} else if(me.isMode(me.MODE_VIEW)) {
+		} else if (me.isMode(me.MODE_VIEW)) {
 			me.getAct('saveClose').setDisabled(true);
 			me.getAct('delete').setDisabled(true);
 			owner.setDisabled(true);
 			me.lref('fldpic').setDisabled(true);
-		} else if(me.isMode(me.MODE_EDIT)) {
+		} else if (me.isMode(me.MODE_EDIT)) {
 			me.getAct('saveClose').setDisabled(false);
 			me.getAct('delete').setDisabled(false);
 			owner.setDisabled(true);
@@ -499,7 +536,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	
 	onViewClose: function(s) {
-		this.mys.cleanupUploadedFiles(s.getId());
+		s.mys.cleanupUploadedFiles(WT.uiid(s.getId()));
 	},
 	
 	updateCategoryFilters: function() {
@@ -522,12 +559,37 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		}]);
 	},
 	
+	openAttachmentUI: function(rec, download) {
+		var me = this,
+				name = rec.get('name'),
+				uploadId = rec.get('_uplId'),
+				url;
+		
+		if (!Ext.isEmpty(uploadId)) {
+			url = WTF.processBinUrl(me.mys.ID, 'DownloadContactAttachment', {
+				inline: !download,
+				uploadId: uploadId
+			});
+		} else {
+			url = WTF.processBinUrl(me.mys.ID, 'DownloadContactAttachment', {
+				inline: !download,
+				contactId: me.getModel().getId(),
+				attachmentId: rec.get('id')
+			});
+		}
+		if (download) {
+			Sonicle.URLMgr.downloadFile(url, {filename: name});
+		} else {
+			Sonicle.URLMgr.openFile(url, {filename: name});
+		}
+	},
+	
 	deleteContact: function() {
 		var me = this,
 				rec = me.getModel();
 		
 		WT.confirm(WT.res('confirm.delete'), function(bid) {
-			if(bid === 'yes') {
+			if (bid === 'yes') {
 				me.wait();
 				WT.ajaxReq(me.mys.ID, 'ManageContacts', {
 					params: {
@@ -536,7 +598,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					},
 					callback: function(success) {
 						me.unwait();
-						if(success) {
+						if (success) {
 							me.fireEvent('viewsave', me, true, rec);
 							me.closeView(false);
 						}
@@ -548,7 +610,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	
 	printContact: function(contactId) {
 		var me = this;
-		if(me.getModel().isDirty()) {
+		if (me.getModel().isDirty()) {
 			WT.warn(WT.res('warn.print.notsaved'));
 		} else {
 			me.mys.printContactsDetail([contactId]);

@@ -40,6 +40,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipient', {
 		WTF.fkField('string'),
 		WTF.field('listRecipientId', 'int', false),
 		WTF.field('recipientType', 'string', false),
-		WTF.field('recipient', 'string', false)
+		WTF.field('recipient', 'string', false),
+		WTF.field('recipientContactId', 'int', true)
 	]
 });

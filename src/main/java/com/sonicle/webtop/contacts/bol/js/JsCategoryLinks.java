@@ -32,7 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.ManagerUtils;
+import com.sonicle.webtop.contacts.ContactsUtils;
 import java.util.Map;
 
 /**
@@ -47,6 +47,6 @@ public class JsCategoryLinks {
 	public JsCategoryLinks(int categoryId, String name, Map<String, String> links) {
 		this.categoryId = categoryId;
 		this.name = name;
-		this.cardDavUrl = links.get(ManagerUtils.CATEGORY_LINK_CARDDAV);
+		this.cardDavUrl = links.get(ContactsUtils.CATEGORY_LINK_CARDDAV);
 	}
 }

@@ -83,7 +83,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteById(Connection con, int contactId) throws DAOException {
+	public int delete(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_VCARDS)
@@ -93,6 +93,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.execute();
 	}
 	
+	/*
 	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -110,4 +111,5 @@ public class ContactVCardDAO extends BaseDAO {
 			)
 			.execute();
 	}
+	*/
 }

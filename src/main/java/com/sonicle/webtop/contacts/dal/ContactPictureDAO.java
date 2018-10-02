@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.webtop.contacts.bol.OContactPicture;
+import com.sonicle.webtop.contacts.bol.OContactPictureMetaOnly;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord;
@@ -52,15 +53,20 @@ public class ContactPictureDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
-	public boolean hasPicture(Connection con, int contactId) throws DAOException {
+	public OContactPictureMetaOnly selectMeta(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.selectCount()
+			.select(
+				CONTACTS_PICTURES.CONTACT_ID,
+				CONTACTS_PICTURES.WIDTH,
+				CONTACTS_PICTURES.HEIGHT,
+				CONTACTS_PICTURES.MEDIA_TYPE
+			)
 			.from(CONTACTS_PICTURES)
 			.where(
 				CONTACTS_PICTURES.CONTACT_ID.equal(contactId)
 			)
-			.fetchOne(0, Integer.class) == 1;
+			.fetchOneInto(OContactPictureMetaOnly.class);
 	}
 	
 	public OContactPicture select(Connection con, int contactId) throws DAOException {
@@ -93,6 +99,7 @@ public class ContactPictureDAO extends BaseDAO {
 			.execute();
 	}
 	
+	/*
 	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -110,4 +117,5 @@ public class ContactPictureDAO extends BaseDAO {
 			)
 			.execute();
 	}
+	*/
 }

@@ -59,7 +59,7 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 	}
 	
 	public Category.Sync getDefaultCategorySync() {
-		return getEnum(Category.Sync.class, DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF);
+		return getEnum(DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF, Category.Sync.class);
 	}
 	
 	public String getDefaultView() {

@@ -31,6 +31,8 @@ public class Keys {
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> CATEGORIES_PKEY = UniqueKeys0.CATEGORIES_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoryPropsRecord> CATEGORY_PROPS_PKEY = UniqueKeys0.CATEGORY_PROPS_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_PKEY = UniqueKeys0.CONTACTS_PKEY;
+	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord> CONTACTS_ATTACHMENTS_PKEY = UniqueKeys0.CONTACTS_ATTACHMENTS_PKEY;
+	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord> CONTACTS_ATTACHMENTS_DATA_PKEY = UniqueKeys0.CONTACTS_ATTACHMENTS_DATA_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord> CONTACTS_PICTURES_PKEY = UniqueKeys0.CONTACTS_PICTURES_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord> CONTACTS_VCARDS_PKEY = UniqueKeys0.CONTACTS_VCARDS_PKEY;
 	public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord> LIST_RECIPIENTS_PKEY = UniqueKeys0.LIST_RECIPIENTS_PKEY;
@@ -39,6 +41,8 @@ public class Keys {
 	// FOREIGN KEY definitions
 	// -------------------------------------------------------------------------
 
+	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_ATTACHMENTS__CONTACTS_ATTACHMENTS_CONTACT_ID_FKEY = ForeignKeys0.CONTACTS_ATTACHMENTS__CONTACTS_ATTACHMENTS_CONTACT_ID_FKEY;
+	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord> CONTACTS_ATTACHMENTS_DATA__CONTACTS_ATTACHMENTS_DATA_CONTACT_ATTACHMENT_ID_FKEY = ForeignKeys0.CONTACTS_ATTACHMENTS_DATA__CONTACTS_ATTACHMENTS_DATA_CONTACT_ATTACHMENT_ID_FKEY;
 
 	// -------------------------------------------------------------------------
 	// [#1459] distribute members to avoid static initialisers > 64kb
@@ -53,8 +57,15 @@ public class Keys {
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> CATEGORIES_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES, com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES.CATEGORY_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.CategoryPropsRecord> CATEGORY_PROPS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS, com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS.DOMAIN_ID, com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS.USER_ID, com.sonicle.webtop.contacts.jooq.tables.CategoryProps.CATEGORY_PROPS.CATEGORY_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS, com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS.CONTACT_ID);
+		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord> CONTACTS_ATTACHMENTS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS.CONTACT_ATTACHMENT_ID);
+		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord> CONTACTS_ATTACHMENTS_DATA_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA.CONTACT_ATTACHMENT_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord> CONTACTS_PICTURES_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES, com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES.CONTACT_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord> CONTACTS_VCARDS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ContactsVcards.CONTACTS_VCARDS, com.sonicle.webtop.contacts.jooq.tables.ContactsVcards.CONTACTS_VCARDS.CONTACT_ID);
 		public static final org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord> LIST_RECIPIENTS_PKEY = createUniqueKey(com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS.LIST_RECIPIENT_ID);
+	}
+
+	private static class ForeignKeys0 extends org.jooq.impl.AbstractKeys {
+		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_ATTACHMENTS__CONTACTS_ATTACHMENTS_CONTACT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS.CONTACT_ID);
+		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord> CONTACTS_ATTACHMENTS_DATA__CONTACTS_ATTACHMENTS_DATA_CONTACT_ATTACHMENT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_ATTACHMENTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA.CONTACT_ATTACHMENT_ID);
 	}
 }

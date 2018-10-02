@@ -20,4 +20,6 @@
 .wtcon-icon-reminder-birthday { background-image: url('birthday_16.png') !important; background-size: contain; }
 .wtcon-icon-reminder-anniversary { background-image: url('anniversary_16.png') !important; background-size: contain; }
 .wtcon-trash-trigger { background-image: url('trash-trigger.png') !important; }
+.wtcon-trash-trigger-touch { background-image: url('trash-trigger-touch.png') !important; }
 .wtcon-add-trigger { background-image: url('add-trigger.png') !important; }
+.wtcon-add-trigger-touch { background-image: url('add-trigger-touch.png') !important; }
