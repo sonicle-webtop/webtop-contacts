@@ -286,6 +286,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ownerCache.get(categoryId);
 	}
 	
+	public String getIncomingCategoryShareRootId(int categoryId) throws WTException {
+		return shareCache.getShareRootIdByFolderId(categoryId);
+	}
+	
 	@Override
 	public List<ShareRootCategory> listIncomingCategoryRoots() throws WTException {
 		return shareCache.getShareRoots();
@@ -1968,8 +1972,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return contDao.logicDeleteById(con, contactId, BaseDAO.createRevisionTimestamp());
 		} else {
 			// List are not supported here
-			doContactPictureDelete(con, contactId);
-			doContactVCardDelete(con, contactId);
+			//doContactPictureDelete(con, contactId);
+			//doContactVCardDelete(con, contactId);
 			return contDao.deleteById(con, contactId);
 		}
 	}
