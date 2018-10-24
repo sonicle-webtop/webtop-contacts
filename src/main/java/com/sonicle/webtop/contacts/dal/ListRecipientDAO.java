@@ -38,6 +38,7 @@ import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_LIST_RECIPIENTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.LIST_RECIPIENTS;
+import com.sonicle.webtop.contacts.jooq.tables.Contacts;
 import com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
@@ -109,21 +110,22 @@ public class ListRecipientDAO extends BaseDAO {
 	
 	public List<VListRecipient> selectByProfileContact(Connection con, String domainId, String userId, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
+		Contacts contacts1=CONTACTS.as("CONTACTS1");
 		return dsl
 			.select(
 					LIST_RECIPIENTS.fields()
 			)
 			.select(
-					CONTACTS.FIRSTNAME,
-					CONTACTS.LASTNAME,
-					CONTACTS.WORK_EMAIL,
-					CONTACTS.HOME_EMAIL,
-					CONTACTS.OTHER_EMAIL
+					contacts1.FIRSTNAME,
+					contacts1.LASTNAME,
+					contacts1.WORK_EMAIL,
+					contacts1.HOME_EMAIL,
+					contacts1.OTHER_EMAIL
 			)
 			.from(LIST_RECIPIENTS)
 			.join(CONTACTS).on(LIST_RECIPIENTS.CONTACT_ID.equal(CONTACTS.CONTACT_ID))
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(CONTACTS).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS.CONTACT_ID))
+			.leftOuterJoin(contacts1).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(contacts1.CONTACT_ID))
 			.where(
 				CATEGORIES.DOMAIN_ID.equal(domainId)
 				.and(CATEGORIES.USER_ID.equal(userId))
