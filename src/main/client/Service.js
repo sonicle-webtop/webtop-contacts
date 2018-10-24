@@ -1117,9 +1117,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	queryContacts: function(txt) {
-		if (!Ext.isEmpty(txt)) {
-			this.reloadContacts(null, txt);
-		}
+		this.reloadContacts(null, Ext.isEmpty(txt) ? null : txt);
 	},
 	
 	reloadContacts: function(letter, query) {
