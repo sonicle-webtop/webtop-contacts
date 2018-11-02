@@ -20,6 +20,9 @@ public class AddressBook   {
   private @Valid String displayName = null;
   private @Valid String description = null;
   private @Valid String syncToken = null;
+  private @Valid String aclFol = null;
+  private @Valid String aclEle = null;
+  private @Valid String ownerUsername = null;
 
   /**
    * AddressBook ID (internal)
@@ -115,6 +118,63 @@ public class AddressBook   {
     this.syncToken = syncToken;
   }
 
+  /**
+   * ACL info for folder itself
+   **/
+  public AddressBook aclFol(String aclFol) {
+    this.aclFol = aclFol;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "ACL info for folder itself")
+  @JsonProperty("aclFol")
+  @NotNull
+  public String getAclFol() {
+    return aclFol;
+  }
+  public void setAclFol(String aclFol) {
+    this.aclFol = aclFol;
+  }
+
+  /**
+   * ACL info for folder elements
+   **/
+  public AddressBook aclEle(String aclEle) {
+    this.aclEle = aclEle;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "ACL info for folder elements")
+  @JsonProperty("aclEle")
+  @NotNull
+  public String getAclEle() {
+    return aclEle;
+  }
+  public void setAclEle(String aclEle) {
+    this.aclEle = aclEle;
+  }
+
+  /**
+   * The owner profile&#39;s username
+   **/
+  public AddressBook ownerUsername(String ownerUsername) {
+    this.ownerUsername = ownerUsername;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "The owner profile's username")
+  @JsonProperty("ownerUsername")
+  @NotNull
+  public String getOwnerUsername() {
+    return ownerUsername;
+  }
+  public void setOwnerUsername(String ownerUsername) {
+    this.ownerUsername = ownerUsername;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -129,12 +189,15 @@ public class AddressBook   {
         Objects.equals(uid, addressBook.uid) &&
         Objects.equals(displayName, addressBook.displayName) &&
         Objects.equals(description, addressBook.description) &&
-        Objects.equals(syncToken, addressBook.syncToken);
+        Objects.equals(syncToken, addressBook.syncToken) &&
+        Objects.equals(aclFol, addressBook.aclFol) &&
+        Objects.equals(aclEle, addressBook.aclEle) &&
+        Objects.equals(ownerUsername, addressBook.ownerUsername);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, uid, displayName, description, syncToken);
+    return Objects.hash(id, uid, displayName, description, syncToken, aclFol, aclEle, ownerUsername);
   }
 
   @Override
@@ -147,6 +210,9 @@ public class AddressBook   {
     sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    syncToken: ").append(toIndentedString(syncToken)).append("\n");
+    sb.append("    aclFol: ").append(toIndentedString(aclFol)).append("\n");
+    sb.append("    aclEle: ").append(toIndentedString(aclEle)).append("\n");
+    sb.append("    ownerUsername: ").append(toIndentedString(ownerUsername)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -41,6 +41,8 @@ import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactCard;
 import com.sonicle.webtop.contacts.model.ContactCardChanged;
+import com.sonicle.webtop.contacts.model.ShareFolderCategory;
+import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.swagger.v1.api.CarddavApi;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBook;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookNew;
@@ -51,6 +53,10 @@ import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardsChanges;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.model.SharePerms;
+import com.sonicle.webtop.core.model.SharePermsElements;
+import com.sonicle.webtop.core.model.SharePermsFolder;
+import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.VCardUtils;
@@ -79,11 +85,12 @@ public class CardDav extends CarddavApi {
 	
 	@Override
 	public Response getAddressBooks() {
+		UserProfileId currentProfileId = RunContext.getRunProfileId();
 		ContactsManager manager = getManager();
 		List<AddressBook> items = new ArrayList<>();
 		
 		if (logger.isDebugEnabled()) {
-			logger.debug("[{}] getAddressBooks()", RunContext.getRunProfileId());
+			logger.debug("[{}] getAddressBooks()", currentProfileId);
 		}
 		
 		try {
@@ -91,22 +98,36 @@ public class CardDav extends CarddavApi {
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
 			for (Category cat : cats.values()) {
 				if (cat.isProviderRemote()) continue;
-				items.add(createAddressBook(cat, revisions.get(cat.getCategoryId())));
+				items.add(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, null));
 			}
+			
+			List<ShareRootCategory> shareRoots = manager.listIncomingCategoryRoots();
+			for (ShareRootCategory shareRoot : shareRoots) {
+				Map<Integer, ShareFolderCategory> folders = manager.listIncomingCategoryFolders(shareRoot.getShareId());
+				revisions = manager.getCategoriesLastRevision(cats.keySet());
+				//Map<Integer, CategoryPropSet> props = manager.getCategoryCustomProps(folders.keySet());
+				for (ShareFolderCategory folder : folders.values()) {
+					Category cat = folder.getCategory();
+					if (cat.isProviderRemote()) continue;
+					items.add(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getElementsPerms()));
+				}
+			}
+			
 			return respOk(items);
 			
 		} catch(WTException ex) {
-			logger.error("[{}] getAddressBooks()", ex, RunContext.getRunProfileId());
+			logger.error("[{}] getAddressBooks()", currentProfileId, ex);
 			return respError(ex);
 		}
 	}
 
 	@Override
 	public Response getAddressBook(String addressBookUid) {
+		UserProfileId currentProfileId = RunContext.getRunProfileId();
 		ContactsManager manager = getManager();
 		
 		if (logger.isDebugEnabled()) {
-			logger.debug("[{}] getAddressBook({})", RunContext.getRunProfileId(), addressBookUid);
+			logger.debug("[{}] getAddressBook({})", currentProfileId, addressBookUid);
 		}
 		
 		try {
@@ -116,20 +137,30 @@ public class CardDav extends CarddavApi {
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(cat.getCategoryId()));
-			return respOk(createAddressBook(cat, revisions.get(cat.getCategoryId())));
+			
+			String rootShareId = manager.getIncomingCategoryShareRootId(categoryId);
+			if (rootShareId != null) {
+				Map<Integer, ShareFolderCategory> folders = manager.listIncomingCategoryFolders(rootShareId);
+				ShareFolderCategory folder = folders.get(categoryId);
+				return respOk(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getElementsPerms()));
+				
+			} else {
+				return respOk(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, null));
+			}
 			
 		} catch(WTException ex) {
-			logger.error("[{}] getAddressBook({})", ex, RunContext.getRunProfileId(), addressBookUid);
+			logger.error("[{}] getAddressBook({})", currentProfileId, addressBookUid, ex);
 			return respError(ex);
 		}
 	}
 
 	@Override
 	public Response addAddressBook(AddressBookNew body) {
+		UserProfileId currentProfileId = RunContext.getRunProfileId();
 		ContactsManager manager = getManager();
 		
 		if (logger.isDebugEnabled()) {
-			logger.debug("[{}] addAddressBook(...)", RunContext.getRunProfileId());
+			logger.debug("[{}] addAddressBook(...)", currentProfileId);
 			logger.debug("{}", body);
 		}
 		
@@ -138,10 +169,11 @@ public class CardDav extends CarddavApi {
 			cat.setName(body.getDisplayName());
 			cat.setDescription(body.getDescription());
 			cat = manager.addCategory(cat);
-			return respOkCreated(createAddressBook(cat, null));
+			// Categories are always added in currentProfile so we do not handle perms here (passing null = full rights)
+			return respOkCreated(createAddressBook(currentProfileId, cat, null, null, null));
 			
 		} catch(WTException ex) {
-			logger.error("[{}] addAddressBook(...)", ex, RunContext.getRunProfileId());
+			logger.error("[{}] addAddressBook(...)", currentProfileId, ex);
 			return respError(ex);
 		}
 	}
@@ -173,7 +205,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
-			logger.error("[{}] updateAddressBook({}, ...)", ex, RunContext.getRunProfileId(), addressBookUid);
+			logger.error("[{}] updateAddressBook({}, ...)", RunContext.getRunProfileId(), addressBookUid, ex);
 			return respError(ex);
 		}
 	}
@@ -199,7 +231,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
-			logger.error("[{}] deleteAddressBook({})", ex, RunContext.getRunProfileId(), addressBookUid);
+			logger.error("[{}] deleteAddressBook({})", RunContext.getRunProfileId(), addressBookUid, ex);
 			return respError(ex);
 		}
 	}
@@ -234,7 +266,7 @@ public class CardDav extends CarddavApi {
 				return respOk(items);
 			}
 		} catch(WTException ex) {
-			logger.error("[{}] getCards({})", ex, RunContext.getRunProfileId(), addressBookUid);
+			logger.error("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid, ex);
 			return respError(ex);
 		}
 	}
@@ -265,7 +297,7 @@ public class CardDav extends CarddavApi {
 			return respOk(createCardsChanges(revisions.get(categoryId), changes));
 			
 		} catch(WTException ex) {
-			logger.error("[{}] getCardsChanges({}, {}, {})", ex, RunContext.getRunProfileId(), addressBookUid, syncToken, limit);
+			logger.error("[{}] getCardsChanges({}, {}, {})", RunContext.getRunProfileId(), addressBookUid, syncToken, limit, ex);
 			return respError(ex);
 		}
 	}
@@ -292,7 +324,7 @@ public class CardDav extends CarddavApi {
 			}
 			
 		} catch(WTException ex) {
-			logger.error("[{}] getCard({}, {})", ex, RunContext.getRunProfileId(), addressBookUid, href);
+			logger.error("[{}] getCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, ex);
 			return respError(ex);
 		}
 	}
@@ -314,7 +346,7 @@ public class CardDav extends CarddavApi {
 			return respOk();
 			
 		} catch(WTException ex) {
-			logger.error("[{}] addCard({}, ...)", ex, RunContext.getRunProfileId(), addressBookUid);
+			logger.error("[{}] addCard({}, ...)", RunContext.getRunProfileId(), addressBookUid, ex);
 			return respError(ex);
 		}
 	}
@@ -338,7 +370,7 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
-			logger.error("[{}] updateCard({}, {}, ...)", ex, RunContext.getRunProfileId(), addressBookUid, href);
+			logger.error("[{}] updateCard({}, {}, ...)", RunContext.getRunProfileId(), addressBookUid, href, ex);
 			return respError(ex);
 		}
 	}
@@ -359,18 +391,30 @@ public class CardDav extends CarddavApi {
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
 		} catch(WTException ex) {
-			logger.error("[{}] deleteCard({}, {})", ex, RunContext.getRunProfileId(), addressBookUid, href);
+			logger.error("[{}] deleteCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, ex);
 			return respError(ex);
 		}
 	}
 	
-	private AddressBook createAddressBook(Category cat, DateTime lastRevisionTimestamp) {
+	private AddressBook createAddressBook(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, SharePerms folderPerms, SharePerms elementPerms) {
+		UserProfile.Data owud = WT.getUserData(cat.getProfileId());
+		
+		String displayName = cat.getName();
+		if (!currentProfileId.equals(cat.getProfileId())) {
+			//String apn = LangUtils.abbreviatePersonalName(false, owud.getDisplayName());
+			displayName = "[" + owud.getDisplayName() + "] " + displayName;
+		}
+		String ownerUsername = owud.getProfileEmailAddress();
+		
 		return new AddressBook()
 				.id(cat.getCategoryId())
 				.uid(ContactsUtils.encodeAsCategoryUid(cat.getCategoryId()))
-				.displayName(cat.getName())
+				.displayName(displayName)
 				.description(cat.getDescription())
-				.syncToken(buildEtag(lastRevisionTimestamp));
+				.syncToken(buildEtag(lastRevisionTimestamp))
+				.aclFol((folderPerms == null) ? SharePermsFolder.full().toString() : folderPerms.toString())
+				.aclEle((elementPerms == null) ? SharePermsElements.full().toString() : elementPerms.toString())
+				.ownerUsername(ownerUsername);
 	}
 	
 	private Card createCard(ContactCard card) {
