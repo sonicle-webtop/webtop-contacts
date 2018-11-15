@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,26 +28,69 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.js;
+package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.bol.js.JsUserOptionsBase;
+import com.sonicle.commons.LangUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
  * @author malbinola
  */
-public class JsUserOptions extends JsUserOptionsBase {
-	public String view;
+public class VContactCompany {
+	public Integer contactId;
+	public Integer categoryId;
+	public String company;
+	public String masterDataId;
+	public String masterDataDescription;
+
+	public Integer getContactId() {
+		return contactId;
+	}
+
+	public void setContactId(Integer contactId) {
+		this.contactId = contactId;
+	}
+
+	public Integer getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(Integer categoryId) {
+		this.categoryId = categoryId;
+	}
 	
-	public String showBy;
-	public String anniversaryReminderDelivery;
-	public String anniversaryReminderTime;
+	public String getCompany() {
+		return company;
+	}
+
+	public void setCompany(String company) {
+		this.company = company;
+	}
 	
-	public JsUserOptions() {}
+	public String getMasterDataId() {
+		return masterDataId;
+	}
+
+	public void setMasterDataId(String masterDataId) {
+		this.masterDataId = masterDataId;
+	}
+
+	public String getMasterDataDescription() {
+		return masterDataDescription;
+	}
+
+	public void setMasterDataDescription(String masterDataDescription) {
+		this.masterDataDescription = masterDataDescription;
+	}
 	
-	public JsUserOptions(String id) {
-		super(id);
+	public String getCompanyId() {
+		return getMasterDataId();
+	}
+	
+	public String getCompanyDescription() {
+		return LangUtils.coalesceStrings(getMasterDataDescription(), getCompany());
 	}
 }

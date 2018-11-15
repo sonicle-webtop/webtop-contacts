@@ -206,8 +206,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					imageWidth: 150,
 					imageHeight: 150,
 					geometry: 'circle',
-					imageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
-					blankImageUrl: me.mys.resourceUrl('contact-placeholder.png'),
+					baseImageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
+					placeholderImageUrl: me.mys.resourceUrl('contact-placeholder.png'),
 					clearTriggerCls: WT.plTags.touchtheme ? 'wtcon-trash-trigger-touch' : 'wtcon-trash-trigger',
 					uploadTriggerCls: WT.plTags.touchtheme ? 'wtcon-add-trigger-touch' : 'wtcon-add-trigger',
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {

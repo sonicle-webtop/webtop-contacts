@@ -35,6 +35,7 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 	extend: 'WTA.sdk.UserOptionsView',
 	requires: [
 		'Sonicle.webtop.contacts.store.View',
+		'Sonicle.webtop.contacts.store.ShowBy',
 		'Sonicle.webtop.contacts.store.ReminderDelivery'
 	],
 		
@@ -60,6 +61,23 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 					}
 				}
 			}), WTF.lookupCombo('id', 'desc', {
+				bind: '{record.showBy}',
+				store: Ext.create('Sonicle.webtop.contacts.store.ShowBy', {
+					autoLoad: true
+				}),
+				fieldLabel: WT.res(me.ID, 'opts.main.fld-showBy.lbl'),
+				width: 280,
+				listeners: {
+					blur: {
+						fn: me.onBlurAutoSave,
+						scope: me
+					}
+				}
+			}), {
+				xtype: 'sospacer'
+			}, {
+				xtype: 'formseparator'
+			}, WTF.lookupCombo('id', 'desc', {
 				bind: '{record.anniversaryReminderDelivery}',
 				store: Ext.create('Sonicle.webtop.contacts.store.ReminderDelivery', {
 					autoLoad: true

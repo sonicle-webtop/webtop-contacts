@@ -1,4 +1,5 @@
-/* 
+/*
+ * WebTop Services is a Web Application framework developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -10,7 +11,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -18,7 +19,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
+ * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -30,24 +31,21 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.js;
-
-import com.sonicle.webtop.core.sdk.bol.js.JsUserOptionsBase;
-
-/**
- *
- * @author malbinola
- */
-public class JsUserOptions extends JsUserOptionsBase {
-	public String view;
+Ext.define('Sonicle.webtop.contacts.store.ShowBy', {
+	extend: 'Ext.data.ArrayStore',
+	alias: 'store.wtconshowby',
 	
-	public String showBy;
-	public String anniversaryReminderDelivery;
-	public String anniversaryReminderTime;
+	model: 'WTA.model.Simple',
+	data: [
+		['lastName',''],
+		['firstName','']
+	],
 	
-	public JsUserOptions() {}
-	
-	public JsUserOptions(String id) {
-		super(id);
+	constructor: function(cfg) {
+		var me = this;
+		Ext.each(me.config.data, function(row) {
+			row[1] = WT.res('com.sonicle.webtop.contacts', 'store.showBy.'+row[0]);
+		});
+		me.callParent([cfg]);
 	}
-}
+});

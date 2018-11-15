@@ -33,10 +33,10 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.ContactItemEx;
+import com.sonicle.webtop.contacts.model.CategoryPropSet;
+import com.sonicle.webtop.contacts.model.ContactItem;
 import com.sonicle.webtop.core.util.JRHelper;
 import java.awt.Image;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -59,17 +59,18 @@ public class RBAddressbook {
 	public String homeEmail;
 	public String company;
 	
-	public RBAddressbook(Category category, ContactItemEx contact) {
+	public RBAddressbook(Category category, CategoryPropSet folderProps, ContactItem contact) {
 		this.isList = contact.getIsList();
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
-		this.categoryColor = Category.getHexColor(category.getColor());
-		this.categoryColorImage = JRHelper.colorAsImage(Category.getHexColor(category.getColor()));
+		String color = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : category.getColor();
+		this.categoryColor = Category.getHexColor(color);
+		this.categoryColorImage = JRHelper.colorAsImage(Category.getHexColor(color));
 		this.contactId = contact.getContactId();
 		this.title = contact.getTitle();
 		this.firstName = contact.getFirstName();
 		this.lastName = contact.getLastName();
-		this.company = StringUtils.defaultIfEmpty(contact.getCompanyAsMasterDataId(), contact.getCompany());
+		this.company = contact.getCompany();
 		this.workTelephone = contact.getWorkTelephone();
 		this.workMobile = contact.getWorkMobile();
 		this.workEmail = contact.getWorkEmail();

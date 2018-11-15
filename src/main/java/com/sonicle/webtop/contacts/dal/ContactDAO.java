@@ -38,7 +38,9 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactCard;
 import com.sonicle.webtop.contacts.bol.VContactCardChanged;
+import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
+import com.sonicle.webtop.contacts.bol.VContactLookup;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
@@ -46,6 +48,8 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.contacts.model.Contact;
+import com.sonicle.webtop.contacts.model.Grouping;
+import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import static com.sonicle.webtop.core.jooq.core.Tables.MASTER_DATA;
@@ -62,6 +66,7 @@ import org.joda.time.LocalDate;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.SortField;
 import org.jooq.impl.DSL;
 
 /**
@@ -250,6 +255,138 @@ AND (ccnts.href IS NULL)
 			)
 			.limit(limit)
 			.fetchInto(VContactCardChanged.class);
+	}
+	
+	
+	
+	
+	
+	public int countByCategoryTypePattern(Connection con, Collection<Integer> categoryIds, boolean listOnly, String searchMode, String pattern) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition listOnlyCndt = toListOnlyCondition(listOnly);
+		Condition patternCndt = toPatternCondition(pattern);
+		
+		return dsl
+			.selectCount()
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				CONTACTS.CATEGORY_ID.in(categoryIds)
+				.and(listOnlyCndt)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+				.and(
+					patternCndt
+				)
+			)
+			.fetchOne(0, Integer.class);
+	}
+	
+	private Condition toListOnlyCondition(boolean listOnly) {
+		return listOnly ? CONTACTS.IS_LIST.isTrue() : DSL.trueCondition();
+	}
+	
+	private Condition toPatternCondition(String pattern) {
+		Condition cndt = DSL.trueCondition();
+		if (!StringUtils.isBlank(pattern)) {
+			return CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
+					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
+					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
+		}
+		return cndt;
+	}
+	
+	public List<VContactLookup> viewByCategoryTypePattern(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, boolean listOnly, String searchMode, String pattern, int limit, int offset) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition listOnlyCndt = toListOnlyCondition(listOnly);
+		Condition patternCndt = toPatternCondition(pattern);
+		
+		// Define sort fields
+		ArrayList<SortField<?>> sortFlds = new ArrayList<>();
+		// TODO: maybe sort on joined field otherwise order could be inaccurate (company can be an ID)
+		for (OrderField of : orderFields) {
+			if (OrderField.FIRSTNAME.equals(of)) {
+				sortFlds.add(CONTACTS.FIRSTNAME.asc());
+			} else if (OrderField.LASTNAME.equals(of)) {
+				sortFlds.add(CONTACTS.LASTNAME.asc());
+			} else if (OrderField.COMPANY.equals(of)) {
+				sortFlds.add(CONTACTS.COMPANY.asc());
+			}
+		}
+		
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.IS_LIST,
+				//CONTACTS.SEARCHFIELD,
+				CONTACTS.TITLE,
+				CONTACTS.FIRSTNAME,
+				CONTACTS.LASTNAME,
+				CONTACTS.NICKNAME,
+				CONTACTS.COMPANY,
+				CONTACTS.FUNCTION,
+				CONTACTS.WORK_ADDRESS,
+				CONTACTS.WORK_CITY,
+				CONTACTS.WORK_TELEPHONE,
+				CONTACTS.WORK_MOBILE,
+				CONTACTS.WORK_EMAIL,
+				CONTACTS.HOME_TELEPHONE,
+				CONTACTS.HOME_EMAIL
+			)
+			.select(
+				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
+				CATEGORIES.USER_ID.as("category_user_id")
+			)
+			.select(
+				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture")
+			)
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.where(
+				CONTACTS.CATEGORY_ID.in(categoryIds)
+				.and(listOnlyCndt)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+				.and(
+					patternCndt
+				)
+			)
+			.orderBy(sortFlds)
+			.limit(limit)
+			.offset(offset)
+			.fetchInto(VContactLookup.class);
+	}
+	
+	public VContactCompany viewContactCompanyByContact(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.COMPANY
+			)
+			.select(
+				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
+				MASTER_DATA.DESCRIPTION.as("master_data_description")
+			)
+			.from(CONTACTS)
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.where(
+				CONTACTS.CONTACT_ID.in(contactId)
+				.and(CONTACTS.IS_LIST.equal(false))
+			)
+			.fetchOneInto(VContactCompany.class);
 	}
 	
 	public List<VContact> viewByCategoryPattern(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
@@ -829,4 +966,12 @@ AND (ccnts.href IS NULL)
 		}
 	}
 	*/
+
+	public static enum OrderField {
+		FIRSTNAME, LASTNAME, COMPANY
+	}
+	
+	public static enum OrderByMode {
+		FIRSTNAME, LASTNAME, COMPANY
+	}
 }

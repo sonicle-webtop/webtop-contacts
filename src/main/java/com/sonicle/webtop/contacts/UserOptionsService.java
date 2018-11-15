@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.Crud;
@@ -69,7 +70,8 @@ public class UserOptionsService extends BaseUserOptionsService {
 				JsUserOptions jso = new JsUserOptions(getTargetProfileId().toString());
 				
 				// Main
-				jso.view = cus.getView();
+				jso.view = EnumUtils.toSerializedName(cus.getView());
+				jso.showBy = EnumUtils.toSerializedName(cus.getShowBy());
 				jso.anniversaryReminderDelivery = cus.getAnniversaryReminderDelivery();
 				jso.anniversaryReminderTime = hmf.print(cus.getAnniversaryReminderTime());
 				
@@ -79,9 +81,10 @@ public class UserOptionsService extends BaseUserOptionsService {
 				Payload<MapItem, JsUserOptions> pl = ServletUtils.getPayload(payload, JsUserOptions.class);
 				
 				// Main
-				if(pl.map.has("view")) cus.setView(pl.data.view);
-				if(pl.map.has("anniversaryReminderDelivery")) cus.setAnniversaryReminderDelivery(pl.data.anniversaryReminderDelivery);
-				if(pl.map.has("anniversaryReminderTime")) cus.setAnniversaryReminderTime(hmf.parseLocalTime(pl.data.anniversaryReminderTime));
+				if (pl.map.has("view")) cus.setView(pl.data.view);
+				if (pl.map.has("showBy")) cus.setShowBy(pl.data.view);
+				if (pl.map.has("anniversaryReminderDelivery")) cus.setAnniversaryReminderDelivery(pl.data.anniversaryReminderDelivery);
+				if (pl.map.has("anniversaryReminderTime")) cus.setAnniversaryReminderTime(hmf.parseLocalTime(pl.data.anniversaryReminderTime));
 				
 				new JsonResult().printTo(out);
 			}

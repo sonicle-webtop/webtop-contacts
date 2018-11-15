@@ -1,6 +1,5 @@
-/*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
- * Copyright (C) 2014 Sonicle S.r.l.
+/* 
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -11,7 +10,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -19,7 +18,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
+ * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -27,12 +26,16 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-Ext.define('Sonicle.webtop.contacts.model.GridContact', {
+Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 	extend: 'WTA.ux.data.EmptyModel',
+	requires: [
+		'Sonicle.webtop.contacts.model.ContactValueItem'
+	],
+	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'GetContactPreview'),
 	
 	idProperty: 'uid',
 	fields: [
@@ -44,10 +47,10 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.roField('lastName', 'string'),
 		WTF.roField('company', 'string'),
 		WTF.roField('function', 'string'),
-		WTF.roField('email', 'string'),
-		WTF.roField('telephone', 'string'),
-		WTF.roField('mobile', 'string'),
+		WTF.roField('notes', 'string'),
 		WTF.roField('pic', 'boolean'),
+		WTF.roField('userProfile', 'string'),
+		WTF.roField('userDisplayName', 'string'),
 		WTF.roField('catId', 'int'),
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
@@ -57,42 +60,22 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec) {
 			return Sonicle.String.join(' ', rec.get('title'), rec.get('firstName'), rec.get('lastName'));
 		}),
-		WTF.calcField('letter', 'string', ['firstName', 'lastName'], function(v, rec) {
-			return Sonicle.webtop.contacts.model.GridContact.calcLetter(rec);
+		WTF.calcField('businessInfo', 'string', ['company', 'function'], function(v, rec) {
+			return Sonicle.String.join(', ', rec.get('function'), rec.get('company'));
+		}),
+		WTF.calcField('pictureId', 'int', ['pic'], function(v, rec) {
+			return rec.get('pic') === true ? rec.get('id') : null;
 		})
 	],
+	hasMany: [
+		WTF.hasMany('data1', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Email addresses
+		WTF.hasMany('data2', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Telephones
+		WTF.hasMany('data3', 'Sonicle.webtop.contacts.model.ContactValueItem') // Other fields
+	],
 	
-	statics: {
-		orderField: 'lastName',
-		
-		setOrderField: function(value) {
-			this.orderField = value;
-		},
-		
-		calcLetter: function(mo) {
-			var name = mo.get(this.orderField), match;
-			if (Ext.isEmpty(name)) {
-				return '*';
-			} else {
-				name = name.substr(0, 1);
-				if (/^[\d]$/.test(name)) { // Digit
-					return '#';
-				} else if (/^[a-zA-Z]$/.test(name)) { // Letter
-					return name.toUpperCase();
-				} else {
-					return '!';
-				}
-				/*
-				match = name.match(/[a-zA-Z0-9]/);
-				if ((match !== null) && /^[\d]$/.test(match[0])) { // Digit
-					return '#';
-				} else if ((match !== null) && /^[a-zA-Z]$/.test(match[0])) { // Letter
-					return match[0].toUpperCase();
-				} else {
-					return '!';
-				}
-				*/
-			}
-		}
+	hasData: function() {
+		return (this.data1().getCount() > 0)
+				|| (this.data2().getCount() > 0)
+				|| (this.data3().getCount() > 0);
 	}
 });

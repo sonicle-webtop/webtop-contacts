@@ -36,10 +36,10 @@ import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
-import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.ServletUtils.IntegerArray;
+import com.sonicle.commons.web.ServletUtils.StringArray;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.commons.web.json.PayloadAsList;
 import com.sonicle.commons.web.json.JsonResult;
@@ -50,21 +50,21 @@ import com.sonicle.commons.web.json.extjs.GridColumnMeta;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
-import com.sonicle.commons.web.json.extjs.SortMeta;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
 import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
+import com.sonicle.webtop.contacts.bol.js.JsContactPreview;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
+import com.sonicle.webtop.contacts.bol.js.JsGridContact;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactPictureWithBytesOld;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyShareFolderCategory;
 import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
@@ -81,11 +81,13 @@ import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
-import com.sonicle.webtop.contacts.model.ContactItemEx;
+import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactItem;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
-import com.sonicle.webtop.contacts.model.FolderContacts;
+import com.sonicle.webtop.contacts.model.ListContactsResult;
+import com.sonicle.webtop.contacts.model.Grouping;
+import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
@@ -132,7 +134,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.supercsv.prefs.CsvPreference;
 
@@ -158,10 +159,6 @@ public class Service extends BaseService {
 	
 	private CheckedRoots checkedRoots = null;
 	private CheckedFolders checkedFolders = null;
-	private ArrayList<FieldMeta> gridFieldsW = null;
-	private ArrayList<FieldMeta> gridFieldsH = null;
-	private ArrayList<GridColumnMeta> gridColsInfoW = null;
-	private ArrayList<GridColumnMeta> gridColsInfoH = null;
 	private final Object gridLock = new Object();
 	
 	//private ExportWizard wizard = null;
@@ -173,10 +170,6 @@ public class Service extends BaseService {
 		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
-		gridFieldsW = buildFields(WORK_VIEW);
-		gridFieldsH = buildFields(HOME_VIEW);
-		gridColsInfoW = buildColsInfo(WORK_VIEW);
-		gridColsInfoH = buildColsInfo(HOME_VIEW);
 	}
 	
 	@Override
@@ -200,7 +193,8 @@ public class Service extends BaseService {
 		ServiceVars co = new ServiceVars();
 		co.put("categoryRemoteSyncEnabled", ss.getCategoryRemoteAutoSyncEnabled());
 		co.put("defaultCategorySync", EnumUtils.toSerializedName(ss.getDefaultCategorySync()));
-		co.put("view", us.getView());
+		co.put("view", EnumUtils.toSerializedName(us.getView()));
+		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		return co;
 	}
 	
@@ -269,41 +263,6 @@ public class Service extends BaseService {
 			}
 		}
 	}
-	
-	/*
-	private void initFolders() throws Exception {
-		UserProfileId pid = getEnv().getProfile().getId();
-		synchronized(roots) {
-			roots.clear();
-			foldersByRoot.clear();
-			folders.clear();
-			
-			roots.put(MyCategoryRoot.SHARE_ID, new MyCategoryRoot(pid));
-			foldersByRoot.put(MyCategoryRoot.SHARE_ID, new ArrayList<CategoryFolder>());
-			for(OCategory cat : manager.listCategories()) {
-				MyCategoryFolder fold = new MyCategoryFolder(MyCategoryRoot.SHARE_ID, cat);
-				foldersByRoot.get(MyCategoryRoot.SHARE_ID).add(fold);
-				folders.put(cat.getCategoryId(), fold);
-			}
-			for(CategoryRoot root : manager.listIncomingCategoryRoots()) {
-				roots.put(root.getShareId(), root);
-				foldersByRoot.put(root.getShareId(), new ArrayList<CategoryFolder>());
-				for(CategoryFolder fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
-					foldersByRoot.get(root.getShareId()).add(fold);
-					folders.put(fold.getCategory().getCategoryId(), fold);
-				}
-			}
-
-			checkedRoots = us.getCheckedCategoryRoots();
-			// If empty, adds MyNode checked by default!
-			if(checkedRoots.isEmpty()) {
-				checkedRoots.add(MyCategoryRoot.SHARE_ID);
-				us.setCheckedCategoryRoots(checkedRoots);
-			}
-			checkedFolders = us.getCheckedCategoryFolders();
-		}
-	}
-	*/
 	
 	public void processManageFoldersTree(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<ExtTreeNode> children = new ArrayList<>();
@@ -653,218 +612,111 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private ArrayList<FieldMeta> buildFields(String view) {
-		ArrayList<FieldMeta> fields = new ArrayList<>();
-		
-		fields.add(new FieldMeta("uid").setType("string"));
-		fields.add(new FieldMeta("contactId").setType("int"));
-		fields.add(new FieldMeta("categoryId"));
-		fields.add(new FieldMeta("categoryName"));
-		fields.add(new FieldMeta("categoryColor"));
-		fields.add(new FieldMeta("isList").setType("boolean"));
-		if(view.equals(WORK_VIEW)) fields.add(new FieldMeta("title").setType("string"));
-		fields.add(new FieldMeta("firstName").setType("string"));
-		fields.add(new FieldMeta("lastName").setType("string"));
-		if(view.equals(HOME_VIEW)) fields.add(new FieldMeta("nickname").setType("string"));
-		if(view.equals(WORK_VIEW)) {
-			fields.add(new FieldMeta("company").setType("string"));
-			fields.add(new FieldMeta("function").setType("string"));
-			//fields.add(new ExtFieldMeta("workAddress").setType("string"));
-			//fields.add(new ExtFieldMeta("workCity").setType("string"));
-			fields.add(new FieldMeta("workTelephone").setType("string"));
-			fields.add(new FieldMeta("workMobile").setType("string"));
-			fields.add(new FieldMeta("workEmail").setType("string"));
-		}
-		if(view.equals(HOME_VIEW)) {
-			fields.add(new FieldMeta("homeTelephone").setType("string"));
-			fields.add(new FieldMeta("homeEmail").setType("string"));
-			fields.add(new FieldMeta("birthday").setType("date").set("dateFormat", "Y-m-d"));
-		}
-		
-		fields.add(new FieldMeta("_profileId"));
-		fields.add(new FieldMeta("_frights"));
-		fields.add(new FieldMeta("_erights"));
-		
-		return fields;
-	}
-	
-	private ArrayList<GridColumnMeta> buildColsInfo(String view) {
-		ArrayList<GridColumnMeta> colsInfo = new ArrayList<>();
-		
-		colsInfo.add(new GridColumnMeta("contactId").setHidden(true).setGroupable(false));
-		//colsInfo.add(new GridColumnMeta("categoryId").setHidden(true));
-		colsInfo.add(new GridColumnMeta("categoryName").setGroupable(false));
-		if(view.equals(WORK_VIEW)) colsInfo.add(new GridColumnMeta("title").setGroupable(false));
-		colsInfo.add(new GridColumnMeta("firstName").setGroupable(true));
-		colsInfo.add(new GridColumnMeta("lastName").setGroupable(true));
-		if(view.equals(HOME_VIEW)) colsInfo.add(new GridColumnMeta("nickname").setGroupable(false));
-		if(view.equals(WORK_VIEW)) {
-			colsInfo.add(new GridColumnMeta("company").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("function").setGroupable(false));
-			//colsInfo.add(new GridColumnMeta("workAddress"));
-			//colsInfo.add(new GridColumnMeta("workCity"));
-			colsInfo.add(new GridColumnMeta("workTelephone").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("workMobile").setGroupable(false));
-			colsInfo.add(new GridColumnMeta("workEmail").setGroupable(true));
-		}
-		if(view.equals(HOME_VIEW)) {
-			colsInfo.add(new GridColumnMeta("homeTelephone").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("homeEmail").setGroupable(true));
-			colsInfo.add(new GridColumnMeta("birthday").setXType("datecolumn").setGroupable(false));
-		}
-		
-		return colsInfo;
-	}
-	
-	private String[] buildQueryParameters(String view, String letter, String query) {
-		String searchMode = null, pattern = null;
-		if (!StringUtils.isEmpty(letter)) {
-			searchMode = "lastname";
-			if (letter.equals("*")) {
-				pattern = "^.*";
-			} else if (letter.equals("#")) {
-				pattern = "^[0-9]";
-			} else {
-				pattern = "^[" + letter.toLowerCase() + "]";
-			}
-		} else if (query != null) {
-			searchMode = (view.equals(WORK_VIEW)) ? "work" : "home";
-			pattern = "%" + query.toLowerCase() + "%";
-		} else {
-			searchMode = "lastname";
-			pattern = "^[a]";
-		}
-		return new String[]{searchMode, pattern};
-	}
-	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
-		ArrayList<MapItem> items = new ArrayList<>();
+		ArrayList<JsGridContact> items = new ArrayList<>();
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
-			if(crud.equals(Crud.READ)) {
-				//String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
-				String view = WORK_VIEW;
-				String letter = ServletUtils.getStringParameter(request, "letter", null);
+			if (crud.equals(Crud.READ)) {
+				GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
+				Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
+				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
+				
+				int page = ServletUtils.getIntParameter(request, "page", true);
+				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				String query = ServletUtils.getStringParameter(request, "query", null);
 				
-				String[] parameters = buildQueryParameters(view, letter, query);
-				String searchMode = parameters[0], pattern = parameters[1];
+				//TODO: optimize call to skip fullCount for subsequent calls
+				boolean listOnly = GridView.CONTACTS_LIST.equals(view);
+				String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
 				
 				List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
-				List<FolderContacts> foContactsObjs = manager.listFolderContacts(visibleCategoryIds, searchMode, pattern);
-				for (FolderContacts foContactsObj : foContactsObjs) {
-					final ShareFolderCategory fold = folders.get(foContactsObj.folder.getCategoryId());
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, page, limit, true);
+				for (ContactItem item : result.items) {
+					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
+					if (root == null) continue;
+					final ShareFolderCategory fold = folders.get(item.getCategoryId());
 					if (fold == null) continue;
-					CategoryPropSet pset = folderProps.get(foContactsObj.folder.getCategoryId());
+					CategoryPropSet pset = folderProps.get(item.getCategoryId());
 					
-					for (ContactItemEx ce : foContactsObj.contacts) {
-						final MapItem item = new MapItem();
-						item.put("id", Contact.buildUid(ce.getContactId()));
-						item.put("contactId", ce.getContactId());
-						item.put("isList", ce.getIsList());
-						if(view.equals(WORK_VIEW)) item.put("title", ce.getTitle());
-						item.put("firstName", ce.getFirstName());
-						item.put("lastName", ce.getLastName());
-						if(view.equals(HOME_VIEW)) item.put("nickname", ce.getNickname());
-						if(view.equals(WORK_VIEW)) {
-							item.put("company", StringUtils.defaultIfEmpty(ce.getCompanyAsMasterDataId(), ce.getCompany()));
-							item.put("function", ce.getFunction());
-							//item.put("workAddress", vc.getCaddress());
-							//item.put("workCity", vc.getCcity());
-							item.put("workTelephone", ce.getWorkTelephone());
-							item.put("workMobile", ce.getWorkMobile());
-							item.put("workEmail", ce.getWorkEmail());
-						}
-						if(view.equals(HOME_VIEW)) {
-							item.put("homeTelephone", ce.getHomeTelephone());
-							item.put("homeEmail", ce.getHomeEmail());
-							item.put("birthday", (ce.getBirthday() != null) ? ymdFmt.print(ce.getBirthday()) : null);
-						}
-						item.put("categoryId", foContactsObj.folder.getCategoryId());
-						item.put("categoryName", foContactsObj.folder.getName());
-						item.put("categoryColor", foContactsObj.folder.getColor());
-						if (pset != null) item.put("categoryColor", pset.getColorOrDefault(foContactsObj.folder.getColor()));
-						item.put("_profileId", new UserProfileId(foContactsObj.folder.getDomainId(), foContactsObj.folder.getUserId()).toString());
-						item.put("_frights", fold.getPerms().toString());
-						item.put("_erights", fold.getElementsPerms().toString());
-						items.add(item);
-					}
+					items.add(new JsGridContact(view, root, fold, pset, item));
 				}
 				
 				GridMetadata meta = new GridMetadata(true);
-				meta.setFields(view.equals(WORK_VIEW) ? gridFieldsW : gridFieldsH);
-				meta.setColumnsInfo(view.equals(WORK_VIEW) ? gridColsInfoW : gridColsInfoH);
-				
-				GroupMeta gm = getGridContactsGroupInfo(view);
-				if(gm != null) meta.setGroupInfo(gm);
-				SortMeta sm = getGridContactsSortInfo(view);
-				if(gm != null) meta.setSortInfo(sm);
-				
-				new JsonResult(items, meta, items.size()).printTo(out);
-				
-			} /*else if(crud.equals(Crud.DELETE)) {
-				PayloadAsList<JsGridContactList> pl = ServletUtils.getPayloadAsList(request, JsGridContactList.class);
-				
-				for(JsGridContact row : pl.data) {
-					logger.debug("deleting {} {}", row.id, row.contactId);
+				if (Grouping.COMPANY.equals(groupBy)) {
+					meta.setGroupInfo(new GroupMeta("company", "ASC"));
+				} else {
+					meta.setGroupInfo(new GroupMeta("letter", "ASC"));
 				}
-				new JsonResult().printTo(out);
 				
-			}*/ else if(crud.equals(Crud.SAVE)) {
-				String view = ServletUtils.getStringParameter(request, "view", true);
-				String context = ServletUtils.getStringParameter(request, "context", true);
-				String field = ServletUtils.getStringParameter(request, "field", null);
-				String direction = ServletUtils.getStringParameter(request, "direction", null);
+				new JsonResult(items, result.fullCount)
+						.setPage(page)
+						.setMetaData(meta)
+						.printTo(out);
 				
-				if(context.equals("group")) {
-					setGridContactsGroupInfo(view, field, direction);
-				} else if(context.equals("sort")) {
-					setGridContactsSortInfo(view, field, direction);
+			} else if (crud.equals(Crud.DELETE)) {
+				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
+				
+				ArrayList<Integer> contactIds = new ArrayList<>();
+				ArrayList<Integer> contactsListIds = new ArrayList<>();
+				for (String uid : uids) {
+					CompositeId cid = JsGridContact.Id.parse(uid);
+					int contactId = JsGridContact.Id.contactId(cid);
+					boolean isList = JsGridContact.Id.isList(cid);
+					if (isList) {
+						contactsListIds.add(contactId);
+					} else {
+						contactIds.add(contactId);
+					}
 				}
+				manager.deleteContact(contactIds);
+				manager.deleteContactsList(contactsListIds);
+				
 				new JsonResult().printTo(out);
 			}
-		
+			
 		} catch(Exception ex) {
-			logger.error("Error in action ManageGridContacts", ex);
-			new JsonResult(false, "Error").printTo(out);
+			logger.error("Error in ManageGridContacts", ex);
+			new JsonResult(ex).printTo(out);
 		}
 	}
 	
-	private void setGridContactsGroupInfo(String view, String field, String direction) {
-		synchronized(gridLock) {
-			GroupMeta meta = null;
-			if(!StringUtils.isEmpty(field) && !StringUtils.isEmpty(direction)) {
-				meta = new GroupMeta(field, direction);
-			} else if(!StringUtils.isEmpty(field)) {
-				meta = new GroupMeta(field);
+	public void processGetContactPreview(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String crud = ServletUtils.getStringParameter(request, "crud", true);
+			if (crud.equals(Crud.READ)) {
+				String uid = ServletUtils.getStringParameter(request, "id", true);
+				
+				CompositeId cid = JsGridContact.Id.parse(uid);
+				int contactId = JsGridContact.Id.contactId(cid);
+				boolean isList = JsGridContact.Id.isList(cid);
+				
+				if (isList) {
+					ContactsList contactsList = manager.getContactsList(contactId);
+					
+					ShareFolderCategory fold = folders.get(contactsList.getCategoryId());
+					if (fold == null) throw new WTException("Folder not found [{}]", contactsList.getCategoryId());
+					CategoryPropSet pset = folderProps.get(contactsList.getCategoryId());
+					
+					new JsonResult(new JsContactPreview(fold, pset, contactsList)).printTo(out);
+					
+				} else {
+					Contact contact = manager.getContact(contactId);
+					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
+					ContactCompany contactCompany = !StringUtils.isBlank(contact.getCompany()) ? manager.getContactCompany(contactId) : new ContactCompany();
+					
+					ShareFolderCategory fold = folders.get(contact.getCategoryId());
+					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
+					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
+					
+					new JsonResult(new JsContactPreview(fold, pset, contact, contactCompany)).printTo(out);
+				}
 			}
-			us.setGridContactsGroupInfo(view, meta);
-		}
-	}
-	
-	private GroupMeta getGridContactsGroupInfo(String view) {
-		synchronized(gridLock) {
-			return us.getGridContactsGroupInfo(view);
-		}
-	}
-	
-	private void setGridContactsSortInfo(String view, String field, String direction) {
-		synchronized(gridLock) {
-			SortMeta meta = null;
-			if(!StringUtils.isEmpty(field) && !StringUtils.isEmpty(direction)) {
-				meta = new SortMeta(field, direction);
-			} else if(!StringUtils.isEmpty(field)) {
-				meta = new SortMeta(field);
-			}
-			us.setGridContactsSortInfo(view, meta);
-		}
-	}
-	
-	private SortMeta getGridContactsSortInfo(String view) {
-		synchronized(gridLock) {
-			return us.getGridContactsSortInfo(view);
+			
+		} catch(Exception ex) {
+			logger.error("Error in ManageContactDetails", ex);
+			new JsonResult(ex).printTo(out);	
 		}
 	}
 	
@@ -1278,28 +1130,30 @@ public class Service extends BaseService {
 			new JsonResult(false, ex.getMessage()).printTo(out);
 		}
 	}
-	
+		
 	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBAddressbook> items = new ArrayList<>();
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			String view = ServletUtils.getStringParameter(request, "view", WORK_VIEW);
-			String letter = ServletUtils.getStringParameter(request, "letter", null);
+			GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
+			Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
+			ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
 			String query = ServletUtils.getStringParameter(request, "query", null);
 			
-			String[] parameters = buildQueryParameters(view, letter, query);
-			String searchMode = parameters[0], pattern = parameters[1];
+			boolean listOnly = GridView.CONTACTS_LIST.equals(view);
+			String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
+			int limit = 500;
 			
 			List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
-			List<FolderContacts> foContactsObjs = manager.listFolderContacts(visibleCategoryIds, searchMode, pattern);
-			for (FolderContacts foContactsObj : foContactsObjs) {
-				final ShareFolderCategory fold = folders.get(foContactsObj.folder.getCategoryId());
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, 1, limit, true);
+			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
+			for (ContactItem item : result.items) {
+				final ShareFolderCategory fold = folders.get(item.getCategoryId());
 				if (fold == null) continue;
+				CategoryPropSet pset = folderProps.get(item.getCategoryId());
 
-				for (ContactItemEx ce : foContactsObj.contacts) {
-					items.add(new RBAddressbook(fold.getCategory(), ce));
-				}
+				items.add(new RBAddressbook(fold.getCategory(), pset, item));
 			}
 			
 			ReportConfig.Builder builder = reportConfigBuilder();

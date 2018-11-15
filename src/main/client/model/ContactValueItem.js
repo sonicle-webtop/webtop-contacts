@@ -1,5 +1,5 @@
 /* 
- * Copyright (C) 2014 Sonicle S.r.l.
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,26 +28,16 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.js;
-
-import com.sonicle.webtop.core.sdk.bol.js.JsUserOptionsBase;
-
-/**
- *
- * @author malbinola
- */
-public class JsUserOptions extends JsUserOptionsBase {
-	public String view;
+Ext.define('Sonicle.webtop.contacts.model.ContactValueItem', {
+	extend: 'WTA.ux.data.BaseModel',
 	
-	public String showBy;
-	public String anniversaryReminderDelivery;
-	public String anniversaryReminderTime;
-	
-	public JsUserOptions() {}
-	
-	public JsUserOptions(String id) {
-		super(id);
-	}
-}
+	identifier: 'negativestring',
+	idProperty: 'id',
+	fields: [
+		WTF.field('id', 'string', false),
+		WTF.field('value', 'string', false),
+		WTF.field('type', 'string', false)
+	]
+});
