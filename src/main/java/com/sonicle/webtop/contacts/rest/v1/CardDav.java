@@ -47,6 +47,7 @@ import com.sonicle.webtop.contacts.swagger.v1.api.CarddavApi;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBook;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookUpdate;
+import com.sonicle.webtop.contacts.swagger.v1.model.ApiError;
 import com.sonicle.webtop.contacts.swagger.v1.model.Card;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardChanged;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
@@ -484,5 +485,12 @@ public class CardDav extends CarddavApi {
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
 		return (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+	}
+	
+	@Override
+	protected Object createErrorEntity(Response.Status status, String message) {
+		return new ApiError()
+				.code(status.getStatusCode())
+				.description(message);
 	}
 }
