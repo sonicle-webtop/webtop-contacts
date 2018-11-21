@@ -201,6 +201,7 @@ public class ManagerUtils {
 			tgt.setWorkEmail(src.getWorkEmail());
 			tgt.setHomeTelephone(src.getHomeTelephone());
 			tgt.setHomeEmail(src.getHomeEmail());
+			tgt.setCategoryName(src.getCategoryName());
 			tgt.setCategoryDomainId(src.getCategoryDomainId());
 			tgt.setCategoryUserId(src.getCategoryUserId());
 			tgt.setHasPicture(src.getHasPicture());

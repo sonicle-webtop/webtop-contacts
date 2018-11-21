@@ -41,11 +41,20 @@ import org.codehaus.plexus.util.StringUtils;
  * @author malbinola
  */
 public class VContactLookup extends OContact {
+	protected String categoryName;
 	protected String categoryDomainId;
 	protected String categoryUserId;
 	protected String masterDataId;
 	protected String masterDataDescription;
 	protected Boolean hasPicture;
+	
+	public String getCategoryName() {
+		return categoryName;
+	}
+
+	public void setCategoryName(String categoryName) {
+		this.categoryName = categoryName;
+	}
 
 	public String getCategoryDomainId() {
 		return categoryDomainId;

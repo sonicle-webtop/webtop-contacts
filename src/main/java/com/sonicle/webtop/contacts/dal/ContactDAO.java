@@ -340,6 +340,7 @@ AND (ccnts.href IS NULL)
 			)
 			.select(
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				CATEGORIES.NAME.as("category_name"),
 				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
 				CATEGORIES.USER_ID.as("category_user_id")
 			)
