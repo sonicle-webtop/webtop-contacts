@@ -1,3 +1,10 @@
+$	5.5.0
+	%	Versione 5.5.0
+	*	<h1>Nuovo elenco contatti</h1>
+		<p>Elenco senza paginazione, visualizzazione avatar con dati principali 
+		del contatto. Pannello anteprima che fornisce un accesso immediato alle
+		informazioni e consente l'esecuzione di azioni rapide (nuova email, chiamata, etc...)</p>
+		<img src="5.5.0_newgrid.png"/>
 $	5.3.0
 	%	Versione 5.3.0
 	*	<h1>Importazione da file LDIF</h1>

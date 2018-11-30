@@ -36,6 +36,7 @@ Ext.define('Sonicle.webtop.contacts.model.UserOptions', {
 	
 	proxy: WT.optionsProxy('com.sonicle.webtop.contacts'),
 	fields: [
+		WTF.field('showBy', 'string', false),
 		WTF.field('view', 'string', false),
 		WTF.field('anniversaryReminderDelivery', 'string', false),
 		WTF.field('anniversaryReminderTime', 'date', false, {dateFormat: 'H:i'})

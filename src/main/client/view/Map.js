@@ -1,4 +1,5 @@
-/* 
+/*
+ * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -10,7 +11,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -18,7 +19,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
+ * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -30,24 +31,10 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.js;
-
-import com.sonicle.webtop.core.sdk.bol.js.JsUserOptionsBase;
-
-/**
- *
- * @author malbinola
- */
-public class JsUserOptions extends JsUserOptionsBase {
-	public String view;
+Ext.define('Sonicle.webtop.contacts.view.Map', {
+	extend: 'WTA.ux.view.Map',
 	
-	public String showBy;
-	public String anniversaryReminderDelivery;
-	public String anniversaryReminderTime;
-	
-	public JsUserOptions() {}
-	
-	public JsUserOptions(String id) {
-		super(id);
+	dockableConfig: {
+		title: 'Mappppppppppppp'
 	}
-}
+});

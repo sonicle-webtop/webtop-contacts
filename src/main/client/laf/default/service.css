@@ -17,9 +17,26 @@
 .wtcon-icon-addContact { background-image: url('contact-add_16.svg') !important; background-size: contain; }
 .wtcon-icon-addContactsList { background-image: url('contacts-list-add_16.svg') !important; background-size: contain; }
 .wtcon-icon-import { background-image: url('import_16.svg') !important; background-size: contain; }
+.wtcon-icon-writeMessage { background-image: url('message-new_16.svg') !important; background-size: contain; }
 .wtcon-icon-reminder-birthday { background-image: url('birthday_16.png') !important; background-size: contain; }
 .wtcon-icon-reminder-anniversary { background-image: url('anniversary_16.png') !important; background-size: contain; }
 .wtcon-trash-trigger { background-image: url('trash-trigger.png') !important; }
 .wtcon-trash-trigger-touch { background-image: url('trash-trigger-touch.png') !important; }
 .wtcon-add-trigger { background-image: url('add-trigger.png') !important; }
 .wtcon-add-trigger-touch { background-image: url('add-trigger-touch.png') !important; }
+
+.wtcon-gpcontacts .x-grid-empty { text-align: center; }
+.wtcon-gpcontacts .x-grid-group-hd {
+	background-color: #eff6fb;
+}
+.wtcon-gpcontacts .wtcon-group-letter {
+	padding-left: 10px;
+	font-weight: bold;
+	font-size: 1.5em;
+	line-height: calc(100% + 0.2em);
+}
+.wtcon-gpcontacts .wtcon-cell-caption {
+	padding-top: 3px;
+	font-size: 0.9em;
+	color: #888;
+}

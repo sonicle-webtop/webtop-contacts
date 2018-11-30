@@ -32,10 +32,12 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
+import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.text.MessageFormat;
@@ -54,14 +56,32 @@ public class ContactsUserSettings extends BaseUserSettings {
 		ss = new ContactsServiceSettings(serviceId, profileId.getDomainId());
 	}
 	
-	public String getView() {
-		String value = getString(VIEW, null);
-		if(value != null) return value;
+	public GridView getView() {
+		GridView value = getEnum(VIEW, null, GridView.class);
+		if (value != null) return value;
 		return ss.getDefaultView();
 	}
 	
+	public boolean setView(GridView value) {
+		return setEnum(VIEW, value);
+	}
+	
 	public boolean setView(String value) {
-		return setString(VIEW, value);
+		return setView(EnumUtils.forSerializedName(value, GridView.class));
+	}
+	
+	public ShowBy getShowBy() {
+		ShowBy value = getEnum(SHOW_BY, null, ShowBy.class);
+		if (value != null) return value;
+		return ss.getDefaultShowBy();
+	}
+	
+	public boolean setShowBy(ShowBy value) {
+		return setEnum(SHOW_BY, value);
+	}
+	
+	public boolean setShowBy(String value) {
+		return setShowBy(EnumUtils.forSerializedName(value, ShowBy.class));
 	}
 	
 	public LocalTime getAnniversaryReminderTime() {

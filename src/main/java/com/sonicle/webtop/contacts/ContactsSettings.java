@@ -68,12 +68,17 @@ public class ContactsSettings {
 	
 	/**
 	 * [user][default]
-	 * [enum {w:WORK, h:HOME}](w)
-	 * Contacts grid view (w:work, h:home)
+	 * [enum {work:WORK, home:HOME, list:CONTACTS_LIST}](work)
+	 * Contacts grid view
 	 */
 	public static final String VIEW = "view";
-	public static final String VIEW_WORK = "w";
-	public static final String VIEW_HOME = "h";
+	
+	/**
+	 * [user][default]
+	 * [enum {firstName:FIRST_NAME, lastName:LAST_NAME}](lastName)
+	 * The field used for ordering.
+	 */
+	public static final String SHOW_BY = "showby";
 	
 	/**
 	 * [user]

@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,21 +28,65 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
 package com.sonicle.webtop.contacts.bol;
 
+import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.core.sdk.UserProfileId;
+import org.codehaus.plexus.util.StringUtils;
 
 /**
  *
  * @author malbinola
  */
-public class VContact extends OContact {
-	protected Boolean hasPicture;
-	protected String companyAsMasterDataId;
+public class VContactLookup extends OContact {
+	protected String categoryName;
 	protected String categoryDomainId;
 	protected String categoryUserId;
+	protected String masterDataId;
+	protected String masterDataDescription;
+	protected Boolean hasPicture;
+	
+	public String getCategoryName() {
+		return categoryName;
+	}
+
+	public void setCategoryName(String categoryName) {
+		this.categoryName = categoryName;
+	}
+
+	public String getCategoryDomainId() {
+		return categoryDomainId;
+	}
+
+	public void setCategoryDomainId(String categoryDomainId) {
+		this.categoryDomainId = categoryDomainId;
+	}
+
+	public String getCategoryUserId() {
+		return categoryUserId;
+	}
+
+	public void setCategoryUserId(String categoryUserId) {
+		this.categoryUserId = categoryUserId;
+	}
+	
+	public String getMasterDataId() {
+		return masterDataId;
+	}
+	
+	public void setMasterDataId(String masterDataId) {
+		this.masterDataId = masterDataId;
+	}
+	
+	public String getMasterDataDescription() {
+		return masterDataDescription;
+	}
+
+	public void setMasterDataDescription(String masterDataDescription) {
+		this.masterDataDescription = masterDataDescription;
+	}
 	
 	public Boolean getHasPicture() {
 		return hasPicture;
@@ -52,31 +96,15 @@ public class VContact extends OContact {
 		this.hasPicture = hasPicture;
 	}
 	
-	public String getCompanyAsMasterDataId() {
-		return companyAsMasterDataId;
-	}
-
-	public void setCompanyAsMasterDataId(String companyAsMasterDataId) {
-		this.companyAsMasterDataId = companyAsMasterDataId;
-	}
-	
-	public String getCategoryDomainId() {
-		return categoryDomainId;
-	}
-
-	public void setCategoryDomainId(String categoryDomainId) {
-		this.categoryDomainId = categoryDomainId;
-	}
-	
-	public String getCategoryUserId() {
-		return categoryUserId;
-	}
-
-	public void setCategoryUserId(String categoryUserId) {
-		this.categoryUserId = categoryUserId;
-	}
-	
-	public UserProfileId getCategoryProfileId() {
+	public UserProfileId getCalendarProfileId() {
 		return new UserProfileId(categoryDomainId, categoryUserId);
+	}
+	
+	public String getCompanyId() {
+		return !StringUtils.isBlank(getMasterDataId()) ? getMasterDataId() : null;
+	}
+	
+	public String getCompanyDescription() {
+		return LangUtils.coalesceStrings(getMasterDataDescription(), getCompany());
 	}
 }

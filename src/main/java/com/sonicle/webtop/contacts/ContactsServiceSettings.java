@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts;
 
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.BaseServiceSettings;
 
 /**
@@ -62,8 +63,12 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 		return getEnum(DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF, Category.Sync.class);
 	}
 	
-	public String getDefaultView() {
-		return getString(DEFAULT_PREFIX + VIEW, VIEW_WORK);
+	public GridView getDefaultView() {
+		return getEnum(DEFAULT_PREFIX + VIEW, GridView.WORK, GridView.class);
+	}
+	
+	public ShowBy getDefaultShowBy() {
+		return getEnum(DEFAULT_PREFIX + SHOW_BY, ShowBy.LASTNAME, ShowBy.class);
 	}
 	
 	public String getDefaultAnniversaryReminderDelivery() {

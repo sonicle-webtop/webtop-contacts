@@ -60,8 +60,10 @@ import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactCard;
 import com.sonicle.webtop.contacts.bol.VContactCardChanged;
+import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
+import com.sonicle.webtop.contacts.bol.VContactLookup;
 import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
@@ -88,11 +90,13 @@ import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactCard;
 import com.sonicle.webtop.contacts.model.ContactCardChanged;
-import com.sonicle.webtop.contacts.model.ContactItemEx;
+import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactItem;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
-import com.sonicle.webtop.contacts.model.FolderContacts;
+import com.sonicle.webtop.contacts.model.ListContactsResult;
+import com.sonicle.webtop.contacts.model.Grouping;
+import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -284,6 +288,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public UserProfileId getCategoryOwner(int categoryId) throws WTException {
 		return ownerCache.get(categoryId);
+	}
+	
+	public String getIncomingCategoryShareRootId(int categoryId) throws WTException {
+		return shareCache.getShareRootIdByFolderId(categoryId);
 	}
 	
 	@Override
@@ -826,33 +834,60 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public List<FolderContacts> listFolderContacts(Collection<Integer> categoryFolderIds, String searchMode, String pattern) throws WTException {
-		CategoryDAO catDao = CategoryDAO.getInstance();
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern) throws WTException {
+		return listContacts(categoryIds, listOnly, groupBy, showBy, pattern, 1, Integer.MAX_VALUE, false);
+	}
+	
+	@Override
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern, int page, int limit, boolean returnFullCount) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
+			List<Integer> okCategoryIds = categoryIds.stream()
+					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
+					.collect(Collectors.toList());
+			
+			int offset = toOffset(page, limit);
+			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
+			
 			con = WT.getConnection(SERVICE_ID);
 			
-			ArrayList<FolderContacts> foConts = new ArrayList<>();
-			List<OCategory> ocats = catDao.selectByDomainIn(con, getTargetProfileId().getDomainId(), categoryFolderIds);
-			for (OCategory ocat : ocats) {
-				if (!quietlyCheckRightsOnCategoryFolder(ocat.getCategoryId(), "READ")) continue;
-				
-				final List<VContact> vconts = contDao.viewByCategoryPattern(con, ocat.getCategoryId(), searchMode, pattern);
-				final ArrayList<ContactItemEx> conts = new ArrayList<>();
-				for (VContact vcont : vconts) {
-					conts.add(ManagerUtils.fillContactEx(new ContactItemEx(), vcont));
-				}
-				foConts.add(new FolderContacts(ManagerUtils.createCategory(ocat), conts));
+			Integer fullCount = null;
+			if (returnFullCount) fullCount = contDao.countByCategoryTypePattern(con, okCategoryIds, listOnly, null, pattern);
+			ArrayList<ContactItem> items = new ArrayList<>();
+			for (VContactLookup vcont : contDao.viewByCategoryTypePattern(con, orderFields, okCategoryIds, listOnly, null, pattern, limit, offset)) {
+				items.add(ManagerUtils.fillContactLookup(new ContactItem(), vcont));
 			}
-			return foConts;
+			
+			return new ListContactsResult(items, fullCount);
 			
 		} catch (SQLException | DAOException ex) {
 			throw wrapException(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
+	}
+	
+	private int toOffset(int page, int limit) {
+		return limit * (page-1);
+	}
+	
+	private Collection<ContactDAO.OrderField> toContactDAOOrderFields(Grouping groupBy, ShowBy showBy) {
+		ArrayList<ContactDAO.OrderField> fields = new ArrayList<>(3);
+		if (ShowBy.FIRSTNAME.equals(showBy)) {
+			fields.add(ContactDAO.OrderField.FIRSTNAME);
+			fields.add(ContactDAO.OrderField.LASTNAME);
+		} else {
+			fields.add(ContactDAO.OrderField.LASTNAME);
+			fields.add(ContactDAO.OrderField.FIRSTNAME);
+		}
+		if (Grouping.COMPANY.equals(groupBy)) {
+			fields.add(0, ContactDAO.OrderField.COMPANY);
+		} else {
+			fields.add(ContactDAO.OrderField.COMPANY);
+		}
+		return fields;
 	}
 	
 	@Override
@@ -891,6 +926,26 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			OContactAttachmentData oattData = attDao.selectBytes(con, attachmentId);
 			return ManagerUtils.fillContactAttachment(new ContactAttachmentWithBytes(oattData.getBytes()), oatt);
+		
+		} catch(SQLException | DAOException ex) {
+			throw wrapException(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public ContactCompany getContactCompany(int contactId) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			VContactCompany vcc = contDao.viewContactCompanyByContact(con, contactId);
+			if (vcc == null) return null;
+			checkRightsOnCategoryFolder(vcc.getCategoryId(), "READ");
+			
+			return ManagerUtils.fillContactCompany(new ContactCompany(), vcc);
 		
 		} catch(SQLException | DAOException ex) {
 			throw wrapException(ex);
@@ -1169,9 +1224,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			
 			OContact ocont = contDao.selectById(con, contactId);
-			if (ocont == null) return null;
-			if (!ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
-			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ"); // Rights check!
+			if ((ocont == null) || !ocont.getIsList()) return null;
+			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 			
 			List<VListRecipient> vlrecs = lrecDao.viewByContact(con, contactId);
 			return ManagerUtils.createContactsList(ocont, vlrecs);
@@ -1787,8 +1841,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		ContactAttachmentDAO attDao = ContactAttachmentDAO.getInstance();
 		
 		OContact ocont = contDao.selectById(con, contactId);
-		if (ocont == null) return null;
-		if (ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
+		if ((ocont == null) || (ocont.getIsList())) return null;
 		
 		Contact cont = ManagerUtils.createContact(ocont);
 		if (picture) {
@@ -1968,8 +2021,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return contDao.logicDeleteById(con, contactId, BaseDAO.createRevisionTimestamp());
 		} else {
 			// List are not supported here
-			doContactPictureDelete(con, contactId);
-			doContactVCardDelete(con, contactId);
+			//doContactPictureDelete(con, contactId);
+			//doContactVCardDelete(con, contactId);
 			return contDao.deleteById(con, contactId);
 		}
 	}

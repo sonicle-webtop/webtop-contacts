@@ -38,12 +38,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	requires: [
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
+		'Sonicle.grid.column.Avatar',
 		'WTA.ux.data.EmptyModel',
 		'WTA.ux.data.SimpleModel',
+		'WTA.ux.field.Search',
 		'Sonicle.webtop.contacts.model.FolderNode',
-		'Sonicle.webtop.contacts.model.GridContact'
+		'Sonicle.webtop.contacts.model.GridContact',
+		'Sonicle.webtop.contacts.store.View',
+		'Sonicle.webtop.contacts.store.GroupBy',
+		'Sonicle.webtop.contacts.store.ShowBy',
+		//'Sonicle.webtop.contacts.ux.ScrollTooltip',
+		'Sonicle.webtop.contacts.ux.panel.ContactPreview'
 	],
 	uses: [
+		'Sonicle.webtop.contacts.view.Map',
 		'Sonicle.webtop.contacts.view.Sharing',
 		'Sonicle.webtop.contacts.view.Category',
 		'Sonicle.webtop.contacts.view.CategoryLinks',
@@ -57,8 +65,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'WTA.mixin.FoldersTree'
 	],
 	
+	activeView: 'work',
+	activeGroupBy: 'alpha',
+	
 	needsReload: true,
-	activeView: 'w',
 	api: null,
 	
 	getApiInstance: function() {
@@ -68,9 +78,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	init: function() {
-		var me = this, ies, iitems = [];
+		var me = this;
 		
-		me.activeView = 'w';
+		me.activeView = me.getVar('view');
+		Sonicle.webtop.contacts.model.GridContact.setOrderField((me.getVar('showBy') === 'firstName' ? 'firstName' : 'lastName'));
+		
 		me.initActions();
 		me.initCxm();
 		
@@ -107,46 +119,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				'-',
 				me.getAct('refresh'),
 				me.getAct('printAddressbook'),
-				me.getAct('deleteContact2'),
 				'->',
-				/*
-				me.getAct('workview'),
-				me.getAct('homeview'),
-				'-',*/
-				me.addRef('cbogroup', Ext.create(WTF.lookupCombo('id', 'desc', {
-					queryMode: 'local',
-					store: {
-						model: 'WTA.ux.data.SimpleModel'
-					},
-					fieldLabel: me.res('fld-group.lbl'),
-					labelWidth: 70,
-					width: 190,
+				{
+					xtype: 'wtsearchfield',
+					reference: 'fldsearch',
+					tooltip: me.res('fld-search.tip'),
 					listeners: {
-						select: function(s, rec) {
-							me.applyGrouping((rec.get('id') === '-') ? null : rec.get('id'));
+						query: function(s, value) {
+							me.queryContacts(value);
 						}
 					}
-				}))),
-				' ',
-				{
-					xtype: 'textfield',
-					reference: 'txtsearch',
-					tooltip: me.res('textfield.tip'),
-					plugins: ['sofieldtooltip'],
-					triggers: {
-						search: {
-							cls: Ext.baseCSSPrefix + 'form-search-trigger',
-							handler: function(s) {
-								me.queryContacts(s.getValue());
-							}
-						}
-					},
-					listeners: {
-						specialkey: function(s, e) {
-							if(e.getKey() === e.ENTER) me.queryContacts(s.getValue());
-						}
-					},
-					width: 200
 				},
 				'->'
 			]
@@ -199,18 +181,240 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}]
 		}));
 		
-		ies = ['*','#','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-		for(var i=0; i<ies.length; i++) {
-			iitems.push({
-				itemId: 'chr'+ies[i].charCodeAt(0),
-				text: ies[i],
-				toggleGroup: 'ix',
-				handler: function(s) {
-					me.reloadContacts(s.getText(), null);
+		me.setMainComponent(Ext.create({
+			xtype: 'container',
+			layout: 'border',
+			referenceHolder: true,
+			items: [{
+				region: 'center',
+				xtype: 'gridpanel',
+				reference: 'gpcontacts',
+				cls: 'wtcon-gpcontacts',
+				store: {
+					type: 'buffered',
+					model: 'Sonicle.webtop.contacts.model.GridContact',
+					proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'data', {
+						extraParams: {
+							view: null,
+							groupBy: null,
+							showBy: null,
+							query: null
+						}
+					}),
+					pageSize: 50,
+					leadingBufferZone: 50,
+					trailingBufferZone: 50,
+					listeners: {
+						beforeload: function(s) {
+							WTU.applyExtraParams(s, {
+								view: me.activeView,
+								groupBy: me.activeGroupBy,
+								showBy: me.getVar('showBy')
+							});
+						},
+						load: function(s) {
+							/*
+							var rec = me.getSelectedContact(), cmp;
+							if (rec && (s.getById(rec.getId()) === null)) { // Record is selected but no more existent in store
+								// I don't know if it is a ExtJs bug, anyway make sure to clear the preview panel and refresh actions affected by strange selections
+								cmp = me.pnlPreview();
+								if (cmp.isLoaded(rec.getId())) cmp.setContacts(null);
+								//me.updateDisabled('deleteContact');
+							}
+							*/
+							// TODO: add lastupdate to model to check if the contact has been updated and refresh preview accordingly (this can reduce openContact code)
+						}
+					}
+				},
+				selModel: {
+					type: 'rowmodel',
+					mode : 'MULTI'
+				},
+				viewConfig: {
+					deferEmptyText: false,
+					emptyText: WT.res('grid.emp')
+				},
+				columns: [{
+					dataIndex: 'id',
+					hidden: true,
+					sortable: false,
+					groupable: false,
+					text: 'ID',
+					width: 80
+				}, {
+					xtype: 'socolorcolumn',
+					dataIndex: 'catId',
+					hidden: true,
+					sortable: false,
+					groupable: false,
+					colorField: 'catColor',
+					displayField: 'catName',
+					text: me.res('gpcontacts.category.lbl'),
+					width: 80
+				}, {
+					xtype: 'soavatarcolumn',
+					dataIndex: 'id',
+					sortable: false,
+					groupable: false,
+					nameField: 'fullName',
+					getPictureUrl: function(v, rec) {
+						return (rec.get('pic') === true) ? Ext.String.urlAppend(WTF.processBinUrl(me.ID, 'GetContactPicture'), Ext.Object.toQueryString({id: v})) : null;
+					},
+					/*
+					getIconCls: function(v,rec) {
+						return (rec.get('isList') === true) ? me.cssIconCls('contactsList') : null;
+					},
+					*/
+					width: 60
+				}, {
+					xtype: 'templatecolumn',
+					sortable: false,
+					groupable: false,
+					text: me.res('gpcontacts.contacts.lbl'),
+					flex: 2,
+					tpl: [
+						'<div>{fullName}<span class="wtcon-cell-caption" style="padding-left:10px;">{[this.getCompany(values)]}</span></div>',
+						'<div class="wtcon-cell-caption">{[this.getRefs(values)]}</div>',
+						{
+							getCompany: function(values) {
+								return (me.activeGroupBy === 'company') ? '' : this.value(values['company']);
+							},
+							getRefs: function(values) {
+								var phone = false,
+										args = ['&nbsp;&nbsp;'], s;
+								
+								if (values['isList'] === true) {
+									args.push(Ext.String.htmlEncode(me.res('contactsList.tit')));
+								} else {
+									s = values['email'];
+									if (!Ext.isEmpty(s)) {
+										args.push('<i class="fa fa-envelope-o" aria-hidden="true"></i>&nbsp;' + this.value(s));
+									}
+									s = values['mobile'];
+									if (!Ext.isEmpty(s)) {
+										args.push('<i class="fa fa-mobile" aria-hidden="true"></i>&nbsp;' + this.value(s));
+										phone = true;
+									}
+									s = values['telephone'];
+									if (!phone && !Ext.isEmpty(s)) {
+										args.push('<i class="fa fa-phone" aria-hidden="true"></i>&nbsp;' + this.value(s));
+									}
+								}	
+								return Sonicle.String.join.apply(null, args);
+							},
+							value: function(s) {
+								return !Ext.isEmpty(s) ? Ext.String.htmlEncode(s) : '';
+							}
+						}
+					]
+				}],
+				features: [{
+					id: 'grouping',
+					ftype: 'grouping',
+					groupHeaderTpl: [
+						'<span class="{[this.getSpanCls(values)]}">{name}</span>',
+						{
+							getSpanCls: function(values) {
+								return 'wt-theme-text-tit' + ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
+							}
+						}
+					]
+				}/*, {
+					id: 'scrolltooltip',
+					ftype: 'wtscrolltooltip'
+				}*/],
+				tbar: [
+					'->',
+					WTF.lookupCombo('id', 'desc', {
+						store: {
+							type: 'wtcongroupby',
+							autoLoad: true
+						},
+						value: me.activeGroupBy,
+						listeners: {
+							select: function(s, rec) {
+								me.applyGroupBy(rec.getId());
+							}
+						},
+						fieldLabel: me.res('fld-group.lbl'),
+						labelWidth: 70,
+						width: 180
+					}),
+					WTF.lookupCombo('id', 'desc', {
+						store: {
+							type: 'wtconview',
+							autoLoad: true
+						},
+						value: me.activeView,
+						listeners: {
+							select: function(s, rec) {
+								me.reloadContacts({view: rec.getId()});
+							}
+						},
+						width: 130
+					}),
+					'-',
+					me.getAct('deleteContact2')
+				],
+				listeners: {
+					selectionchange: function(s) {
+						me.updateDisabled('showContact');
+						me.updateDisabled('printContact');
+						me.updateDisabled('copyContact');
+						me.updateDisabled('moveContact');
+						me.updateDisabled('deleteContact');
+						me.updateDisabled('addContactsListFromSel');
+						me.updateDisabled('addToContactsListFromSel');
+						me.updateDisabled('callTelephone');
+						me.updateDisabled('callMobile');
+						me.updateDisabled('sendSms');
+						me.pnlPreview().setContacts(s.getSelection());
+					},
+					rowdblclick: function(s, rec) {
+						var er = me.toRightsObj(rec.get('_erights'));
+						me.openContactItemUI(er.UPDATE, rec);
+					},
+					rowcontextmenu: function(s, rec, itm, i, e) {
+						WT.showContextMenu(e, me.getRef('cxmGrid'), {
+							task: rec,
+							tasks: s.getSelection()
+						});
+					},
+					rowkeydown: function(s, rec, itm, indx, e) {
+						if (e.getKey() === e.DELETE) {
+							me.getAct('deleteContact').execute();
+						}
+					}
 				}
-			});
-		}
-		
+			}, {
+				region: 'east',
+				xtype: 'wtconcontactpreviewpanel',
+				reference: 'pnlpreview',
+				split: true,
+				hidden: !WT.plTags.desktop,
+				mys: me,
+				listeners: {
+					writeemail: function(s, rcpts) {
+						WT.handleNewMailMessage(rcpts);
+					},
+					callnumber: function(s, number) {
+						WT.handlePbxCall(number);
+					},
+					writesms: function(s, number, id, fn) {
+						WT.handleSendSMS(fn, number, null);
+					},
+					mapaddress: function(s, address) {
+						WT.openGoogleMaps({query: address});
+					},
+					clearselection: function(s) {
+						me.gpContacts().getSelectionModel().deselectAll();
+					}
+				},
+				width: '60%',
+				minWidth: 600
+			}]
+		}));
+		/*
 		me.setMainComponent(Ext.create({
 			xtype: 'container',
 			layout: 'border',
@@ -347,52 +551,50 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						metachange: function(s, meta) {
 							s.isReconfiguring = true;
 							
-							/*
-							var gp = me.gpContacts(),
-									colsInfo = [],
-									data = [];
-							
-							if(meta.colsInfo) {
-								colsInfo.push({
-									xtype: 'soiconcolumn',
-									getIconCls: function(v,rec) {
-										return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
-									},
-									iconSize: WTU.imgSizeToPx('xs'),
-									width: 30,
-									groupable: false
-								});
-								
-								Ext.iterate(meta.colsInfo, function(col,i) {
-									var lastColState=me.lastState&&me.lastState.columns.length>0?me.lastState.columns[i+1]:null;
-									if (col.dataIndex === 'categoryName') {
-										col.xtype = 'socolorcolumn';
-										col.header = me.res('gpcontacts.category.lbl');
-										col.colorField = 'categoryColor';
-										col.displayField = 'categoryName';
-										if (!lastColState || !Ext.isDefined(lastColState.width)) col.width = 150;
-										if (!lastColState || !Ext.isDefined(lastColState.hidden)) col.hidden = false;
-									} else {
-										col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
-										if (!lastColState || !Ext.isDefined(lastColState.width)) {
-											if (col.dataIndex === 'title') col.width = 50;
-											else if((col.dataIndex === 'workEmail') || (col.dataIndex === 'homeEmail')) col.flex = 2;
-											else col.flex = 1;
-										}
-									}
-									
-									if(col.xtype === 'datecolumn') {
-										col.format = WT.getShortDateFmt();
-									}
-									if (lastColState) {
-										if (Ext.isDefined(lastColState.width)) col.width=lastColState.width;
-										if (Ext.isDefined(lastColState.hidden)) col.hidden=lastColState.hidden;
-									}
-									colsInfo.push(col);
-								});
-								me.gpContacts().reconfigure(s, colsInfo);
-							}
-							*/
+							//var gp = me.gpContacts(),
+							//		colsInfo = [],
+							//		data = [];
+							//
+							//if(meta.colsInfo) {
+							//	colsInfo.push({
+							//		xtype: 'soiconcolumn',
+							//		getIconCls: function(v,rec) {
+							//			return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
+							//		},
+							//		iconSize: WTU.imgSizeToPx('xs'),
+							//		width: 30,
+							//		groupable: false
+							//	});
+							//	
+							//	Ext.iterate(meta.colsInfo, function(col,i) {
+							//		var lastColState=me.lastState&&me.lastState.columns.length>0?me.lastState.columns[i+1]:null;
+							//		if (col.dataIndex === 'categoryName') {
+							//			col.xtype = 'socolorcolumn';
+							//			col.header = me.res('gpcontacts.category.lbl');
+							//			col.colorField = 'categoryColor';
+							//			col.displayField = 'categoryName';
+							//			if (!lastColState || !Ext.isDefined(lastColState.width)) col.width = 150;
+							//			if (!lastColState || !Ext.isDefined(lastColState.hidden)) col.hidden = false;
+							//		} else {
+							//			col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
+							//			if (!lastColState || !Ext.isDefined(lastColState.width)) {
+							//				if (col.dataIndex === 'title') col.width = 50;
+							//				else if((col.dataIndex === 'workEmail') || (col.dataIndex === 'homeEmail')) col.flex = 2;
+							//				else col.flex = 1;
+							//			}
+							//		}
+							//		
+							//		if(col.xtype === 'datecolumn') {
+							//			col.format = WT.getShortDateFmt();
+							//		}
+							//		if (lastColState) {
+							//			if (Ext.isDefined(lastColState.width)) col.width=lastColState.width;
+							//			if (Ext.isDefined(lastColState.hidden)) col.hidden=lastColState.hidden;
+							//		}
+							//		colsInfo.push(col);
+							//	});
+							//	me.gpContacts().reconfigure(s, colsInfo);
+							//}
 						   
 						    var colsInfo=me.gpContacts().getColumns(),
 								data = [];
@@ -400,7 +602,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							// Fill group combo
 							Ext.iterate(colsInfo, function(col,i) {
 								if(col.groupable && !col.hidden) {
-									data.push({id: col.dataIndex, desc: col.text /*col.header*/});
+									data.push({id: col.dataIndex, desc: col.text 
+									//col.header
+									});
 								}
 							});
 							
@@ -496,6 +700,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				items: iitems
 			}]
 		}));
+		*/
 	},
 	
 	notificationCallback: function(type, tag, data) {
@@ -505,8 +710,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
-	txtSearch: function() {
-		return this.getToolbar().lookupReference('txtsearch');
+	fldSearch: function() {
+		return this.getToolbar().lookupReference('fldsearch');
 	},
 	
 	trFolders: function() {
@@ -515,6 +720,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	gpContacts: function() {
 		return this.getMainComponent().lookupReference('gpcontacts');
+	},
+	
+	pnlPreview: function() {
+		return this.getMainComponent().lookupReference('pnlpreview');
 	},
 	
 	tbIndex: function() {
@@ -538,24 +747,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		
-		me.addAct('workview', {
-			scale: hdscale,
-			text: null,
-			itemId: 'w',
-			toggleGroup: 'view',
-			handler: function() {
-				me.changeView('w');
-			}
-		});
-		me.addAct('homeview', {
-			scale: hdscale,
-			text: null,
-			itemId: 'h',
-			toggleGroup: 'view',
-			handler: function() {
-				me.changeView('h');
-			}
-		});
 		me.addAct('editSharing', {
 			text: WT.res('sharing.tit'),
 			tooltip: null,
@@ -739,7 +930,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				var rec = me.getSelectedContact(), er;
 				if (rec) {
 					er = me.toRightsObj(rec.get('_erights'));
-					me.openContactItemUI(rec.get('isList'), er.UPDATE, rec.get('id'));
+					me.openContactItemUI(er.UPDATE, rec);
 				}
 			}
 		});
@@ -763,7 +954,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			tooltip: null,
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if (sel.length > 0) me.sendSelContactAsEmail(sel);
+				if (sel.length > 0) me.sendContactsAsEmail(me.extractIds(sel, 'id'));
 			}
 		});
 		me.addAct('addContactsListFromSel', {
@@ -771,7 +962,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			handler: function() {
 				var node = me.getSelectedFolder(me.trFolders()),
 						er = me.toRightsObj(node.get('_erights')),
-						rcpts = me.buildRcpts(me.activeView, me.getSelectedContacts());
+						rcpts = me.toRcpts(me.getSelectedContacts());
 				
 				if (er.CREATE) {
 					me.addContactsListUI(node.get('_pid'), node.get('_catId'), rcpts);
@@ -783,9 +974,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('addToContactsListFromSel', {
 			tooltip: null,
 			handler: function() {
-				var emails = me.buildEmails(me.activeView, me.getSelectedContacts());
-				
-				me.addToContactsListUI(emails);
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) me.addAsContactsListRecipientUI(sel);
 			}
 		});
 		me.addAct('deleteContact', {
@@ -794,7 +984,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iconCls: 'wt-icon-delete',
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if(sel.length > 0) me.deleteSelContacts(sel);
+				if (sel.length > 0) me.deleteContactItemsUI(sel);
+			}
+		});
+		me.addAct('deleteContact2', {
+			text: null,
+			tooltip: WT.res('act-delete.lbl'),
+			iconCls: 'wt-icon-delete',
+			disabled: true,
+			handler: function() {
+				me.getAct('deleteContact').execute();
 			}
 		});
 		me.addAct('copyContact', {
@@ -815,37 +1014,28 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iconCls: 'wt-icon-print',
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if (sel.length > 0) me.printSelContacts(sel);
+				if (sel.length > 0) me.printContactsDetail(me.extractIds(sel, 'id'));
 			}
 		});
 		me.addAct('callTelephone', {
-			text: me.res('act-call-telephone.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-call-xs',
 			handler: function() {
-				var sel = me.getSelectedContacts();
-				if (sel.length > 0) WT.handlePbxCall(sel[0].get('workTelephone'));
+				var rec = me.getSelectedContact();
+				if (rec) WT.handlePbxCall(rec.get('telephone'));
 			}
 		});
 		me.addAct('callMobile', {
-			text: me.res('act-call-mobile.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-call-xs',
 			handler: function() {
-				var sel = me.getSelectedContacts();
-				if (sel.length > 0) WT.handlePbxCall(sel[0].get('workMobile'));
+				var rec = me.getSelectedContact();
+				if (rec) WT.handlePbxCall(rec.get('mobile'));
 			}
 		});
-		me.addAct('sendSMS', {
-			text: me.res('act-send-sms.lbl'),
+		me.addAct('sendSms', {
 			tooltip: null,
-			iconCls: 'wt-icon-sms-xs',
 			handler: function() {
-				var sel = me.getSelectedContacts();
-				if (sel.length > 0) WT.handleSendSMS(
-						sel[0].get('firstName')+" "+sel[0].get('lastName'),
-						sel[0].get('workMobile')
-				);
+				var rec = me.getSelectedContact();
+				if (rec) WT.handleSendSMS(rec.get('fullName'), rec.get('mobile'), null);
 			}
 		});
 		
@@ -868,15 +1058,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				delete params.action;
 				var url = WTF.processBinUrl(me.ID, 'PrintAddressbook', params);
 				Sonicle.URLMgr.openFile(url, {filename: 'addressbook', newWindow: true});
-			}
-		});
-		me.addAct('deleteContact2', {
-			scale: hdscale,
-			text: null,
-			tooltip: WT.res('act-delete.tip'),
-			iconCls: 'wt-icon-delete',
-			handler: function() {
-				me.getAct('deleteContact').execute();
 			}
 		});
 		/*
@@ -1015,17 +1196,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						]
 					}
 				},
-				{
-					text: WT.res('act-call.lbl'),
-					iconCls: 'wt-icon-call-xs',
-					menu: {
-						items: [
-							me.getAct('callTelephone'),
-							me.getAct('callMobile')
-						]
-					}
-				},
-				me.getAct('sendSMS'),
 				me.getAct('printContact'),
 				'-',
 				me.getAct('deleteContact'),
@@ -1033,23 +1203,29 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsListFromSel'),
 				me.getAct('addToContactsListFromSel'),
 				'-',
+				{
+					text: WT.res('act-call.lbl'),
+					iconCls: 'wt-icon-call',
+					menu: {
+						items: [
+							me.getAct('callTelephone'),
+							me.getAct('callMobile')
+						]
+					}
+				},
+				me.getAct('sendSms'),
+				'-',
 				me.getAct('sendContact')
 			]
 		}));
 	},
 	
 	onActivate: function() {
-		var me = this,
-				gp = me.gpContacts();
+		var me = this;
 		
-		if(me.needsReload) {
+		if (me.needsReload) {
 			me.needsReload = false;
-			if(gp.getStore().loadCount === 0) { // The first time...
-				// ...sets startup letter!
-				me.reloadContacts('A');
-			} else {
-				me.reloadContacts();
-			}
+			me.reloadContacts();
 		}
 		
 		me.updateDisabled('showContact');
@@ -1059,49 +1235,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('deleteContact');
 		me.updateDisabled('addContactsListFromSel');
 		me.updateDisabled('addToContactsListFromSel');
-	},
-	
-	loadCboGroup: function(data, value) {
-		var cbo = this.getRef('cbogroup');
-		data.unshift({id: '-', desc: WT.res('word.no')});
-		cbo.getStore().setData(data);
-		cbo.setValue((value) ? value : '-');
-	},
-	
-	applyGrouping: function(field, dir) {
-		var gp = this.gpContacts();
-		if(field) {
-			gp.getStore().group(field, dir || 'asc');
-			gp.getView().getFeature('grouping').enable();
-		} else {
-			gp.getView().getFeature('grouping').disable();
-		}
-	},
-	
-	saveGroupInfo: function(field, direction) {
-		var me = this;
-		WT.ajaxReq(me.ID, 'ManageGridContacts', {
-			params: {
-				crud: 'save',
-				view: me.activeView,
-				context: 'group',
-				field: field,
-				direction: direction
-			}
-		});
-	},
-	
-	saveSortInfo: function(field, direction) {
-		var me = this;
-		WT.ajaxReq(me.ID, 'ManageGridContacts', {
-			params: {
-				crud: 'save',
-				view: me.activeView,
-				context: 'sort',
-				field: field,
-				direction: direction
-			}
-		});
+		me.updateDisabled('callTelephone');
+		me.updateDisabled('callMobile');
+		me.updateDisabled('sendSms');
 	},
 	
 	loadRootNode: function(pid, reloadItemsIf) {
@@ -1116,28 +1252,51 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
-	queryContacts: function(txt) {
-		this.reloadContacts(null, Ext.isEmpty(txt) ? null : txt);
+	
+	
+
+	
+	calcGroupField: function(groupBy) {
+		if (groupBy === 'company') {
+			return 'company';
+		} else {
+			return 'letter';
+		}
 	},
 	
-	reloadContacts: function(letter, query) {
-		var me = this, sto, pars;
-		
-		if(me.isActive()) {
+	applyGroupBy: function(groupBy, reload) {
+		var me = this;
+		me.activeGroupBy = groupBy;
+		if (reload !== false) {
+			me.gpContacts().getStore().setGroupField(me.calcGroupField(groupBy));
+		}	
+	},
+	
+	reloadContacts: function(opts) {
+		opts = opts || {};
+		var me = this, sto, pars = {};
+		// NB: opts.query is not persisted if service is not active!
+		if (Ext.isString(opts.groupBy)) me.activeGroupBy = opts.groupBy;
+		if (Ext.isString(opts.view)) me.activeView = opts.view;
+		if (me.isActive()) {
 			sto = me.gpContacts().getStore();
-			pars = {view: me.activeView};
-			if(letter !== undefined) Ext.apply(pars, {letter: letter});
-			if(query !== undefined) Ext.apply(pars, {query: query});
-			WTU.loadWithExtraParams(sto, pars);
+			if (!sto.getGroupField()) {
+				sto.setGroupField(me.calcGroupField(me.activeGroupBy));
+			} else {
+				if (opts.query !== undefined) Ext.apply(pars, {query: opts.query});
+				WTU.loadWithExtraParams(sto, pars);
+			}
 		} else {
 			me.needsReload = true;
 		}
 	},
 	
-	changeView: function(view) {
-		var me = this;
-		//me.activeView = view;
-		me.reloadContacts('A');
+	queryContacts: function(txt) {
+		this.reloadContacts({query: txt});
+	},
+	
+	getSelectedContacts: function() {
+		return this.gpContacts().getSelection();
 	},
 	
 	getSelectedContact: function(forceSingle) {
@@ -1145,10 +1304,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var sel = this.getSelectedContacts();
 		if (forceSingle && sel.length !== 1) return null;
 		return (sel.length > 0) ? sel[0] : null;
-	},
-	
-	getSelectedContacts: function() {
-		return this.gpContacts().getSelection();
 	},
 	
 	addCategoryUI: function(domainId, userId) {
@@ -1199,16 +1354,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	manageHiddenCategoriesUI: function(node) {
 		var me = this,
-				vct = me.createHiddenCategories(node.getId());
+				vw = me.createHiddenCategories(node.getId());
 		
-		vct.getView().on('viewcallback', function(s, success, json) {
+		vw.on('viewcallback', function(s, success, json) {
 			if (success) {
 				Ext.iterate(json.data, function(pid) {
 					me.loadRootNode(pid);
 				});
 			}
 		});
-		vct.show();
+		vw.showView();
 	},
 	
 	hideCategoryUI: function(node) {
@@ -1265,21 +1420,57 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	openContactItemUI: function(isList, edit, id) {
-		var me = this;
-		if (isList === true) {
+	openContactItemUI: function(edit, rec) {
+		var me = this,
+				id = rec.get('id'),
+				isList = rec.get('isList') === true,
+				sel;
+		if (isList) {
 			me.openContactsList(edit, id, {
-				callback: function(success) {
-					if (success && edit) me.reloadContacts();
+				callback: function(success, mo) {
+					if (success && edit) {
+						me.reloadContacts();
+						sel = me.getSelectedContacts();
+						if ((sel.length === 1) && (sel[0].get('id') === mo.getId())) {
+							me.pnlPreview().setContacts(sel);
+						}
+					}
 				}
 			});
-		} else if(isList === false) {
+		} else {
 			me.openContact(edit, id, {
-				callback: function(success) {
-					if (success && edit) me.reloadContacts();
+				callback: function(success, mo) {
+					if (success && edit) {
+						me.reloadContacts();
+						sel = me.getSelectedContacts();
+						if ((sel.length === 1) && (sel[0].get('id') === mo.getId())) {
+							me.pnlPreview().setContacts(sel);
+						}
+					}
 				}
 			});
 		}
+	},
+	
+	deleteContactItemsUI: function(recs) {
+		var me = this,
+			ids = me.extractIds(recs),
+			msg;
+		
+		if (recs.length === 1) {
+			msg = me.res('contact.confirm.delete', Ext.String.ellipsis(recs[0].get('fullName'), 40));
+		} else {
+			msg = me.res('gpcontacts.confirm.delete.selection');
+		}
+		WT.confirm(msg, function(bid) {
+			if (bid === 'yes') {
+				me.deleteContactsItems(ids, {
+					callback: function(success) {
+						if (success) me.reloadContacts();
+					}
+				});
+			}
+		});
 	},
 	
 	addContactUI: function(ownerId, categoryId) {
@@ -1300,11 +1491,30 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	addAsContactsListRecipientUI: function(recs) {
+		var me = this,
+				vw = me.createContactListChooser(null);
+		
+		vw.on('viewok', function(s, listAddress, rcptType) {
+			me.addAsContactsListRecipient(listAddress, rcptType, me.toEmails(recs));
+			/*
+			WT.ajaxReq(me.ID, 'AddToContactsList', {
+				params: {
+					list: list,
+					recipientType: recipientType,
+					emails: emails
+				}
+			});
+			*/
+		});
+		vw.showView();
+	},
+	
 	addToContactsListUI: function(emails) {
 		var me = this,
-				vct = me.createListChooser('');
+				vw = me.createContactListChooser('');
 		
-		vct.getView().on('viewok', function(s,list,recipientType) {
+		vw.on('viewok', function(s, list, recipientType) {
 			WT.ajaxReq(me.ID, 'AddToContactsList', {
 				params: {
 					list: list,
@@ -1313,35 +1523,32 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		});
-		vct.show();
+		vw.showView();
 	},
 	
-	deleteSelContacts: function(sel) {
+	deleteContactItemsUI_OLD: function(recs) {
 		var me = this,
-			sto = me.gpContacts().getStore(),
-			isl = sel[0].get('isList') === true,
-			ids = me.selectionIds(sel),
-			msg, name;
+			isl = recs[0].get('isList') === true,
+			ids = me.extractIds(recs, 'id'),
+			msg;
 		
-		if (sel.length === 1) {
-			name = Sonicle.String.join(' ', sel[0].get('firstName'), sel[0].get('lastName'));
-			msg = me.res('contact.confirm.delete', Ext.String.ellipsis(name, 40));
+		if (recs.length === 1) {
+			msg = me.res('contact.confirm.delete', Ext.String.ellipsis(recs[0].get('fullName'), 40));
 		} else {
 			msg = me.res('gpcontacts.confirm.delete.selection');
 		}
-		
 		WT.confirm(msg, function(bid) {
 			if (bid === 'yes') {
 				if (isl) {
 					me.deleteContactsLists(ids, {
 						callback: function(success) {
-							if(success) sto.remove(sel);
+							if (success) me.reloadContacts();
 						}
 					});
 				} else {
 					me.deleteContacts(ids, {
 						callback: function(success) {
-							if(success) sto.remove(sel);
+							if (success) me.reloadContacts();
 						}
 					});
 				}
@@ -1351,7 +1558,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	moveContactsSel: function(copy, sel) {
 		var me = this,
-				id = sel[0].get('contactId'),
+				id = sel[0].get('id'),
 				isl = sel[0].get('isList') === true,
 				pid = sel[0].get('_profileId'),
 				cat = sel[0].get('categoryId');
@@ -1374,22 +1581,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	confirmMoveContact: function(copy, id, ownerId, catId, opts) {
 		var me = this,
-				vct = me.createCategoryChooser(copy, ownerId, catId);
+				vw = me.createCategoryChooser(copy, ownerId, catId);
 		
-		vct.getView().on('viewok', function(s) {
+		vw.on('viewok', function(s) {
 			me.moveContact(copy, id, s.getVMData().categoryId, opts);
 		});
-		vct.show();
+		vw.showView();
 	},
 	
 	confirmMoveContactsList: function(copy, id, ownerId, catId, opts) {
 		var me = this,
-				vct = me.createCategoryChooser(copy, ownerId, catId);
+				vw = me.createCategoryChooser(copy, ownerId, catId);
 		
-		vct.getView().on('viewok', function(s) {
+		vw.on('viewok', function(s) {
 			me.moveContactsList(copy, id, s.getVMData().categoryId, opts);
 		});
-		vct.show();
+		vw.showView();
 	},
 	
 	importContactsUI: function(categoryId) {
@@ -1401,20 +1608,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	printSelContacts: function(sel) {
-		this.printContactsDetail(this.selectionIds(sel));
-	},
-	
-	sendSelContactAsEmail: function(sel) {
-		this.sendContactAsEmail(this.selectionIds(sel));
-	},
-	
 	editShare: function(id) {
 		var me = this,
-				vw = WT.createView(me.ID, 'view.Sharing');
+				vw = WT.createView(me.ID, 'view.Sharing', {swapReturn: true});
 		
-		vw.show(false, function() {
-			vw.getView().begin('edit', {
+		vw.showView(function(s) {
+			vw.begin('edit', {
 				data: {
 					id: id
 				}
@@ -1425,13 +1624,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	addCategory: function(domainId, userId, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.Category');
+				vw = WT.createView(me.ID, 'view.Category', {swapReturn: true});
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('new', {
+		vw.showView(function(s) {
+			vw.begin('new', {
 				data: {
 					domainId: domainId,
 					userId: userId,
@@ -1444,7 +1643,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	setupRemoteCategory: function(profileId, opts) {
 		opts = opts || {};
 		var me = this,
-			vct = WT.createView(me.ID, 'view.CategoryRemoteWiz', {
+			vw = WT.createView(me.ID, 'view.CategoryRemoteWiz', {
+				swapReturn: true,
 				viewCfg: {
 					data: {
 						profileId: profileId
@@ -1452,22 +1652,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		
-		vct.getView().on('viewclose', function(s) {
+		vw.on('viewclose', function(s) {
 			Ext.callback(opts.callback, opts.scope || me, [true, s.getVMData()]);
 		});
-		vct.show();
+		vw.showView();
 	},
 	
 	viewCategoryLinks: function(categoryId, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.CategoryLinks');
+				vw = WT.createView(me.ID, 'view.CategoryLinks', {swapReturn: true});
 		
-		vct.getView().on('viewclose', function(s, success, model) {
+		vw.on('viewclose', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('view', {
+		vw.showView(function(s) {
+			vw.begin('view', {
 				data: {
 					categoryId: categoryId
 				}
@@ -1478,13 +1678,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	editCategory: function(categoryId, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.Category');
+				vw = WT.createView(me.ID, 'view.Category', {swapReturn: true});
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('edit', {
+		vw.showView(function(s) {
+			vw.begin('edit', {
 				data: {
 					categoryId: categoryId
 				}
@@ -1564,16 +1764,47 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	deleteContactsItems: function(contactItemsIds, opts) {
+		opts = opts || {};
+		var me = this;
+		WT.ajaxReq(me.ID, 'ManageGridContacts', {
+			params: {
+				crud: 'delete',
+				ids: WTU.arrayAsParam(contactItemsIds)
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
+			}
+		});
+	},
+	
+	moveContactsItems: function(copy, contactItemsIds, targetCategoryId, opts) {
+		opts = opts || {};
+		var me = this;
+		
+		WT.ajaxReq(me.ID, 'ManageGridContacts', {
+			params: {
+				crud: 'move',
+				copy: copy,
+				ids: WTU.arrayAsParam(contactItemsIds),
+				targetCategoryId: targetCategoryId
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
+			}
+		});
+	},
+	
 	addContact: function(ownerId, categoryId, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.Contact');
+				vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true});
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('new', {
+		vw.showView(function(s) {
+			vw.begin('new', {
 				data: {
 					_profileId: ownerId,
 					categoryId: categoryId
@@ -1642,13 +1873,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		opts = opts || {};
 		var me = this,
 				data = me.prepareContactNewData(cnt),
-				vct = WT.createView(me.ID, 'view.Contact');	
+				vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true});	
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('new', {
+		vw.showView(function(s) {
+			vw.begin('new', {
 				data: data,
 				dirty: opts.dirty
 			});
@@ -1662,14 +1893,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	openContact: function(edit, contactId, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.Contact'),
+				vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true}),
 				mode = edit ? 'edit' : 'view';
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin(mode, {
+		vw.showView(function(s) {
+			vw.begin(mode, {
 				data: {
 					id: contactId
 				}
@@ -1680,13 +1911,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	addContactsList: function(ownerId, categoryId, recipients, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.ContactsList');
+				vw = WT.createView(me.ID, 'view.ContactsList', {swapReturn: true});
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('new', {
+		vw.showView(function(s) {
+			vw.begin('new', {
 				data: {
 					_profileId: ownerId,
 					categoryId: categoryId,
@@ -1717,13 +1948,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		opts = opts || {};
 		var me = this,
 				data = me.prepareContactsListNewData(cnt),
-				vct = WT.createView(me.ID, 'view.ContactsList');	
+				vw = WT.createView(me.ID, 'view.ContactsList', {swapReturn: true});	
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin('new', {
+		vw.showView(function(s) {
+			vw.begin('new', {
 				data: data,
 				dirty: opts.dirty
 			});
@@ -1737,14 +1968,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	openContactsList: function(edit, contactsListId, opts) {
 		opts = opts || {};
 		var me = this,
-				vct = WT.createView(me.ID, 'view.ContactsList'),
+				vw = WT.createView(me.ID, 'view.ContactsList', {swapReturn: true}),
 				mode = edit ? 'edit' : 'view';
 		
-		vct.getView().on('viewsave', function(s, success, model) {
+		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
-		vct.show(false, function() {
-			vct.getView().begin(mode, {
+		vw.showView(function(s) {
+			vw.begin(mode, {
 				data: {
 					id: contactsListId
 				}
@@ -1817,25 +2048,27 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	importContacts: function(categoryId, opts) {
 		opts = opts || {};
 		var me = this,
-				vwc = WT.createView(me.ID, 'view.ImportContacts', {
+				vw = WT.createView(me.ID, 'view.ImportContacts', {
+					swapReturn: true,
 					viewCfg: {
 						categoryId: categoryId
 					}
 				});
 		
-		vwc.getView().on('dosuccess', function() {
+		vw.on('dosuccess', function() {
 			Ext.callback(opts.callback, opts.scope || me, [true]);
 		});
-		vwc.show();
+		vw.showView();
 	},
 	
-	printContactsDetail: function(ids) {
+	printContactsDetail: function(contactIds) {
 		var me = this, url;
-		url = WTF.processBinUrl(me.ID, 'PrintContactsDetail', {ids: WTU.arrayAsParam(ids)});
+		url = WTF.processBinUrl(me.ID, 'PrintContactsDetail', {ids: WTU.arrayAsParam(contactIds)});
 		Sonicle.URLMgr.openFile(url, {filename: 'contacts-detail', newWindow: true});
 	},
 	
-	sendContactAsEmail: function(ids, opts) {
+	sendContactsAsEmail: function(contactIds, opts) {
+		opts = opts || {};
 		var me = this,
 			mapi = WT.getServiceApi('com.sonicle.webtop.mail');
 		if (mapi) {
@@ -1843,7 +2076,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			WT.ajaxReq(me.ID, 'PrepareSendContactAsEmail', {
 				params: {
 					uploadTag: meid,
-					ids: WTU.arrayAsParam(ids)
+					ids: WTU.arrayAsParam(contactIds)
 				},
 				callback: function(success, json) {
 					mapi.newMessage({
@@ -1860,6 +2093,21 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		}
+	},
+	
+	addAsContactsListRecipient: function(listAddress, rcptType, rcptAddresses, opts) {
+		opts = opts || {};
+		var me = this;
+		WT.ajaxReq(me.ID, 'AddToContactsList', {
+			params: {
+				list: listAddress,
+				recipientType: rcptType,
+				emails: rcptAddresses
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope, [success, json]);
+			}
+		});
 	},
 	
 	/*
@@ -1886,180 +2134,180 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		return ids;
 	},
-	
-	/**
-	 * @private
-	 */
-	updateDisabled: function(action) {
-		var me = this,
-				dis = me.isDisabled(action);
+			
+	privates: {
+		updateDisabled: function(action) {
+			var me = this,
+					dis = me.isDisabled(action);
+
+			if(action === 'deleteContact') {
+				me.setActDisabled(action, dis);
+				me.setActDisabled('deleteContact2', dis);
+			} else {
+				me.setActDisabled(action, dis);
+			}
+		},
 		
-		if(action === 'deleteContact') {
-			me.setActDisabled(action, dis);
-			me.setActDisabled('deleteContact2', dis);
-		} else {
-			me.setActDisabled(action, dis);
-		}
-	},
-	
-	/**
-	 * @private
-	 */
-	isDisabled: function(action) {
-		var me = this, sel, er;
+		isDisabled: function(action) {
+			var me = this, sel, er;
+
+			switch(action) {
+				case 'showContact':
+				case 'copyContact':
+					sel = me.getSelectedContact();
+					if (sel) {
+						return false;
+					} else {
+						return true;
+					}
+				case 'printContact':
+					sel = me.getSelectedContact();
+					if (sel && (sel.get('isList') === false)) {
+						return false;
+					} else {
+						return true;
+					}
+					break;
+				case 'callTelephone':
+					sel = me.getSelectedContact();
+					if (sel && (WT.getVar('pbxConfigured') === true) && !Ext.isEmpty(sel.get('telephone'))) {
+						return false;
+					} else {
+						return true;
+					}
+					break;
+				case 'callMobile':
+					sel = me.getSelectedContact();
+					if (sel && (WT.getVar('pbxConfigured') === true) && !Ext.isEmpty(sel.get('mobile'))) {
+						return false;
+					} else {
+						return true;
+					}
+					break;
+				case 'sendSms':
+					sel = me.getSelectedContact();
+					if (sel && (WT.getVar('smsConfigured') === true) && !Ext.isEmpty(sel.get('mobile'))) {
+						return false;
+					} else {
+						return true;
+					}
+					break;
+				case 'moveContact':
+					sel = me.getSelectedContact();
+					if (sel) {
+						er = me.toRightsObj(sel.get('_erights'));
+						return !er.DELETE;
+					} else {
+						return true;
+					}
+				case 'deleteContact':
+					sel = me.getSelectedContacts();
+					if (sel.length === 0) {
+						return true;
+					} else if (sel.length === 1) {
+						er = me.toRightsObj(sel[0].get('_erights'));
+						return !er.DELETE;
+					} else {
+						for (var i=0; i<sel.length; i++) {
+							if (!me.toRightsObj(sel[i].get('_erights')).DELETE) return true;
+						}
+						return false;
+					}
+					break;
+				case 'addContactsListFromSel':
+				case 'addToContactsListFromSel':
+					sel = me.getSelectedContacts();
+					if (sel.length === 0) {
+						return true;
+					} else {
+						var emailMiss = true, firstIsList = sel[0].get('isList') === true;
+						for (var i=0; i<sel.length; i++) {
+							if (!Ext.isEmpty(sel[i].get('email'))) emailMiss = false;
+							if (sel[i].get('isList') !== firstIsList) return true;
+						}
+						return firstIsList || emailMiss;
+					}
+					break;
+			}
+		},
 		
-		switch(action) {
-			case 'showContact':
-			case 'copyContact':
-				sel = me.getSelectedContacts();
-				if(sel.length === 1) {
-					return false;
-				} else {
-					return true;
+		extractIds: function(recs, idField, filterFn) {
+			if (arguments.length === 2) {
+				if (Ext.isFunction(idField)) {
+					filterFn = idField;
+					idField = undefined;
 				}
-			case 'printContact':
-				sel = me.getSelectedContacts();
-				if(sel.length === 1 && (sel[0].get('isList') === false)) {
-					return false;
-				} else {
-					return true;
+			}
+			var ids = [];
+			if (!Ext.isFunction(filterFn)) filterFn = function(rec) {return true;};
+			Ext.iterate(recs, function(rec) {
+				if (filterFn(rec)) {
+					ids.push(Ext.isEmpty(idField) ? rec.getId() : rec.get(idField));
 				}
-				break;
-			case 'callTelephone':
-				sel = me.getSelectedContacts();
-				if(/*WT.getVar('pbxConfigured') &&*/ sel.length === 1 && sel[0].get('workTelephone') !== '') {
-					return false;
-				} else {
-					return true;
+			});
+			return ids;
+		},
+		
+		toRcpts: function(recs) {
+			var rcpts = [], email;
+			Ext.iterate(recs, function(rec) {
+				email = rec.get('email');
+				if (!Ext.isEmpty(email)) rcpts.push({recipientType:'to', recipient: email});
+			});
+			return rcpts;
+		},
+		
+		toEmails: function(recs) {
+			var emails = [], email, fn;
+			Ext.iterate(recs, function(rec) {
+				email = rec.get('email');
+				fn = rec.get('fullName');
+				if (!Ext.isEmpty(fn)) email = fn + '<' + email + '>';
+				if (!Ext.isEmpty(email)) emails.push(email);
+			});
+			return emails;
+		},
+		
+		createCategoryChooser: function(copy, ownerId, catId) {
+			var me = this;
+			return WT.createView(me.ID, 'view.CategoryChooser', {
+				swapReturn: true,
+				viewCfg: {
+					dockableConfig: {
+						title: me.res(copy ? 'act-copyContact.lbl' : 'act-moveContact.lbl')
+					},
+					ownerId: ownerId,
+					categoryId: catId
 				}
-				break;
-			case 'callMobile':
-				sel = me.getSelectedContacts();
-				if(/*WT.getVar('pbxConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
-					return false;
-				} else {
-					return true;
-				}
-				break;
-			case 'sendSMS':
-				sel = me.getSelectedContacts();
-				if(/*WT.getVar('smsConfigured') &&*/ sel.length === 1 && sel[0].get('workMobile') !== '') {
-					return false;
-				} else {
-					return true;
-				}
-				break;
-			case 'moveContact':
-				sel = me.getSelectedContacts();
-				if(sel.length === 1) {
-					er = me.toRightsObj(sel[0].get('_erights'));
-					return !er.DELETE;
-				} else {
-					return true;
-				}
-			case 'deleteContact':
-				sel = me.getSelectedContacts();
-				if(sel.length === 0) {
-					return true;
-				} else if(sel.length === 1) {
-					er = me.toRightsObj(sel[0].get('_erights'));
-					return !er.DELETE;
-				} else {
-					var isl = sel[0].get('isList') === true;
-					for(var i=0; i<sel.length; i++) {
-						if(sel[i].get('isList') !== isl) return true;
-						if(!me.toRightsObj(sel[i].get('_erights')).DELETE) return true;
+			});
+		},
+		
+		createHiddenCategories: function(rootNodeId) {
+			var me = this;
+			return WT.createView(me.ID, 'view.HiddenCategories', {
+				swapReturn: true,
+				viewCfg: {
+					action: 'ManageHiddenCategories',
+					extraParams: {
+						crud: 'list',
+						rootId: rootNodeId
 					}
-					return false;
 				}
-				break;
-			case 'addContactsListFromSel':
-			case 'addToContactsListFromSel':
-				sel = me.getSelectedContacts();
-				if(sel.length === 0) {
-					return true;
-				} else {
-					var isl = sel[0].get('isList') === true;
-					for(var i=0; i<sel.length; i++) {
-						if(sel[i].get('isList') !== isl) return true;
-					}
-					return isl;
+			});
+		},
+		
+		createContactListChooser: function(contactListId) {
+			var me = this;
+			return WT.createView(me.ID, 'view.ListChooser', {
+				swapReturn: true,
+				viewCfg: {
+					dockableConfig: {
+						title: me.res('act-addToContactsListFromSel.lbl')
+					},
+					list: contactListId
 				}
-				break;
+			});
 		}
-	},
-	
-	/**
-	 * @private
-	 */
-	buildRcpts: function(view, recs) {
-		var rcpts = [], email;
-		Ext.iterate(recs, function(rec) {
-			email = (view === 'w') ? rec.get('workEmail') : rec.get('homeEmail');
-			if(!Ext.isEmpty(email)) rcpts.push({recipientType:'to', recipient: email});
-		});
-		return rcpts;
-	},
-	
-	/**
-	 * @private
-	 */
-	buildEmails: function(view, recs) {
-		var emails = [], email, name;
-		Ext.iterate(recs, function(rec) {
-			email = (view === 'w') ? rec.get('workEmail') : rec.get('homeEmail');
-			name = Sonicle.String.join(' ', rec.get('firstName'), rec.get('lastName'));
-			if(!Ext.isEmpty(name)) email=name+" <"+email+">";
-			if(!Ext.isEmpty(email)) emails.push(email);
-		});
-		return emails;
-	},
-	
-	/**
-	 * @private
-	 */
-	createHiddenCategories: function(rootNodeId) {
-		var me = this;
-		return WT.createView(me.ID, 'view.HiddenCategories', {
-			viewCfg: {
-				action: 'ManageHiddenCategories',
-				extraParams: {
-					crud: 'list',
-					rootId: rootNodeId
-				}
-			}
-		});
-	},
-	
-	/**
-	 * @private
-	 */
-	createCategoryChooser: function(copy, ownerId, catId) {
-		var me = this;
-		return WT.createView(me.ID, 'view.CategoryChooser', {
-			viewCfg: {
-				dockableConfig: {
-					title: me.res(copy ? 'act-copyContact.lbl' : 'act-moveContact.lbl')
-				},
-				ownerId: ownerId,
-				categoryId: catId
-			}
-		});
-	},
-	
-	/**
-	 * @private
-	 */
-	createListChooser: function(list) {
-		var me = this;
-		return WT.createView(me.ID, 'view.ListChooser', {
-			viewCfg: {
-				dockableConfig: {
-					title: me.res('act-addToContactsListFromSel.lbl')
-				},
-				list: list
-			}
-		});
 	},
 	
 	statics: {

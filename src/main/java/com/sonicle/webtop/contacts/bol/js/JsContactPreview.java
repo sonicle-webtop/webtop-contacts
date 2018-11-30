@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -32,22 +32,21 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.commons.web.json.CompositeId;
-import com.sonicle.webtop.contacts.GridView;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.Contact;
+import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
-import org.apache.commons.lang3.StringUtils;
+import org.jooq.tools.StringUtils;
 
 /**
  *
  * @author malbinola
  */
-public class JsGridContact {
+public class JsContactPreview {
 	public String uid;
 	public Integer id;
 	public boolean isList;
@@ -56,44 +55,44 @@ public class JsGridContact {
 	public String lastName;
 	public String company;
 	public String function;
-	public String email;
-	public String telephone;
-	public String mobile;
+	public ArrayList<ValueItem> data1;
+	public ArrayList<ValueItem> data2;
+	public ArrayList<ValueItem> data3;
+	public String notes;
 	public boolean pic;
+	public String userProfile;
+	public String userDisplayName;
 	public Integer catId;
 	public String catName;
 	public String catColor;
 	public String _pid;
 	public String _frights;
 	public String _erights;
-	
-	public JsGridContact() {}
-	
-	public JsGridContact(GridView view, ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, ContactItem item) {
+
+	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany) {
 		Category category = folder.getCategory();
-		
-		this.uid = Id.build(item.getContactId(), item.getIsList()).toString();
+
+		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
 		this.id = item.getContactId();
-		this.isList = item.getIsList();
+		this.isList = false;
 		this.title = item.getTitle();
 		this.firstName = item.getFirstName();
 		this.lastName = item.getLastName();
-		this.company = item.getCompany();
-		
-		if (GridView.WORK.equals(view)) {
-			this.email = item.getWorkEmail();
-			this.telephone = item.getWorkTelephone();
-			this.mobile = item.getWorkMobile();
-		} else if (GridView.HOME.equals(view)) {
-			this.email = item.getHomeEmail();
-			this.telephone = item.getHomeTelephone();
-			this.mobile = item.getWorkMobile();
-		} else if (GridView.CONTACTS_LIST.equals(view)) {
-			this.email = item.getWorkEmail();
-		}
-		
-		this.pic = item.isHasPicture();
-		
+		this.company = itemCompany.getCompanyDescription();
+		this.data1 = new ArrayList<>();
+		addValueItem(this.data1, "rcp1", item.getWorkEmail(), "work");
+		addValueItem(this.data1, "rcp2", item.getHomeEmail(), "home");
+		this.data2 = new ArrayList<>();
+		addValueItem(this.data2, "tel1", item.getWorkMobile(), "mobile");
+		addValueItem(this.data2, "tel2", item.getWorkTelephone(), "work");
+		addValueItem(this.data2, "tel3", item.getHomeTelephone(), "home");
+		this.data3 = new ArrayList<>();
+		addValueItem(this.data3, "comp", itemCompany.getCompanyDescription(), "company");
+		addValueItem(this.data3, "add1", item.getWorkFullAddress(), "workadd");
+		addValueItem(this.data3, "add2", item.getHomeFullAddress(), "homeadd");
+		this.notes = item.getNotes();
+		this.pic = item.hasPicture();
+
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
@@ -101,29 +100,43 @@ public class JsGridContact {
 		this._frights = folder.getPerms().toString();
 		this._erights = folder.getElementsPerms().toString();
 	}
-	
-	public static class JsGridContactList extends ArrayList<JsGridContact> {
-		public JsGridContactList() {
-			super();
+
+	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, ContactsList item) {
+		Category category = folder.getCategory();
+
+		this.uid = JsGridContact.Id.build(item.getContactId(), true).toString();
+		this.id = item.getContactId();
+		this.isList = true;
+		this.firstName = item.getName();
+		this.data1 = new ArrayList<>();
+		this.data2 = new ArrayList<>();
+		this.data3 = new ArrayList<>();
+		this.notes = null;
+		this.pic = false;
+
+		this.catId = category.getCategoryId();
+		this.catName = category.getName();
+		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
+		this._pid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
+		this._frights = folder.getPerms().toString();
+		this._erights = folder.getElementsPerms().toString();
+	}
+
+	private void addValueItem(ArrayList<ValueItem> array, String id, String value, String type) {
+		if (!StringUtils.isBlank(value)) {
+			array.add(new ValueItem(id, value, type));
 		}
 	}
-	
-	public static class Id {
-		
-		public static CompositeId build(int contactId, boolean isList) {
-			return new CompositeId(contactId, isList ? "L" : "C");
-		}
-		
-		public static CompositeId parse(String id) {
-			return new CompositeId(2).parse(id);
-		}
-		
-		public static int contactId(CompositeId cid) {
-			return Integer.valueOf(cid.getToken(0));
-		}
-		
-		public static boolean isList(CompositeId cid) {
-			return "L".equals(cid.getToken(1));
+
+	public static class ValueItem {
+		public String id;
+		public String value;
+		public String type;
+
+		public ValueItem(String id, String value, String type) {
+			this.id = id;
+			this.value = value;
+			this.type = type;
 		}
 	}
 }

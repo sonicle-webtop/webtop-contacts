@@ -39,15 +39,18 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactAttachment;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
-import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactCard;
+import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
+import com.sonicle.webtop.contacts.bol.VContactLookup;
+import com.sonicle.webtop.contacts.model.BaseContact;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactCard;
-import com.sonicle.webtop.contacts.model.ContactItemEx;
+import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactItem;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
@@ -186,13 +189,44 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static ContactItemEx fillContactEx(ContactItemEx tgt, VContact src) {
+	static <T extends ContactItem, S extends VContactLookup> T fillContactLookup(T tgt, S src) {
 		if ((tgt != null) && (src != null)) {
-			fillContact(tgt, src);
+			fillBaseContact(tgt, src);
 			tgt.setIsList(src.getIsList());
-			tgt.setCompanyAsMasterDataId(src.getCompanyAsMasterDataId());
+			tgt.setCompany(src.getCompanyDescription());
+			tgt.setFunction(src.getFunction());
+			tgt.setWorkCity(src.getWorkCity());
+			tgt.setWorkTelephone(src.getWorkTelephone());
+			tgt.setWorkMobile(src.getWorkMobile());
+			tgt.setWorkEmail(src.getWorkEmail());
+			tgt.setHomeTelephone(src.getHomeTelephone());
+			tgt.setHomeEmail(src.getHomeEmail());
+			tgt.setCategoryName(src.getCategoryName());
 			tgt.setCategoryDomainId(src.getCategoryDomainId());
 			tgt.setCategoryUserId(src.getCategoryUserId());
+			tgt.setHasPicture(src.getHasPicture());
+		}
+		return tgt;
+	}
+	
+	static <T extends BaseContact, S extends OContact> T fillBaseContact(T tgt, S src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setContactId(src.getContactId());
+			tgt.setCategoryId(src.getCategoryId());
+			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), BaseContact.RevisionStatus.class));
+			tgt.setPublicUid(src.getPublicUid());
+			tgt.setTitle(src.getTitle());
+			tgt.setFirstName(src.getFirstname());
+			tgt.setLastName(src.getLastname());
+			tgt.setNickname(src.getNickname());
+		}
+		return tgt;
+	}
+	
+	static <T extends ContactCompany, S extends VContactCompany> T fillContactCompany(T tgt, S src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setCompanyId(src.getCompanyId());
+			tgt.setCompanyDescription(src.getCompanyDescription());
 		}
 		return tgt;
 	}

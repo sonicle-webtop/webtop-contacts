@@ -1,3 +1,10 @@
+$	5.5.0
+	%	Version 5.5.0
+	*	<h1>New contacts list</h1>
+		<p>Infinite grid, avatar display within main contact's data.
+		Preview pane that provides an immediate access to infos and enable some
+		rapid actions on the selected contact (new email, call, ...)</p>
+		<img src="5.5.0_newgrid.png"/>
 $	5.2.0
 	%	Version 5.2.0
 	*	<h1>NethVoice Switchboard Integration</h1>

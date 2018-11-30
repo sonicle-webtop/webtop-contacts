@@ -154,7 +154,7 @@
           "required": true,
           "type": "string",
           "description": "Address book UID",
-          "x-example": 1234
+          "x-example": "1234"
         }
       ]
     },
@@ -223,7 +223,7 @@
           "required": true,
           "type": "string",
           "description": "Address book UID",
-          "x-example": 1234
+          "x-example": "1234"
         }
       ]
     },
@@ -275,7 +275,7 @@
           "required": true,
           "type": "string",
           "description": "Address book UID",
-          "x-example": 1234
+          "x-example": "1234"
         }
       ]
     },
@@ -362,14 +362,14 @@
           "required": true,
           "type": "string",
           "description": "Address book UID",
-          "x-example": 1234
+          "x-example": "1234"
         },
         {
           "name": "href",
           "in": "path",
           "required": true,
-          "description": "Card reference URI",
-          "type": "string"
+          "type": "string",
+          "description": "Card reference URI"
         }
       ]
     }
@@ -380,7 +380,7 @@
     }
   },
   "definitions": {
-    "Error": {
+    "ApiError": {
       "type": "object",
       "required": [
         "code"
@@ -394,22 +394,21 @@
         "description": {
           "type": "string",
           "example": "Bad query parameter [$size]: Invalid integer value [abc]"
-        },
-        "reason": {
-          "type": "string",
-          "example": "Bad Request"
         }
       },
       "description": "This general detailed error structure is used throughout this API.",
-      "example": "{\n  \"code\": 400,\n  \"description\": \"Bad query parameter [$size]: Invalid integer value [abc]\",\n  \"reasonPhrase\": \"Bad Request\"\n}"
+      "example": "{\n  \"code\": 400,\n  \"description\": \"Bad query parameter [$size]: Invalid integer value [abc]\"\n}"
     },
     "AddressBook": {
       "type": "object",
       "required": [
+        "aclEle",
+        "aclFol",
         "displayName",
         "id",
-        "uid",
-        "syncToken"
+        "ownerUsername",
+        "syncToken",
+        "uid"
       ],
       "properties": {
         "id": {
@@ -431,6 +430,18 @@
         "syncToken": {
           "type": "string",
           "description": "Current sync token"
+        },
+        "aclFol": {
+          "type": "string",
+          "description": "ACL info for folder itself"
+        },
+        "aclEle": {
+          "type": "string",
+          "description": "ACL info for folder elements"
+        },
+        "ownerUsername": {
+          "type": "string",
+          "description": "The owner profile's username"
         }
       },
       "description": "Bean for carry addressbook's fields"
