@@ -33,8 +33,7 @@
 package com.sonicle.webtop.contacts.bol;
 
 import com.sonicle.commons.LangUtils;
-import java.util.Arrays;
-import org.codehaus.plexus.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
