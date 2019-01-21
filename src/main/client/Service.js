@@ -999,13 +999,15 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('copyContact', {
 			tooltip: null,
 			handler: function() {
-				me.moveContactsSel(true, me.getSelectedContacts());
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) me.moveContactItemsUI(true, sel);
 			}
 		});
 		me.addAct('moveContact', {
 			tooltip: null,
 			handler: function() {
-				me.moveContactsSel(false, me.getSelectedContacts());
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) me.moveContactItemsUI(false, sel);
 			}
 		});
 		me.addAct('printContact', {
@@ -1473,6 +1475,23 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	moveContactItemsUI: function(copy, recs) {
+		var me = this,
+			ids = me.extractIds(recs),
+			vw = me.createCategoryChooser(copy);
+		
+		vw.on('viewok', function(s, categoryId) {
+			me.gpContacts().setLoading(true);
+			me.moveContactsItems(copy, ids, categoryId, {
+				callback: function(success) {
+					me.gpContacts().setLoading(false);
+					if (success) me.reloadContacts();
+				}
+			});
+		});
+		vw.showView();
+	},
+	
 	addContactUI: function(ownerId, categoryId) {
 		var me = this;
 		me.addContact(ownerId, categoryId, {
@@ -1522,79 +1541,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					emails: emails
 				}
 			});
-		});
-		vw.showView();
-	},
-	
-	deleteContactItemsUI_OLD: function(recs) {
-		var me = this,
-			isl = recs[0].get('isList') === true,
-			ids = me.extractIds(recs, 'id'),
-			msg;
-		
-		if (recs.length === 1) {
-			msg = me.res('contact.confirm.delete', Ext.String.ellipsis(recs[0].get('fullName'), 40));
-		} else {
-			msg = me.res('gpcontacts.confirm.delete.selection');
-		}
-		WT.confirm(msg, function(bid) {
-			if (bid === 'yes') {
-				if (isl) {
-					me.deleteContactsLists(ids, {
-						callback: function(success) {
-							if (success) me.reloadContacts();
-						}
-					});
-				} else {
-					me.deleteContacts(ids, {
-						callback: function(success) {
-							if (success) me.reloadContacts();
-						}
-					});
-				}
-			}
-		});
-	},
-	
-	moveContactsSel: function(copy, sel) {
-		var me = this,
-				id = sel[0].get('id'),
-				isl = sel[0].get('isList') === true,
-				pid = sel[0].get('_profileId'),
-				cat = sel[0].get('categoryId');
-		
-		if(isl) {
-			me.confirmMoveContactsList(copy, id, pid, cat, {
-				callback: function() {
-					me.reloadContacts();
-				}
-			});
-			
-		} else {
-			me.confirmMoveContact(copy, id, pid, cat, {
-				callback: function() {
-					me.reloadContacts();
-				}
-			});
-		}
-	},
-	
-	confirmMoveContact: function(copy, id, ownerId, catId, opts) {
-		var me = this,
-				vw = me.createCategoryChooser(copy, ownerId, catId);
-		
-		vw.on('viewok', function(s) {
-			me.moveContact(copy, id, s.getVMData().categoryId, opts);
-		});
-		vw.showView();
-	},
-	
-	confirmMoveContactsList: function(copy, id, ownerId, catId, opts) {
-		var me = this,
-				vw = me.createCategoryChooser(copy, ownerId, catId);
-		
-		vw.on('viewok', function(s) {
-			me.moveContactsList(copy, id, s.getVMData().categoryId, opts);
 		});
 		vw.showView();
 	},
@@ -1781,7 +1727,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	moveContactsItems: function(copy, contactItemsIds, targetCategoryId, opts) {
 		opts = opts || {};
 		var me = this;
-		
 		WT.ajaxReq(me.ID, 'ManageGridContacts', {
 			params: {
 				crud: 'move',
@@ -1983,6 +1928,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	/* No more used but working...
 	deleteContacts: function(contactIds, opts) {
 		opts = opts || {};
 		var me = this;
@@ -1990,23 +1936,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			params: {
 				crud: 'delete',
 				ids: WTU.arrayAsParam(contactIds)
-			},
-			callback: function(success, json) {
-				Ext.callback(opts.callback, opts.scope || me, [success, json]);
-			}
-		});
-	},
-	
-	moveContact: function(copy, contactId, targetCategoryId, opts) {
-		opts = opts || {};
-		var me = this;
-		
-		WT.ajaxReq(me.ID, 'ManageContacts', {
-			params: {
-				crud: 'move',
-				copy: copy,
-				id: contactId,
-				targetCategoryId: targetCategoryId
 			},
 			callback: function(success, json) {
 				Ext.callback(opts.callback, opts.scope || me, [success, json]);
@@ -2027,23 +1956,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 	},
-	
-	moveContactsList: function(copy, contactsListId, targetCategoryId, opts) {
-		opts = opts || {};
-		var me = this;
-		
-		WT.ajaxReq(me.ID, 'ManageContactsLists', {
-			params: {
-				crud: 'move',
-				copy: copy,
-				id: contactsListId,
-				targetCategoryId: targetCategoryId
-			},
-			callback: function(success, json) {
-				Ext.callback(opts.callback, opts.scope || me, [success, json]);
-			}
-		});
-	},
+	*/
 	
 	importContacts: function(categoryId, opts) {
 		opts = opts || {};
@@ -2154,12 +2067,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			switch(action) {
 				case 'showContact':
 				case 'copyContact':
-					sel = me.getSelectedContact();
-					if (sel) {
+					sel = me.getSelectedContacts();
+					if (sel && (sel.length > 0)) {
 						return false;
 					} else {
 						return true;
 					}
+					break;
 				case 'printContact':
 					sel = me.getSelectedContact();
 					if (sel && (sel.get('isList') === false)) {
@@ -2193,13 +2107,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 					break;
 				case 'moveContact':
-					sel = me.getSelectedContact();
-					if (sel) {
-						er = me.toRightsObj(sel.get('_erights'));
-						return !er.DELETE;
-					} else {
-						return true;
-					}
 				case 'deleteContact':
 					sel = me.getSelectedContacts();
 					if (sel.length === 0) {
@@ -2268,7 +2175,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			return emails;
 		},
 		
-		createCategoryChooser: function(copy, ownerId, catId) {
+		createCategoryChooser: function(copy) {
 			var me = this;
 			return WT.createView(me.ID, 'view.CategoryChooser', {
 				swapReturn: true,
@@ -2276,8 +2183,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					dockableConfig: {
 						title: me.res(copy ? 'act-copyContact.lbl' : 'act-moveContact.lbl')
 					},
-					ownerId: ownerId,
-					categoryId: catId
+					writableOnly: true
 				}
 			});
 		},

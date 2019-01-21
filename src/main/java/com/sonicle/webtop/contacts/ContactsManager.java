@@ -1184,27 +1184,29 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void moveContact(boolean copy, int contactId, int targetCategoryId) throws WTException {
+	public void moveContacts(boolean copy, Collection<Integer> contactIds, int targetCategoryId) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID, false);
-			OContact ocont = contDao.selectById(con, contactId);
-			if (ocont == null || ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
-			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
-			
-			if(copy || (targetCategoryId != ocont.getCategoryId())) {
-				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
-				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+			for (Integer contactId : contactIds) {
+				OContact ocont = contDao.selectById(con, contactId);
+				if (ocont == null || ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
+				checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 				
-				Contact contact = ManagerUtils.fillContact(new Contact(), ocont);
-				
-				doContactMove(coreMgr, con, copy, contact, targetCategoryId);
-				DbUtils.commitQuietly(con);
-				writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
+				if (copy || (targetCategoryId != ocont.getCategoryId())) {
+					checkRightsOnCategoryElements(targetCategoryId, "CREATE");
+					if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+
+					Contact contact = ManagerUtils.fillContact(new Contact(), ocont);
+					doContactMove(coreMgr, con, copy, contact, targetCategoryId);
+					
+					writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
+				}
 			}
+			DbUtils.commitQuietly(con);
 			
 		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1366,7 +1368,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void moveContactsList(boolean copy, int contactsListId, int targetCategoryId) throws WTException {
+	public void moveContactsList(boolean copy, Collection<Integer> contactIds, int targetCategoryId) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactDAO contDao = ContactDAO.getInstance();
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
@@ -1374,23 +1376,25 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			con = WT.getConnection(SERVICE_ID, false);
-			
-			OContact ocont = contDao.selectById(con, contactsListId);
-			if (ocont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
-			if (!ocont.getIsList()) throw new WTException("Not a contacts list");
-			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
-			
-			if (copy || (targetCategoryId != ocont.getCategoryId())) {
-				checkRightsOnCategoryElements(targetCategoryId, "CREATE");
-				if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+			for (Integer contactsListId : contactIds) {
+				OContact ocont = contDao.selectById(con, contactsListId);
+				if (ocont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
+				if (!ocont.getIsList()) throw new WTException("Not a contacts list");
+				checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
 				
-				List<VListRecipient> recipients = lrecDao.viewByContact(con, contactsListId);
-				ContactsList clist = ManagerUtils.createContactsList(ocont, recipients);
-
-				doMoveContactsList(coreMgr, con, copy, clist, targetCategoryId);
-				DbUtils.commitQuietly(con);
-				writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
-			}	
+				if (copy || (targetCategoryId != ocont.getCategoryId())) {
+					checkRightsOnCategoryElements(targetCategoryId, "CREATE");
+					if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+				
+					List<VListRecipient> recipients = lrecDao.viewByContact(con, contactsListId);
+					ContactsList clist = ManagerUtils.createContactsList(ocont, recipients);
+					doMoveContactsList(coreMgr, con, copy, clist, targetCategoryId);
+					
+					writeLog("CONTACTLIST_UPDATE", String.valueOf(contactsListId));
+				}	
+			}
+			
+			DbUtils.commitQuietly(con);
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
