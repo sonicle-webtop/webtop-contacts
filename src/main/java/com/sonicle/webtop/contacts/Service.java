@@ -107,6 +107,7 @@ import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
+import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
@@ -266,29 +267,34 @@ public class Service extends BaseService {
 	
 	public void processManageFoldersTree(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<ExtTreeNode> children = new ArrayList<>();
-		ExtTreeNode child = null;
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if (crud.equals(Crud.READ)) {
 				String node = ServletUtils.getStringParameter(request, "node", true);
+				boolean chooser = ServletUtils.getBooleanParameter(request, "chooser", false);
 				
 				if (node.equals("root")) { // Node: root -> list roots
-					for(ShareRootCategory root : roots.values()) {
-						children.add(createRootNode(root));
+					for (ShareRootCategory root : roots.values()) {
+						children.add(createRootNode(chooser, root));
 					}
 				} else { // Node: folder -> list folders (categories)
+					boolean writableOnly = ServletUtils.getBooleanParameter(request, "writableOnly", false);
 					ShareRootCategory root = roots.get(node);
 					
 					if (root instanceof MyShareRootCategory) {
 						for (Category cal : manager.listCategories().values()) {
 							MyShareFolderCategory folder = new MyShareFolderCategory(node, cal);
-							children.add(createFolderNode(folder, null, root.getPerms()));
+							if (writableOnly && !folder.getElementsPerms().implies("CREATE")) continue;
+							
+							children.add(createFolderNode(chooser, folder, null, root.getPerms()));
 						}
 					} else {
 						if (foldersByRoot.containsKey(root.getShareId())) {
-							for (ShareFolderCategory fold : foldersByRoot.get(root.getShareId())) {
-								final ExtTreeNode etn = createFolderNode(fold, folderProps.get(fold.getCategory().getCategoryId()), root.getPerms());
+							for (ShareFolderCategory folder : foldersByRoot.get(root.getShareId())) {
+								if (writableOnly && !folder.getElementsPerms().implies("CREATE")) continue;
+								
+								final ExtTreeNode etn = createFolderNode(chooser, folder, folderProps.get(folder.getCategory().getCategoryId()), root.getPerms());
 								if (etn != null) children.add(etn);
 							}
 						}
@@ -673,6 +679,28 @@ public class Service extends BaseService {
 				manager.deleteContactsList(contactsListIds);
 				
 				new JsonResult().printTo(out);
+				
+			} else if (crud.equals(Crud.MOVE)) {
+				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
+				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
+				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
+				
+				ArrayList<Integer> contactIds = new ArrayList<>();
+				ArrayList<Integer> contactsListIds = new ArrayList<>();
+				for (String uid : uids) {
+					CompositeId cid = JsGridContact.Id.parse(uid);
+					int contactId = JsGridContact.Id.contactId(cid);
+					boolean isList = JsGridContact.Id.isList(cid);
+					if (isList) {
+						contactsListIds.add(contactId);
+					} else {
+						contactIds.add(contactId);
+					}
+				}
+				manager.moveContacts(copy, contactIds, categoryId);
+				manager.moveContactsList(copy, contactsListIds, categoryId);
+				
+				new JsonResult().printTo(out);
 			}
 			
 		} catch(Exception ex) {
@@ -806,16 +834,6 @@ public class Service extends BaseService {
 				}
 				
 				new JsonResult().printTo(out);
-				
-			} else if (crud.equals(Crud.MOVE)) {
-				String id = ServletUtils.getStringParameter(request, "id", true);
-				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
-				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
-				
-				int contactId = Integer.parseInt(id);
-				manager.moveContact(copy, contactId, categoryId);
-				
-				new JsonResult().printTo(out);
 			}
 			
 		} catch(Exception ex) {
@@ -921,16 +939,6 @@ public class Service extends BaseService {
 				} else {
 					manager.deleteContactsList(ids);
 				}
-				
-				new JsonResult().printTo(out);
-				
-			} else if(crud.equals(Crud.MOVE)) {
-				String id = ServletUtils.getStringParameter(request, "id", true);
-				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
-				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
-				
-				int contactId = Integer.parseInt(id);
-				manager.moveContactsList(copy, contactId, categoryId);
 				
 				new JsonResult().printTo(out);
 			}
@@ -1424,15 +1432,15 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private ExtTreeNode createRootNode(ShareRootCategory root) {
+	private ExtTreeNode createRootNode(boolean chooser, ShareRootCategory root) {
 		if(root instanceof MyShareRootCategory) {
-			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-categoryMy").setExpanded(true);
+			return createRootNode(chooser, root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-categoryMy").setExpanded(true);
 		} else {
-			return createRootNode(root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-categoryIncoming");
+			return createRootNode(chooser, root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-categoryIncoming");
 		}
 	}
 	
-	private ExtTreeNode createRootNode(String id, String pid, String rights, String text, boolean leaf, String iconClass) {
+	private ExtTreeNode createRootNode(boolean chooser, String id, String pid, String rights, String text, boolean leaf, String iconClass) {
 		boolean visible = checkedRoots.contains(id);
 		ExtTreeNode node = new ExtTreeNode(id, text, leaf);
 		node.put("_type", JsFolderNode.TYPE_ROOT);
@@ -1441,11 +1449,11 @@ public class Service extends BaseService {
 		node.put("_visible", visible);
 		
 		node.setIconClass(iconClass);
-		node.setChecked(visible);
+		if (!chooser) node.setChecked(visible);
 		return node;
 	}
 	
-	private ExtTreeNode createFolderNode(ShareFolderCategory folder, CategoryPropSet folderProps, SharePermsRoot rootPerms) {
+	private ExtTreeNode createFolderNode(boolean chooser, ShareFolderCategory folder, CategoryPropSet folderProps, SharePermsRoot rootPerms) {
 		Category cat = folder.getCategory();
 		String id = new CompositeId().setTokens(folder.getShareId(), cat.getCategoryId()).toString();
 		String color = cat.getColor();
@@ -1482,7 +1490,8 @@ public class Service extends BaseService {
 		node.setCls(StringUtils.join(classes, " "));
 		
 		node.setIconClass("wt-palette-" + Category.getHexColor(color));
-		node.setChecked(visible);
+		if (!chooser) node.setChecked(visible);
+		
 		return node;
 	}
 	

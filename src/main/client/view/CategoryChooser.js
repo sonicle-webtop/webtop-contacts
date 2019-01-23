@@ -32,128 +32,106 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
-	extend: 'WTA.sdk.DockableView',
+	extend: 'WTA.sdk.UIView',
 	requires: [
-		'Sonicle.form.field.ColorComboBox',
-		'Sonicle.webtop.contacts.model.CategoryLkp'
+		'Sonicle.String'
+	],
+	uses: [
+		'Sonicle.webtop.contacts.model.FolderNode'
 	],
 	
 	dockableConfig: {
-		width: 300,
-		height: 150,
+		width: 400,
+		height: 450,
 		modal: true,
 		minimizable: false,
 		maximizable: false
 	},
 	promptConfirm: false,
+	writableOnly: false,
 	
 	viewModel: {
 		data: {
-			ownerId: null,
+			result: 'cancel',
+			profileId: null,
 			categoryId: null
 		}
 	},
+	defaultButton: 'btnok',
 	
-	/**
-	 * @cfg {String} ownerId
-	 * Initial ownerId value
-	*/
-	
-	/**
-	 * @cfg {String} categoryId
-	 * Initial categoryId value
-	*/
+	constructor: function(cfg) {
+		var me = this;
+		me.callParent([cfg]);
+		
+		WTU.applyFormulas(me.getVM(), {
+			isValid: WTF.foGetFn(null, 'categoryId', function(v) {
+				return v !== null;
+			})
+		});
+	},
 	
 	initComponent: function() {
-		var me = this,
-				ic = me.getInitialConfig();
-		
-		if(!Ext.isEmpty(ic.ownerId)) me.getVM().set('ownerId', ic.ownerId);
-		if(!Ext.isEmpty(ic.categoryId)) me.getVM().set('categoryId', ic.categoryId);
+		var me = this;
 		
 		Ext.apply(me, {
 			buttons: [{
+				reference: 'btnok',
+				bind: {
+					disabled: '{!isValid}'
+				},
 				text: WT.res('act-ok.lbl'),
-				handler: me.onOkClick,
-				scope: me
+				handler: function() {
+					me.okView();
+				}
 			}, {
 				text: WT.res('act-cancel.lbl'),
-				handler: me.onCancelClick,
-				scope: me
+				handler: function() {
+					me.closeView(false);
+				}
 			}]
 		});
 		me.callParent(arguments);
 		
 		me.add({
 			region: 'center',
-			xtype: 'wtfieldspanel',
-			modelValidation: true,
-			defaults: {
-				labelWidth: 100
-			},
-			items: [
-				WTF.localCombo('id', 'desc', {
-					reference: 'fldowner',
-					bind: '{ownerId}',
-					store: {
-						autoLoad: true,
-						model: 'WTA.ux.data.SimpleModel',
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
-					},
-					fieldLabel: me.mys.res('categoryChooser.fld-owner.lbl'),
-					anchor: '100%',
-					listeners: {
-						change: function(s, nv) {
-							me.updateCategoryFilters(nv);
-						}
-					},
-					allowBlank: false
+			xtype: 'treepanel',
+			border: false,
+			useArrows: true,
+			rootVisible: false,
+			store: {
+				autoLoad: true,
+				model: 'Sonicle.webtop.contacts.model.FolderNode',
+				proxy: WTF.apiProxy(me.mys.ID, 'ManageFoldersTree', 'children', {
+					extraParams: {
+						crud: 'read',
+						chooser: true,
+						writableOnly: me.writableOnly
+					}
 				}),
-				WTF.lookupCombo('categoryId', 'name', {
-					xtype: 'socolorcombo',
-					reference: 'fldcategory',
-					bind: '{categoryId}',
-					store: {
-						autoLoad: true,
-						model: me.mys.preNs('model.CategoryLkp'),
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
-						filters: [{
-							filterFn: function(rec) {
-								return (rec.get('_writable') === true);
-							}
-						}]
-					},
-					colorField: 'color',
-					fieldLabel: me.mys.res('categoryChooser.fld-category.lbl'),
-					anchor: '100%',
-					allowBlank: false
-			})]
+				root: { id: 'root', expanded: true }
+			},
+			hideHeaders: true,
+			listeners: {
+				selectionchange: function(s, sel) {
+					var me = this,
+							rec = sel[0];
+					if (rec) {
+						me.getVM().set({
+							categoryId: rec.get('_catId'),
+							profileId: rec.get('_pid')
+						});
+					}
+				},
+				scope: me
+			}
 		});
 	},
 	
-	onOkClick: function() {
-		var me = this;
-		if (!me.lref('fldowner').isValid() || !me.lref('fldcategory').isValid()) return;
-		me.fireEvent('viewok', me);
-		me.closeView(false);
-	},
-	
-	onCancelClick: function() {
-		this.closeView(false);
-	},
-	
-	updateCategoryFilters: function(owner) {
+	okView: function() {
 		var me = this,
-				fld = me.lref('fldcategory'),
-				sto = fld.getStore();
-		
-		sto.clearFilter();
-		sto.addFilter([{
-			property: '_profileId',
-			value: owner
-		}, {
-			property: '_writable',
-			value: true
-		}]);
+				vm = me.getVM();
+		vm.set('result', 'ok');
+		me.fireEvent('viewok', me, vm.get('categoryId'), vm.get('profileId'));
+		me.closeView(false);
 	}
 });
