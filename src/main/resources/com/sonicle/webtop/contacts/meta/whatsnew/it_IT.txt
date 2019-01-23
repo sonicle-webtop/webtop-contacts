@@ -1,5 +1,5 @@
-$	5.5.1
-	%	Versione 5.5.1
+$	5.5.2
+	%	Versione 5.5.2
 	*	<h1>Sposta e copia contatti multpli</h1>
 		<p>E' ora possibile eseguire l'operazione di spostamento e copia contatti su una seleziona multipla</p>
 $	5.5.0
