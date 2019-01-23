@@ -1,3 +1,7 @@
+$	5.5.1
+	%	Version 5.5.1
+	*	<h1>Move and copy multiple contacts</h1>
+		<p>It is now possibile to move and copy contacts over a multple selection</p>
 $	5.5.0
 	%	Version 5.5.0
 	*	<h1>New contacts list</h1>
