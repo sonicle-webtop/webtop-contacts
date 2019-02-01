@@ -36,7 +36,7 @@ import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.GridView;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.sdk.UserProfileId;
@@ -69,7 +69,7 @@ public class JsGridContact {
 	
 	public JsGridContact() {}
 	
-	public JsGridContact(GridView view, ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, ContactItem item) {
+	public JsGridContact(GridView view, ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, ContactLookup item) {
 		Category category = folder.getCategory();
 		
 		this.uid = Id.build(item.getContactId(), item.getIsList()).toString();

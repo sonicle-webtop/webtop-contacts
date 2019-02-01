@@ -80,12 +80,13 @@ public class JsContactPreview {
 		this.lastName = item.getLastName();
 		this.company = itemCompany.getCompanyDescription();
 		this.data1 = new ArrayList<>();
-		addValueItem(this.data1, "rcp1", item.getWorkEmail(), "work");
-		addValueItem(this.data1, "rcp2", item.getHomeEmail(), "home");
+		addValueItem(this.data1, "rcp1", item.getEmail1(), "work");
+		addValueItem(this.data1, "rcp2", item.getEmail2(), "home");
+		addValueItem(this.data1, "rcp3", item.getEmail3(), "email");
 		this.data2 = new ArrayList<>();
-		addValueItem(this.data2, "tel1", item.getWorkMobile(), "mobile");
-		addValueItem(this.data2, "tel2", item.getWorkTelephone(), "work");
-		addValueItem(this.data2, "tel3", item.getHomeTelephone(), "home");
+		addValueItem(this.data2, "tel1", item.getMobile(), "mobile");
+		addValueItem(this.data2, "tel2", item.getWorkTelephone1(), "work");
+		addValueItem(this.data2, "tel3", item.getHomeTelephone1(), "home");
 		this.data3 = new ArrayList<>();
 		addValueItem(this.data3, "comp", itemCompany.getCompanyDescription(), "company");
 		addValueItem(this.data3, "add1", item.getWorkFullAddress(), "workadd");

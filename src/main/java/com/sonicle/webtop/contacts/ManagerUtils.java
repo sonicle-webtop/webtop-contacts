@@ -39,7 +39,8 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactAttachment;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
-import com.sonicle.webtop.contacts.bol.VContactCard;
+import com.sonicle.webtop.contacts.bol.VContactBase;
+import com.sonicle.webtop.contacts.bol.VContactObject;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
@@ -48,9 +49,9 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
-import com.sonicle.webtop.contacts.model.ContactCard;
+import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactCompany;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
@@ -66,6 +67,10 @@ public class ManagerUtils {
 	
 	static String getProductName() {
 		return WT.getPlatformName() + " Contacts";
+	}
+	
+	static int toOffset(int page, int limit) {
+		return limit * (page-1);
 	}
 	
 	static Category createCategory(OCategory src) {
@@ -152,7 +157,7 @@ public class ManagerUtils {
 	
 	
 	
-	static <T extends ContactCard> T fillContactCard(T tgt, VContactCard src) {
+	static <T extends ContactObject> T fillContactCard(T tgt, VContactObject src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setContactId(src.getContactId());
 			tgt.setCategoryId(src.getCategoryId());
@@ -189,7 +194,7 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static <T extends ContactItem, S extends VContactLookup> T fillContactLookup(T tgt, S src) {
+	static <T extends ContactLookup, S extends VContactLookup> T fillContactLookup(T tgt, S src) {
 		if ((tgt != null) && (src != null)) {
 			fillBaseContact(tgt, src);
 			tgt.setIsList(src.getIsList());
@@ -231,6 +236,14 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
+	static <T extends ContactCompany, S extends VContactBase> T fillContactCompany(T tgt, S src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setCompanyId(src.getCompanyId());
+			tgt.setCompanyDescription(src.getCompanyDescription());
+		}
+		return tgt;
+	}
+	
 	static Contact createContact(OContact src) {
 		if (src == null) return null;
 		return fillContact(new Contact(), src);
@@ -247,36 +260,36 @@ public class ManagerUtils {
 			tgt.setLastName(src.getLastname());
 			tgt.setNickname(src.getNickname());
 			tgt.setGender(EnumUtils.forSerializedName(src.getGender(), Contact.Gender.class));
+			tgt.setMobile(src.getWorkMobile());
+			tgt.setPager1(src.getWorkPager());
+			tgt.setPager2(src.getHomePager());
+			tgt.setEmail1(src.getWorkEmail());
+			tgt.setEmail2(src.getHomeEmail());
+			tgt.setEmail3(src.getOtherEmail());
+			tgt.setInstantMsg1(src.getWorkIm());
+			tgt.setInstantMsg2(src.getHomeIm());
+			tgt.setInstantMsg3(src.getOtherIm());
 			tgt.setWorkAddress(src.getWorkAddress());
 			tgt.setWorkPostalCode(src.getWorkPostalcode());
 			tgt.setWorkCity(src.getWorkCity());
 			tgt.setWorkState(src.getWorkState());
 			tgt.setWorkCountry(src.getWorkCountry());
-			tgt.setWorkTelephone(src.getWorkTelephone());
+			tgt.setWorkTelephone1(src.getWorkTelephone());
 			tgt.setWorkTelephone2(src.getWorkTelephone2());
-			tgt.setWorkMobile(src.getWorkMobile());
 			tgt.setWorkFax(src.getWorkFax());
-			tgt.setWorkPager(src.getWorkPager());
-			tgt.setWorkEmail(src.getWorkEmail());
-			tgt.setWorkInstantMsg(src.getWorkIm());
 			tgt.setHomeAddress(src.getHomeAddress());
 			tgt.setHomePostalCode(src.getHomePostalcode());
 			tgt.setHomeCity(src.getHomeCity());
 			tgt.setHomeState(src.getHomeState());
 			tgt.setHomeCountry(src.getHomeCountry());
-			tgt.setHomeTelephone(src.getHomeTelephone());
+			tgt.setHomeTelephone1(src.getHomeTelephone());
 			tgt.setHomeTelephone2(src.getHomeTelephone2());
 			tgt.setHomeFax(src.getHomeFax());
-			tgt.setHomePager(src.getHomePager());
-			tgt.setHomeEmail(src.getHomeEmail());
-			tgt.setHomeInstantMsg(src.getHomeIm());
 			tgt.setOtherAddress(src.getOtherAddress());
 			tgt.setOtherPostalCode(src.getOtherPostalcode());
 			tgt.setOtherCity(src.getOtherCity());
 			tgt.setOtherState(src.getOtherState());
 			tgt.setOtherCountry(src.getOtherCountry());
-			tgt.setOtherEmail(src.getOtherEmail());
-			tgt.setOtherInstantMsg(src.getOtherIm());
 			tgt.setCompany(src.getCompany());
 			tgt.setFunction(src.getFunction());
 			tgt.setDepartment(src.getDepartment());
@@ -325,36 +338,36 @@ public class ManagerUtils {
 			tgt.setLastname(src.getLastName());
 			tgt.setNickname(src.getNickname());
 			tgt.setGender(EnumUtils.toSerializedName(src.getGender()));
+			tgt.setWorkMobile(src.getMobile());
+			tgt.setWorkPager(src.getPager1());
+			tgt.setHomePager(src.getPager2());
+			tgt.setWorkEmail(src.getEmail1());
+			tgt.setHomeEmail(src.getEmail2());
+			tgt.setOtherEmail(src.getEmail3());
+			tgt.setWorkIm(src.getInstantMsg1());
+			tgt.setHomeIm(src.getInstantMsg2());
+			tgt.setOtherIm(src.getInstantMsg3());
 			tgt.setWorkAddress(src.getWorkAddress());
 			tgt.setWorkPostalcode(src.getWorkPostalCode());
 			tgt.setWorkCity(src.getWorkCity());
 			tgt.setWorkState(src.getWorkState());
 			tgt.setWorkCountry(src.getWorkCountry());
-			tgt.setWorkTelephone(src.getWorkTelephone());
+			tgt.setWorkTelephone(src.getWorkTelephone1());
 			tgt.setWorkTelephone2(src.getWorkTelephone2());
-			tgt.setWorkMobile(src.getWorkMobile());
 			tgt.setWorkFax(src.getWorkFax());
-			tgt.setWorkPager(src.getWorkPager());
-			tgt.setWorkEmail(src.getWorkEmail());
-			tgt.setWorkIm(src.getWorkInstantMsg());
 			tgt.setHomeAddress(src.getHomeAddress());
 			tgt.setHomePostalcode(src.getHomePostalCode());
 			tgt.setHomeCity(src.getHomeCity());
 			tgt.setHomeState(src.getHomeState());
 			tgt.setHomeCountry(src.getHomeCountry());
-			tgt.setHomeTelephone(src.getHomeTelephone());
+			tgt.setHomeTelephone(src.getHomeTelephone1());
 			tgt.setHomeTelephone2(src.getHomeTelephone2());
 			tgt.setHomeFax(src.getHomeFax());
-			tgt.setHomePager(src.getHomePager());
-			tgt.setHomeEmail(src.getHomeEmail());
-			tgt.setHomeIm(src.getHomeInstantMsg());
 			tgt.setOtherAddress(src.getOtherAddress());
 			tgt.setOtherPostalcode(src.getOtherPostalCode());
 			tgt.setOtherCity(src.getOtherCity());
 			tgt.setOtherState(src.getOtherState());
 			tgt.setOtherCountry(src.getOtherCountry());
-			tgt.setOtherEmail(src.getOtherEmail());
-			tgt.setOtherIm(src.getOtherInstantMsg());
 			tgt.setCompany(src.getCompany());
 			tgt.setFunction(src.getFunction());
 			tgt.setDepartment(src.getDepartment());

@@ -82,7 +82,7 @@ import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactCompany;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
@@ -627,7 +627,6 @@ public class Service extends BaseService {
 				GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
 				Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
 				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
-				
 				int page = ServletUtils.getIntParameter(request, "page", true);
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				String query = ServletUtils.getStringParameter(request, "query", null);
@@ -638,7 +637,7 @@ public class Service extends BaseService {
 				
 				List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
 				ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, page, limit, true);
-				for (ContactItem item : result.items) {
+				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
 					final ShareFolderCategory fold = folders.get(item.getCategoryId());
@@ -1156,7 +1155,7 @@ public class Service extends BaseService {
 			List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
 			ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
-			for (ContactItem item : result.items) {
+			for (ContactLookup item : result.items) {
 				final ShareFolderCategory fold = folders.get(item.getCategoryId());
 				if (fold == null) continue;
 				CategoryPropSet pset = folderProps.get(item.getCategoryId());

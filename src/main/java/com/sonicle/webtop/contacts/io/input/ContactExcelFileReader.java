@@ -203,6 +203,24 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 		} else if (target.equals("Gender")) {
 			//TODO: gestire sesso
 			//contact.setGender(value);
+		} else if (target.equals("Mobile") || target.equals("WorkMobile")) {
+			contact.setMobile(value);	
+		} else if (target.equals("Pager1") || target.equals("WorkPager")) {
+			contact.setPager1(value);
+		} else if (target.equals("Pager2") || target.equals("HomePager")) {
+			contact.setPager2(value);
+		} else if (target.equals("Email1") || target.equals("WorkEmail")) {
+			contact.setEmail1(value);
+		} else if (target.equals("Email2") || target.equals("HomeEmail")) {
+			contact.setEmail2(value);
+		} else if (target.equals("Email3") || target.equals("OtherEmail")) {
+			contact.setEmail3(value);
+		} else if (target.equals("InstantMsg1") || target.equals("WorkInstantMsg")) {
+			contact.setInstantMsg1(value);
+		} else if (target.equals("InstantMsg2") || target.equals("HomeInstantMsg")) {
+			contact.setInstantMsg2(value);
+		} else if (target.equals("InstantMsg3") || target.equals("OtherInstantMsg")) {
+			contact.setInstantMsg3(value);
 		} else if (target.equals("WorkAddress")) {
 			contact.setWorkAddress(value);
 		} else if (target.equals("WorkPostalCode")) {
@@ -213,20 +231,12 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 			contact.setWorkState(value);
 		} else if (target.equals("WorkCountry")) {
 			contact.setWorkCountry(value);
-		} else if (target.equals("WorkTelephone")) {
-			contact.setWorkTelephone(value);
+		} else if (target.equals("WorkTelephone1") || target.equals("WorkTelephone")) {
+			contact.setWorkTelephone1(value);
 		} else if (target.equals("WorkTelephone2")) {
 			contact.setWorkTelephone2(value);
-		} else if (target.equals("WorkMobile")) {
-			contact.setWorkMobile(value);
 		} else if (target.equals("WorkFax")) {
 			contact.setWorkFax(value);
-		} else if (target.equals("WorkPager")) {
-			contact.setWorkPager(value);
-		} else if (target.equals("WorkEmail")) {
-			contact.setWorkEmail(value);
-		} else if (target.equals("WorkInstantMsg")) {
-			contact.setWorkInstantMsg(value);
 		} else if (target.equals("HomeAddress")) {
 			contact.setHomeAddress(value);
 		} else if (target.equals("HomePostalCode")) {
@@ -237,18 +247,12 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 			contact.setHomeState(value);
 		} else if (target.equals("HomeCountry")) {
 			contact.setHomeCountry(value);
-		} else if (target.equals("HomeTelephone")) {
-			contact.setHomeTelephone(value);
+		} else if (target.equals("HomeTelephone1") || target.equals("HomeTelephone")) {
+			contact.setHomeTelephone1(value);
 		} else if (target.equals("HomeTelephone2")) {
 			contact.setHomeTelephone2(value);
 		} else if (target.equals("HomeFax")) {
 			contact.setHomeFax(value);
-		} else if (target.equals("HomePager")) {
-			contact.setHomePager(value);
-		} else if (target.equals("HomeEmail")) {
-			contact.setHomeEmail(value);
-		} else if (target.equals("HomeInstantMsg")) {
-			contact.setHomeInstantMsg(value);
 		} else if (target.equals("OtherAddress")) {
 			contact.setOtherAddress(value);
 		} else if (target.equals("OtherPostalCode")) {
@@ -258,11 +262,7 @@ public class ContactExcelFileReader extends ExcelFileReader implements ContactFi
 		} else if (target.equals("OtherState")) {
 			contact.setOtherState(value);
 		} else if (target.equals("OtherCountry")) {
-			contact.setOtherCountry(value);
-		} else if (target.equals("OtherEmail")) {
-			contact.setOtherEmail(value);
-		} else if (target.equals("OtherInstantMsg")) {
-			contact.setOtherInstantMsg(value);
+			contact.setOtherCountry(value);		
 		} else if (target.equals("Company")) {
 			contact.setCompany(value);
 		} else if (target.equals("Function")) {

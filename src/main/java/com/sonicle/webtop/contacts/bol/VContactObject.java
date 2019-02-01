@@ -32,42 +32,18 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.UserProfileId;
-
 /**
  *
  * @author malbinola
  */
-public class VContactLookup extends VContactBase {
-	protected String categoryName;
-	protected String categoryDomainId;
-	protected String categoryUserId;
+public class VContactObject extends VContactBase {
+	protected Boolean hasVcard;
 	
-	public String getCategoryName() {
-		return categoryName;
+	public Boolean getHasVcard() {
+		return hasVcard;
 	}
 
-	public void setCategoryName(String categoryName) {
-		this.categoryName = categoryName;
-	}
-
-	public String getCategoryDomainId() {
-		return categoryDomainId;
-	}
-
-	public void setCategoryDomainId(String categoryDomainId) {
-		this.categoryDomainId = categoryDomainId;
-	}
-
-	public String getCategoryUserId() {
-		return categoryUserId;
-	}
-
-	public void setCategoryUserId(String categoryUserId) {
-		this.categoryUserId = categoryUserId;
-	}
-	
-	public UserProfileId getCalendarProfileId() {
-		return new UserProfileId(categoryDomainId, categoryUserId);
+	public void setHasVcard(Boolean hasVcard) {
+		this.hasVcard = hasVcard;
 	}
 }

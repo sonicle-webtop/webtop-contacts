@@ -178,23 +178,23 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					xtype: 'formseparator'
 				}, {
 					xtype: 'textfield',
-					bind: '{record.workMobile}',
+					bind: '{record.mobile}',
 					fieldLabel: me.mys.res('contact.fld-mobile.lbl')
 				}, {
 					xtype: 'textfield',
-					bind: '{record.workEmail}',
+					bind: '{record.email1}',
 					fieldLabel: me.mys.res('contact.fld-workEmail.lbl')
 				}, {
 					xtype: 'textfield',
-					bind: '{record.workTelephone}',
+					bind: '{record.workTelephone1}',
 					fieldLabel: me.mys.res('contact.fld-workTelephone.lbl')
 				}, {
 					xtype: 'textfield',
-					bind: '{record.homeEmail}',
+					bind: '{record.email2}',
 					fieldLabel: me.mys.res('contact.fld-homeEmail.lbl')
 				}, {
 					xtype: 'textfield',
-					bind: '{record.homeTelephone}',
+					bind: '{record.homeTelephone1}',
 					fieldLabel: me.mys.res('contact.fld-homeTelephone.lbl')
 				}]
 			}, {
@@ -246,7 +246,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			},
 			items: [{
 				xtype: 'textfield',
-				bind: '{record.workEmail}',
+				bind: '{record.email1}',
 				fieldLabel: me.mys.res('contact.fld-email.lbl')
 			}, {
 				xtype: 'textfield',
@@ -270,7 +270,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldLabel: me.mys.res('contact.fld-country.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.workTelephone}',
+				bind: '{record.workTelephone1}',
 				fieldLabel: me.mys.res('contact.fld-telephone.lbl')	
 			}, {
 				xtype: 'textfield',
@@ -278,20 +278,20 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldLabel: me.mys.res('contact.fld-telephone2.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.workMobile}',
-				fieldLabel: me.mys.res('contact.fld-mobile.lbl')
-			}, {
-				xtype: 'textfield',
 				bind: '{record.workFax}',
 				fieldLabel: me.mys.res('contact.fld-fax.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.workPager}',
+				bind: '{record.pager1}',
 				fieldLabel: me.mys.res('contact.fld-pager.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.workInstantMsg}',
+				bind: '{record.instantMsg1}',
 				fieldLabel: me.mys.res('contact.fld-instantMsg.lbl')
+			}, {
+				xtype: 'textfield',
+				bind: '{record.mobile}',
+				fieldLabel: me.mys.res('contact.fld-mobile.lbl')
 			}, {
 				xtype: 'textfield',
 				bind: '{record.manager}',
@@ -318,7 +318,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			},
 			items: [{
 				xtype: 'textfield',
-				bind: '{record.homeEmail}',
+				bind: '{record.email2}',
 				fieldLabel: me.mys.res('contact.fld-email.lbl')
 			}, {
 				xtype: 'textfield',
@@ -342,7 +342,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldLabel: me.mys.res('contact.fld-country.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.homeTelephone}',
+				bind: '{record.homeTelephone1}',
 				fieldLabel: me.mys.res('contact.fld-telephone.lbl')
 			}, {
 				xtype: 'textfield',
@@ -350,20 +350,20 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldLabel: me.mys.res('contact.fld-telephone2.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.workMobile}',
-				fieldLabel: me.mys.res('contact.fld-mobile.lbl')
-			}, {
-				xtype: 'textfield',
 				bind: '{record.homeFax}',
 				fieldLabel: me.mys.res('contact.fld-fax.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.homePager}',
+				bind: '{record.pager2}',
 				fieldLabel: me.mys.res('contact.fld-pager.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.homeInstantMsg}',
+				bind: '{record.instantMsg2}',
 				fieldLabel: me.mys.res('contact.fld-instantMsg.lbl')
+			}, {
+				xtype: 'textfield',
+				bind: '{record.mobile}',
+				fieldLabel: me.mys.res('contact.fld-mobile.lbl')
 			}]
 		};
 		
@@ -377,7 +377,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			},
 			items: [{
 				xtype: 'textfield',
-				bind: '{record.otherEmail}',
+				bind: '{record.email3}',
 				fieldLabel: me.mys.res('contact.fld-email.lbl')
 			}, {
 				xtype: 'textfield',
@@ -401,7 +401,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldLabel: me.mys.res('contact.fld-country.lbl')
 			}, {
 				xtype: 'textfield',
-				bind: '{record.otherInstantMsg}',
+				bind: '{record.instantMsg3}',
 				fieldLabel: me.mys.res('contact.fld-instantMsg.lbl')
 			}]
 		};

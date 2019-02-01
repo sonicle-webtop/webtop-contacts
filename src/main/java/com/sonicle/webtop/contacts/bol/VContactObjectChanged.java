@@ -38,7 +38,7 @@ import org.joda.time.DateTime;
  *
  * @author malbinola
  */
-public class VContactCardChanged {
+public class VContactObjectChanged {
 	protected Integer contactId;
 	protected String revisionStatus;
 	protected DateTime revisionTimestamp;
