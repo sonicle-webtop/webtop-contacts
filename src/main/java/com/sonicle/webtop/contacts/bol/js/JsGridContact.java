@@ -79,6 +79,7 @@ public class JsGridContact {
 		this.firstName = item.getFirstName();
 		this.lastName = item.getLastName();
 		this.company = item.getCompany();
+		this.function = item.getFunction();
 		
 		if (GridView.WORK.equals(view)) {
 			this.email = item.getWorkEmail();

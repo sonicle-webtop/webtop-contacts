@@ -37,6 +37,7 @@ import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
+import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.ServletUtils.IntegerArray;
 import com.sonicle.commons.web.ServletUtils.StringArray;
@@ -45,8 +46,6 @@ import com.sonicle.commons.web.json.PayloadAsList;
 import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.commons.web.json.Payload;
-import com.sonicle.commons.web.json.extjs.FieldMeta;
-import com.sonicle.commons.web.json.extjs.GridColumnMeta;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
@@ -58,6 +57,7 @@ import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactPreview;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
+import com.sonicle.webtop.contacts.bol.js.JsEventContact;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsGridContact;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
@@ -107,7 +107,6 @@ import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
-import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
@@ -838,6 +837,25 @@ public class Service extends BaseService {
 		} catch(Exception ex) {
 			logger.error("Error in ManageContacts", ex);
 			new JsonResult(false, "Error").printTo(out);	
+		}
+	}
+	
+	public void processGetContactInformationForEventCreation(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			String id = ServletUtils.getStringParameter(request, "id", true);
+			String type = ServletUtils.getStringParameter(request, "type", true);
+			int contactId = Integer.parseInt(id);
+			
+			Contact contact = manager.getContact(contactId, false, false);
+			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
+			
+			new JsonResult(eventContact).printTo(out);
+			
+		} catch (ParameterException ex) {
+			logger.error("Error in GetContactInformationForEventCreation", ex);
+			new JsonResult(false, "Error").printTo(out);	
+		} catch (WTException ex) {
+			logger.error("Error in GetContactInformationForEventCreation", ex);
 		}
 	}
 	

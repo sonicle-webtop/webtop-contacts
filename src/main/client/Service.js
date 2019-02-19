@@ -368,6 +368,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('callTelephone');
 						me.updateDisabled('callMobile');
 						me.updateDisabled('sendSms');
+						me.updateDisabled('addEvent');
 						me.pnlPreview().setContacts(s.getSelection());
 					},
 					rowdblclick: function(s, rec) {
@@ -795,6 +796,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsList').execute();
 			}
 		});
+		me.addAct('addEvent', {
+			tooltip: null,
+			handler: function() {
+				me.createEventUI();
+			}
+		});
 	},
 	
 	initCxm: function() {
@@ -918,6 +925,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsListFromSel'),
 				me.getAct('addToContactsListFromSel'),
 				'-',
+				me.getAct('addEvent'),
+				'-',
 				{
 					text: WT.res('act-call.lbl'),
 					iconCls: 'wt-icon-call',
@@ -953,6 +962,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('callTelephone');
 		me.updateDisabled('callMobile');
 		me.updateDisabled('sendSms');
+		me.updateDisabled('addEvent');
 	},
 	
 	loadRootNode: function(pid, reloadItemsIf) {
@@ -967,9 +977,94 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
+	createEventUI: function() {
+		var me = this,
+			selection = me.getSelectedContact(),
+			contactId = selection.data.id,
+			
+			basicContactInformation = {
+				firstName: selection.data.firstName,
+				lastName: selection.data.lastName,
+				company: selection.data.company,
+				role: selection.data.function
+			};
+		
+		me.confirmEventCreation(this.res('contact.type.event.create'), function(bid, value) {
+				if (bid === 'ok') me.createEvent(value, contactId, basicContactInformation);
+			}, me);
+	},
 	
+	confirmEventCreation: function(msg, cb, scope) {
+		var me = this,
+		    defaultValue = me.activeView;
+		
+		if(defaultValue === 'list')
+			defaultValue = 'work';
+		
+		WT.confirm(msg, cb, scope, {
+			buttons: Ext.Msg.OKCANCEL,
+			instClass: 'Sonicle.webtop.contacts.ux.RecurringConfirmBox',
+			instConfig: {
+				homeText: me.res('contact.type.home'),
+				workText: me.res('contact.type.work'),
+				otherText: me.res('contact.type.other')
+			},
+			config: {
+				value: defaultValue
+			}
+		});
+	},
 	
-
+	createEvent: function(value, contactId, basicContactInformation) {
+		var me = this;
+			
+		me.getContactInformationForEvent(contactId, value, basicContactInformation, {
+			callback: function(success, json, basicContactInformation) {
+				
+				var contactData = json.data,
+				    calendarService = WT.getServiceApi('com.sonicle.webtop.calendar');
+				
+				if(contactData !== null) {
+				
+					var address = !Ext.isEmpty(contactData.address) ? contactData.address + ", " : "",
+						postalCode = !Ext.isEmpty(contactData.postalCode) ? contactData.postalCode + ", " : "",
+					    city = !Ext.isEmpty(contactData.city) ? contactData.city + ", " : "",
+					    state = !Ext.isEmpty(contactData.state) ? contactData.state + ", " : "",
+					    country = !Ext.isEmpty(contactData.country) ? contactData.country : "",
+					    name = !Ext.isEmpty(basicContactInformation.firstName) ? basicContactInformation.firstName + " " : "",
+					    lastName = !Ext.isEmpty(basicContactInformation.lastName) ? basicContactInformation.lastName + "\n" : "\n",
+					    company = !Ext.isEmpty(basicContactInformation.company) ? basicContactInformation.company + "\n" : "",
+					    role = !Ext.isEmpty(basicContactInformation.role) ? basicContactInformation.role + "\n" : "",
+					    departament = !Ext.isEmpty(contactData.department) ? contactData.department + "\n" : "",
+					    email = !Ext.isEmpty(contactData.email) ? contactData.email + "\n" : "",
+					    mobile = !Ext.isEmpty(contactData.mobile) ? contactData.mobile + "\n" : "",
+					    telephone = !Ext.isEmpty(contactData.telephone) ? contactData.telephone + "\n" : "",
+				
+				    data = {
+						location: address + postalCode + city + state + country,
+						description: name + lastName + company + role + departament + email + mobile + telephone
+					};
+				calendarService.addEvent(data);
+				}
+				else 
+				calendarService.addEvent();
+			}
+		});
+	},
+	
+	getContactInformationForEvent: function(contactId, informationType, basicContactInformation, opts) {
+		opts = opts || {};
+		var me = this;
+		WT.ajaxReq(me.ID, 'GetContactInformationForEventCreation', {
+			params: {
+				id: contactId,
+				type: informationType
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope || me, [success, json, basicContactInformation]);
+			}
+		});
+	},
 	
 	calcGroupField: function(groupBy) {
 		if (groupBy === 'company') {
@@ -1859,6 +1954,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						return firstIsList || emailMiss;
 					}
 					break;
+				case 'addEvent': 
+					sel = me.getSelectedContacts();
+					if(sel.length === 1) {
+						return false;
+					}
+					else {
+						return true;
+					}
 			}
 		},
 		
