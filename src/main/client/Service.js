@@ -368,7 +368,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('callTelephone');
 						me.updateDisabled('callMobile');
 						me.updateDisabled('sendSms');
-						me.updateDisabled('addEvent');
+						me.updateDisabled('createEvent');
 						me.pnlPreview().setContacts(s.getSelection());
 					},
 					rowdblclick: function(s, rec) {
@@ -796,10 +796,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsList').execute();
 			}
 		});
-		me.addAct('addEvent', {
+		me.addAct('createEvent', {
 			tooltip: null,
 			handler: function() {
-				me.createEventUI();
+				var rec = me.getSelectedContact();
+				if (rec) me.createEventUI(rec);
 			}
 		});
 	},
@@ -925,7 +926,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsListFromSel'),
 				me.getAct('addToContactsListFromSel'),
 				'-',
-				me.getAct('addEvent'),
+				me.getAct('createEvent'),
 				'-',
 				{
 					text: WT.res('act-call.lbl'),
@@ -962,7 +963,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('callTelephone');
 		me.updateDisabled('callMobile');
 		me.updateDisabled('sendSms');
-		me.updateDisabled('addEvent');
+		me.updateDisabled('createEvent');
 	},
 	
 	loadRootNode: function(pid, reloadItemsIf) {
@@ -977,21 +978,18 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
-	createEventUI: function() {
-		var me = this,
-			selection = me.getSelectedContact(),
-			contactId = selection.data.id,
-			
-			basicContactInformation = {
-				firstName: selection.data.firstName,
-				lastName: selection.data.lastName,
-				company: selection.data.company,
-				role: selection.data.function
-			};
-		
-		me.confirmEventCreation(this.res('contact.type.event.create'), function(bid, value) {
-				if (bid === 'ok') me.createEvent(value, contactId, basicContactInformation);
-			}, me);
+	createEventUI: function(rec) {
+		var me = this;
+		me.confirmEventCreation(me.res('contact.confirm.eventCreation'), function(bid, value) {
+			if (bid === 'ok') {
+				me.createEvent(value, rec.get('id'), {
+					firstName: rec.get('firstName'),
+					lastName: rec.get('lastName'),
+					company: rec.get('company'),
+					role: rec.get('function')
+				});
+			}
+		}, me);
 	},
 	
 	confirmEventCreation: function(msg, cb, scope) {
@@ -1015,53 +1013,48 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	createEvent: function(value, contactId, basicContactInformation) {
+	createEvent: function(type, contactId, contactInfo) {
 		var me = this;
-			
-		me.getContactInformationForEvent(contactId, value, basicContactInformation, {
-			callback: function(success, json, basicContactInformation) {
-				
-				var contactData = json.data,
-				    calendarService = WT.getServiceApi('com.sonicle.webtop.calendar');
-				
-				if(contactData !== null) {
-				
-					var address = !Ext.isEmpty(contactData.address) ? contactData.address + ", " : "",
-						postalCode = !Ext.isEmpty(contactData.postalCode) ? contactData.postalCode + ", " : "",
-					    city = !Ext.isEmpty(contactData.city) ? contactData.city + ", " : "",
-					    state = !Ext.isEmpty(contactData.state) ? contactData.state + ", " : "",
-					    country = !Ext.isEmpty(contactData.country) ? contactData.country : "",
-					    name = !Ext.isEmpty(basicContactInformation.firstName) ? basicContactInformation.firstName + " " : "",
-					    lastName = !Ext.isEmpty(basicContactInformation.lastName) ? basicContactInformation.lastName + "\n" : "\n",
-					    company = !Ext.isEmpty(basicContactInformation.company) ? basicContactInformation.company + "\n" : "",
-					    role = !Ext.isEmpty(basicContactInformation.role) ? basicContactInformation.role + "\n" : "",
-					    departament = !Ext.isEmpty(contactData.department) ? contactData.department + "\n" : "",
-					    email = !Ext.isEmpty(contactData.email) ? contactData.email + "\n" : "",
-					    mobile = !Ext.isEmpty(contactData.mobile) ? contactData.mobile + "\n" : "",
-					    telephone = !Ext.isEmpty(contactData.telephone) ? contactData.telephone + "\n" : "",
-				
-				    data = {
-						location: address + postalCode + city + state + country,
-						description: name + lastName + company + role + departament + email + mobile + telephone
-					};
-				calendarService.addEvent(data);
+		me.getContactInformationForEvent(contactId, type, {
+			callback: function(success, json) {
+				if (success) {
+					var calSvc = WT.getServiceApi('com.sonicle.webtop.calendar');
+					if (calSvc) {
+						var SoString = Sonicle.String,
+								data = json.data || {},
+								lArgs = [', '], dArgs = ['\n'];
+
+						lArgs.push(data.address);
+						lArgs.push(data.postalCode);
+						lArgs.push(data.city);
+						lArgs.push(data.state);
+						lArgs.push(data.country);
+						dArgs.push(SoString.join(' ', contactInfo.firstName, contactInfo.lastName));
+						dArgs.push(SoString.join(', ', contactInfo.company, data.department, contactInfo.role));
+						dArgs.push(data.email);
+						dArgs.push(data.mobile);
+						dArgs.push(data.telephone);
+
+						calSvc.addEvent({
+							location: SoString.join.apply(me, lArgs),
+							description: SoString.join.apply(me, dArgs)
+						});
+					}
 				}
-				else 
-				calendarService.addEvent();
 			}
 		});
 	},
 	
-	getContactInformationForEvent: function(contactId, informationType, basicContactInformation, opts) {
+	getContactInformationForEvent: function(contactId, type, opts) {
 		opts = opts || {};
 		var me = this;
 		WT.ajaxReq(me.ID, 'GetContactInformationForEventCreation', {
 			params: {
 				id: contactId,
-				type: informationType
+				type: type
 			},
 			callback: function(success, json) {
-				Ext.callback(opts.callback, opts.scope || me, [success, json, basicContactInformation]);
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
 			}
 		});
 	},
@@ -1954,7 +1947,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						return firstIsList || emailMiss;
 					}
 					break;
-				case 'addEvent': 
+				case 'createEvent': 
 					sel = me.getSelectedContacts();
 					if(sel.length === 1) {
 						return false;
