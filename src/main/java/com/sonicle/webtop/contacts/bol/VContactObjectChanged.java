@@ -32,42 +32,56 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.UserProfileId;
+import org.joda.time.DateTime;
 
 /**
  *
  * @author malbinola
  */
-public class VContactLookup extends VContactBase {
-	protected String categoryName;
-	protected String categoryDomainId;
-	protected String categoryUserId;
+public class VContactObjectChanged {
+	protected Integer contactId;
+	protected String revisionStatus;
+	protected DateTime revisionTimestamp;
+	protected DateTime creationTimestamp;
+	protected String href;
+
+	public Integer getContactId() {
+		return contactId;
+	}
+
+	public void setContactId(Integer contactId) {
+		this.contactId = contactId;
+	}
+
+	public String getRevisionStatus() {
+		return revisionStatus;
+	}
+
+	public void setRevisionStatus(String revisionStatus) {
+		this.revisionStatus = revisionStatus;
+	}
+
+	public DateTime getRevisionTimestamp() {
+		return revisionTimestamp;
+	}
+
+	public void setRevisionTimestamp(DateTime revisionTimestamp) {
+		this.revisionTimestamp = revisionTimestamp;
+	}
 	
-	public String getCategoryName() {
-		return categoryName;
+	public DateTime getCreationTimestamp() {
+		return creationTimestamp;
 	}
 
-	public void setCategoryName(String categoryName) {
-		this.categoryName = categoryName;
+	public void setCreationTimestamp(DateTime creationTimestamp) {
+		this.creationTimestamp = creationTimestamp;
 	}
 
-	public String getCategoryDomainId() {
-		return categoryDomainId;
+	public String getHref() {
+		return href;
 	}
 
-	public void setCategoryDomainId(String categoryDomainId) {
-		this.categoryDomainId = categoryDomainId;
-	}
-
-	public String getCategoryUserId() {
-		return categoryUserId;
-	}
-
-	public void setCategoryUserId(String categoryUserId) {
-		this.categoryUserId = categoryUserId;
-	}
-	
-	public UserProfileId getCalendarProfileId() {
-		return new UserProfileId(categoryDomainId, categoryUserId);
+	public void setHref(String href) {
+		this.href = href;
 	}
 }

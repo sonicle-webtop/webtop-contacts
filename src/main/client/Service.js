@@ -368,6 +368,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('callTelephone');
 						me.updateDisabled('callMobile');
 						me.updateDisabled('sendSms');
+						me.updateDisabled('createEvent');
 						me.pnlPreview().setContacts(s.getSelection());
 					},
 					rowdblclick: function(s, rec) {
@@ -414,293 +415,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				minWidth: 600
 			}]
 		}));
-		/*
-		me.setMainComponent(Ext.create({
-			xtype: 'container',
-			layout: 'border',
-			referenceHolder: true,
-			items: [{
-				region: 'center',
-				xtype: 'gridpanel',
-				reference: 'gpcontacts',
-				stateful: {
-					width: true,
-					dataIndex: true
-				},
-				stateId: me.buildStateId('gpcontacts'),
-				columns: [
-					{
-						xtype: "soiconcolumn",
-						width: 30,
-						groupable: false,
-						getIconCls: function(v,rec) {
-							return me.cssIconCls((rec.get('isList') === true) ? 'contactsList' : 'contact');
-						},
-						iconSize: WTU.imgSizeToPx('xs')
-					},
-					{
-						hidden: true,
-						dataIndex: "contactId",
-						groupable:false,
-						header: "ID",
-						flex:1
-					},
-					{
-						dataIndex: "categoryName",
-						groupable:false,
-						xtype:"socolorcolumn",
-						header: me.res('gpcontacts.category.lbl'),
-						colorField:"categoryColor",
-						displayField:"categoryName",
-						width:150,
-						hidden:false
-					},
-					{
-						dataIndex: "title",
-						groupable: false,
-						header: me.res('gpcontacts.title.lbl'),
-						width: 50
-					},
-					{
-						dataIndex: "firstName",
-						groupable: true,
-						header: me.res('gpcontacts.firstName.lbl'),
-						flex: 1
-					},
-					{
-						dataIndex: "lastName",
-						groupable: true,
-						header: me.res('gpcontacts.lastName.lbl'),
-						flex: 1
-					},
-					{
-						dataIndex: "company",
-						groupable: true,
-						header: me.res('gpcontacts.company.lbl'),
-						flex: 1
-					},
-					{
-						dataIndex: "function",
-						groupable: false,
-						header: me.res('gpcontacts.function.lbl'),
-						flex: 1
-					},
-					{
-						xtype: 'solinkcolumn',
-						dataIndex: "workTelephone",
-						groupable: true,
-						header: me.res('gpcontacts.workTelephone.lbl'),
-						flex: 1,
-						listeners: {
-							linkclick: function(s,idx,rec) {
-								WT.handlePbxCall(rec.get('workTelephone'));
-							}
-						}
-					},
-					{
-						xtype: 'solinkcolumn',
-						dataIndex: "workMobile",
-						groupable: false,
-						header: me.res('gpcontacts.workMobile.lbl'),
-						flex: 1,
-						listeners: {
-							linkclick: function(s,idx,rec) {
-								WT.handlePbxCall(rec.get('workMobile'));
-							}
-						}
-					},
-					{
-						xtype: 'solinkcolumn',
-						dataIndex: "workEmail",
-						groupable: true,
-						header: me.res('gpcontacts.workEmail.lbl'),
-						flex: 2,
-						listeners: {
-							linkclick: function(s,idx,rec) {
-								WT.handleMailAddress(rec.get('workEmail'));
-							}
-						}
-					}
-				],
-				store: {
-					model: 'Sonicle.webtop.contacts.model.GridContact',
-					proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'contacts', {
-						extraParams: {
-							view: null,
-							letter: null,
-							query: null
-						}
-					}),
-					listeners: {
-						load: function(s, rec, success, op) {
-							var pars = op.getProxy().getExtraParams(),
-									tb = me.getToolbar(),
-									tbi = me.tbIndex();
-							//if(!Ext.isEmpty(pars.view)) tb.getComponent(pars.view).toggle(true);
-							if(pars.letter !== null) {
-								tbi.getComponent('chr'+pars.letter.charCodeAt(0)).toggle(true);
-								me.txtSearch().setValue(null);
-							} else if(pars.query !== null) {
-								tbi.getComponent(0).toggle(true);
-								tbi.getComponent(0).toggle(false);
-							} else {
-								tbi.getComponent('chr'+'A'.charCodeAt(0)).toggle(true);
-								me.txtSearch().setValue(null);
-							}
-						},
-						metachange: function(s, meta) {
-							s.isReconfiguring = true;
-							
-							//var gp = me.gpContacts(),
-							//		colsInfo = [],
-							//		data = [];
-							//
-							//if(meta.colsInfo) {
-							//	colsInfo.push({
-							//		xtype: 'soiconcolumn',
-							//		getIconCls: function(v,rec) {
-							//			return me.cssIconCls((rec.get('isList') === true) ? 'contacts-list' : 'contact', 'xs');
-							//		},
-							//		iconSize: WTU.imgSizeToPx('xs'),
-							//		width: 30,
-							//		groupable: false
-							//	});
-							//	
-							//	Ext.iterate(meta.colsInfo, function(col,i) {
-							//		var lastColState=me.lastState&&me.lastState.columns.length>0?me.lastState.columns[i+1]:null;
-							//		if (col.dataIndex === 'categoryName') {
-							//			col.xtype = 'socolorcolumn';
-							//			col.header = me.res('gpcontacts.category.lbl');
-							//			col.colorField = 'categoryColor';
-							//			col.displayField = 'categoryName';
-							//			if (!lastColState || !Ext.isDefined(lastColState.width)) col.width = 150;
-							//			if (!lastColState || !Ext.isDefined(lastColState.hidden)) col.hidden = false;
-							//		} else {
-							//			col.header = me.res('gpcontacts.'+col.dataIndex+'.lbl');
-							//			if (!lastColState || !Ext.isDefined(lastColState.width)) {
-							//				if (col.dataIndex === 'title') col.width = 50;
-							//				else if((col.dataIndex === 'workEmail') || (col.dataIndex === 'homeEmail')) col.flex = 2;
-							//				else col.flex = 1;
-							//			}
-							//		}
-							//		
-							//		if(col.xtype === 'datecolumn') {
-							//			col.format = WT.getShortDateFmt();
-							//		}
-							//		if (lastColState) {
-							//			if (Ext.isDefined(lastColState.width)) col.width=lastColState.width;
-							//			if (Ext.isDefined(lastColState.hidden)) col.hidden=lastColState.hidden;
-							//		}
-							//		colsInfo.push(col);
-							//	});
-							//	me.gpContacts().reconfigure(s, colsInfo);
-							//}
-						   
-						    var colsInfo=me.gpContacts().getColumns(),
-								data = [];
-							
-							// Fill group combo
-							Ext.iterate(colsInfo, function(col,i) {
-								if(col.groupable && !col.hidden) {
-									data.push({id: col.dataIndex, desc: col.text 
-									//col.header
-									});
-								}
-							});
-							
-							if(meta.groupInfo) {
-								me.loadCboGroup(data, meta.groupInfo.field);
-								me.applyGrouping(meta.groupInfo.field, meta.groupInfo.direction);
-							} else {
-								me.loadCboGroup(data);
-								me.applyGrouping(null);
-							}
-							if(meta.sortInfo) {
-								s.getSorters().removeAll();
-								s.getSorters().add(new Ext.util.Sorter({
-									property: meta.sortInfo.field,
-									direction: meta.sortInfo.direction
-								}));
-							}
-							
-							s.isReconfiguring = false;
-						}
-					}
-				},
-				selModel: {
-					type: 'rowmodel',
-					mode : 'MULTI'
-				},
-				//columns: [],
-				features: [{
-					id: 'grouping',
-					ftype: 'grouping',
-					groupHeaderTpl: '{columnName}: {name} ({children.length})'
-				}],
-				listeners: {
-					selectionchange: function() {
-						me.updateDisabled('showContact');
-						me.updateDisabled('callTelephone');
-						me.updateDisabled('callMobile');
-						me.updateDisabled('sendSMS');
-						me.updateDisabled('printContact');
-						me.updateDisabled('copyContact');
-						me.updateDisabled('moveContact');
-						me.updateDisabled('deleteContact');
-						me.updateDisabled('addContactsListFromSel');
-						me.updateDisabled('addToContactsListFromSel');
-					},
-					rowdblclick: function(s, rec) {
-						var er = me.toRightsObj(rec.get('_erights'));
-						me.openContactItemUI(rec.get('isList'), er.UPDATE, rec.get('id'));
-					},
-					rowcontextmenu: function(s, rec, itm, i, e) {
-						var selection = s.getSelection();
-						me.getAct('sendContact').setDisabled(false)
-						Ext.each(selection,function(sel){
-							if(sel.get('isList')){
-								me.getAct('sendContact').setDisabled(true)
-							}
-						});
-						WT.showContextMenu(e, me.getRef('cxmGrid'), {
-							contact: rec,
-							contacts: s.getSelection()
-						});
-					},
-					groupchange: function(sto, group) {
-						if(sto.isReconfiguring) return;
-						if(group === null) {
-							me.getRef('cbogroup').setValue('-');
-							me.saveGroupInfo(null, null);
-						} else {
-							me.getRef('cbogroup').setValue(group.getProperty());
-							me.saveGroupInfo(group.getProperty(), group.getDirection());
-						}
-					},
-					sortchange: function(ct, col, dir) {
-						if(me.gpContacts().getStore().isReconfiguring) return;
-						me.saveSortInfo(col.dataIndex, dir);
-					},
-					staterestore: function(g, state, opts) {
-						me.lastState=state;
-					},
-					statesave: function(g, state, opts) {
-						if (state.columns.length>0) me.lastState=state;
-					}
-				}
-			}, {
-				region: 'east',
-				xtype: 'toolbar',
-				reference: 'tbindex',
-				vertical: true,
-				overflowHandler: 'scroller',
-				defaults: {
-					padding: 0
-				},
-				items: iitems
-			}]
-		}));
-		*/
 	},
 	
 	notificationCallback: function(type, tag, data) {
@@ -1082,6 +796,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsList').execute();
 			}
 		});
+		me.addAct('createEvent', {
+			tooltip: null,
+			handler: function() {
+				var rec = me.getSelectedContact();
+				if (rec) me.createEventUI(rec);
+			}
+		});
 	},
 	
 	initCxm: function() {
@@ -1205,6 +926,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsListFromSel'),
 				me.getAct('addToContactsListFromSel'),
 				'-',
+				me.getAct('createEvent'),
+				'-',
 				{
 					text: WT.res('act-call.lbl'),
 					iconCls: 'wt-icon-call',
@@ -1240,6 +963,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('callTelephone');
 		me.updateDisabled('callMobile');
 		me.updateDisabled('sendSms');
+		me.updateDisabled('createEvent');
 	},
 	
 	loadRootNode: function(pid, reloadItemsIf) {
@@ -1254,9 +978,86 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
+	createEventUI: function(rec) {
+		var me = this;
+		me.confirmEventCreation(me.res('contact.confirm.eventCreation'), function(bid, value) {
+			if (bid === 'ok') {
+				me.createEvent(value, rec.get('id'), {
+					firstName: rec.get('firstName'),
+					lastName: rec.get('lastName'),
+					company: rec.get('company'),
+					role: rec.get('function')
+				});
+			}
+		}, me);
+	},
 	
+	confirmEventCreation: function(msg, cb, scope) {
+		var me = this,
+		    defaultValue = me.activeView;
+		
+		if(defaultValue === 'list')
+			defaultValue = 'work';
+		
+		WT.confirm(msg, cb, scope, {
+			buttons: Ext.Msg.OKCANCEL,
+			instClass: 'Sonicle.webtop.contacts.ux.RecurringConfirmBox',
+			instConfig: {
+				homeText: me.res('contact.type.home'),
+				workText: me.res('contact.type.work'),
+				otherText: me.res('contact.type.other')
+			},
+			config: {
+				value: defaultValue
+			}
+		});
+	},
 	
+	createEvent: function(type, contactId, contactInfo) {
+		var me = this;
+		me.getContactInformationForEvent(contactId, type, {
+			callback: function(success, json) {
+				if (success) {
+					var calSvc = WT.getServiceApi('com.sonicle.webtop.calendar');
+					if (calSvc) {
+						var SoString = Sonicle.String,
+								data = json.data || {},
+								lArgs = [', '], dArgs = ['\n'];
 
+						lArgs.push(data.address);
+						lArgs.push(data.postalCode);
+						lArgs.push(data.city);
+						lArgs.push(data.state);
+						lArgs.push(data.country);
+						dArgs.push(SoString.join(' ', contactInfo.firstName, contactInfo.lastName));
+						dArgs.push(SoString.join(', ', contactInfo.company, data.department, contactInfo.role));
+						dArgs.push(data.email);
+						dArgs.push(data.mobile);
+						dArgs.push(data.telephone);
+
+						calSvc.addEvent({
+							location: SoString.join.apply(me, lArgs),
+							description: SoString.join.apply(me, dArgs)
+						});
+					}
+				}
+			}
+		});
+	},
+	
+	getContactInformationForEvent: function(contactId, type, opts) {
+		opts = opts || {};
+		var me = this;
+		WT.ajaxReq(me.ID, 'GetContactInformationForEventCreation', {
+			params: {
+				id: contactId,
+				type: type
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope || me, [success, json]);
+			}
+		});
+	},
 	
 	calcGroupField: function(groupBy) {
 		if (groupBy === 'company') {
@@ -1786,29 +1587,55 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		if (Ext.isDefined(cnt.lastName)) obj.lastName = cnt.lastName;
 		if (Ext.isDefined(cnt.nickname)) obj.nickname = cnt.nickname;
 		if (Ext.isDefined(cnt.gender)) obj.gender = cnt.gender;
+		if (Ext.isDefined(cnt.mobile)) obj.mobile = cnt.mobile;
+		if (Ext.isDefined(cnt.pager1)) obj.pager1 = cnt.pager1;
+		if (Ext.isDefined(cnt.pager2)) obj.pager2 = cnt.pager2;
+		if (Ext.isDefined(cnt.email1)) obj.email1 = cnt.email1;
+		if (Ext.isDefined(cnt.email2)) obj.email2 = cnt.email2;
+		if (Ext.isDefined(cnt.email3)) obj.email3 = cnt.email3;
+		if (Ext.isDefined(cnt.instantMsg1)) obj.instantMsg1 = cnt.instantMsg1;
+		if (Ext.isDefined(cnt.instantMsg2)) obj.instantMsg2 = cnt.instantMsg2;
+		if (Ext.isDefined(cnt.instantMsg3)) obj.instantMsg3 = cnt.instantMsg3;
 		if (Ext.isDefined(cnt.workAddress)) obj.workAddress = cnt.workAddress;
 		if (Ext.isDefined(cnt.workPostalCode)) obj.workPostalCode = cnt.workPostalCode;
 		if (Ext.isDefined(cnt.workCity)) obj.workCity = cnt.workCity;
 		if (Ext.isDefined(cnt.workState)) obj.workState = cnt.workState;
 		if (Ext.isDefined(cnt.workCountry)) obj.workCountry = cnt.workCountry;
-		if (Ext.isDefined(cnt.workTelephone)) obj.workTelephone = cnt.workTelephone;
+		if (Ext.isDefined(cnt.workTelephone1)) obj.workTelephone1 = cnt.workTelephone1;
 		if (Ext.isDefined(cnt.workTelephone2)) obj.workTelephone2 = cnt.workTelephone2;
-		if (Ext.isDefined(cnt.workMobile)) obj.workMobile = cnt.workMobile;
 		if (Ext.isDefined(cnt.workFax)) obj.workFax = cnt.workFax;
-		if (Ext.isDefined(cnt.workPager)) obj.workPager = cnt.workPager;
-		if (Ext.isDefined(cnt.workEmail)) obj.workEmail = cnt.workEmail;
-		if (Ext.isDefined(cnt.workInstantMsg)) obj.workInstantMsg = cnt.workInstantMsg;
 		if (Ext.isDefined(cnt.homeAddress)) obj.homeAddress = cnt.homeAddress;
 		if (Ext.isDefined(cnt.homePostalCode)) obj.homePostalCode = cnt.homePostalCode;
 		if (Ext.isDefined(cnt.homeCity)) obj.homeCity = cnt.homeCity;
 		if (Ext.isDefined(cnt.homeState)) obj.homeState = cnt.homeState;
 		if (Ext.isDefined(cnt.homeCountry)) obj.homeCountry = cnt.homeCountry;
-		if (Ext.isDefined(cnt.homeTelephone)) obj.homeTelephone = cnt.homeTelephone;
+		if (Ext.isDefined(cnt.homeTelephone1)) obj.homeTelephone1 = cnt.homeTelephone1;
 		if (Ext.isDefined(cnt.homeTelephone2)) obj.homeTelephone2 = cnt.homeTelephone2;
 		if (Ext.isDefined(cnt.homeFax)) obj.homeFax = cnt.homeFax;
-		if (Ext.isDefined(cnt.homePager)) obj.homePager = cnt.homePager;
-		if (Ext.isDefined(cnt.homeEmail)) obj.homeEmail = cnt.homeEmail;
-		if (Ext.isDefined(cnt.homeInstantMsg)) obj.homeInstantMsg = cnt.homeInstantMsg;
+		if (Ext.isDefined(cnt.otherAddress)) obj.otherAddress = cnt.otherAddress;
+		if (Ext.isDefined(cnt.otherPostalCode)) obj.otherPostalCode = cnt.otherPostalCode;
+		if (Ext.isDefined(cnt.otherCity)) obj.otherCity = cnt.otherCity;
+		if (Ext.isDefined(cnt.otherState)) obj.otherState = cnt.otherState;
+		if (Ext.isDefined(cnt.otherCountry)) obj.otherCountry = cnt.otherCountry;
+		if (Ext.isDefined(cnt.company)) obj.company = cnt.company;
+		if (Ext.isDefined(cnt.function)) obj.function = cnt.function;
+		if (Ext.isDefined(cnt.department)) obj.department = cnt.department;
+		if (Ext.isDefined(cnt.birthday)) obj.birthday = cnt.birthday;
+		if (Ext.isDefined(cnt.anniversary)) obj.anniversary = cnt.anniversary;
+		if (Ext.isDefined(cnt.url)) obj.url = cnt.url;
+		if (Ext.isDefined(cnt.notes)) obj.notes = cnt.notes;
+		if (Ext.isDefined(cnt.picture)) obj.picture = cnt.picture;
+		
+		// OLD compatibility mappings...
+		if (Ext.isDefined(cnt.workTelephone)) obj.workTelephone1 = cnt.workTelephone;
+		if (Ext.isDefined(cnt.homeTelephone)) obj.homeTelephone1 = cnt.homeTelephone;
+		if (Ext.isDefined(cnt.workMobile)) obj.mobile = cnt.workMobile;
+		if (Ext.isDefined(cnt.workPager)) obj.pager1 = cnt.workPager;
+		if (Ext.isDefined(cnt.homePager)) obj.pager2 = cnt.homePager;
+		if (Ext.isDefined(cnt.workEmail)) obj.email1 = cnt.workEmail;
+		if (Ext.isDefined(cnt.homeEmail)) obj.email2 = cnt.homeEmail;
+		if (Ext.isDefined(cnt.workInstantMsg)) obj.instantMsg1 = cnt.workInstantMsg;
+		if (Ext.isDefined(cnt.homeInstantMsg)) obj.instantMsg2 = cnt.homeInstantMsg;
 
 		return obj;
 	},
@@ -1818,7 +1645,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		opts = opts || {};
 		var me = this,
 				data = me.prepareContactNewData(cnt),
-				vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true});	
+				vw = WT.createView(me.ID, 'view.Contact', {
+					swapReturn: true,
+					viewCfg: {
+						uploadTag: opts.uploadTag
+					}
+				});	
 		
 		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
@@ -2135,6 +1967,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						return firstIsList || emailMiss;
 					}
 					break;
+				case 'createEvent': 
+					sel = me.getSelectedContacts();
+					if(sel.length === 1) {
+						return false;
+					}
+					else {
+						return true;
+					}
 			}
 		},
 		

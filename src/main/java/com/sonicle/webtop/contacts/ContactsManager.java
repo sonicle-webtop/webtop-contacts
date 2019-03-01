@@ -58,8 +58,8 @@ import com.sonicle.webtop.contacts.bol.OContactPictureMetaOnly;
 import com.sonicle.webtop.contacts.bol.OContactVCard;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
-import com.sonicle.webtop.contacts.bol.VContactCard;
-import com.sonicle.webtop.contacts.bol.VContactCardChanged;
+import com.sonicle.webtop.contacts.bol.VContactObject;
+import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
@@ -88,10 +88,12 @@ import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
-import com.sonicle.webtop.contacts.model.ContactCard;
-import com.sonicle.webtop.contacts.model.ContactCardChanged;
+import com.sonicle.webtop.contacts.model.ContactObject;
+import com.sonicle.webtop.contacts.model.ContactObjectChanged;
+import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
+import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
 import com.sonicle.webtop.contacts.model.ContactCompany;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
@@ -650,25 +652,26 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public List<ContactCard> listContactCards(int categoryFolderIds) throws WTException {
+	@Override
+	public List<ContactObject> listContactObjects(int categoryId, ContactObjectOutputType outputType) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryFolder(categoryFolderIds, "READ");
+			checkRightsOnCategoryFolder(categoryId, "READ");
 			
-			ArrayList<ContactCard> items = new ArrayList<>();
-			Map<String, List<VContactCard>> vcontMap = contDao.viewCardsByCategory(con, categoryFolderIds);
-			for (List<VContactCard> vconts : vcontMap.values()) {
+			ArrayList<ContactObject> items = new ArrayList<>();
+			Map<String, List<VContactObject>> map = contDao.viewContactObjectByCategory(con, categoryId);
+			for (List<VContactObject> vconts : map.values()) {
 				if (vconts.isEmpty()) continue;
-				VContactCard vcont = vconts.get(vconts.size()-1);
+				VContactObject vcont = vconts.get(vconts.size()-1);
 				if (vconts.size() > 1) {
-					logger.trace("Many Cards ({}) found for same href [{} -> {}]", vconts.size(), vcont.getHref(), vcont.getContactId());
+					logger.trace("Many contacts ({}) found for same href [{} -> {}]", vconts.size(), vcont.getHref(), vcont.getContactId());
 				}
 				
-				items.add(doContactCardPrepare(con, vcont));
+				items.add(doContactObjectPrepare(con, vcont, outputType));
 			}
 			return items;
 			
@@ -679,36 +682,37 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public CollectionChangeSet<ContactCardChanged> listContactCardsChanges(int categoryFolderId, DateTime since, Integer limit) throws WTException {
+	@Override
+	public CollectionChangeSet<ContactObjectChanged> listContactObjectsChanges(int categoryId, DateTime since, Integer limit) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryFolder(categoryFolderId, "READ");
+			checkRightsOnCategoryFolder(categoryId, "READ");
 			
-			ArrayList<ContactCardChanged> inserted = new ArrayList<>();
-			ArrayList<ContactCardChanged> updated = new ArrayList<>();
-			ArrayList<ContactCardChanged> deleted = new ArrayList<>();
+			ArrayList<ContactObjectChanged> inserted = new ArrayList<>();
+			ArrayList<ContactObjectChanged> updated = new ArrayList<>();
+			ArrayList<ContactObjectChanged> deleted = new ArrayList<>();
 			
 			if (limit == null) limit = Integer.MAX_VALUE;
 			if (since == null) {
-				List<VContactCardChanged> vconts = contDao.viewChangedByCategory(con, categoryFolderId, limit);
-				for (VContactCardChanged vcont : vconts) {
-					inserted.add(new ContactCardChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
+				List<VContactObjectChanged> vconts = contDao.viewLiveContactObjectsChangedByCategory(con, categoryId, limit);
+				for (VContactObjectChanged vcont : vconts) {
+					inserted.add(new ContactObjectChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
 				}
 			} else {
-				List<VContactCardChanged> vconts = contDao.viewChangedByCategorySince(con, categoryFolderId, since, limit);
-				for (VContactCardChanged vcont : vconts) {
+				List<VContactObjectChanged> vconts = contDao.viewChangedByCategorySince(con, categoryId, since, limit);
+				for (VContactObjectChanged vcont : vconts) {
 					Contact.RevisionStatus revStatus = EnumUtils.forSerializedName(vcont.getRevisionStatus(), Contact.RevisionStatus.class);
 					if (Contact.RevisionStatus.DELETED.equals(revStatus)) {
-						deleted.add(new ContactCardChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
+						deleted.add(new ContactObjectChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
 					} else {
 						if (Contact.RevisionStatus.NEW.equals(revStatus) || (vcont.getCreationTimestamp().compareTo(since) >= 0)) {
-							inserted.add(new ContactCardChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
+							inserted.add(new ContactObjectChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
 						} else {
-							updated.add(new ContactCardChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
+							updated.add(new ContactObjectChanged(vcont.getContactId(), vcont.getRevisionTimestamp(), vcont.getHref()));
 						}
 					}
 				}
@@ -723,32 +727,34 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public ContactCard getContactCard(int categoryFolderId, String href) throws WTException {
-		List<ContactCard> ccs = getContactCards(categoryFolderId, Arrays.asList(href));
+	@Override
+	public ContactObjectWithVCard getContactObjectWithVCard(int categoryId, String href) throws WTException {
+		List<ContactObjectWithVCard> ccs = getContactObjectsWithVCard(categoryId, Arrays.asList(href));
 		return ccs.isEmpty() ? null : ccs.get(0);
 	}
 	
-	public List<ContactCard> getContactCards(int categoryFolderId, Collection<String> hrefs) throws WTException {
+	@Override
+	public List<ContactObjectWithVCard> getContactObjectsWithVCard(int categoryId, Collection<String> hrefs) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryFolder(categoryFolderId, "READ");
+			checkRightsOnCategoryFolder(categoryId, "READ");
 			
-			ArrayList<ContactCard> items = new ArrayList<>();
-			Map<String, List<VContactCard>> vcontMap = contDao.viewCardsByCategoryHrefs(con, categoryFolderId, hrefs);
+			ArrayList<ContactObjectWithVCard> items = new ArrayList<>();
+			Map<String, List<VContactObject>> map = contDao.viewContactObjectByCategoryHrefs(con, categoryId, hrefs);
 			for (String href : hrefs) {
-				List<VContactCard> vconts = vcontMap.get(href);
+				List<VContactObject> vconts = map.get(href);
 				if (vconts == null) continue;
 				if (vconts.isEmpty()) continue;
-				VContactCard vcont = vconts.get(vconts.size()-1);
+				VContactObject vcont = vconts.get(vconts.size()-1);
 				if (vconts.size() > 1) {
-					logger.trace("Many Cards ({}) found for same href [{} -> {}]", vconts.size(), vcont.getHref(), vcont.getContactId());
+					logger.trace("Many contacts ({}) found for same href [{} -> {}]", vconts.size(), vcont.getHref(), vcont.getContactId());
 				}
 				
-				items.add(doContactCardPrepare(con, vcont));
+				items.add((ContactObjectWithVCard)doContactObjectPrepare(con, vcont, ContactObjectOutputType.VCARD));
 			}
 			return items;
 			
@@ -759,10 +765,31 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public void addContactCard(int categoryFolderId, String href, VCard vCard) throws WTException {
+	@Override
+	public ContactObject getContactObject(int categoryId, int contactId, ContactObjectOutputType outputType) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			
+			checkRightsOnCategoryFolder(categoryId, "READ");
+			
+			VContactObject cobj = contDao.viewContactObjectById(con, categoryId, contactId);
+			return (cobj == null) ? null : doContactObjectPrepare(con, cobj, outputType);
+			
+		} catch (SQLException | DAOException ex) {
+			throw wrapException(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public void addContactObject(int categoryId, String href, VCard vCard) throws WTException {
 		VCardInput in = new VCardInput();
 		ContactInput ci = in.fromVCard(vCard, null);
-		ci.contact.setCategoryId(categoryFolderId);
+		ci.contact.setCategoryId(categoryId);
 		ci.contact.setHref(href);
 		
 		String rawData = null;
@@ -774,30 +801,32 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		addContact(ci.contact, rawData);
 	}
 	
-	public void updateContactCard(int categoryFolderId, String href, VCard vCard) throws WTException {
-		int contactId = getContactIdByCategoryHref(categoryFolderId, href, true);
+	@Override
+	public void updateContactObject(int categoryId, String href, VCard vCard) throws WTException {
+		int contactId = getContactIdByCategoryHref(categoryId, href, true);
 		
 		VCardInput in = new VCardInput();
 		ContactInput ci = in.fromVCard(vCard, null);
 		ci.contact.setContactId(contactId);
-		ci.contact.setCategoryId(categoryFolderId);
+		ci.contact.setCategoryId(categoryId);
 		updateContact(ci.contact, true);
 	}
 	
-	public void deleteContactCard(int categoryFolderId, String href) throws WTException {
-		int contactId = getContactIdByCategoryHref(categoryFolderId, href, true);
+	@Override
+	public void deleteContactObject(int categoryId, String href) throws WTException {
+		int contactId = getContactIdByCategoryHref(categoryId, href, true);
 		deleteContact(contactId);
 	}
 	
-	private int getContactIdByCategoryHref(int categoryFolderId, String href, boolean throwExIfManyMatchesFound) throws WTException {
+	private int getContactIdByCategoryHref(int categoryId, String href, boolean throwExIfManyMatchesFound) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			List<Integer> ids = contDao.selectAliveIdsByCategoryHrefs(con, categoryFolderId, href);
-			if (ids.isEmpty()) throw new NotFoundException("Contact card not found [{}, {}]", categoryFolderId, href);
+			List<Integer> ids = contDao.selectAliveIdsByCategoryHrefs(con, categoryId, href);
+			if (ids.isEmpty()) throw new NotFoundException("Contact card not found [{}, {}]", categoryId, href);
 			if (throwExIfManyMatchesFound && (ids.size() > 1)) throw new WTException("Many matches for href [{}]", href);
 			return ids.get(ids.size()-1);
 			
@@ -806,31 +835,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
-	}
-	
-	private ContactCard doContactCardPrepare(Connection con, VContactCard vcont) throws WTException {
-		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
-		
-		Contact cont = ManagerUtils.fillContact(new Contact(), vcont);
-		if (vcont.getHasPicture()) {
-			OContactPicture opic = cpicDao.select(con, vcont.getContactId());
-			if (opic != null) cont.setPicture(ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic));
-		}
-		
-		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
-		VCardOutput out = new VCardOutput(prodId);
-		VCard vCard = out.toVCard(cont);
-		if (vcont.getHasVcard()) {
-			//TODO: in order to be fully compliant, merge generated vcard with the original one in db table!
-		}
-		
-		String raw = out.write(vCard);
-		
-		ContactCard cc = ManagerUtils.fillContactCard(new ContactCard(), vcont);
-		cc.setSize(raw.getBytes().length);
-		cc.setVcard(raw);
-		
-		return cc;
 	}
 	
 	@Override
@@ -844,20 +848,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
+			int offset = ManagerUtils.toOffset(page, limit);
+			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
 			List<Integer> okCategoryIds = categoryIds.stream()
 					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
 					.collect(Collectors.toList());
-			
-			int offset = toOffset(page, limit);
-			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
 			
 			con = WT.getConnection(SERVICE_ID);
 			
 			Integer fullCount = null;
 			if (returnFullCount) fullCount = contDao.countByCategoryTypePattern(con, okCategoryIds, listOnly, null, pattern);
-			ArrayList<ContactItem> items = new ArrayList<>();
+			ArrayList<ContactLookup> items = new ArrayList<>();
 			for (VContactLookup vcont : contDao.viewByCategoryTypePattern(con, orderFields, okCategoryIds, listOnly, null, pattern, limit, offset)) {
-				items.add(ManagerUtils.fillContactLookup(new ContactItem(), vcont));
+				items.add(ManagerUtils.fillContactLookup(new ContactLookup(), vcont));
 			}
 			
 			return new ListContactsResult(items, fullCount);
@@ -867,10 +870,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
-	}
-	
-	private int toOffset(int page, int limit) {
-		return limit * (page-1);
 	}
 	
 	private Collection<ContactDAO.OrderField> toContactDAOOrderFields(Grouping groupBy, ShowBy showBy) {
@@ -892,11 +891,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public Contact getContact(int contactId) throws WTException {
+		return getContact(contactId, true, true);
+	}
+	
+	public Contact getContact(int contactId, boolean processPicture, boolean processAttachments) throws WTException {
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			Contact cont = doContactGet(con, contactId, true, true);
+			Contact cont = doContactGet(con, contactId, processPicture, processAttachments);
 			if (cont == null) return null;
 			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ");
 			
@@ -990,39 +993,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	/*
-	@Override
-	public Contact addContact(Contact contact, ContactPictureWithBytesOld picture) throws WTException {
-		return addContact(contact, picture, null);
-	}
-	
-	private Contact addContact(Contact contact, ContactPictureWithBytesOld picture, String vCardRawData) throws WTException {
-		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
-		CategoryDAO catDao = CategoryDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			checkRightsOnCategoryElements(contact.getCategoryId(), "CREATE");
-			con = WT.getConnection(SERVICE_ID, false);
-			
-			String provider = catDao.selectProviderById(con, contact.getCategoryId());
-			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
-			
-			OContact inserted = doContactInsert(coreMgr, con, false, contact, picture, vCardRawData);
-			DbUtils.commitQuietly(con);
-			writeLog("CONTACT_INSERT", String.valueOf(inserted.getContactId()));
-			return ManagerUtils.fillContact(new Contact(), inserted);
-			
-		} catch(SQLException | DAOException | WTException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	
-	*/
-	
 	@Override
 	public void updateContact(Contact contact) throws WTException {
 		updateContact(contact, false);
@@ -1030,6 +1000,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public void updateContact(Contact contact, boolean processPicture) throws WTException {
+		updateContact(contact, processPicture, true);
+	}
+	
+	public void updateContact(Contact contact, boolean processPicture, boolean processAttachments) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
@@ -1041,7 +1015,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			String provider = catDao.selectProviderById(con, contact.getCategoryId());
 			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
-			boolean updated = doContactUpdate(coreMgr, con, false, contact, processPicture, true);
+			boolean updated = doContactUpdate(coreMgr, con, false, contact, processPicture, processAttachments);
 			if (!updated) throw new WTException("Contact not updated [{}]", contact.getContactId());
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
@@ -1053,33 +1027,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.closeQuietly(con);
 		}
 	}
-	
-	/*
-	public void updateContact(Contact contact, ContactPictureWithBytesOld picture, boolean deletePictureIfNull) throws WTException {
-		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
-		CategoryDAO catDao = CategoryDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE");
-			con = WT.getConnection(SERVICE_ID, false);
-			
-			String provider = catDao.selectProviderById(con, contact.getCategoryId());
-			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
-			
-			boolean updated = doContactUpdate(coreMgr, con, false, contact, picture, deletePictureIfNull);
-			if (!updated) throw new WTException("Contact not found [{}]", contact.getContactId());
-			DbUtils.commitQuietly(con);
-			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
-			
-		} catch(SQLException | DAOException | WTException ex) {
-			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	*/
 	
 	@Override
 	public ContactPictureWithBytes getContactPicture(int contactId) throws WTException {
@@ -1839,7 +1786,41 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return catDao.update(con, ocat) == 1;
 	}
 	
-	private Contact doContactGet(Connection con, int contactId, boolean picture, boolean fillAttachments) throws DAOException, WTException {
+	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType) throws WTException {
+		if (ContactObjectOutputType.STAT.equals(outputType)) {
+			return ManagerUtils.fillContactCard(new ContactObject(), vcont);
+			
+		} else {
+			ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
+			
+			Contact cont = ManagerUtils.fillContact(new Contact(), vcont);
+			ContactCompany ccomp = ManagerUtils.fillContactCompany(new ContactCompany(), vcont);
+			if (vcont.getHasPicture()) {
+				OContactPicture opic = cpicDao.select(con, vcont.getContactId());
+				if (opic != null) cont.setPicture(ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic));
+			}
+			
+			if (ContactObjectOutputType.VCARD.equals(outputType)) {
+				ContactObjectWithVCard cc = ManagerUtils.fillContactCard(new ContactObjectWithVCard(), vcont);
+				
+				VCardOutput out = new VCardOutput(VCardUtils.buildProdId(ManagerUtils.getProductName()));
+				VCard vCard = out.toVCard(cont);
+				if (vcont.getHasVcard()) {
+					//TODO: in order to be fully compliant, merge generated vcard with the original one in db table!
+				}
+				cc.setVcard(out.write(vCard));
+				return cc;
+				
+			} else {
+				ContactObjectWithBean cc = ManagerUtils.fillContactCard(new ContactObjectWithBean(), vcont);
+				cc.setContact(cont);
+				cc.setContactCompany(ccomp);
+				return cc;
+			}
+		}
+	}
+	
+	private Contact doContactGet(Connection con, int contactId, boolean processPicture, boolean processAttachments) throws DAOException, WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
 		ContactAttachmentDAO attDao = ContactAttachmentDAO.getInstance();
@@ -1848,11 +1829,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if ((ocont == null) || (ocont.getIsList())) return null;
 		
 		Contact cont = ManagerUtils.createContact(ocont);
-		if (picture) {
+		if (processPicture) {
 			OContactPictureMetaOnly opic = cpicDao.selectMeta(con, contactId);
 			cont.setPicture(ManagerUtils.createContactPicture(opic));
 		}
-		if (fillAttachments) {
+		if (processAttachments) {
 			List<OContactAttachment> oatts = attDao.selectByContact(con, contactId);
 			cont.setAttachments(ManagerUtils.createContactAttachmentList(oatts));
 		}

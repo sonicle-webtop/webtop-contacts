@@ -33,7 +33,6 @@
 package com.sonicle.webtop.contacts.bol;
 
 import com.sonicle.commons.LangUtils;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *

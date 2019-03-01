@@ -34,13 +34,15 @@ package com.sonicle.webtop.contacts.rest.v1;
 
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.ContactsUtils;
 import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.contacts.model.ContactCard;
-import com.sonicle.webtop.contacts.model.ContactCardChanged;
+import com.sonicle.webtop.contacts.model.ContactObject;
+import com.sonicle.webtop.contacts.model.ContactObjectChanged;
+import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.swagger.v1.api.CarddavApi;
@@ -105,7 +107,7 @@ public class CardDav extends CarddavApi {
 			List<ShareRootCategory> shareRoots = manager.listIncomingCategoryRoots();
 			for (ShareRootCategory shareRoot : shareRoots) {
 				Map<Integer, ShareFolderCategory> folders = manager.listIncomingCategoryFolders(shareRoot.getShareId());
-				revisions = manager.getCategoriesLastRevision(cats.keySet());
+				revisions = manager.getCategoriesLastRevision(folders.keySet());
 				//Map<Integer, CategoryPropSet> props = manager.getCategoryCustomProps(folders.keySet());
 				for (ShareFolderCategory folder : folders.values()) {
 					Category cat = folder.getCategory();
@@ -253,19 +255,20 @@ public class CardDav extends CarddavApi {
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
 			if ((hrefs == null) || hrefs.isEmpty()) {
-				List<ContactCard> cards = manager.listContactCards(categoryId);
-				for (ContactCard card : cards) {
-					items.add(createCardWithData(card));
+				List<ContactObject> cards = manager.listContactObjects(categoryId, ContactObjectOutputType.VCARD);
+				for (ContactObject card : cards) {
+					items.add(createCardWithData((ContactObjectWithVCard)card));
 				}
 				return respOk(items);
 				
 			} else {
-				List<ContactCard> cards = manager.getContactCards(categoryId, hrefs);
-				for (ContactCard card : cards) {
-					items.add(createCardWithData(card));
+				List<ContactObjectWithVCard> cards = manager.getContactObjectsWithVCard(categoryId, hrefs);
+				for (ContactObjectWithVCard card : cards) {
+					items.add(createCardWithData((ContactObjectWithVCard)card));
 				}
 				return respOk(items);
 			}
+			
 		} catch(WTException ex) {
 			logger.error("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid, ex);
 			return respError(ex);
@@ -294,7 +297,7 @@ public class CardDav extends CarddavApi {
 				if (since == null) return respErrorBadRequest();
 			}
 			
-			CollectionChangeSet<ContactCardChanged> changes = manager.listContactCardsChanges(categoryId, since, limit);
+			CollectionChangeSet<ContactObjectChanged> changes = manager.listContactObjectsChanges(categoryId, since, limit);
 			return respOk(createCardsChanges(revisions.get(categoryId), changes));
 			
 		} catch(WTException ex) {
@@ -317,7 +320,7 @@ public class CardDav extends CarddavApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactCard card = manager.getContactCard(categoryId, href);
+			ContactObjectWithVCard card = manager.getContactObjectWithVCard(categoryId, href);
 			if (card != null) {
 				return respOk(createCardWithData(card));
 			} else {
@@ -343,7 +346,7 @@ public class CardDav extends CarddavApi {
 			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			// Manager's call is already ro protected for remoteProviders
 			VCard vCard = parseVCard(body.getVcard());
-			manager.addContactCard(categoryId, body.getHref(), vCard);
+			manager.addContactObject(categoryId, body.getHref(), vCard);
 			return respOk();
 			
 		} catch(WTException ex) {
@@ -365,7 +368,7 @@ public class CardDav extends CarddavApi {
 			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
 			// Manager's call is already ro protected for remoteProviders
 			VCard vCard = parseVCard(body);
-			manager.updateContactCard(categoryId, href, vCard);
+			manager.updateContactObject(categoryId, href, vCard);
 			return respOkNoContent();
 			
 		} catch(NotFoundException ex) {
@@ -386,7 +389,7 @@ public class CardDav extends CarddavApi {
 		
 		try {
 			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
-			manager.deleteContactCard(categoryId, href);
+			manager.deleteContactObject(categoryId, href);
 			return respOkNoContent();
 			
 		} catch(NotFoundException ex) {
@@ -418,7 +421,7 @@ public class CardDav extends CarddavApi {
 				.ownerUsername(ownerUsername);
 	}
 	
-	private Card createCard(ContactCard card) {
+	private Card createCard(ContactObjectWithVCard card) {
 		return new Card()
 				.id(card.getContactId())
 				.uid(card.getPublicUid())
@@ -428,31 +431,31 @@ public class CardDav extends CarddavApi {
 				.size(card.getSize());
 	}
 	
-	private Card createCardWithData(ContactCard card) {
+	private Card createCardWithData(ContactObjectWithVCard card) {
 		return createCard(card)
 				.vcard(card.getVcard());
 	}
 	
-	private CardChanged createCardChanged(ContactCardChanged card) {
+	private CardChanged createCardChanged(ContactObjectChanged card) {
 		return new CardChanged()
 				.id(card.getContactId())
 				.href(card.getHref())
 				.etag(buildEtag(card.getRevisionTimestamp()));
 	}
 	
-	private CardsChanges createCardsChanges(DateTime lastRevisionTimestamp, CollectionChangeSet<ContactCardChanged> changes) {
+	private CardsChanges createCardsChanges(DateTime lastRevisionTimestamp, CollectionChangeSet<ContactObjectChanged> changes) {
 		ArrayList<CardChanged> inserted = new ArrayList<>();
-		for (ContactCardChanged card : changes.inserted) {
+		for (ContactObjectChanged card : changes.inserted) {
 			inserted.add(createCardChanged(card));
 		}
 		
 		ArrayList<CardChanged> updated = new ArrayList<>();
-		for (ContactCardChanged card : changes.updated) {
+		for (ContactObjectChanged card : changes.updated) {
 			updated.add(createCardChanged(card));
 		}
 		
 		ArrayList<CardChanged> deleted = new ArrayList<>();
-		for (ContactCardChanged card : changes.deleted) {
+		for (ContactObjectChanged card : changes.deleted) {
 			deleted.add(createCardChanged(card));
 		}
 		

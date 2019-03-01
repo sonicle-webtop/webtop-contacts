@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright (C) 2018 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -30,58 +30,39 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2018 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol;
-
-import org.joda.time.DateTime;
-
-/**
- *
- * @author malbinola
- */
-public class VContactCardChanged {
-	protected Integer contactId;
-	protected String revisionStatus;
-	protected DateTime revisionTimestamp;
-	protected DateTime creationTimestamp;
-	protected String href;
-
-	public Integer getContactId() {
-		return contactId;
-	}
-
-	public void setContactId(Integer contactId) {
-		this.contactId = contactId;
-	}
-
-	public String getRevisionStatus() {
-		return revisionStatus;
-	}
-
-	public void setRevisionStatus(String revisionStatus) {
-		this.revisionStatus = revisionStatus;
-	}
-
-	public DateTime getRevisionTimestamp() {
-		return revisionTimestamp;
-	}
-
-	public void setRevisionTimestamp(DateTime revisionTimestamp) {
-		this.revisionTimestamp = revisionTimestamp;
-	}
+Ext.define('Sonicle.webtop.contacts.ux.RecurringConfirmBox', {
+	extend: 'WTA.ux.window.CustomPromptMsgBox',
 	
-	public DateTime getCreationTimestamp() {
-		return creationTimestamp;
+	homeText: '',
+	workText: '',
+	otherText: '',
+	
+	createCustomPrompt: function() {
+		var me = this;
+		return {
+			xtype: 'radiogroup',
+			id: me.id + '-radiogroup',
+			simpleValue: true,
+			vertical: true,
+			columns: 1,
+			items: [{
+				inputValue: 'work',
+				boxLabel: me.workText
+			},{
+				inputValue: 'home',
+				boxLabel: me.homeText
+			},  {
+				inputValue: 'other',
+				boxLabel: me.otherText
+			}]
+		};
+	},
+	
+	setCustomPromptValue: function(value) {
+		this.customPrompt.setValue(value);
+	},
+	
+	getCustomPromptValue: function() {
+		return this.customPrompt.getValue();
 	}
-
-	public void setCreationTimestamp(DateTime creationTimestamp) {
-		this.creationTimestamp = creationTimestamp;
-	}
-
-	public String getHref() {
-		return href;
-	}
-
-	public void setHref(String href) {
-		this.href = href;
-	}
-}
+});

@@ -37,6 +37,7 @@ import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
+import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.ServletUtils.IntegerArray;
 import com.sonicle.commons.web.ServletUtils.StringArray;
@@ -45,8 +46,6 @@ import com.sonicle.commons.web.json.PayloadAsList;
 import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.commons.web.json.Payload;
-import com.sonicle.commons.web.json.extjs.FieldMeta;
-import com.sonicle.commons.web.json.extjs.GridColumnMeta;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
@@ -58,6 +57,7 @@ import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactPreview;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
+import com.sonicle.webtop.contacts.bol.js.JsEventContact;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsGridContact;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
@@ -82,7 +82,7 @@ import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactCompany;
-import com.sonicle.webtop.contacts.model.ContactItem;
+import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
@@ -107,7 +107,6 @@ import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
-import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
@@ -627,7 +626,6 @@ public class Service extends BaseService {
 				GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
 				Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
 				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
-				
 				int page = ServletUtils.getIntParameter(request, "page", true);
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				String query = ServletUtils.getStringParameter(request, "query", null);
@@ -638,7 +636,7 @@ public class Service extends BaseService {
 				
 				List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
 				ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, page, limit, true);
-				for (ContactItem item : result.items) {
+				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
 					final ShareFolderCategory fold = folders.get(item.getCategoryId());
@@ -839,6 +837,25 @@ public class Service extends BaseService {
 		} catch(Exception ex) {
 			logger.error("Error in ManageContacts", ex);
 			new JsonResult(false, "Error").printTo(out);	
+		}
+	}
+	
+	public void processGetContactInformationForEventCreation(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			String id = ServletUtils.getStringParameter(request, "id", true);
+			String type = ServletUtils.getStringParameter(request, "type", true);
+			int contactId = Integer.parseInt(id);
+			
+			Contact contact = manager.getContact(contactId, false, false);
+			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
+			
+			new JsonResult(eventContact).printTo(out);
+			
+		} catch (ParameterException ex) {
+			logger.error("Error in GetContactInformationForEventCreation", ex);
+			new JsonResult(false, "Error").printTo(out);	
+		} catch (WTException ex) {
+			logger.error("Error in GetContactInformationForEventCreation", ex);
 		}
 	}
 	
@@ -1156,7 +1173,7 @@ public class Service extends BaseService {
 			List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
 			ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
-			for (ContactItem item : result.items) {
+			for (ContactLookup item : result.items) {
 				final ShareFolderCategory fold = folders.get(item.getCategoryId());
 				if (fold == null) continue;
 				CategoryPropSet pset = folderProps.get(item.getCategoryId());

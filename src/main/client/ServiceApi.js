@@ -49,40 +49,56 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {String} [data.lastName]
 	 * @param {String} [data.nickname]
 	 * @param {male|female|other} [data.gender]
+	 * @param {String} [data.mobile]
+	 * @param {String} [data.pager1]
+	 * @param {String} [data.pager2]
+	 * @param {String} [data.email1]
+	 * @param {String} [data.email2]
+	 * @param {String} [data.email3]
+	 * @param {String} [data.instantMsg1]
+	 * @param {String} [data.instantMsg2]
+	 * @param {String} [data.instantMsg3]
 	 * @param {String} [data.workAddress]
 	 * @param {String} [data.workPostalCode]
 	 * @param {String} [data.workCity]
 	 * @param {String} [data.workState]
 	 * @param {String} [data.workCountry]
-	 * @param {String} [data.workTelephone]
+	 * @param {String} [data.workTelephone1]
 	 * @param {String} [data.workTelephone2]
-	 * @param {String} [data.workMobile]
 	 * @param {String} [data.workFax]
-	 * @param {String} [data.workPager]
-	 * @param {String} [data.workEmail]
-	 * @param {String} [data.workInstantMsg]
 	 * @param {String} [data.homeAddress]
 	 * @param {String} [data.homePostalCode]
 	 * @param {String} [data.homeCity]
 	 * @param {String} [data.homeState]
 	 * @param {String} [data.homeCountry]
-	 * @param {String} [data.homeTelephone]
+	 * @param {String} [data.homeTelephone1]
 	 * @param {String} [data.homeTelephone2]
 	 * @param {String} [data.homeFax]
-	 * @param {String} [data.homePager]
-	 * @param {String} [data.homeEmail]
-	 * @param {String} [data.homeInstantMsg]
+	 * @param {String} [data.otherAddress]
+	 * @param {String} [data.otherPostalCode]
+	 * @param {String} [data.otherCity]
+	 * @param {String} [data.otherState]
+	 * @param {String} [data.otherCountry]
+	 * @param {String} [data.company]
+	 * @param {String} [data.function]
+	 * @param {String} [data.department]
+	 * @param {Date} [data.birthday]
+	 * @param {Date} [data.anniversary]
+	 * @param {String} [data.url]
+	 * @param {String} [data.notes]
 	 * @param {Object} opts An object containing configuration.
 	 * @param {Function} [opts.callback] Callback method for 'viewsave' event.
 	 * @param {Object} [opts.scope] The callback method scope.
 	 * @param {Boolean} [opts.dirty] The dirty state of the model.
+	 * @param {Boolean} [opts.uploadTag] A custom upload tag.
 	 */
 	addContact: function(data, opts) {
 		opts = opts || {};
 		this.service.addContact2(data, {
 			callback: opts.callback,
 			scope: opts.scope,
-			dirty: opts.dirty
+			dirty: opts.dirty,
+			uploadTag: opts.uploadTag
 		});
 	}
 });

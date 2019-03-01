@@ -32,13 +32,33 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
+import com.sonicle.commons.LangUtils;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  *
  * @author malbinola
  */
-public class VContactCard extends OContact {
+public class VContactBase extends OContact {
+	protected String masterDataId;
+	protected String masterDataDescription;
 	protected Boolean hasPicture;
-	protected Boolean hasVcard;
+	
+	public String getMasterDataId() {
+		return masterDataId;
+	}
+	
+	public void setMasterDataId(String masterDataId) {
+		this.masterDataId = masterDataId;
+	}
+	
+	public String getMasterDataDescription() {
+		return masterDataDescription;
+	}
+
+	public void setMasterDataDescription(String masterDataDescription) {
+		this.masterDataDescription = masterDataDescription;
+	}
 	
 	public Boolean getHasPicture() {
 		return hasPicture;
@@ -47,12 +67,12 @@ public class VContactCard extends OContact {
 	public void setHasPicture(Boolean hasPicture) {
 		this.hasPicture = hasPicture;
 	}
-
-	public Boolean getHasVcard() {
-		return hasVcard;
+	
+	public String getCompanyId() {
+		return !StringUtils.isBlank(getMasterDataId()) ? getMasterDataId() : null;
 	}
-
-	public void setHasVcard(Boolean hasVcard) {
-		this.hasVcard = hasVcard;
+	
+	public String getCompanyDescription() {
+		return LangUtils.coalesceStrings(getMasterDataDescription(), getCompany());
 	}
 }
