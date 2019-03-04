@@ -1592,8 +1592,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		if (Ext.isDefined(cnt.pager2)) obj.pager2 = cnt.pager2;
 		if (Ext.isDefined(cnt.email1)) obj.email1 = cnt.email1;
 		if (Ext.isDefined(cnt.email2)) obj.email2 = cnt.email2;
+		if (Ext.isDefined(cnt.email3)) obj.email3 = cnt.email3;
 		if (Ext.isDefined(cnt.instantMsg1)) obj.instantMsg1 = cnt.instantMsg1;
 		if (Ext.isDefined(cnt.instantMsg2)) obj.instantMsg2 = cnt.instantMsg2;
+		if (Ext.isDefined(cnt.instantMsg3)) obj.instantMsg3 = cnt.instantMsg3;
 		if (Ext.isDefined(cnt.workAddress)) obj.workAddress = cnt.workAddress;
 		if (Ext.isDefined(cnt.workPostalCode)) obj.workPostalCode = cnt.workPostalCode;
 		if (Ext.isDefined(cnt.workCity)) obj.workCity = cnt.workCity;
@@ -1610,6 +1612,19 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		if (Ext.isDefined(cnt.homeTelephone1)) obj.homeTelephone1 = cnt.homeTelephone1;
 		if (Ext.isDefined(cnt.homeTelephone2)) obj.homeTelephone2 = cnt.homeTelephone2;
 		if (Ext.isDefined(cnt.homeFax)) obj.homeFax = cnt.homeFax;
+		if (Ext.isDefined(cnt.otherAddress)) obj.otherAddress = cnt.otherAddress;
+		if (Ext.isDefined(cnt.otherPostalCode)) obj.otherPostalCode = cnt.otherPostalCode;
+		if (Ext.isDefined(cnt.otherCity)) obj.otherCity = cnt.otherCity;
+		if (Ext.isDefined(cnt.otherState)) obj.otherState = cnt.otherState;
+		if (Ext.isDefined(cnt.otherCountry)) obj.otherCountry = cnt.otherCountry;
+		if (Ext.isDefined(cnt.company)) obj.company = cnt.company;
+		if (Ext.isDefined(cnt.function)) obj.function = cnt.function;
+		if (Ext.isDefined(cnt.department)) obj.department = cnt.department;
+		if (Ext.isDefined(cnt.birthday)) obj.birthday = cnt.birthday;
+		if (Ext.isDefined(cnt.anniversary)) obj.anniversary = cnt.anniversary;
+		if (Ext.isDefined(cnt.url)) obj.url = cnt.url;
+		if (Ext.isDefined(cnt.notes)) obj.notes = cnt.notes;
+		if (Ext.isDefined(cnt.picture)) obj.picture = cnt.picture;
 		
 		// OLD compatibility mappings...
 		if (Ext.isDefined(cnt.workTelephone)) obj.workTelephone1 = cnt.workTelephone;
@@ -1630,7 +1645,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		opts = opts || {};
 		var me = this,
 				data = me.prepareContactNewData(cnt),
-				vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true});	
+				vw = WT.createView(me.ID, 'view.Contact', {
+					swapReturn: true,
+					viewCfg: {
+						uploadTag: opts.uploadTag
+					}
+				});	
 		
 		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);

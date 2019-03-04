@@ -54,8 +54,10 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {String} [data.pager2]
 	 * @param {String} [data.email1]
 	 * @param {String} [data.email2]
+	 * @param {String} [data.email3]
 	 * @param {String} [data.instantMsg1]
 	 * @param {String} [data.instantMsg2]
+	 * @param {String} [data.instantMsg3]
 	 * @param {String} [data.workAddress]
 	 * @param {String} [data.workPostalCode]
 	 * @param {String} [data.workCity]
@@ -72,17 +74,31 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {String} [data.homeTelephone1]
 	 * @param {String} [data.homeTelephone2]
 	 * @param {String} [data.homeFax]
+	 * @param {String} [data.otherAddress]
+	 * @param {String} [data.otherPostalCode]
+	 * @param {String} [data.otherCity]
+	 * @param {String} [data.otherState]
+	 * @param {String} [data.otherCountry]
+	 * @param {String} [data.company]
+	 * @param {String} [data.function]
+	 * @param {String} [data.department]
+	 * @param {Date} [data.birthday]
+	 * @param {Date} [data.anniversary]
+	 * @param {String} [data.url]
+	 * @param {String} [data.notes]
 	 * @param {Object} opts An object containing configuration.
 	 * @param {Function} [opts.callback] Callback method for 'viewsave' event.
 	 * @param {Object} [opts.scope] The callback method scope.
 	 * @param {Boolean} [opts.dirty] The dirty state of the model.
+	 * @param {Boolean} [opts.uploadTag] A custom upload tag.
 	 */
 	addContact: function(data, opts) {
 		opts = opts || {};
 		this.service.addContact2(data, {
 			callback: opts.callback,
 			scope: opts.scope,
-			dirty: opts.dirty
+			dirty: opts.dirty,
+			uploadTag: opts.uploadTag
 		});
 	}
 });

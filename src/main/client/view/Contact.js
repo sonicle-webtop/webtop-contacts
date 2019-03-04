@@ -55,6 +55,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.Contact',
 	
+	uploadTag: null,
+	
 	initComponent: function() {
 		var me = this;
 		Ext.apply(me, {
@@ -118,6 +120,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		});
 		me.callParent(arguments);
 		
+		if (Ext.isEmpty(me.uploadTag)) me.uploadTag = WT.uiid(me.getId());
 		var main, work, more, home, other, notes, attachs;
 		main = {
 			xtype: 'wtform',
@@ -211,7 +214,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					clearTriggerCls: WT.plTags.touchtheme ? 'wtcon-trash-trigger-touch' : 'wtcon-trash-trigger',
 					uploadTriggerCls: WT.plTags.touchtheme ? 'wtcon-add-trigger-touch' : 'wtcon-add-trigger',
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
-						extraParams: { tag: WT.uiid(me.getId()) },
+						extraParams: { tag: me.uploadTag },
 						maxFileSize: 1048576, // 1MB
 						mimeTypes: [
 							{title: 'Image files', extensions: 'jpeg,jpg,png'}
@@ -475,7 +478,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			},
 			sid: me.mys.ID,
 			uploadContext: 'ContactAttachment',
-			uploadTag: WT.uiid(me.getId()),
+			uploadTag: me.uploadTag,
 			dropElementId: null,
 			highlightDrop: true,
 			typeField: 'ext',
@@ -536,7 +539,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	
 	onViewClose: function(s) {
-		s.mys.cleanupUploadedFiles(WT.uiid(s.getId()));
+		s.mys.cleanupUploadedFiles(s.uploadTag);
 	},
 	
 	updateCategoryFilters: function() {
