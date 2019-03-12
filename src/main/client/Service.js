@@ -39,6 +39,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
 		'Sonicle.grid.column.Avatar',
+		'Sonicle.tree.Column',
 		'WTA.ux.data.EmptyModel',
 		'WTA.ux.data.SimpleModel',
 		'WTA.ux.field.Search',
@@ -51,6 +52,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.ux.panel.ContactPreview'
 	],
 	uses: [
+		'WTA.util.FoldersTree',
 		'Sonicle.webtop.contacts.view.Map',
 		'Sonicle.webtop.contacts.view.Sharing',
 		'Sonicle.webtop.contacts.view.Category',
@@ -70,6 +72,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	needsReload: true,
 	api: null,
+	
+	treeSelEnabled: false,
 	
 	getApiInstance: function() {
 		var me = this;
@@ -165,16 +169,43 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						}
 					}
 				},
+				//disableSelection: true,
+				selModel: {
+					mode: 'SIMPLE',
+					toggleOnClick: true,
+					ignoreRightMouseSelection: true
+				},
 				hideHeaders: true,
+				columns: [{
+					xtype: 'sotreecolumn',
+					dataIndex: 'text',
+					renderer: WTA.util.FoldersTree.coloredCheckboxTreeRenderer({
+						defaultText: me.res('category.fld-default.lbl').toLowerCase()
+					}),
+					flex: 1
+				}],
 				listeners: {
 					checkchange: function(n, ck) {
-						me.showHideFolder(n, ck);
+						n.refreshActive();
+					},
+					beforeselect: function(s, rec) {
+						if (me.treeSelEnabled === false) return false;
+					},
+					beforedeselect: function(s, rec) {
+						if (me.treeSelEnabled === false) return false;
+					},
+					itemclick: function(s, rec, itm, i, e) {
+						if (me.treeSelEnabled === false) {
+							if (!e.getTarget(s.checkboxSelector, itm)) {
+								s.setChecked(rec, !rec.get('checked'), e);
+							}
+						}
 					},
 					itemcontextmenu: function(vw, rec, itm, i, e) {
-						if(rec.get('_type') === 'root') {
-							WT.showContextMenu(e, me.getRef('cxmRootFolder'), {folder: rec});
+						if (rec.isFolderRoot()) {
+							WT.showContextMenu(e, me.getRef('cxmRootFolder'), {node: rec});
 						} else {
-							WT.showContextMenu(e, me.getRef('cxmFolder'), {folder: rec});
+							WT.showContextMenu(e, me.getRef('cxmFolder'), {node: rec});
 						}
 					}
 				}
@@ -372,7 +403,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.pnlPreview().setContacts(s.getSelection());
 					},
 					rowdblclick: function(s, rec) {
-						var er = me.toRightsObj(rec.get('_erights'));
+						var er = WTA.util.FoldersTree.toRightsObj(rec.get('_erights'));
 						me.openContactItemUI(er.UPDATE, rec);
 					},
 					rowcontextmenu: function(s, rec, itm, i, e) {
@@ -465,74 +496,74 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			text: WT.res('sharing.tit'),
 			tooltip: null,
 			iconCls: 'wt-icon-sharing',
-			handler: function() {
-				var node = me.getSelectedNode(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.editShare(node.getId());
 			}
 		});
 		me.addAct('manageHiddenCategories', {
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedRootFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.manageHiddenCategoriesUI(node);
 			}
 		});
 		me.addAct('hideCategory', {
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedNode(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.hideCategoryUI(node);
 			}
 		});
 		me.addAct('addCategory', {
 			ignoreSize: true,
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.addCategoryUI(node.get('_domainId'), node.get('_userId'));
 			}
 		});
 		me.addAct('addRemoteCategory', {
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.addRemoteCategoryUI(node.get('_pid'));
 			}
 		});
 		me.addAct('viewCategoryLinks', {
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.viewCategoryLinks(node.get('_catId'));
 			}
 		});
 		me.addAct('editCategory', {
 			ignoreSize: true,
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.editCategoryUI(node.get('_catId'));
 			}
 		});
 		me.addAct('deleteCategory', {
 			ignoreSize: true,
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.deleteCategoryUI(node);
 			}
 		});
 		me.addAct('syncRemoteCategory', {
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.syncRemoteCategoryUI(node.get('_catId'));
 			}
 		});
 		me.addAct('importContacts', {
 			tooltip: null,
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = e.menuData.node;
 				if (node) me.importContactsUI(node.get('_catId'));
 			}
 		});
@@ -547,26 +578,26 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						colors: WT.getColorPalette(),
 						listeners: {
 							select: function(s, color) {
-								var node = me.getSelectedFolder(me.trFolders());
+								var node = s.menuData.node;
 								me.getRef('cxmFolder').hide();
-								if (node) me.updateCategoryPropColorUI(node, '#'+color);
+								if (node) me.updateCategoryColorUI(node, '#'+color);
 							}
 						}
 					},
 					'-',
 					me.addAct('restoreCategoryColor', {
 						tooltip: null,
-						handler: function() {
-							var node = me.getSelectedFolder(me.trFolders());
-							if (node) me.updateCategoryPropColorUI(node, null);
+						handler: function(s, e) {
+							var node = e.menuData.node;
+							if (node) me.updateCategoryColorUI(node, null);
 						}
 					})
 				]
 			}
 		});
-		var onItemClick = function(s) {
-			var node = me.getSelectedFolder(me.trFolders());
-			if (node && s.checked) me.updateCategoryPropSyncUI(node, s.getItemId());
+		var onItemClick = function(s, e) {
+			var node = e.menuData.node;
+			if (node && s.checked) me.updateCategorySyncUI(node, s.getItemId());
 		};
 		me.addAct('categorySync', {
 			text: me.res('mni-categorySync.lbl'),
@@ -604,37 +635,25 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('viewThisFolderOnly', {
 			tooltip: null,
 			iconCls: 'wt-icon-select-one',
-			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
-				if(node) me.showOneF3FolderOnly(me.getSelectedRootFolder(me.trFolders()), node.getId());
+			handler: function(s, e) {
+				var node = e.menuData.node;
+				if (node) WTA.util.FoldersTree.activateSingleFolder(node.getFolderRootNode(), node.getId());
 			}
 		});
 		me.addAct('viewAllFolders', {
 			tooltip: null,
 			iconCls: 'wt-icon-select-all',
-			handler: function() {
-				var node = me.getSelectedRootFolder(me.trFolders());
-				if (node) {
-					if (node.isLoaded()) {
-						me.showHideAllF3Folders(node, true);
-					} else {
-						me.updateCheckedFoldersUI(node, true);
-					}
-				}
+			handler: function(s, e) {
+				var node = e.menuData.node;
+				if (node) WTA.util.FoldersTree.setActiveAllFolders(node.getFolderRootNode(), true);
 			}
 		});
 		me.addAct('viewNoneFolders', {
 			tooltip: null,
 			iconCls: 'wt-icon-select-none',
-			handler: function() {
-				var node = me.getSelectedRootFolder(me.trFolders());
-				if (node) {
-					if (node.isLoaded()) {
-						me.showHideAllF3Folders(node, false);
-					} else {
-						me.updateCheckedFoldersUI(node, false);
-					}
-				}
+			handler: function(s, e) {
+				var node = e.menuData.node;
+				if (node) WTA.util.FoldersTree.setActiveAllFolders(node.getFolderRootNode(), false);
 			}
 		});
 		me.addAct('showContact', {
@@ -643,7 +662,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			handler: function() {
 				var rec = me.getSelectedContact(), er;
 				if (rec) {
-					er = me.toRightsObj(rec.get('_erights'));
+					er = WTA.util.FoldersTree.toRightsObj(rec.get('_erights'));
 					me.openContactItemUI(er.UPDATE, rec);
 				}
 			}
@@ -652,7 +671,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+				var node = WTA.util.FoldersTree.getTargetFolder(me.trFolders());
 				if (node) me.addContactUI(node.get('_pid'), node.get('_catId'));
 			}
 		});
@@ -660,7 +679,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			ignoreSize: true,
 			tooltip: null,
 			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders());
+				var node = WTA.util.FoldersTree.getTargetFolder(me.trFolders());
 				if (node) me.addContactsListUI(node.get('_pid'), node.get('_catId'));
 			}
 		});
@@ -674,8 +693,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('addContactsListFromSel', {
 			tooltip: null,
 			handler: function() {
-				var node = me.getSelectedFolder(me.trFolders()),
-						er = me.toRightsObj(node.get('_erights')),
+				var node = WTA.util.FoldersTree.getTargetFolder(me.trFolders()),
+						er = WTA.util.FoldersTree.toRightsObj(node.get('_erights')),
 						rcpts = me.toRcpts(me.getSelectedContacts());
 				
 				if (er.CREATE) {
@@ -830,9 +849,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			],
 			listeners: {
 				beforeshow: function(s) {
-					var rec = s.menuData.folder,
-							mine = Ext.String.startsWith(rec.getId(), '0'),
-							rr = me.toRightsObj(rec.get('_rrights'));
+					var rec = s.menuData.node,
+							mine = rec.isPersonalNode(),
+							rr = WTA.util.FoldersTree.toRightsObj(rec.get('_rrights'));
 					me.getAct('addCategory').setDisabled(!rr.MANAGE);
 					me.getAct('addRemoteCategory').setDisabled(!rr.MANAGE);
 					me.getAct('editSharing').setDisabled(!rr.MANAGE);
@@ -846,8 +865,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			items: [
 				me.getAct('editCategory'),
 				me.getAct('deleteCategory'),
-				me.getAct('addCategory'),
-				me.getAct('addRemoteCategory'),
 				'-',
 				{
 					text: me.res('mni-viewFolder.lbl'),
@@ -881,27 +898,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			],
 			listeners: {
 				beforeshow: function(s) {
-					var rec = s.menuData.folder,
-							mine = Ext.String.startsWith(rec.getId(), '0'),
-							rr = me.toRightsObj(rec.get('_rrights')),
-							fr = me.toRightsObj(rec.get('_frights')),
-							er = me.toRightsObj(rec.get('_erights'));
+					var FT = WTA.util.FoldersTree,
+							rec = s.menuData.node,
+							mine = rec.isPersonalNode(),
+							rr = FT.toRightsObj(rec.get('_rrights')),
+							fr = FT.toRightsObj(rec.get('_frights')),
+							er = FT.toRightsObj(rec.get('_erights'));
 					me.getAct('editCategory').setDisabled(!fr.UPDATE);
 					me.getAct('deleteCategory').setDisabled(!fr.DELETE || rec.get('_builtIn'));
-					me.getAct('addCategory').setDisabled(!rr.MANAGE);
-					me.getAct('addRemoteCategory').setDisabled(!rr.MANAGE);
 					me.getAct('editSharing').setDisabled(!rr.MANAGE);
-					me.getAct('addContact').setDisabled(!er.CREATE);
-					me.getAct('addContactsList').setDisabled(!er.CREATE);
 					me.getAct('importContacts').setDisabled(!er.CREATE);
 					me.getAct('hideCategory').setDisabled(mine);
-					me.getAct('categoryColor').setDisabled(mine);
-					me.getAct('categorySync').setDisabled(mine);
+					me.getAct('restoreCategoryColor').setDisabled(mine);
 					me.getAct('syncRemoteCategory').setDisabled(!Sonicle.webtop.contacts.view.Category.isRemote(rec.get('_provider')));
-					if (!mine) {
-						s.down('menu#categoryColor').down('colorpicker').select(rec.get('_color'), true);
-						s.down('menu#categorySync').getComponent(rec.get('_sync')).setChecked(true);
-					}
+					
+					var picker = s.down('menu#categoryColor').down('colorpicker');
+					picker.menuData = s.menuData; // Picker's handler doesn't carry the event, injects menuData inside the picket itself
+					picker.select(rec.get('_color'), true);
+					s.down('menu#categorySync').getComponent(rec.get('_sync')).setChecked(true);
 				}
 			}
 		}));
@@ -1175,9 +1189,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if(bid === 'yes') {
 				me.updateCategoryVisibility(node.get('_catId'), true, {
 					callback: function(success) {
-						if(success) {
+						if (success) {
 							me.loadRootNode(node.get('_pid'));
-							me.showHideF3Node(node, false);
+							node.setActive(false);
 						}
 					}
 				});
@@ -1185,21 +1199,21 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}, this);
 	},
 	
-	updateCategoryPropColorUI: function(node, color) {
+	updateCategoryColorUI: function(node, color) {
 		var me = this;
-		me.updateCategoryPropColor(node.get('_catId'), color, {
+		me.updateCategoryColor(node.get('_catId'), color, {
 			callback: function(success) {
 				if (success) {
 					me.loadRootNode(node.get('_pid'));
-					if (node.get('_visible')) me.reloadContacts();
+					if (node.isActive()) me.reloadContacts();
 				}
 			}
 		});
 	},
 	
-	updateCategoryPropSyncUI: function(node, sync) {
+	updateCategorySyncUI: function(node, sync) {
 		var me = this;
-		me.updateCategoryPropSync(node.get('_catId'), sync, {
+		me.updateCategorySync(node.get('_catId'), sync, {
 			callback: function(success) {
 				if (success) {
 					me.loadRootNode(node.get('_pid'));
@@ -1208,20 +1222,22 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	/*
 	updateCheckedFoldersUI: function(node, checked) {
 		var me = this;
 		me.updateCheckedFolders(node.getId(), checked, {
 			callback: function(success) {
 				if(success) {
-					if (node.get('_visible')) {
+					if (node.get('_active')) {
 						me.reloadContacts();
 					} else {
-						if (checked) me.showHideF3Node(node, checked);
+						if (checked) node.setActive(checked);
 					}
 				}
 			}
 		});
 	},
+	*/
 	
 	openContactItemUI: function(edit, rec) {
 		var me = this,
@@ -1469,10 +1485,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	updateCategoryPropColor: function(categoryId, color, opts) {
+	updateCategoryColor: function(categoryId, color, opts) {
 		opts = opts || {};
 		var me = this;
-		WT.ajaxReq(me.ID, 'SetCategoryPropColor', {
+		WT.ajaxReq(me.ID, 'SetCategoryColor', {
 			params: {
 				id: categoryId,
 				color: color
@@ -1483,10 +1499,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
-	updateCategoryPropSync: function(categoryId, sync, opts) {
+	updateCategorySync: function(categoryId, sync, opts) {
 		opts = opts || {};
 		var me = this;
-		WT.ajaxReq(me.ID, 'SetCategoryPropSync', {
+		WT.ajaxReq(me.ID, 'SetCategorySync', {
 			params: {
 				id: categoryId,
 				sync: sync
@@ -1497,6 +1513,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	/*
 	updateCheckedFolders: function(rootId, checked, opts) {
 		opts = opts || {};
 		var me = this;
@@ -1510,6 +1527,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 	},
+	*/
 	
 	deleteContactsItems: function(contactItemsIds, opts) {
 		opts = opts || {};
@@ -1561,11 +1579,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	prepareContactNewData: function(cnt) {
 		var me = this,
-				rn = me.getF3MyRoot(me.trFolders()),
-				n = me.getF3FolderByRoot(rn),
+				n = WTA.util.FoldersTree.getTargetFolder(me.trFolders()),
 				obj = {};
 		
-		obj._profileId = rn.get('_pid');
+		obj._profileId = n.get('_pid');
 		obj.categoryId = n.get('_catId');
 		
 		// TODO: abilitare supporto all'inserimento nelle categorie condivise
@@ -1706,11 +1723,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	prepareContactsListNewData: function(cnt) {
 		var me = this,
-				rn = me.getF3MyRoot(me.trFolders()),
-				n = me.getF3FolderByRoot(rn),
+				n = WTA.util.FoldersTree.getTargetFolder(me.trFolders()),
 				obj = {};
 		
-		obj._profileId = rn.get('_pid');
+		obj._profileId = n.get('_pid');
 		obj.categoryId = n.get('_catId');
 		
 		// TODO: abilitare supporto all'inserimento nelle categorie condivise
@@ -1894,7 +1910,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		},
 		
 		isDisabled: function(action) {
-			var me = this, sel, er;
+			var me = this,
+					FT = WTA.util.FoldersTree,
+					sel, er;
 
 			switch(action) {
 				case 'showContact':
@@ -1944,11 +1962,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					if (sel.length === 0) {
 						return true;
 					} else if (sel.length === 1) {
-						er = me.toRightsObj(sel[0].get('_erights'));
+						er = FT.toRightsObj(sel[0].get('_erights'));
 						return !er.DELETE;
 					} else {
 						for (var i=0; i<sel.length; i++) {
-							if (!me.toRightsObj(sel[i].get('_erights')).DELETE) return true;
+							if (!FT.toRightsObj(sel[i].get('_erights')).DELETE) return true;
 						}
 						return false;
 					}

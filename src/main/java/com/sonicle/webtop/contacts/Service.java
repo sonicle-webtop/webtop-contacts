@@ -49,8 +49,8 @@ import com.sonicle.commons.web.json.Payload;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
-import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedFolders;
-import com.sonicle.webtop.contacts.ContactsUserSettings.CheckedRoots;
+import com.sonicle.webtop.contacts.ContactsUserSettings.InactiveFolders;
+import com.sonicle.webtop.contacts.ContactsUserSettings.InactiveRoots;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
@@ -129,6 +129,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -157,8 +158,8 @@ public class Service extends BaseService {
 	private final HashMap<Integer, ShareRootCategory> rootByFolder = new HashMap<>();
 	private final AsyncActionCollection<Integer, SyncRemoteCategoryAA> syncRemoteCategoryAAs = new AsyncActionCollection<>();
 	
-	private CheckedRoots checkedRoots = null;
-	private CheckedFolders checkedFolders = null;
+	private InactiveRoots inactiveRoots = null;
+	private InactiveFolders inactiveFolders = null;
 	private final Object gridLock = new Object();
 	
 	//private ExportWizard wizard = null;
@@ -174,10 +175,10 @@ public class Service extends BaseService {
 	
 	@Override
 	public void cleanup() throws Exception {
-		checkedFolders.clear();
-		checkedFolders = null;
-		checkedRoots.clear();
-		checkedRoots = null;
+		inactiveFolders.clear();
+		inactiveFolders = null;
+		inactiveRoots.clear();
+		inactiveRoots = null;
 		rootByFolder.clear();
 		foldersByRoot.clear();
 		folderProps.clear();
@@ -215,14 +216,16 @@ public class Service extends BaseService {
 		synchronized(roots) {
 			updateRootFoldersCache();
 			updateFoldersCache();
+			inactiveRoots = us.getInactiveCategoryRoots();
+			inactiveFolders = us.getInactiveCategoryFolders();
 			
-			checkedRoots = us.getCheckedCategoryRoots();
-			// If empty, adds MyNode checked by default!
-			if(checkedRoots.isEmpty()) {
-				checkedRoots.add(MyShareRootCategory.SHARE_ID);
-				us.setCheckedCategoryRoots(checkedRoots);
+			// Clean-up orphans
+			if (inactiveRoots.removeIf(shareId -> !roots.containsKey(shareId))) {
+				us.setInactiveCategoryRoots(inactiveRoots);
 			}
-			checkedFolders = us.getCheckedCategoryFolders();
+			if (inactiveFolders.removeIf(categoryId -> !folders.containsKey(categoryId))) {
+				us.setInactiveCategoryFolders(inactiveFolders);
+			}
 		}
 	}
 	
@@ -231,7 +234,7 @@ public class Service extends BaseService {
 		synchronized(roots) {
 			roots.clear();
 			roots.put(MyShareRootCategory.SHARE_ID, new MyShareRootCategory(pid));
-			for(ShareRootCategory root : manager.listIncomingCategoryRoots()) {
+			for (ShareRootCategory root : manager.listIncomingCategoryRoots()) {
 				roots.put(root.getShareId(), root);
 			}
 		}
@@ -242,9 +245,9 @@ public class Service extends BaseService {
 			foldersByRoot.clear();
 			folders.clear();
 			rootByFolder.clear();
-			for(ShareRootCategory root : roots.values()) {
+			for (ShareRootCategory root : roots.values()) {
 				foldersByRoot.put(root.getShareId(), new ArrayList<ShareFolderCategory>());
-				if(root instanceof MyShareRootCategory) {
+				if (root instanceof MyShareRootCategory) {
 					for(Category cat : manager.listCategories().values()) {
 						final MyShareFolderCategory fold = new MyShareFolderCategory(root.getShareId(), cat);
 						foldersByRoot.get(root.getShareId()).add(fold);
@@ -252,7 +255,7 @@ public class Service extends BaseService {
 						rootByFolder.put(cat.getCategoryId(), root);
 					}
 				} else {
-					for(ShareFolderCategory fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
+					for (ShareFolderCategory fold : manager.listIncomingCategoryFolders(root.getShareId()).values()) {
 						final int catId = fold.getCategory().getCategoryId();
 						foldersByRoot.get(root.getShareId()).add(fold);
 						folders.put(catId, fold);
@@ -306,11 +309,11 @@ public class Service extends BaseService {
 				
 				for (JsFolderNode node : pl.data) {
 					if (node._type.equals(JsFolderNode.TYPE_ROOT)) {
-						toggleCheckedRoot(node.id, node._visible);
+						toggleActiveRoot(node.id, node._active);
 						
 					} else if (node._type.equals(JsFolderNode.TYPE_FOLDER)) {
 						CompositeId cid = new CompositeId().parse(node.id);
-						toggleCheckedFolder(Integer.valueOf(cid.getToken(1)), node._visible);
+						toggleActiveFolder(Integer.valueOf(cid.getToken(1)), node._active);
 					}
 				}
 				new JsonResult().printTo(out);
@@ -329,27 +332,6 @@ public class Service extends BaseService {
 			
 		} catch(Exception ex) {
 			logger.error("Error in action ManageFoldersTree", ex);
-		}
-	}
-	
-	public void processUpdateCheckedFolders(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
-		try {
-			String rootId = ServletUtils.getStringParameter(request, "rootId", true);
-			Boolean checked = ServletUtils.getBooleanParameter(request, "checked", true);
-			
-			synchronized(roots) {
-				ArrayList<Integer> catIds = new ArrayList<>();
-				for(ShareFolderCategory fold : foldersByRoot.get(rootId)) {
-					catIds.add(fold.getCategory().getCategoryId());
-				}
-				toggleCheckedFolders(catIds.toArray(new Integer[catIds.size()]), checked);
-			}
-			
-			new JsonResult().printTo(out);
-			
-		} catch(Exception ex) {
-			logger.error("Error in UpdateCheckedFolders", ex);
-			new JsonResult(ex).printTo(out);
 		}
 	}
 	
@@ -440,7 +422,6 @@ public class Service extends BaseService {
 				
 				item = manager.addCategory(JsCategory.createCategory(pl.data));
 				updateFoldersCache();
-				toggleCheckedFolder(item.getCategoryId(), true);
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.UPDATE)) {
@@ -455,7 +436,7 @@ public class Service extends BaseService {
 				
 				manager.deleteCategory(pl.data.categoryId);
 				updateFoldersCache();
-				toggleCheckedFolder(pl.data.categoryId, false);
+				toggleActiveFolder(pl.data.categoryId, true); // forgets it by simply activating it
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals("readLinks")) {
@@ -529,7 +510,6 @@ public class Service extends BaseService {
 				Category cal = manager.addCategory(setup.toCategory());
 				wts.clearProperty(SERVICE_ID, PROPERTY_PREFIX+tag);
 				updateFoldersCache();
-				toggleCheckedFolder(cal.getCategoryId(), true);
 				runSyncRemoteCategory(cal.getCategoryId(), cal.getName(), true); // Starts a full-sync
 				
 				new JsonResult().printTo(out);
@@ -590,7 +570,7 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processSetCategoryPropColor(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+	public void processSetCategoryColor(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
 			Integer id = ServletUtils.getIntParameter(request, "id", true);
 			String color = ServletUtils.getStringParameter(request, "color", null);
@@ -603,7 +583,7 @@ public class Service extends BaseService {
 		}
 	}
 	
-	public void processSetCategoryPropSync(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+	public void processSetCategorySync(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
 			Integer id = ServletUtils.getIntParameter(request, "id", true);
 			String sync = ServletUtils.getStringParameter(request, "sync", null);
@@ -634,7 +614,7 @@ public class Service extends BaseService {
 				boolean listOnly = GridView.CONTACTS_LIST.equals(view);
 				String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
 				
-				List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
+				List<Integer> visibleCategoryIds = getActiveFolderIds();
 				ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
@@ -976,7 +956,7 @@ public class Service extends BaseService {
 			
 			ContactsList cl=new ContactsList();
 			cl.setContactId(idlist);
-			for(String email: emails) {
+			for (String email: emails) {
 				ContactsListRecipient rcpt = new ContactsListRecipient();
 				rcpt.setRecipient(email);
 				rcpt.setRecipientType(recipientType);
@@ -1170,7 +1150,7 @@ public class Service extends BaseService {
 			String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
 			int limit = 500;
 			
-			List<Integer> visibleCategoryIds = getVisibleFolderIds(true);
+			List<Integer> visibleCategoryIds = getActiveFolderIds();
 			ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
@@ -1326,72 +1306,56 @@ public class Service extends BaseService {
 		return (StringUtils.isBlank(full)) ? String.valueOf(contact.getContactId()) : PathUtils.sanitizeFileName(full);
 	}
 	
-	private ArrayList<Integer> getVisibleFolderIds(boolean cleanupOrphans) {
+	private ArrayList<Integer> getActiveFolderIds() {
 		ArrayList<Integer> ids = new ArrayList<>();
-		ArrayList<Integer> orphans = new ArrayList<>();
-		
-		Integer[] checked = getCheckedFolders();
-		for (ShareRootCategory root : getCheckedRoots()) {
-			for (Integer folderId : checked) {
-				final ShareRootCategory folderRoot = rootByFolder.get(folderId);
-				if (folderRoot == null) {
-					if (cleanupOrphans) orphans.add(folderId);
-					continue;
-				}
-				
-				if (root.getShareId().equals(folderRoot.getShareId())) {
-					ids.add(folderId);
+		synchronized(roots) {
+			for (ShareRootCategory root : getActiveRoots()) {
+				for (ShareFolderCategory folder : foldersByRoot.get(root.getShareId())) {
+					if (inactiveFolders.contains(folder.getCategory().getCategoryId())) continue;
+					ids.add(folder.getCategory().getCategoryId());
 				}
 			}
 		}
-		if (cleanupOrphans) toggleCheckedFolders(orphans.toArray(new Integer[orphans.size()]), false);
 		return ids;
 	}
 	
-	private List<ShareRootCategory> getCheckedRoots() {
-		ArrayList<ShareRootCategory> checked = new ArrayList<>();
-		for(ShareRootCategory root : roots.values()) {
-			if(!checkedRoots.contains(root.getShareId())) continue; // Skip folder if not visible
-			checked.add(root);
-		}
-		return checked;
+	private List<ShareRootCategory> getActiveRoots() {
+		return roots.values().stream()
+				.filter(root -> !inactiveRoots.contains(root.getShareId()))
+				.collect(Collectors.toList());
 	}
 	
-	private Integer[] getCheckedFolders() {
-		return checkedFolders.toArray(new Integer[checkedFolders.size()]);
+	private void toggleActiveRoot(String shareId, boolean active) {
+		toggleActiveRoots(new String[]{shareId}, active);
 	}
 	
-	private void toggleCheckedRoot(String shareId, boolean checked) {
-		toggleCheckedRoots(new String[]{shareId}, checked);
-	}
-	
-	private void toggleCheckedRoots(String[] shareIds, boolean checked) {
+	private void toggleActiveRoots(String[] shareIds, boolean active) {
 		synchronized(roots) {
-			for(String shareId : shareIds) {
-				if(checked) {
-					checkedRoots.add(shareId);
+			for (String shareId : shareIds) {
+				if (active) {
+					inactiveRoots.remove(shareId);
 				} else {
-					checkedRoots.remove(shareId);
+					inactiveRoots.add(shareId);
 				}
 			}	
-			us.setCheckedCategoryRoots(checkedRoots);
+			us.setInactiveCategoryRoots(inactiveRoots);
 		}
 	}
 	
-	private void toggleCheckedFolder(Integer folderId, boolean checked) {
-		toggleCheckedFolders(new Integer[]{folderId}, checked);
+	private void toggleActiveFolder(Integer folderId, boolean active) {
+		toggleActiveFolders(new Integer[]{folderId}, active);
 	}
 	
-	private void toggleCheckedFolders(Integer[] folderIds, boolean checked) {
+	private void toggleActiveFolders(Integer[] folderIds, boolean active) {
 		synchronized(roots) {
-			for(int folderId : folderIds) {
-				if(checked) {
-					checkedFolders.add(folderId);
+			for (int folderId : folderIds) {
+				if (active) {
+					inactiveFolders.remove(folderId);
 				} else {
-					checkedFolders.remove(folderId);
+					inactiveFolders.add(folderId);
 				}
 			}
-			us.setCheckedCategoryFolders(checkedFolders);
+			us.setInactiveCategoryFolders(inactiveFolders);
 		}
 	}
 	
@@ -1413,60 +1377,59 @@ public class Service extends BaseService {
 		}
 	}
 	
-	private void updateCategoryFolderColor(int categoryId, String color) {
+	private void updateCategoryFolderColor(int categoryId, String color) throws WTException {
 		synchronized(roots) {
-			try {
+			if (folders.get(categoryId) instanceof MyShareFolderCategory) {
+				Category cat = manager.getCategory(categoryId);
+				cat.setColor(color);
+				manager.updateCategory(cat);
+				updateFoldersCache();
+			} else {
 				CategoryPropSet pset = manager.getCategoryCustomProps(categoryId);
 				pset.setColor(color);
 				manager.updateCategoryCustomProps(categoryId, pset);
-				
-				// Update internal cache
-				ShareFolderCategory folder = folders.get(categoryId);
-				if (!(folder instanceof MyShareFolderCategory)) {
-					folderProps.put(categoryId, pset);
-				}
-			} catch(WTException ex) {
-				logger.error("Error saving custom category props", ex);
+				folderProps.put(categoryId, pset);
 			}
 		}
 	}
 	
-	private void updateCategoryFolderSync(int categoryId, Category.Sync sync) {
+	private void updateCategoryFolderSync(int categoryId, Category.Sync sync) throws WTException {
 		synchronized(roots) {
-			try {
+			if (folders.get(categoryId) instanceof MyShareFolderCategory) {
+				Category cat = manager.getCategory(categoryId);
+				cat.setSync(sync);
+				manager.updateCategory(cat);
+				updateFoldersCache();
+			} else {
 				CategoryPropSet pset = manager.getCategoryCustomProps(categoryId);
 				pset.setSync(sync);
 				manager.updateCategoryCustomProps(categoryId, pset);
-				
-				// Update internal cache
-				ShareFolderCategory folder = folders.get(categoryId);
-				if (!(folder instanceof MyShareFolderCategory)) {
-					folderProps.put(categoryId, pset);
-				}
-			} catch(WTException ex) {
-				logger.error("Error saving custom category props", ex);
+				folderProps.put(categoryId, pset);
 			}
 		}
 	}
 	
 	private ExtTreeNode createRootNode(boolean chooser, ShareRootCategory root) {
 		if(root instanceof MyShareRootCategory) {
-			return createRootNode(chooser, root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-categoryMy").setExpanded(true);
+			return createRootNode(chooser, root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), lookupResource(ContactsLocale.CATEGORIES_MY), false, "wtcon-icon-categoryMy")
+					.setExpanded(true);
 		} else {
-			return createRootNode(chooser, root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-categoryIncoming");
+			return createRootNode(chooser, root.getShareId(), root.getOwnerProfileId().toString(), root.getPerms().toString(), root.getDescription(), false, "wtcon-icon-categoryIncoming")
+					.setExpanded(true);
 		}
 	}
 	
 	private ExtTreeNode createRootNode(boolean chooser, String id, String pid, String rights, String text, boolean leaf, String iconClass) {
-		boolean visible = checkedRoots.contains(id);
+		boolean active = !inactiveRoots.contains(id);
 		ExtTreeNode node = new ExtTreeNode(id, text, leaf);
 		node.put("_type", JsFolderNode.TYPE_ROOT);
 		node.put("_pid", pid);
 		node.put("_rrights", rights);
-		node.put("_visible", visible);
-		
+		node.put("_active", active);
 		node.setIconClass(iconClass);
-		if (!chooser) node.setChecked(visible);
+		if (!chooser) node.setChecked(active);
+		node.put("expandable", false);
+		
 		return node;
 	}
 	
@@ -1475,7 +1438,7 @@ public class Service extends BaseService {
 		String id = new CompositeId().setTokens(folder.getShareId(), cat.getCategoryId()).toString();
 		String color = cat.getColor();
 		Category.Sync sync = Category.Sync.OFF;
-		boolean visible = checkedFolders.contains(cat.getCategoryId());
+		boolean active = !inactiveFolders.contains(cat.getCategoryId());
 		
 		if (folderProps != null) { // Props are not null only for incoming folders
 			if (folderProps.getHiddenOrDefault(false)) return null;
@@ -1497,17 +1460,8 @@ public class Service extends BaseService {
 		node.put("_color", Category.getHexColor(color));
 		node.put("_sync", EnumUtils.toSerializedName(sync));
 		node.put("_default", cat.getIsDefault());
-		node.put("_visible", visible);
-		
-		List<String> classes = new ArrayList<>();
-		if (cat.getIsDefault()) classes.add("wt-tree-node-bold");
-		if (!folder.getElementsPerms().implies("CREATE") 
-				&& !folder.getElementsPerms().implies("UPDATE")
-				&& !folder.getElementsPerms().implies("DELETE")) classes.add("wt-tree-node-grey");
-		node.setCls(StringUtils.join(classes, " "));
-		
-		node.setIconClass("wt-palette-" + Category.getHexColor(color));
-		if (!chooser) node.setChecked(visible);
+		node.put("_active", active);
+		if (!chooser) node.setChecked(active);
 		
 		return node;
 	}

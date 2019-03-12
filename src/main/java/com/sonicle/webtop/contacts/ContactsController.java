@@ -32,7 +32,6 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.sdk.interfaces.IControllerRemindersHooks;
@@ -64,8 +63,7 @@ public class ContactsController extends BaseController implements IControllerSer
 		
 		// Adds built-in calendar
 		try {
-			Category cat = manager.addBuiltInCategory();
-			if (cat != null) setCategoryCheckedState(profileId, cat.getCategoryId(), true);
+			manager.addBuiltInCategory();
 		} catch(WTException ex) {
 			throw ex;
 		}
@@ -87,16 +85,5 @@ public class ContactsController extends BaseController implements IControllerSer
 	public List<BaseReminder> returnReminders(DateTime now) {
 		ContactsManager manager = new ContactsManager(true, RunContext.getRunProfileId());
 		return manager.getRemindersToBeNotified(now);
-	}
-	
-	private void setCategoryCheckedState(UserProfileId profileId, int categoryId, boolean checked) {
-		ContactsUserSettings tus = new ContactsUserSettings(SERVICE_ID, profileId);
-		ContactsUserSettings.CheckedFolders cf = tus.getCheckedCategoryFolders();
-		if (checked) {
-			cf.add(categoryId);
-		} else {
-			cf.remove(categoryId);
-		}
-		tus.setCheckedCategoryFolders(cf);
 	}
 }
