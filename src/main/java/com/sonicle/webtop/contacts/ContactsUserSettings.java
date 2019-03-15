@@ -33,7 +33,8 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
-import com.sonicle.commons.web.json.JsonResult;
+import com.sonicle.commons.web.json.bean.IntegerSet;
+import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
@@ -41,7 +42,6 @@ import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.text.MessageFormat;
-import java.util.HashSet;
 import org.joda.time.LocalTime;
 
 /**
@@ -104,20 +104,20 @@ public class ContactsUserSettings extends BaseUserSettings {
 		return setString(ANNIVERSARY_REMINDER_DELIVERY, value);
 	}
 	
-	public InactiveRoots getInactiveCategoryRoots() {
-		return getObject(INACTIVE_CATEGORY_ROOTS, new InactiveRoots(), InactiveRoots.class);
+	public StringSet getInactiveCategoryRoots() {
+		return getObject(INACTIVE_CATEGORY_ROOTS, new StringSet(), StringSet.class);
 	}
 	
-	public boolean setInactiveCategoryRoots(InactiveRoots value) {
-		return setObject(INACTIVE_CATEGORY_ROOTS, value, InactiveRoots.class);
+	public boolean setInactiveCategoryRoots(StringSet value) {
+		return setObject(INACTIVE_CATEGORY_ROOTS, value, StringSet.class);
 	}
 	
-	public InactiveFolders getInactiveCategoryFolders() {
-		return getObject(INACTIVE_CATEGORY_FOLDERS, new InactiveFolders(), InactiveFolders.class);
+	public IntegerSet getInactiveCategoryFolders() {
+		return getObject(INACTIVE_CATEGORY_FOLDERS, new IntegerSet(), IntegerSet.class);
 	}
 	
-	public boolean setInactiveCategoryFolders(InactiveFolders value) {
-		return setObject(INACTIVE_CATEGORY_FOLDERS, value, InactiveFolders.class);
+	public boolean setInactiveCategoryFolders(IntegerSet value) {
+		return setObject(INACTIVE_CATEGORY_FOLDERS, value, IntegerSet.class);
 	}
 	
 	public GroupMeta getGridContactsGroupInfo(String view) {
@@ -148,31 +148,37 @@ public class ContactsUserSettings extends BaseUserSettings {
 		}
 	}
 	
-	public static class InactiveRoots extends HashSet<String> {
-		public InactiveRoots() {
-			super();
-		}
-		
-		public static InactiveRoots fromJson(String value) {
-			return JsonResult.gson.fromJson(value, InactiveRoots.class);
-		}
-		
-		public static String toJson(InactiveRoots value) {
-			return JsonResult.gson.toJson(value, InactiveRoots.class);
-		}
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
+	 * @return
+	 */
+	@Deprecated
+	public StringSet getCheckedCategoryRoots() {
+		return getObject(CHECKED_CATEGORY_ROOTS, null, StringSet.class);
 	}
 	
-	public static class InactiveFolders extends HashSet<Integer> {
-		public InactiveFolders() {
-			super();
-		}
-		
-		public static InactiveFolders fromJson(String value) {
-			return JsonResult.gson.fromJson(value, InactiveFolders.class);
-		}
-		
-		public static String toJson(InactiveFolders value) {
-			return JsonResult.gson.toJson(value, InactiveFolders.class);
-		}
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
+	 */
+	@Deprecated
+	public void clearCheckedCategoryRoots() {
+		clear(CHECKED_CATEGORY_ROOTS);
+	}
+	
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
+	 * @return
+	 */
+	@Deprecated
+	public IntegerSet getCheckedCategoryFolders() {
+		return getObject(CHECKED_CATEGORY_FOLDERS, null, IntegerSet.class);
+	}
+	
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
+	 */
+	@Deprecated
+	public void clearCheckedCategoryFolders() {
+		clear(CHECKED_CATEGORY_FOLDERS);
 	}
 }
