@@ -670,16 +670,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('addContact', {
 			ignoreSize: true,
 			tooltip: null,
-			handler: function() {
-				var node = WTA.util.FoldersTree.getTargetFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = (e && e.menuData) ? e.menuData.node : WTA.util.FoldersTree.getTargetFolder(me.trFolders());
 				if (node) me.addContactUI(node.get('_pid'), node.get('_catId'));
 			}
 		});
 		me.addAct('addContactsList', {
 			ignoreSize: true,
 			tooltip: null,
-			handler: function() {
-				var node = WTA.util.FoldersTree.getTargetFolder(me.trFolders());
+			handler: function(s, e) {
+				var node = (e && e.menuData) ? e.menuData.node : WTA.util.FoldersTree.getTargetFolder(me.trFolders());
 				if (node) me.addContactsListUI(node.get('_pid'), node.get('_catId'));
 			}
 		});
