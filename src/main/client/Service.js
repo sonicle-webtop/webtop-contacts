@@ -244,6 +244,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							});
 						},
 						load: function(s) {
+							me.pnlPreview().setContacts(me.getSelectedContacts(true));
 							/*
 							var rec = me.getSelectedContact(), cmp;
 							if (rec && (s.getById(rec.getId()) === null)) { // Record is selected but no more existent in store
@@ -253,7 +254,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								//me.updateDisabled('deleteContact');
 							}
 							*/
-							// TODO: add lastupdate to model to check if the contact has been updated and refresh preview accordingly (this can reduce openContact code)
 						}
 					}
 				},
@@ -1112,8 +1112,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		this.reloadContacts({query: txt});
 	},
 	
-	getSelectedContacts: function() {
-		return this.gpContacts().getSelection();
+	getSelectedContacts: function(forceVisible) {
+		if (forceVisible === undefined) forceVisible = false;
+		var gp = this.gpContacts(),
+				view = gp.getView(),
+				sel = gp.getSelection(),
+				arr = [];
+		if (sel && (forceVisible === true)) {
+			for(var i=0; i<sel.length; i++) {
+				if (view.getNode(sel[i])) arr.push(sel[i]);
+			}
+			return arr;
+		} else {
+			return sel;
+		}
 	},
 	
 	getSelectedContact: function(forceSingle) {
@@ -1242,17 +1254,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	openContactItemUI: function(edit, rec) {
 		var me = this,
 				id = rec.get('id'),
-				isList = rec.get('isList') === true,
-				sel;
+				isList = rec.get('isList') === true;
 		if (isList) {
 			me.openContactsList(edit, id, {
 				callback: function(success, mo) {
 					if (success && edit) {
 						me.reloadContacts();
-						sel = me.getSelectedContacts();
-						if ((sel.length === 1) && (sel[0].get('id') === mo.getId())) {
-							me.pnlPreview().setContacts(sel);
-						}
 					}
 				}
 			});
@@ -1261,10 +1268,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				callback: function(success, mo) {
 					if (success && edit) {
 						me.reloadContacts();
-						sel = me.getSelectedContacts();
-						if ((sel.length === 1) && (sel[0].get('id') === mo.getId())) {
-							me.pnlPreview().setContacts(sel);
-						}
 					}
 				}
 			});
