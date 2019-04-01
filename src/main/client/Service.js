@@ -440,6 +440,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					},
 					clearselection: function(s) {
 						me.gpContacts().getSelectionModel().deselectAll();
+					},
+					editcontact: function(s, isList, id) {
+						me.openContactItemUI(true, isList, id);
 					}
 				},
 				width: '60%',
@@ -1251,12 +1254,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	*/
 	
-	openContactItemUI: function(edit, rec) {
-		var me = this,
-				id = rec.get('id'),
-				isList = rec.get('isList') === true;
+	openContactItemUI: function(edit, isList, contactItemId) {
+		var me = this;
+		if ((arguments.length === 2) && (isList.isModel)) {
+			contactItemId = isList.get('id');
+			isList = isList.get('isList') === true;
+		}
 		if (isList) {
-			me.openContactsList(edit, id, {
+			me.openContactsList(edit, contactItemId, {
 				callback: function(success, mo) {
 					if (success && edit) {
 						me.reloadContacts();
@@ -1264,7 +1269,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		} else {
-			me.openContact(edit, id, {
+			me.openContact(edit, contactItemId, {
 				callback: function(success, mo) {
 					if (success && edit) {
 						me.reloadContacts();

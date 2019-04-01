@@ -37,6 +37,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		'Sonicle.form.field.InitialsAvatar',
 		'Sonicle.form.field.DisplayImage',
 		'Sonicle.form.field.ColorDisplay',
+		'WTA.util.FoldersTree',
 		'WTA.ux.grid.TileList',
 		'Sonicle.webtop.contacts.model.ContactPreview'
 	],
@@ -58,6 +59,10 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		
 		WTU.applyFormulas(me.getVM(), {
 			foHasPicture: WTF.foIsEqual('record', 'pic', true),
+			foIsEditable: WTF.foGetFn('record', '_erights', function(val) {
+				var er = WTA.util.FoldersTree.toRightsObj(val);
+				return er.UPDATE;
+			}),
 			foHasData: {
 				bind: {bindTo: '{record}'},
 				get: function(val) {
@@ -313,9 +318,23 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			}, {
 				xtype: 'tabpanel',
 				items: [{
-					xtype: 'container',
+					xtype: 'wtpanel',
 					title: me.mys.res('contactPreview.single.contact.tit'),
 					layout: 'anchor',
+					tbar: [{
+						xtype: 'tbtext',
+						text: me.mys.res('contactPreview.single.contact.tb.info')
+					}, '->', {
+						xtype: 'button',
+						bind: {
+							disabled: '{!foIsEditable}'
+						},
+						text: me.mys.res('contactPreview.single.contact.tb.edit.lbl'),
+						handler: function() {
+							var vm = me.getVM();
+							me.fireEvent('editcontact', me, vm.get('record.isList'), vm.get('record.id'));
+						}
+					}],
 					defaults: {
 						anchor: '100%',
 						margin: '15 0 15 0'
