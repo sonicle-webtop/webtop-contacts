@@ -120,6 +120,11 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 				flex: 1
 			}],
 			listeners: {
+				celldblclick: function(s, td, cidx, rec, tr, ridx, e) {
+					// ENTER key event is stolen by tree's nav model, so re-proxy it...
+					// NB: this is valid until ExtJs 6.2.X, since 6.5.X we must use itemclick event!!!
+					me.fireDefaultButton(e);
+				},
 				selectionchange: function(s, sel) {
 					var me = this,
 							rec = sel[0];
