@@ -110,7 +110,7 @@ public class Eas extends EasApi {
 					CategoryPropSet catProps = props.get(cat.getCategoryId());
 					if (Category.Sync.OFF.equals(catProps.getSyncOrDefault(Category.Sync.OFF))) continue;
 					
-					items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getRealElementsPerms(cat.getSync())));
+					items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getRealElementsPerms(catProps.getSync())));
 				}
 			}
 			
