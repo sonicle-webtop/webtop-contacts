@@ -43,6 +43,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'WTA.ux.data.EmptyModel',
 		'WTA.ux.data.SimpleModel',
 		'WTA.ux.field.Search',
+		//'WTA.ux.field.Search2',
 		'Sonicle.webtop.contacts.model.FolderNode',
 		'Sonicle.webtop.contacts.model.GridContact',
 		'Sonicle.webtop.contacts.store.View',
@@ -127,10 +128,33 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				{
 					xtype: 'wtsearchfield',
 					reference: 'fldsearch',
+					fields: [{
+						name: 'name',
+						type: 'string',
+						label: me.res('fld-search.field.name.lbl')
+					}, {
+						name: 'company',
+						type: 'string',
+						label: me.res('fld-search.field.company.lbl')
+					}, {
+						name: 'email',
+						type: 'string',
+						label: me.res('fld-search.field.email.lbl')
+					}, {
+						name: 'phone',
+						type: 'string',
+						label: me.res('fld-search.field.phone.lbl')
+					}, {
+						name: 'any',
+						type: 'string',
+						textSink: true,
+						label: me.res('fld-search.field.any.lbl')
+					}],
 					tooltip: me.res('fld-search.tip'),
+					emptyText: me.res('fld-search.emp'),
 					listeners: {
-						query: function(s, value) {
-							me.queryContacts(value);
+						query: function(s, value, qObj) {
+							me.queryContacts(qObj);
 						}
 					}
 				},
@@ -1111,8 +1135,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
-	queryContacts: function(txt) {
-		this.reloadContacts({query: txt});
+	queryContacts: function(query) {
+		var isString = Ext.isString(query),
+			obj = {
+				allText: isString ? query : query.anyText,
+				conditions: isString ? [] : query.conditionArray
+			};
+		this.reloadContacts({query: Ext.JSON.encode(obj)});
 	},
 	
 	getSelectedContacts: function(forceVisible) {

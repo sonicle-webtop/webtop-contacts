@@ -290,10 +290,9 @@ AND (ccnts.href IS NULL)
 			.fetchInto(VContactObjectChanged.class);
 	}
 	
-	public int countByCategoryTypePattern(Connection con, Collection<Integer> categoryIds, boolean listOnly, String searchMode, String pattern) throws DAOException {
+	public int countByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, boolean listOnly, String searchMode, Condition condition) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		Condition listOnlyCndt = toListOnlyCondition(listOnly);
-		Condition patternCndt = toSearchPatternCondition(pattern);
 		
 		return dsl
 			.selectCount()
@@ -307,16 +306,15 @@ AND (ccnts.href IS NULL)
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 				.and(
-					patternCndt
+					(condition != null) ? condition : DSL.trueCondition()
 				)
 			)
 			.fetchOne(0, Integer.class);
 	}
 	
-	public List<VContactLookup> viewByCategoryTypePattern(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, boolean listOnly, String searchMode, String pattern, int limit, int offset) throws DAOException {
+	public List<VContactLookup> viewByCategoryTypeCondition(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, boolean listOnly, String searchMode, Condition condition, int limit, int offset) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		Condition listOnlyCndt = toListOnlyCondition(listOnly);
-		Condition patternCndt = toSearchPatternCondition(pattern);
 		
 		// Define sort fields
 		ArrayList<SortField<?>> sortFlds = new ArrayList<>();
@@ -373,7 +371,7 @@ AND (ccnts.href IS NULL)
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
 				.and(
-					patternCndt
+					(condition != null) ? condition : DSL.trueCondition()
 				)
 			)
 			.orderBy(sortFlds)

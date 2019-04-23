@@ -47,6 +47,7 @@ import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.commons.web.json.Payload;
 import com.sonicle.commons.web.json.bean.IntegerSet;
+import com.sonicle.commons.web.json.bean.QueryObj;
 import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
@@ -84,6 +85,7 @@ import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
+import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
@@ -633,14 +635,13 @@ public class Service extends BaseService {
 				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
 				int page = ServletUtils.getIntParameter(request, "page", true);
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
-				String query = ServletUtils.getStringParameter(request, "query", null);
+				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
 				//TODO: optimize call to skip fullCount for subsequent calls
 				boolean listOnly = GridView.CONTACTS_LIST.equals(view);
-				String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
 				
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, page, limit, true);
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, ContactQuery.toCondition(queryObj), page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;

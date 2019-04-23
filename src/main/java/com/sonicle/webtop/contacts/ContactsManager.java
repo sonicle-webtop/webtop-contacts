@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.github.rutledgepaulv.qbuilders.conditions.Condition;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.IdentifierUtils;
 import com.sonicle.commons.InternetAddressUtils;
@@ -77,6 +78,7 @@ import com.sonicle.webtop.contacts.dal.ContactAttachmentDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ContactVCardDAO;
+import com.sonicle.webtop.contacts.dal.ContactPredicateVisitor;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
@@ -96,6 +98,7 @@ import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
+import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
@@ -842,12 +845,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return listContacts(categoryIds, listOnly, groupBy, showBy, pattern, 1, Integer.MAX_VALUE, false);
 	}
 	
+	@Deprecated
 	@Override
 	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern, int page, int limit, boolean returnFullCount) throws WTException {
+		return listContacts(categoryIds, listOnly, groupBy, showBy, ContactQuery.toCondition(pattern), page, limit, returnFullCount);
+	}
+	
+	@Override
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, Condition<ContactQuery> conditionPredicate, int page, int limit, boolean returnFullCount) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
 			int offset = ManagerUtils.toOffset(page, limit);
 			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
 			List<Integer> okCategoryIds = categoryIds.stream()
@@ -855,11 +865,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					.collect(Collectors.toList());
 			
 			con = WT.getConnection(SERVICE_ID);
-			
 			Integer fullCount = null;
-			if (returnFullCount) fullCount = contDao.countByCategoryTypePattern(con, okCategoryIds, listOnly, null, pattern);
+			if (returnFullCount) fullCount = contDao.countByCategoryTypeCondition(con, okCategoryIds, listOnly, null, condition);
 			ArrayList<ContactLookup> items = new ArrayList<>();
-			for (VContactLookup vcont : contDao.viewByCategoryTypePattern(con, orderFields, okCategoryIds, listOnly, null, pattern, limit, offset)) {
+			for (VContactLookup vcont : contDao.viewByCategoryTypeCondition(con, orderFields, okCategoryIds, listOnly, null, condition, limit, offset)) {
 				items.add(ManagerUtils.fillContactLookup(new ContactLookup(), vcont));
 			}
 			
