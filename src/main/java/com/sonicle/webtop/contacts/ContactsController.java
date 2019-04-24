@@ -77,7 +77,7 @@ public class ContactsController extends BaseController implements IControllerSer
 
 	@Override
 	public void onUserRemoved(UserProfileId profileId) throws WTException {
-		ContactsManager manager = new ContactsManager(false, profileId);
+		ContactsManager manager = new ContactsManager(true, profileId);
 		manager.eraseData(true);
 	}
 	
