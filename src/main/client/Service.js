@@ -31,8 +31,6 @@
  * feasible for technical reasons, the Appropriate Legal Notices must display
  * the words "Powered by Sonicle WebTop".
  */
-
-
 Ext.define('Sonicle.webtop.contacts.Service', {
 	extend: 'WTA.sdk.Service',
 	requires: [
@@ -43,7 +41,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'WTA.ux.data.EmptyModel',
 		'WTA.ux.data.SimpleModel',
 		'WTA.ux.field.Search',
-		//'WTA.ux.field.Search2',
 		'Sonicle.webtop.contacts.model.FolderNode',
 		'Sonicle.webtop.contacts.model.GridContact',
 		'Sonicle.webtop.contacts.store.View',

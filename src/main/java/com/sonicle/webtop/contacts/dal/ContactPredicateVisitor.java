@@ -78,7 +78,7 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 						.or(CONTACTS.HOME_TELEPHONE2.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_PAGER.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_FAX.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
-			case "everywhere":
+			case "any":
 				return CONTACTS.SEARCHFIELD.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
 						.or(CONTACTS.WORK_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
