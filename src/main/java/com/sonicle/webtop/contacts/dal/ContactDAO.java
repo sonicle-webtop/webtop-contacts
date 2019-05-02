@@ -50,6 +50,7 @@ import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import static com.sonicle.webtop.core.jooq.core.Tables.MASTER_DATA;
@@ -290,9 +291,31 @@ AND (ccnts.href IS NULL)
 			.fetchInto(VContactObjectChanged.class);
 	}
 	
-	public int countByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, boolean listOnly, String searchMode, Condition condition) throws DAOException {
+	public boolean existByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, ContactType type, Condition condition) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		Condition listOnlyCndt = toListOnlyCondition(listOnly);
+		Condition typeCndt = toContactTypeCondition(type);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		return dsl.fetchExists(
+			dsl.selectOne()
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				CONTACTS.CATEGORY_ID.in(categoryIds)
+				.and(typeCndt)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+				.and(filterCndt)
+			)
+		);
+	}
+	
+	public int countByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, ContactType type, Condition condition) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition typeCndt = toContactTypeCondition(type);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
 		
 		return dsl
 			.selectCount()
@@ -300,21 +323,20 @@ AND (ccnts.href IS NULL)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
-				.and(listOnlyCndt)
+				.and(typeCndt)
 				.and(
 					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
-				.and(
-					(condition != null) ? condition : DSL.trueCondition()
-				)
+				.and(filterCndt)
 			)
 			.fetchOne(0, Integer.class);
 	}
 	
-	public List<VContactLookup> viewByCategoryTypeCondition(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, boolean listOnly, String searchMode, Condition condition, int limit, int offset) throws DAOException {
+	public List<VContactLookup> viewByCategoryTypeCondition(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, ContactType type, Condition condition, int limit, int offset) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		Condition listOnlyCndt = toListOnlyCondition(listOnly);
+		Condition typeCndt = toContactTypeCondition(type);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
 		
 		// Define sort fields
 		ArrayList<SortField<?>> sortFlds = new ArrayList<>();
@@ -365,14 +387,12 @@ AND (ccnts.href IS NULL)
 			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
-				.and(listOnlyCndt)
+				.and(typeCndt)
 				.and(
 					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
-				.and(
-					(condition != null) ? condition : DSL.trueCondition()
-				)
+				.and(filterCndt)
 			)
 			.orderBy(sortFlds)
 			.limit(limit)
@@ -986,6 +1006,17 @@ AND (ccnts.href IS NULL)
 	
 	public static enum OrderByMode {
 		FIRSTNAME, LASTNAME, COMPANY
+	}
+	
+	private Condition toContactTypeCondition(ContactType type) {
+		if (ContactType.CONTACT.equals(type)) {
+			return CONTACTS.IS_LIST.isFalse();
+		} else if (ContactType.LIST.equals(type)) {
+			return CONTACTS.IS_LIST.isTrue();
+		} else {
+			return DSL.trueCondition();
+		}
+		
 	}
 	
 	private Condition toListOnlyCondition(boolean listOnly) {

@@ -102,6 +102,7 @@ import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -841,34 +842,66 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern) throws WTException {
-		return listContacts(categoryIds, listOnly, groupBy, showBy, pattern, 1, Integer.MAX_VALUE, false);
-	}
-	
-	@Deprecated
-	@Override
-	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern, int page, int limit, boolean returnFullCount) throws WTException {
-		return listContacts(categoryIds, listOnly, groupBy, showBy, ContactQuery.toCondition(pattern), page, limit, returnFullCount);
-	}
-	
-	@Override
-	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, Condition<ContactQuery> conditionPredicate, int page, int limit, boolean returnFullCount) throws WTException {
+	public boolean existContact(Collection<Integer> categoryIds, Condition<ContactQuery> conditionPredicate) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
-			int offset = ManagerUtils.toOffset(page, limit);
-			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
 			List<Integer> okCategoryIds = categoryIds.stream()
 					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
 					.collect(Collectors.toList());
 			
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
+			
+			con = WT.getConnection(SERVICE_ID);
+			return contDao.existByCategoryTypeCondition(con, okCategoryIds, ContactType.CONTACT, condition);
+			
+		} catch (SQLException | DAOException ex) {
+			throw wrapException(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
+	@Override
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern, int page, int limit, boolean returnFullCount) throws WTException {
+		ContactType type = listOnly ? ContactType.LIST : ContactType.ANY;
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.toCondition(pattern), page, limit, returnFullCount);
+	}
+	
+	@Override
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, ContactType type, Grouping groupBy, ShowBy showBy, String pattern) throws WTException {
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.toCondition(pattern), 1, Integer.MAX_VALUE, false);
+	}
+	
+	@Override
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, ContactType type, Grouping groupBy, ShowBy showBy, Condition<ContactQuery> conditionPredicate) throws WTException {
+		return listContacts(categoryIds, type, groupBy, showBy, conditionPredicate, 1, Integer.MAX_VALUE, false);
+	}
+	
+	@Override
+	public ListContactsResult listContacts(Collection<Integer> categoryIds, ContactType type, Grouping groupBy, ShowBy showBy, Condition<ContactQuery> conditionPredicate, int page, int limit, boolean returnFullCount) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			List<Integer> okCategoryIds = categoryIds.stream()
+					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
+					.collect(Collectors.toList());
+			
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
+			int offset = ManagerUtils.toOffset(page, limit);
+			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
+			
 			con = WT.getConnection(SERVICE_ID);
 			Integer fullCount = null;
-			if (returnFullCount) fullCount = contDao.countByCategoryTypeCondition(con, okCategoryIds, listOnly, null, condition);
+			if (returnFullCount) fullCount = contDao.countByCategoryTypeCondition(con, okCategoryIds, type, condition);
 			ArrayList<ContactLookup> items = new ArrayList<>();
-			for (VContactLookup vcont : contDao.viewByCategoryTypeCondition(con, orderFields, okCategoryIds, listOnly, null, condition, limit, offset)) {
+			for (VContactLookup vcont : contDao.viewByCategoryTypeCondition(con, orderFields, okCategoryIds, type, condition, limit, offset)) {
 				items.add(ManagerUtils.fillContactLookup(new ContactLookup(), vcont));
 			}
 			
