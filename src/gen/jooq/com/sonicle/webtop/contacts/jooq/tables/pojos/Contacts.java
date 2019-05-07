@@ -16,12 +16,13 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts implements java.io.Serializable {
 
-	private static final long serialVersionUID = -2044779498;
+	private static final long serialVersionUID = 1605680258;
 
 	private java.lang.Integer       contactId;
 	private java.lang.Integer       categoryId;
 	private java.lang.String        revisionStatus;
 	private org.joda.time.DateTime  revisionTimestamp;
+	private java.lang.Integer       revisionSequence;
 	private java.lang.String        publicUid;
 	private java.lang.Boolean       isList;
 	private java.lang.String        searchfield;
@@ -72,10 +73,10 @@ public class Contacts implements java.io.Serializable {
 	private java.lang.String        otherIm;
 	private java.lang.String        url;
 	private java.lang.String        notes;
-	private java.lang.Integer       revisionSequence;
 	private java.lang.String        href;
 	private java.lang.String        etag;
 	private org.joda.time.DateTime  creationTimestamp;
+	private java.lang.String        displayName;
 
 	public Contacts() {}
 
@@ -84,6 +85,7 @@ public class Contacts implements java.io.Serializable {
 		java.lang.Integer       categoryId,
 		java.lang.String        revisionStatus,
 		org.joda.time.DateTime  revisionTimestamp,
+		java.lang.Integer       revisionSequence,
 		java.lang.String        publicUid,
 		java.lang.Boolean       isList,
 		java.lang.String        searchfield,
@@ -134,15 +136,16 @@ public class Contacts implements java.io.Serializable {
 		java.lang.String        otherIm,
 		java.lang.String        url,
 		java.lang.String        notes,
-		java.lang.Integer       revisionSequence,
 		java.lang.String        href,
 		java.lang.String        etag,
-		org.joda.time.DateTime  creationTimestamp
+		org.joda.time.DateTime  creationTimestamp,
+		java.lang.String        displayName
 	) {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
 		this.revisionStatus = revisionStatus;
 		this.revisionTimestamp = revisionTimestamp;
+		this.revisionSequence = revisionSequence;
 		this.publicUid = publicUid;
 		this.isList = isList;
 		this.searchfield = searchfield;
@@ -193,10 +196,10 @@ public class Contacts implements java.io.Serializable {
 		this.otherIm = otherIm;
 		this.url = url;
 		this.notes = notes;
-		this.revisionSequence = revisionSequence;
 		this.href = href;
 		this.etag = etag;
 		this.creationTimestamp = creationTimestamp;
+		this.displayName = displayName;
 	}
 
 	public java.lang.Integer getContactId() {
@@ -229,6 +232,14 @@ public class Contacts implements java.io.Serializable {
 
 	public void setRevisionTimestamp(org.joda.time.DateTime revisionTimestamp) {
 		this.revisionTimestamp = revisionTimestamp;
+	}
+
+	public java.lang.Integer getRevisionSequence() {
+		return this.revisionSequence;
+	}
+
+	public void setRevisionSequence(java.lang.Integer revisionSequence) {
+		this.revisionSequence = revisionSequence;
 	}
 
 	public java.lang.String getPublicUid() {
@@ -631,14 +642,6 @@ public class Contacts implements java.io.Serializable {
 		this.notes = notes;
 	}
 
-	public java.lang.Integer getRevisionSequence() {
-		return this.revisionSequence;
-	}
-
-	public void setRevisionSequence(java.lang.Integer revisionSequence) {
-		this.revisionSequence = revisionSequence;
-	}
-
 	public java.lang.String getHref() {
 		return this.href;
 	}
@@ -661,5 +664,13 @@ public class Contacts implements java.io.Serializable {
 
 	public void setCreationTimestamp(org.joda.time.DateTime creationTimestamp) {
 		this.creationTimestamp = creationTimestamp;
+	}
+
+	public java.lang.String getDisplayName() {
+		return this.displayName;
+	}
+
+	public void setDisplayName(java.lang.String displayName) {
+		this.displayName = displayName;
 	}
 }

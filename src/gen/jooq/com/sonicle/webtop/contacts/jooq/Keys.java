@@ -22,6 +22,7 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Integer> IDENTITY_CATEGORIES = Identities0.IDENTITY_CATEGORIES;
+	public static final org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> IDENTITY_CONTACTS = Identities0.IDENTITY_CONTACTS;
 	public static final org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, java.lang.Integer> IDENTITY_LIST_RECIPIENTS = Identities0.IDENTITY_LIST_RECIPIENTS;
 
 	// -------------------------------------------------------------------------
@@ -43,6 +44,10 @@ public class Keys {
 
 	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_ATTACHMENTS__CONTACTS_ATTACHMENTS_CONTACT_ID_FKEY = ForeignKeys0.CONTACTS_ATTACHMENTS__CONTACTS_ATTACHMENTS_CONTACT_ID_FKEY;
 	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord> CONTACTS_ATTACHMENTS_DATA__CONTACTS_ATTACHMENTS_DATA_CONTACT_ATTACHMENT_ID_FKEY = ForeignKeys0.CONTACTS_ATTACHMENTS_DATA__CONTACTS_ATTACHMENTS_DATA_CONTACT_ATTACHMENT_ID_FKEY;
+	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_PICTURES__CONTACTS_PICTURES_CONTACT_ID_FKEY = ForeignKeys0.CONTACTS_PICTURES__CONTACTS_PICTURES_CONTACT_ID_FKEY;
+	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_VCARDS__CONTACTS_VCARDS_CONTACT_ID_FKEY = ForeignKeys0.CONTACTS_VCARDS__CONTACTS_VCARDS_CONTACT_ID_FKEY;
+	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> LIST_RECIPIENTS__LIST_RECIPIENTS_CONTACT_ID_FKEY = ForeignKeys0.LIST_RECIPIENTS__LIST_RECIPIENTS_CONTACT_ID_FKEY;
+	public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> LIST_RECIPIENTS__LIST_RECIPIENTS_RECIPIENT_CONTACT_ID_FKEY = ForeignKeys0.LIST_RECIPIENTS__LIST_RECIPIENTS_RECIPIENT_CONTACT_ID_FKEY;
 
 	// -------------------------------------------------------------------------
 	// [#1459] distribute members to avoid static initialisers > 64kb
@@ -50,6 +55,7 @@ public class Keys {
 
 	private static class Identities0 extends org.jooq.impl.AbstractKeys {
 		public static org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Integer> IDENTITY_CATEGORIES = createIdentity(com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES, com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES.CATEGORY_ID);
+		public static org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> IDENTITY_CONTACTS = createIdentity(com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS, com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS.CONTACT_ID);
 		public static org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, java.lang.Integer> IDENTITY_LIST_RECIPIENTS = createIdentity(com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS.LIST_RECIPIENT_ID);
 	}
 
@@ -67,5 +73,9 @@ public class Keys {
 	private static class ForeignKeys0 extends org.jooq.impl.AbstractKeys {
 		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_ATTACHMENTS__CONTACTS_ATTACHMENTS_CONTACT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS.CONTACT_ID);
 		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord> CONTACTS_ATTACHMENTS_DATA__CONTACTS_ATTACHMENTS_DATA_CONTACT_ATTACHMENT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_ATTACHMENTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA, com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA.CONTACT_ATTACHMENT_ID);
+		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_PICTURES__CONTACTS_PICTURES_CONTACT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES, com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES.CONTACT_ID);
+		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> CONTACTS_VCARDS__CONTACTS_VCARDS_CONTACT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ContactsVcards.CONTACTS_VCARDS, com.sonicle.webtop.contacts.jooq.tables.ContactsVcards.CONTACTS_VCARDS.CONTACT_ID);
+		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> LIST_RECIPIENTS__LIST_RECIPIENTS_CONTACT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS.CONTACT_ID);
+		public static final org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> LIST_RECIPIENTS__LIST_RECIPIENTS_RECIPIENT_CONTACT_ID_FKEY = createForeignKey(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PKEY, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS.RECIPIENT_CONTACT_ID);
 	}
 }

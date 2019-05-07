@@ -16,18 +16,18 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories implements java.io.Serializable {
 
-	private static final long serialVersionUID = -859429899;
+	private static final long serialVersionUID = 1668741939;
 
 	private java.lang.Integer      categoryId;
 	private java.lang.String       domainId;
 	private java.lang.String       userId;
 	private java.lang.Boolean      builtIn;
+	private java.lang.String       provider;
 	private java.lang.String       name;
 	private java.lang.String       description;
 	private java.lang.String       color;
 	private java.lang.String       sync;
 	private java.lang.Boolean      isDefault;
-	private java.lang.String       provider;
 	private java.lang.String       parameters;
 	private java.lang.Short        remoteSyncFrequency;
 	private org.joda.time.DateTime remoteSyncTimestamp;
@@ -40,12 +40,12 @@ public class Categories implements java.io.Serializable {
 		java.lang.String       domainId,
 		java.lang.String       userId,
 		java.lang.Boolean      builtIn,
+		java.lang.String       provider,
 		java.lang.String       name,
 		java.lang.String       description,
 		java.lang.String       color,
 		java.lang.String       sync,
 		java.lang.Boolean      isDefault,
-		java.lang.String       provider,
 		java.lang.String       parameters,
 		java.lang.Short        remoteSyncFrequency,
 		org.joda.time.DateTime remoteSyncTimestamp,
@@ -55,12 +55,12 @@ public class Categories implements java.io.Serializable {
 		this.domainId = domainId;
 		this.userId = userId;
 		this.builtIn = builtIn;
+		this.provider = provider;
 		this.name = name;
 		this.description = description;
 		this.color = color;
 		this.sync = sync;
 		this.isDefault = isDefault;
-		this.provider = provider;
 		this.parameters = parameters;
 		this.remoteSyncFrequency = remoteSyncFrequency;
 		this.remoteSyncTimestamp = remoteSyncTimestamp;
@@ -97,6 +97,14 @@ public class Categories implements java.io.Serializable {
 
 	public void setBuiltIn(java.lang.Boolean builtIn) {
 		this.builtIn = builtIn;
+	}
+
+	public java.lang.String getProvider() {
+		return this.provider;
+	}
+
+	public void setProvider(java.lang.String provider) {
+		this.provider = provider;
 	}
 
 	public java.lang.String getName() {
@@ -137,14 +145,6 @@ public class Categories implements java.io.Serializable {
 
 	public void setIsDefault(java.lang.Boolean isDefault) {
 		this.isDefault = isDefault;
-	}
-
-	public java.lang.String getProvider() {
-		return this.provider;
-	}
-
-	public void setProvider(java.lang.String provider) {
-		this.provider = provider;
 	}
 
 	public java.lang.String getParameters() {

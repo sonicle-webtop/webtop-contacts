@@ -633,7 +633,7 @@ public class Service extends BaseService {
 			if (crud.equals(Crud.READ)) {
 				GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
 				Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
-				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
+				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.DISPLAY, ShowBy.class);
 				int page = ServletUtils.getIntParameter(request, "page", true);
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
@@ -659,7 +659,6 @@ public class Service extends BaseService {
 				} else {
 					meta.setGroupInfo(new GroupMeta("letter", "ASC"));
 				}
-				
 				new JsonResult(items, result.fullCount)
 						.setPage(page)
 						.setMetaData(meta)
@@ -1170,7 +1169,7 @@ public class Service extends BaseService {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
 			GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
 			Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
-			ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.LASTNAME, ShowBy.class);
+			ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.DISPLAY, ShowBy.class);
 			String query = ServletUtils.getStringParameter(request, "query", null);
 			
 			boolean listOnly = GridView.CONTACTS_LIST.equals(view);

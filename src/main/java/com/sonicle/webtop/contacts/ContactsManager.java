@@ -84,6 +84,7 @@ import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
+import com.sonicle.webtop.contacts.model.BaseContact;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
@@ -916,12 +917,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private Collection<ContactDAO.OrderField> toContactDAOOrderFields(Grouping groupBy, ShowBy showBy) {
 		ArrayList<ContactDAO.OrderField> fields = new ArrayList<>(3);
-		if (ShowBy.FIRSTNAME.equals(showBy)) {
+		if (ShowBy.FIRST_LAST.equals(showBy)) {
 			fields.add(ContactDAO.OrderField.FIRSTNAME);
 			fields.add(ContactDAO.OrderField.LASTNAME);
+		} else if (ShowBy.LAST_FIRST.equals(showBy)) {
+			fields.add(ContactDAO.OrderField.LASTNAME);
+			fields.add(ContactDAO.OrderField.FIRSTNAME);
 		} else {
-			fields.add(ContactDAO.OrderField.LASTNAME);
-			fields.add(ContactDAO.OrderField.FIRSTNAME);
+			fields.add(ContactDAO.OrderField.DISPLAYNAME);
 		}
 		if (Grouping.COMPANY.equals(groupBy)) {
 			fields.add(0, ContactDAO.OrderField.COMPANY);
@@ -1295,7 +1298,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			writeLog("CONTACTLIST_UPDATE", String.valueOf(list.getContactId()));
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
 			throw wrapException(ex);
 		} finally {
@@ -1385,7 +1388,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
 			throw wrapException(ex);
 		} finally {
@@ -1925,10 +1928,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ocont;
 	}
 	
+	@Deprecated
 	private boolean doContactUpdate(CoreManager coreMgr, Connection con, boolean isList, Contact contact, ContactPictureWithBytesOld picture, boolean deletePictureIfNull) throws DAOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		
 		OContact ocont = ManagerUtils.createOContact(contact);
+		fillDefaultsForUpdate(ocont);
 		if (isList) {
 			ocont.setSearchfield(buildSearchfield(ocont));
 			int ret = contDao.updateList(con, ocont, BaseDAO.createRevisionTimestamp());
@@ -2001,6 +2006,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		ContactAttachmentDAO attDao = ContactAttachmentDAO.getInstance();
 		
 		OContact ocont = ManagerUtils.createOContact(contact);
+		fillDefaultsForUpdate(ocont);
 		boolean ret = false;
 		if (isList) {
 			ocont.setSearchfield(buildSearchfield(ocont));
@@ -2241,10 +2247,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ocont;
 	}
 	
-	private boolean doContactsListUpdate(CoreManager coreMgr, Connection con, ContactsList list) throws DAOException {
+	private boolean doContactsListUpdate(CoreManager coreMgr, Connection con, ContactsList list) throws DAOException, IOException {
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
 		
-		if (!doContactUpdate(coreMgr, con, true, createContact(list), null, false)) return false;
+		if (!doContactUpdate(coreMgr, con, true, createContact(list), false, false)) return false;
 		//TODO: gestire la modifica determinando gli eliminati e gli aggiunti?
 		lrecDao.deleteByContact(con, list.getContactId());
 		for (ContactsListRecipient rcpt : list.getRecipients()) {
@@ -2268,7 +2274,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return true;
 	}
 	
-	private boolean doMoveContactsList(CoreManager coreMgr, Connection con, boolean copy, ContactsList clist, int targetCategoryId) throws DAOException, WTException {
+	private boolean doMoveContactsList(CoreManager coreMgr, Connection con, boolean copy, ContactsList clist, int targetCategoryId) throws DAOException, IOException {
 		clist.setCategoryId(targetCategoryId);
 		if (copy) {
 			doContactsListInsert(coreMgr, con, clist);
@@ -2406,6 +2412,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Contact cont = new Contact();
 		cont.setContactId(src.getContactId());
 		cont.setCategoryId(src.getCategoryId());
+		cont.setDisplayName(src.getName());
+		cont.setFirstName(src.getName());
 		cont.setLastName(src.getName());
 		return cont;
 	}
@@ -2416,6 +2424,24 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
 			}
 			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ContactsUtils.buildHref(tgt.getPublicUid()));
+			if (!tgt.getIsList()) {
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+			} else {
+				// Compose list workEmail as: "list-{contactId}@{serviceId}"
+				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@" + SERVICE_ID);
+			}
+		}
+		return tgt;
+	}
+	
+	private OContact fillDefaultsForUpdate(OContact tgt) {
+		if (tgt != null) {
+			if (!tgt.getIsList()) {
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+			} else {
+				// Compose list workEmail as: "list-{contactId}@{serviceId}"
+				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@" + SERVICE_ID);
+			}
 		}
 		return tgt;
 	}
@@ -2447,7 +2473,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private ReminderInApp createAnniversaryInAppReminder(Locale locale, boolean birthday, VContact contact, DateTime date) {
 		String type = (birthday) ? "birthday" : "anniversary";
 		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
-		String title = MessageFormat.format(lookupResource(locale, resKey), Contact.buildFullName(contact.getFirstname(), contact.getLastname()));
+		String title = MessageFormat.format(lookupResource(locale, resKey), BaseContact.buildFullName(contact.getFirstname(), contact.getLastname()));
 		
 		ReminderInApp alert = new ReminderInApp(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
 		alert.setTitle(title);
@@ -2459,7 +2485,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private ReminderEmail createAnniversaryEmailReminder(Locale locale, InternetAddress recipient, boolean birthday, VContact contact, DateTime date) {
 		String type = (birthday) ? "birthday" : "anniversary";
 		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
-		String fullName = Contact.buildFullName(contact.getFirstname(), contact.getLastname());
+		String fullName = BaseContact.buildFullName(contact.getFirstname(), contact.getLastname());
 		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
 		String subject = NotificationHelper.buildSubject(locale, SERVICE_ID, title);
 		String body = null;
@@ -2509,12 +2535,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						final String value = vcont.getValueBy(fieldType, fieldCategory);
 						final String recipientId=vcont.getContactId()!=null?vcont.getContactId().toString():null;
 						if (vcont.getIsList() && fieldCategory.equals(RecipientFieldCategory.WORK) && fieldType.equals(RecipientFieldType.EMAIL)) {
-							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getLastname(), value, Recipient.Type.TO, recipientId));
+							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getDisplayName(), value, Recipient.Type.TO, recipientId));
 							
 						} else if (!listsOnly) {
 							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
-							final String personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
+							String personal = vcont.getDisplayName();
+							if (StringUtils.isBlank(personal)) personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
 							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value, Recipient.Type.TO, recipientId));
 						}
 					}

@@ -48,6 +48,7 @@ import org.joda.time.format.DateTimeFormatter;
 public class JsContact {
 	public Integer id;
 	public Integer categoryId;
+	public String displayName;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -107,6 +108,7 @@ public class JsContact {
 		
 		id = contact.getContactId();
 		categoryId = contact.getCategoryId();
+		displayName = contact.getDisplayName();
 		title = contact.getTitle();
 		firstName = contact.getFirstName();
 		lastName = contact.getLastName();
@@ -174,6 +176,7 @@ public class JsContact {
 		Contact item = new Contact();
 		item.setContactId(js.id);
 		item.setCategoryId(js.categoryId);
+		item.setDisplayName(js.displayName);
 		item.setTitle(js.title);
 		item.setFirstName(js.firstName);
 		item.setLastName(js.lastName);

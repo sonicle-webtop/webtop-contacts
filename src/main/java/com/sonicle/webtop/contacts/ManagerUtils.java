@@ -223,6 +223,7 @@ public class ManagerUtils {
 			tgt.setTitle(src.getTitle());
 			tgt.setFirstName(src.getFirstname());
 			tgt.setLastName(src.getLastname());
+			tgt.setDisplayName(src.getDisplayName());
 			tgt.setNickname(src.getNickname());
 		}
 		return tgt;
@@ -258,6 +259,7 @@ public class ManagerUtils {
 			tgt.setTitle(src.getTitle());
 			tgt.setFirstName(src.getFirstname());
 			tgt.setLastName(src.getLastname());
+			tgt.setDisplayName(src.getDisplayName());
 			tgt.setNickname(src.getNickname());
 			tgt.setGender(EnumUtils.forSerializedName(src.getGender(), Contact.Gender.class));
 			tgt.setMobile(src.getWorkMobile());
@@ -336,6 +338,7 @@ public class ManagerUtils {
 			tgt.setTitle(src.getTitle());
 			tgt.setFirstname(src.getFirstName());
 			tgt.setLastname(src.getLastName());
+			tgt.setDisplayName(src.getDisplayName());
 			tgt.setNickname(src.getNickname());
 			tgt.setGender(EnumUtils.toSerializedName(src.getGender()));
 			tgt.setWorkMobile(src.getMobile());

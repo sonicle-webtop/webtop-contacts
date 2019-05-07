@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables.records;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = -2012160923;
+	private static final long serialVersionUID = 117883634;
 
 	/**
 	 * Setter for <code>contacts.contacts.contact_id</code>.
@@ -75,717 +75,717 @@ public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicl
 	}
 
 	/**
-	 * Setter for <code>contacts.contacts.public_uid</code>.
-	 */
-	public void setPublicUid(java.lang.String value) {
-		setValue(4, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.public_uid</code>.
-	 */
-	public java.lang.String getPublicUid() {
-		return (java.lang.String) getValue(4);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.is_list</code>.
-	 */
-	public void setIsList(java.lang.Boolean value) {
-		setValue(5, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.is_list</code>.
-	 */
-	public java.lang.Boolean getIsList() {
-		return (java.lang.Boolean) getValue(5);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.searchfield</code>.
-	 */
-	public void setSearchfield(java.lang.String value) {
-		setValue(6, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.searchfield</code>.
-	 */
-	public java.lang.String getSearchfield() {
-		return (java.lang.String) getValue(6);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.title</code>.
-	 */
-	public void setTitle(java.lang.String value) {
-		setValue(7, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.title</code>.
-	 */
-	public java.lang.String getTitle() {
-		return (java.lang.String) getValue(7);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.firstname</code>.
-	 */
-	public void setFirstname(java.lang.String value) {
-		setValue(8, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.firstname</code>.
-	 */
-	public java.lang.String getFirstname() {
-		return (java.lang.String) getValue(8);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.lastname</code>.
-	 */
-	public void setLastname(java.lang.String value) {
-		setValue(9, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.lastname</code>.
-	 */
-	public java.lang.String getLastname() {
-		return (java.lang.String) getValue(9);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.nickname</code>.
-	 */
-	public void setNickname(java.lang.String value) {
-		setValue(10, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.nickname</code>.
-	 */
-	public java.lang.String getNickname() {
-		return (java.lang.String) getValue(10);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.gender</code>.
-	 */
-	public void setGender(java.lang.String value) {
-		setValue(11, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.gender</code>.
-	 */
-	public java.lang.String getGender() {
-		return (java.lang.String) getValue(11);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.company</code>.
-	 */
-	public void setCompany(java.lang.String value) {
-		setValue(12, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.company</code>.
-	 */
-	public java.lang.String getCompany() {
-		return (java.lang.String) getValue(12);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.function</code>.
-	 */
-	public void setFunction(java.lang.String value) {
-		setValue(13, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.function</code>.
-	 */
-	public java.lang.String getFunction() {
-		return (java.lang.String) getValue(13);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_address</code>.
-	 */
-	public void setWorkAddress(java.lang.String value) {
-		setValue(14, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_address</code>.
-	 */
-	public java.lang.String getWorkAddress() {
-		return (java.lang.String) getValue(14);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_city</code>.
-	 */
-	public void setWorkCity(java.lang.String value) {
-		setValue(15, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_city</code>.
-	 */
-	public java.lang.String getWorkCity() {
-		return (java.lang.String) getValue(15);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_state</code>.
-	 */
-	public void setWorkState(java.lang.String value) {
-		setValue(16, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_state</code>.
-	 */
-	public java.lang.String getWorkState() {
-		return (java.lang.String) getValue(16);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_postalcode</code>.
-	 */
-	public void setWorkPostalcode(java.lang.String value) {
-		setValue(17, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_postalcode</code>.
-	 */
-	public java.lang.String getWorkPostalcode() {
-		return (java.lang.String) getValue(17);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_country</code>.
-	 */
-	public void setWorkCountry(java.lang.String value) {
-		setValue(18, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_country</code>.
-	 */
-	public java.lang.String getWorkCountry() {
-		return (java.lang.String) getValue(18);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_telephone</code>.
-	 */
-	public void setWorkTelephone(java.lang.String value) {
-		setValue(19, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_telephone</code>.
-	 */
-	public java.lang.String getWorkTelephone() {
-		return (java.lang.String) getValue(19);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_telephone2</code>.
-	 */
-	public void setWorkTelephone2(java.lang.String value) {
-		setValue(20, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_telephone2</code>.
-	 */
-	public java.lang.String getWorkTelephone2() {
-		return (java.lang.String) getValue(20);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_fax</code>.
-	 */
-	public void setWorkFax(java.lang.String value) {
-		setValue(21, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_fax</code>.
-	 */
-	public java.lang.String getWorkFax() {
-		return (java.lang.String) getValue(21);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_mobile</code>.
-	 */
-	public void setWorkMobile(java.lang.String value) {
-		setValue(22, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_mobile</code>.
-	 */
-	public java.lang.String getWorkMobile() {
-		return (java.lang.String) getValue(22);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_pager</code>.
-	 */
-	public void setWorkPager(java.lang.String value) {
-		setValue(23, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_pager</code>.
-	 */
-	public java.lang.String getWorkPager() {
-		return (java.lang.String) getValue(23);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_email</code>.
-	 */
-	public void setWorkEmail(java.lang.String value) {
-		setValue(24, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_email</code>.
-	 */
-	public java.lang.String getWorkEmail() {
-		return (java.lang.String) getValue(24);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.work_im</code>.
-	 */
-	public void setWorkIm(java.lang.String value) {
-		setValue(25, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.work_im</code>.
-	 */
-	public java.lang.String getWorkIm() {
-		return (java.lang.String) getValue(25);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.assistant</code>.
-	 */
-	public void setAssistant(java.lang.String value) {
-		setValue(26, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.assistant</code>.
-	 */
-	public java.lang.String getAssistant() {
-		return (java.lang.String) getValue(26);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.assistant_telephone</code>.
-	 */
-	public void setAssistantTelephone(java.lang.String value) {
-		setValue(27, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.assistant_telephone</code>.
-	 */
-	public java.lang.String getAssistantTelephone() {
-		return (java.lang.String) getValue(27);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.department</code>.
-	 */
-	public void setDepartment(java.lang.String value) {
-		setValue(28, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.department</code>.
-	 */
-	public java.lang.String getDepartment() {
-		return (java.lang.String) getValue(28);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.manager</code>.
-	 */
-	public void setManager(java.lang.String value) {
-		setValue(29, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.manager</code>.
-	 */
-	public java.lang.String getManager() {
-		return (java.lang.String) getValue(29);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_address</code>.
-	 */
-	public void setHomeAddress(java.lang.String value) {
-		setValue(30, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_address</code>.
-	 */
-	public java.lang.String getHomeAddress() {
-		return (java.lang.String) getValue(30);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_city</code>.
-	 */
-	public void setHomeCity(java.lang.String value) {
-		setValue(31, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_city</code>.
-	 */
-	public java.lang.String getHomeCity() {
-		return (java.lang.String) getValue(31);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_state</code>.
-	 */
-	public void setHomeState(java.lang.String value) {
-		setValue(32, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_state</code>.
-	 */
-	public java.lang.String getHomeState() {
-		return (java.lang.String) getValue(32);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_postalcode</code>.
-	 */
-	public void setHomePostalcode(java.lang.String value) {
-		setValue(33, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_postalcode</code>.
-	 */
-	public java.lang.String getHomePostalcode() {
-		return (java.lang.String) getValue(33);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_country</code>.
-	 */
-	public void setHomeCountry(java.lang.String value) {
-		setValue(34, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_country</code>.
-	 */
-	public java.lang.String getHomeCountry() {
-		return (java.lang.String) getValue(34);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_telephone</code>.
-	 */
-	public void setHomeTelephone(java.lang.String value) {
-		setValue(35, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_telephone</code>.
-	 */
-	public java.lang.String getHomeTelephone() {
-		return (java.lang.String) getValue(35);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_telephone2</code>.
-	 */
-	public void setHomeTelephone2(java.lang.String value) {
-		setValue(36, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_telephone2</code>.
-	 */
-	public java.lang.String getHomeTelephone2() {
-		return (java.lang.String) getValue(36);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_fax</code>.
-	 */
-	public void setHomeFax(java.lang.String value) {
-		setValue(37, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_fax</code>.
-	 */
-	public java.lang.String getHomeFax() {
-		return (java.lang.String) getValue(37);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_mobile</code>.
-	 */
-	public void setHomeMobile(java.lang.String value) {
-		setValue(38, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_mobile</code>.
-	 */
-	public java.lang.String getHomeMobile() {
-		return (java.lang.String) getValue(38);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_pager</code>.
-	 */
-	public void setHomePager(java.lang.String value) {
-		setValue(39, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_pager</code>.
-	 */
-	public java.lang.String getHomePager() {
-		return (java.lang.String) getValue(39);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_email</code>.
-	 */
-	public void setHomeEmail(java.lang.String value) {
-		setValue(40, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_email</code>.
-	 */
-	public java.lang.String getHomeEmail() {
-		return (java.lang.String) getValue(40);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.home_im</code>.
-	 */
-	public void setHomeIm(java.lang.String value) {
-		setValue(41, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.home_im</code>.
-	 */
-	public java.lang.String getHomeIm() {
-		return (java.lang.String) getValue(41);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.partner</code>.
-	 */
-	public void setPartner(java.lang.String value) {
-		setValue(42, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.partner</code>.
-	 */
-	public java.lang.String getPartner() {
-		return (java.lang.String) getValue(42);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.birthday</code>.
-	 */
-	public void setBirthday(org.joda.time.LocalDate value) {
-		setValue(43, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.birthday</code>.
-	 */
-	public org.joda.time.LocalDate getBirthday() {
-		return (org.joda.time.LocalDate) getValue(43);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.anniversary</code>.
-	 */
-	public void setAnniversary(org.joda.time.LocalDate value) {
-		setValue(44, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.anniversary</code>.
-	 */
-	public org.joda.time.LocalDate getAnniversary() {
-		return (org.joda.time.LocalDate) getValue(44);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_address</code>.
-	 */
-	public void setOtherAddress(java.lang.String value) {
-		setValue(45, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_address</code>.
-	 */
-	public java.lang.String getOtherAddress() {
-		return (java.lang.String) getValue(45);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_city</code>.
-	 */
-	public void setOtherCity(java.lang.String value) {
-		setValue(46, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_city</code>.
-	 */
-	public java.lang.String getOtherCity() {
-		return (java.lang.String) getValue(46);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_state</code>.
-	 */
-	public void setOtherState(java.lang.String value) {
-		setValue(47, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_state</code>.
-	 */
-	public java.lang.String getOtherState() {
-		return (java.lang.String) getValue(47);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_postalcode</code>.
-	 */
-	public void setOtherPostalcode(java.lang.String value) {
-		setValue(48, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_postalcode</code>.
-	 */
-	public java.lang.String getOtherPostalcode() {
-		return (java.lang.String) getValue(48);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_country</code>.
-	 */
-	public void setOtherCountry(java.lang.String value) {
-		setValue(49, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_country</code>.
-	 */
-	public java.lang.String getOtherCountry() {
-		return (java.lang.String) getValue(49);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_email</code>.
-	 */
-	public void setOtherEmail(java.lang.String value) {
-		setValue(50, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_email</code>.
-	 */
-	public java.lang.String getOtherEmail() {
-		return (java.lang.String) getValue(50);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.other_im</code>.
-	 */
-	public void setOtherIm(java.lang.String value) {
-		setValue(51, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.other_im</code>.
-	 */
-	public java.lang.String getOtherIm() {
-		return (java.lang.String) getValue(51);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.url</code>.
-	 */
-	public void setUrl(java.lang.String value) {
-		setValue(52, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.url</code>.
-	 */
-	public java.lang.String getUrl() {
-		return (java.lang.String) getValue(52);
-	}
-
-	/**
-	 * Setter for <code>contacts.contacts.notes</code>.
-	 */
-	public void setNotes(java.lang.String value) {
-		setValue(53, value);
-	}
-
-	/**
-	 * Getter for <code>contacts.contacts.notes</code>.
-	 */
-	public java.lang.String getNotes() {
-		return (java.lang.String) getValue(53);
-	}
-
-	/**
 	 * Setter for <code>contacts.contacts.revision_sequence</code>.
 	 */
 	public void setRevisionSequence(java.lang.Integer value) {
-		setValue(54, value);
+		setValue(4, value);
 	}
 
 	/**
 	 * Getter for <code>contacts.contacts.revision_sequence</code>.
 	 */
 	public java.lang.Integer getRevisionSequence() {
-		return (java.lang.Integer) getValue(54);
+		return (java.lang.Integer) getValue(4);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.public_uid</code>.
+	 */
+	public void setPublicUid(java.lang.String value) {
+		setValue(5, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.public_uid</code>.
+	 */
+	public java.lang.String getPublicUid() {
+		return (java.lang.String) getValue(5);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.is_list</code>.
+	 */
+	public void setIsList(java.lang.Boolean value) {
+		setValue(6, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.is_list</code>.
+	 */
+	public java.lang.Boolean getIsList() {
+		return (java.lang.Boolean) getValue(6);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.searchfield</code>.
+	 */
+	public void setSearchfield(java.lang.String value) {
+		setValue(7, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.searchfield</code>.
+	 */
+	public java.lang.String getSearchfield() {
+		return (java.lang.String) getValue(7);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.title</code>.
+	 */
+	public void setTitle(java.lang.String value) {
+		setValue(8, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.title</code>.
+	 */
+	public java.lang.String getTitle() {
+		return (java.lang.String) getValue(8);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.firstname</code>.
+	 */
+	public void setFirstname(java.lang.String value) {
+		setValue(9, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.firstname</code>.
+	 */
+	public java.lang.String getFirstname() {
+		return (java.lang.String) getValue(9);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.lastname</code>.
+	 */
+	public void setLastname(java.lang.String value) {
+		setValue(10, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.lastname</code>.
+	 */
+	public java.lang.String getLastname() {
+		return (java.lang.String) getValue(10);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.nickname</code>.
+	 */
+	public void setNickname(java.lang.String value) {
+		setValue(11, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.nickname</code>.
+	 */
+	public java.lang.String getNickname() {
+		return (java.lang.String) getValue(11);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.gender</code>.
+	 */
+	public void setGender(java.lang.String value) {
+		setValue(12, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.gender</code>.
+	 */
+	public java.lang.String getGender() {
+		return (java.lang.String) getValue(12);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.company</code>.
+	 */
+	public void setCompany(java.lang.String value) {
+		setValue(13, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.company</code>.
+	 */
+	public java.lang.String getCompany() {
+		return (java.lang.String) getValue(13);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.function</code>.
+	 */
+	public void setFunction(java.lang.String value) {
+		setValue(14, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.function</code>.
+	 */
+	public java.lang.String getFunction() {
+		return (java.lang.String) getValue(14);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_address</code>.
+	 */
+	public void setWorkAddress(java.lang.String value) {
+		setValue(15, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_address</code>.
+	 */
+	public java.lang.String getWorkAddress() {
+		return (java.lang.String) getValue(15);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_city</code>.
+	 */
+	public void setWorkCity(java.lang.String value) {
+		setValue(16, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_city</code>.
+	 */
+	public java.lang.String getWorkCity() {
+		return (java.lang.String) getValue(16);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_state</code>.
+	 */
+	public void setWorkState(java.lang.String value) {
+		setValue(17, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_state</code>.
+	 */
+	public java.lang.String getWorkState() {
+		return (java.lang.String) getValue(17);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_postalcode</code>.
+	 */
+	public void setWorkPostalcode(java.lang.String value) {
+		setValue(18, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_postalcode</code>.
+	 */
+	public java.lang.String getWorkPostalcode() {
+		return (java.lang.String) getValue(18);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_country</code>.
+	 */
+	public void setWorkCountry(java.lang.String value) {
+		setValue(19, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_country</code>.
+	 */
+	public java.lang.String getWorkCountry() {
+		return (java.lang.String) getValue(19);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_telephone</code>.
+	 */
+	public void setWorkTelephone(java.lang.String value) {
+		setValue(20, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_telephone</code>.
+	 */
+	public java.lang.String getWorkTelephone() {
+		return (java.lang.String) getValue(20);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_telephone2</code>.
+	 */
+	public void setWorkTelephone2(java.lang.String value) {
+		setValue(21, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_telephone2</code>.
+	 */
+	public java.lang.String getWorkTelephone2() {
+		return (java.lang.String) getValue(21);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_fax</code>.
+	 */
+	public void setWorkFax(java.lang.String value) {
+		setValue(22, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_fax</code>.
+	 */
+	public java.lang.String getWorkFax() {
+		return (java.lang.String) getValue(22);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_mobile</code>.
+	 */
+	public void setWorkMobile(java.lang.String value) {
+		setValue(23, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_mobile</code>.
+	 */
+	public java.lang.String getWorkMobile() {
+		return (java.lang.String) getValue(23);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_pager</code>.
+	 */
+	public void setWorkPager(java.lang.String value) {
+		setValue(24, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_pager</code>.
+	 */
+	public java.lang.String getWorkPager() {
+		return (java.lang.String) getValue(24);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_email</code>.
+	 */
+	public void setWorkEmail(java.lang.String value) {
+		setValue(25, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_email</code>.
+	 */
+	public java.lang.String getWorkEmail() {
+		return (java.lang.String) getValue(25);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.work_im</code>.
+	 */
+	public void setWorkIm(java.lang.String value) {
+		setValue(26, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.work_im</code>.
+	 */
+	public java.lang.String getWorkIm() {
+		return (java.lang.String) getValue(26);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.assistant</code>.
+	 */
+	public void setAssistant(java.lang.String value) {
+		setValue(27, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.assistant</code>.
+	 */
+	public java.lang.String getAssistant() {
+		return (java.lang.String) getValue(27);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.assistant_telephone</code>.
+	 */
+	public void setAssistantTelephone(java.lang.String value) {
+		setValue(28, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.assistant_telephone</code>.
+	 */
+	public java.lang.String getAssistantTelephone() {
+		return (java.lang.String) getValue(28);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.department</code>.
+	 */
+	public void setDepartment(java.lang.String value) {
+		setValue(29, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.department</code>.
+	 */
+	public java.lang.String getDepartment() {
+		return (java.lang.String) getValue(29);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.manager</code>.
+	 */
+	public void setManager(java.lang.String value) {
+		setValue(30, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.manager</code>.
+	 */
+	public java.lang.String getManager() {
+		return (java.lang.String) getValue(30);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_address</code>.
+	 */
+	public void setHomeAddress(java.lang.String value) {
+		setValue(31, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_address</code>.
+	 */
+	public java.lang.String getHomeAddress() {
+		return (java.lang.String) getValue(31);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_city</code>.
+	 */
+	public void setHomeCity(java.lang.String value) {
+		setValue(32, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_city</code>.
+	 */
+	public java.lang.String getHomeCity() {
+		return (java.lang.String) getValue(32);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_state</code>.
+	 */
+	public void setHomeState(java.lang.String value) {
+		setValue(33, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_state</code>.
+	 */
+	public java.lang.String getHomeState() {
+		return (java.lang.String) getValue(33);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_postalcode</code>.
+	 */
+	public void setHomePostalcode(java.lang.String value) {
+		setValue(34, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_postalcode</code>.
+	 */
+	public java.lang.String getHomePostalcode() {
+		return (java.lang.String) getValue(34);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_country</code>.
+	 */
+	public void setHomeCountry(java.lang.String value) {
+		setValue(35, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_country</code>.
+	 */
+	public java.lang.String getHomeCountry() {
+		return (java.lang.String) getValue(35);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_telephone</code>.
+	 */
+	public void setHomeTelephone(java.lang.String value) {
+		setValue(36, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_telephone</code>.
+	 */
+	public java.lang.String getHomeTelephone() {
+		return (java.lang.String) getValue(36);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_telephone2</code>.
+	 */
+	public void setHomeTelephone2(java.lang.String value) {
+		setValue(37, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_telephone2</code>.
+	 */
+	public java.lang.String getHomeTelephone2() {
+		return (java.lang.String) getValue(37);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_fax</code>.
+	 */
+	public void setHomeFax(java.lang.String value) {
+		setValue(38, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_fax</code>.
+	 */
+	public java.lang.String getHomeFax() {
+		return (java.lang.String) getValue(38);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_mobile</code>.
+	 */
+	public void setHomeMobile(java.lang.String value) {
+		setValue(39, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_mobile</code>.
+	 */
+	public java.lang.String getHomeMobile() {
+		return (java.lang.String) getValue(39);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_pager</code>.
+	 */
+	public void setHomePager(java.lang.String value) {
+		setValue(40, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_pager</code>.
+	 */
+	public java.lang.String getHomePager() {
+		return (java.lang.String) getValue(40);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_email</code>.
+	 */
+	public void setHomeEmail(java.lang.String value) {
+		setValue(41, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_email</code>.
+	 */
+	public java.lang.String getHomeEmail() {
+		return (java.lang.String) getValue(41);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.home_im</code>.
+	 */
+	public void setHomeIm(java.lang.String value) {
+		setValue(42, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.home_im</code>.
+	 */
+	public java.lang.String getHomeIm() {
+		return (java.lang.String) getValue(42);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.partner</code>.
+	 */
+	public void setPartner(java.lang.String value) {
+		setValue(43, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.partner</code>.
+	 */
+	public java.lang.String getPartner() {
+		return (java.lang.String) getValue(43);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.birthday</code>.
+	 */
+	public void setBirthday(org.joda.time.LocalDate value) {
+		setValue(44, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.birthday</code>.
+	 */
+	public org.joda.time.LocalDate getBirthday() {
+		return (org.joda.time.LocalDate) getValue(44);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.anniversary</code>.
+	 */
+	public void setAnniversary(org.joda.time.LocalDate value) {
+		setValue(45, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.anniversary</code>.
+	 */
+	public org.joda.time.LocalDate getAnniversary() {
+		return (org.joda.time.LocalDate) getValue(45);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_address</code>.
+	 */
+	public void setOtherAddress(java.lang.String value) {
+		setValue(46, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_address</code>.
+	 */
+	public java.lang.String getOtherAddress() {
+		return (java.lang.String) getValue(46);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_city</code>.
+	 */
+	public void setOtherCity(java.lang.String value) {
+		setValue(47, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_city</code>.
+	 */
+	public java.lang.String getOtherCity() {
+		return (java.lang.String) getValue(47);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_state</code>.
+	 */
+	public void setOtherState(java.lang.String value) {
+		setValue(48, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_state</code>.
+	 */
+	public java.lang.String getOtherState() {
+		return (java.lang.String) getValue(48);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_postalcode</code>.
+	 */
+	public void setOtherPostalcode(java.lang.String value) {
+		setValue(49, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_postalcode</code>.
+	 */
+	public java.lang.String getOtherPostalcode() {
+		return (java.lang.String) getValue(49);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_country</code>.
+	 */
+	public void setOtherCountry(java.lang.String value) {
+		setValue(50, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_country</code>.
+	 */
+	public java.lang.String getOtherCountry() {
+		return (java.lang.String) getValue(50);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_email</code>.
+	 */
+	public void setOtherEmail(java.lang.String value) {
+		setValue(51, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_email</code>.
+	 */
+	public java.lang.String getOtherEmail() {
+		return (java.lang.String) getValue(51);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.other_im</code>.
+	 */
+	public void setOtherIm(java.lang.String value) {
+		setValue(52, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.other_im</code>.
+	 */
+	public java.lang.String getOtherIm() {
+		return (java.lang.String) getValue(52);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.url</code>.
+	 */
+	public void setUrl(java.lang.String value) {
+		setValue(53, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.url</code>.
+	 */
+	public java.lang.String getUrl() {
+		return (java.lang.String) getValue(53);
+	}
+
+	/**
+	 * Setter for <code>contacts.contacts.notes</code>.
+	 */
+	public void setNotes(java.lang.String value) {
+		setValue(54, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.notes</code>.
+	 */
+	public java.lang.String getNotes() {
+		return (java.lang.String) getValue(54);
 	}
 
 	/**
@@ -830,6 +830,20 @@ public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicl
 		return (org.joda.time.DateTime) getValue(57);
 	}
 
+	/**
+	 * Setter for <code>contacts.contacts.display_name</code>.
+	 */
+	public void setDisplayName(java.lang.String value) {
+		setValue(58, value);
+	}
+
+	/**
+	 * Getter for <code>contacts.contacts.display_name</code>.
+	 */
+	public java.lang.String getDisplayName() {
+		return (java.lang.String) getValue(58);
+	}
+
 	// -------------------------------------------------------------------------
 	// Primary key information
 	// -------------------------------------------------------------------------
@@ -856,66 +870,67 @@ public class ContactsRecord extends org.jooq.impl.UpdatableRecordImpl<com.sonicl
 	/**
 	 * Create a detached, initialised ContactsRecord
 	 */
-	public ContactsRecord(java.lang.Integer contactId, java.lang.Integer categoryId, java.lang.String revisionStatus, org.joda.time.DateTime revisionTimestamp, java.lang.String publicUid, java.lang.Boolean isList, java.lang.String searchfield, java.lang.String title, java.lang.String firstname, java.lang.String lastname, java.lang.String nickname, java.lang.String gender, java.lang.String company, java.lang.String function, java.lang.String workAddress, java.lang.String workCity, java.lang.String workState, java.lang.String workPostalcode, java.lang.String workCountry, java.lang.String workTelephone, java.lang.String workTelephone2, java.lang.String workFax, java.lang.String workMobile, java.lang.String workPager, java.lang.String workEmail, java.lang.String workIm, java.lang.String assistant, java.lang.String assistantTelephone, java.lang.String department, java.lang.String manager, java.lang.String homeAddress, java.lang.String homeCity, java.lang.String homeState, java.lang.String homePostalcode, java.lang.String homeCountry, java.lang.String homeTelephone, java.lang.String homeTelephone2, java.lang.String homeFax, java.lang.String homeMobile, java.lang.String homePager, java.lang.String homeEmail, java.lang.String homeIm, java.lang.String partner, org.joda.time.LocalDate birthday, org.joda.time.LocalDate anniversary, java.lang.String otherAddress, java.lang.String otherCity, java.lang.String otherState, java.lang.String otherPostalcode, java.lang.String otherCountry, java.lang.String otherEmail, java.lang.String otherIm, java.lang.String url, java.lang.String notes, java.lang.Integer revisionSequence, java.lang.String href, java.lang.String etag, org.joda.time.DateTime creationTimestamp) {
+	public ContactsRecord(java.lang.Integer contactId, java.lang.Integer categoryId, java.lang.String revisionStatus, org.joda.time.DateTime revisionTimestamp, java.lang.Integer revisionSequence, java.lang.String publicUid, java.lang.Boolean isList, java.lang.String searchfield, java.lang.String title, java.lang.String firstname, java.lang.String lastname, java.lang.String nickname, java.lang.String gender, java.lang.String company, java.lang.String function, java.lang.String workAddress, java.lang.String workCity, java.lang.String workState, java.lang.String workPostalcode, java.lang.String workCountry, java.lang.String workTelephone, java.lang.String workTelephone2, java.lang.String workFax, java.lang.String workMobile, java.lang.String workPager, java.lang.String workEmail, java.lang.String workIm, java.lang.String assistant, java.lang.String assistantTelephone, java.lang.String department, java.lang.String manager, java.lang.String homeAddress, java.lang.String homeCity, java.lang.String homeState, java.lang.String homePostalcode, java.lang.String homeCountry, java.lang.String homeTelephone, java.lang.String homeTelephone2, java.lang.String homeFax, java.lang.String homeMobile, java.lang.String homePager, java.lang.String homeEmail, java.lang.String homeIm, java.lang.String partner, org.joda.time.LocalDate birthday, org.joda.time.LocalDate anniversary, java.lang.String otherAddress, java.lang.String otherCity, java.lang.String otherState, java.lang.String otherPostalcode, java.lang.String otherCountry, java.lang.String otherEmail, java.lang.String otherIm, java.lang.String url, java.lang.String notes, java.lang.String href, java.lang.String etag, org.joda.time.DateTime creationTimestamp, java.lang.String displayName) {
 		super(com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS);
 
 		setValue(0, contactId);
 		setValue(1, categoryId);
 		setValue(2, revisionStatus);
 		setValue(3, revisionTimestamp);
-		setValue(4, publicUid);
-		setValue(5, isList);
-		setValue(6, searchfield);
-		setValue(7, title);
-		setValue(8, firstname);
-		setValue(9, lastname);
-		setValue(10, nickname);
-		setValue(11, gender);
-		setValue(12, company);
-		setValue(13, function);
-		setValue(14, workAddress);
-		setValue(15, workCity);
-		setValue(16, workState);
-		setValue(17, workPostalcode);
-		setValue(18, workCountry);
-		setValue(19, workTelephone);
-		setValue(20, workTelephone2);
-		setValue(21, workFax);
-		setValue(22, workMobile);
-		setValue(23, workPager);
-		setValue(24, workEmail);
-		setValue(25, workIm);
-		setValue(26, assistant);
-		setValue(27, assistantTelephone);
-		setValue(28, department);
-		setValue(29, manager);
-		setValue(30, homeAddress);
-		setValue(31, homeCity);
-		setValue(32, homeState);
-		setValue(33, homePostalcode);
-		setValue(34, homeCountry);
-		setValue(35, homeTelephone);
-		setValue(36, homeTelephone2);
-		setValue(37, homeFax);
-		setValue(38, homeMobile);
-		setValue(39, homePager);
-		setValue(40, homeEmail);
-		setValue(41, homeIm);
-		setValue(42, partner);
-		setValue(43, birthday);
-		setValue(44, anniversary);
-		setValue(45, otherAddress);
-		setValue(46, otherCity);
-		setValue(47, otherState);
-		setValue(48, otherPostalcode);
-		setValue(49, otherCountry);
-		setValue(50, otherEmail);
-		setValue(51, otherIm);
-		setValue(52, url);
-		setValue(53, notes);
-		setValue(54, revisionSequence);
+		setValue(4, revisionSequence);
+		setValue(5, publicUid);
+		setValue(6, isList);
+		setValue(7, searchfield);
+		setValue(8, title);
+		setValue(9, firstname);
+		setValue(10, lastname);
+		setValue(11, nickname);
+		setValue(12, gender);
+		setValue(13, company);
+		setValue(14, function);
+		setValue(15, workAddress);
+		setValue(16, workCity);
+		setValue(17, workState);
+		setValue(18, workPostalcode);
+		setValue(19, workCountry);
+		setValue(20, workTelephone);
+		setValue(21, workTelephone2);
+		setValue(22, workFax);
+		setValue(23, workMobile);
+		setValue(24, workPager);
+		setValue(25, workEmail);
+		setValue(26, workIm);
+		setValue(27, assistant);
+		setValue(28, assistantTelephone);
+		setValue(29, department);
+		setValue(30, manager);
+		setValue(31, homeAddress);
+		setValue(32, homeCity);
+		setValue(33, homeState);
+		setValue(34, homePostalcode);
+		setValue(35, homeCountry);
+		setValue(36, homeTelephone);
+		setValue(37, homeTelephone2);
+		setValue(38, homeFax);
+		setValue(39, homeMobile);
+		setValue(40, homePager);
+		setValue(41, homeEmail);
+		setValue(42, homeIm);
+		setValue(43, partner);
+		setValue(44, birthday);
+		setValue(45, anniversary);
+		setValue(46, otherAddress);
+		setValue(47, otherCity);
+		setValue(48, otherState);
+		setValue(49, otherPostalcode);
+		setValue(50, otherCountry);
+		setValue(51, otherEmail);
+		setValue(52, otherIm);
+		setValue(53, url);
+		setValue(54, notes);
 		setValue(55, href);
 		setValue(56, etag);
 		setValue(57, creationTimestamp);
+		setValue(58, displayName);
 	}
 }

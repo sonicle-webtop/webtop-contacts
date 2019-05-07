@@ -85,7 +85,7 @@ public class ContactsSettings {
 	
 	/**
 	 * [user][default]
-	 * [enum {firstName:FIRST_NAME, lastName:LAST_NAME}](lastName)
+	 * [enum {fnln:FIRST_LAST, lnfn:LAST_FIRST, dn:DISPLAY}](dn)
 	 * The field used for ordering.
 	 */
 	public static final String SHOW_BY = "showby";

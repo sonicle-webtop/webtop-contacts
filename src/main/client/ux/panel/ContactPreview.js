@@ -155,7 +155,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					layout: 'anchor',
 					items: [{
 						xtype: 'sointialsavatarfield',
-						bind: '{record.fullName}',
+						bind: '{record.avatarName}',
 						margin: 5,
 						avatarSize: 110
 					}]
@@ -164,7 +164,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					layout: 'anchor',
 					items: [{
 						xtype: 'displayfield',
-						bind: '{record.fullName}',
+						bind: '{record.avatarName}',
 						fieldStyle: {
 							fontSize: '2em'
 						}
@@ -206,7 +206,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					items: [{
 						xtype: 'sointialsavatarfield',
 						bind: {
-							value: '{record.fullName}',
+							value: '{record.avatarName}',
 							hidden: '{record.pic}'
 						},
 						margin: 5,
@@ -230,7 +230,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					layout: 'anchor',
 					items: [{
 						xtype: 'displayfield',
-						bind: '{record.fullName}',
+						bind: '{record.avatarName}',
 						fieldStyle: {
 							fontSize: '2em'
 						}
@@ -266,7 +266,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							iconCls: 'wtcon-icon-writeMessage',
 							handler: function() {
 								var vm = me.getVM();
-								me.fireEvent('writeemail', me, [vm.get('foMainEmail')], vm.get('record.id'), vm.get('record.fullName'));
+								me.fireEvent('writeemail', me, [vm.get('foMainEmail')], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 							}
 						}, {
 							xtype: 'button',
@@ -293,7 +293,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							iconCls: 'wt-icon-call',
 							handler: function() {
 								var vm = me.getVM();
-								me.fireEvent('callnumber', me, vm.get('foMainTelephone'), vm.get('record.id'), vm.get('record.fullName'));
+								me.fireEvent('callnumber', me, vm.get('foMainTelephone'), vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 							}
 						}, {
 							xtype: 'button',
@@ -307,7 +307,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							iconCls: 'wt-icon-sms',
 							handler: function() {
 								var vm = me.getVM();
-								me.fireEvent('writesms', me, vm.get('foMobile'), vm.get('record.id'), vm.get('record.fullName'));
+								me.fireEvent('writesms', me, vm.get('foMobile'), vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 							}
 						}]
 					}],
@@ -364,7 +364,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								listeners: {
 									cellvalueclick: function(s, val) {
 										var vm = me.getVM();
-										me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.fullName'));
+										me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 									}
 								},
 								margin: '0 5 0 5',
@@ -387,7 +387,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								listeners: {
 									cellvalueclick: function(s, val) {
 										var vm = me.getVM();
-										me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.fullName'));
+										me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 									}
 								},
 								margin: '0 5 0 5',
@@ -402,6 +402,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								},
 								labelField: 'type',
 								labelTexts: {
+									fullName: me.mys.res('contactPreview.single.fullName'),
 									company: me.mys.res('contactPreview.single.company'),
 									workadd: me.mys.res('contactPreview.single.workAddress'),
 									homeadd: me.mys.res('contactPreview.single.homeAddress')
@@ -410,7 +411,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 									cellvalueclick: function(s, val, rec) {
 										if (['workadd', 'homeadd'].indexOf(rec.get('type')) !== -1) {
 											var vm = me.getVM();
-											me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.fullName'));
+											me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 										}
 									}
 								},

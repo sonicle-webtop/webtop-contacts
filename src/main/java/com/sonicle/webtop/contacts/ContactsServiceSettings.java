@@ -68,7 +68,7 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 	}
 	
 	public ShowBy getDefaultShowBy() {
-		return getEnum(DEFAULT_PREFIX + SHOW_BY, ShowBy.LASTNAME, ShowBy.class);
+		return getEnum(DEFAULT_PREFIX + SHOW_BY, ShowBy.DISPLAY, ShowBy.class);
 	}
 	
 	public String getDefaultAnniversaryReminderDelivery() {

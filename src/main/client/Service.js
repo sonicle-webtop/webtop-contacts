@@ -83,8 +83,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		
 		me.activeView = me.getVar('view');
-		Sonicle.webtop.contacts.model.GridContact.setOrderField((me.getVar('showBy') === 'firstName' ? 'firstName' : 'lastName'));
-		
+		Sonicle.webtop.contacts.model.GridContact.setShowBy(me.getVar('showBy'));
 		me.initActions();
 		me.initCxm();
 		
@@ -308,7 +307,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					dataIndex: 'id',
 					sortable: false,
 					groupable: false,
-					nameField: 'fullName',
+					nameField: 'avatarName',
 					getPictureUrl: function(v, rec) {
 						return (rec.get('pic') === true) ? Ext.String.urlAppend(WTF.processBinUrl(me.ID, 'GetContactPicture'), Ext.Object.toQueryString({id: v})) : null;
 					},
@@ -325,7 +324,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					text: me.res('gpcontacts.contacts.lbl'),
 					flex: 2,
 					tpl: [
-						'<div>{fullName}<span class="wtcon-cell-caption" style="padding-left:10px;">{[this.getCompany(values)]}</span></div>',
+						'<div>{calcDisplayName}<span class="wtcon-cell-caption" style="padding-left:10px;">{[this.getCompany(values)]}</span></div>',
 						'<div class="wtcon-cell-caption">{[this.getRefs(values)]}</div>',
 						{
 							getCompany: function(values) {
@@ -1633,6 +1632,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			obj.calendarId = evt.calendarId;
 		}
 		*/
+		if (Ext.isDefined(cnt.displayName)) obj.displayName = cnt.displayName;
 		if (Ext.isDefined(cnt.title)) obj.title = cnt.title;
 		if (Ext.isDefined(cnt.firstName)) obj.firstName = cnt.firstName;
 		if (Ext.isDefined(cnt.lastName)) obj.lastName = cnt.lastName;

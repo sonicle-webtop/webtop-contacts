@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ContactsVcards extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord> {
 
-	private static final long serialVersionUID = -3645173;
+	private static final long serialVersionUID = 958176824;
 
 	/**
 	 * The reference instance of <code>contacts.contacts_vcards</code>
@@ -77,6 +77,14 @@ public class ContactsVcards extends org.jooq.impl.TableImpl<com.sonicle.webtop.c
 	@Override
 	public java.util.List<org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord>> getKeys() {
 		return java.util.Arrays.<org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord>>asList(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_VCARDS_PKEY);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public java.util.List<org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord, ?>> getReferences() {
+		return java.util.Arrays.<org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord, ?>>asList(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_VCARDS__CONTACTS_VCARDS_CONTACT_ID_FKEY);
 	}
 
 	/**

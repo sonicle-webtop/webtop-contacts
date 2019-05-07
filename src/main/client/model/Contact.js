@@ -48,6 +48,7 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 	fields: [
 		WTF.field('id', 'int', false),
 		WTF.field('categoryId', 'int', false),
+		WTF.field('displayName', 'string', true),
 		WTF.field('title', 'string', true),
 		WTF.field('firstName', 'string', true),
 		WTF.field('lastName', 'string', true),
@@ -95,7 +96,10 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('url', 'string', true),
 		WTF.field('notes', 'string', true),
 		WTF.field('picture', 'string', true),
-		WTF.field('_profileId', 'string', false)
+		WTF.field('_profileId', 'string', false),
+		WTF.calcField('calcDisplayName', 'string', ['firstName', 'lastName'], function(v, rec) {
+			return Sonicle.String.join(' ', rec.get('firstName'), rec.get('lastName'));
+		})
 	],
 	hasMany: [
 		WTF.hasMany('attachments', 'Sonicle.webtop.contacts.model.ContactAttachment')

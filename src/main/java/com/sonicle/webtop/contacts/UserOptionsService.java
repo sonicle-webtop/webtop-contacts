@@ -82,7 +82,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 				
 				// Main
 				if (pl.map.has("view")) cus.setView(pl.data.view);
-				if (pl.map.has("showBy")) cus.setShowBy(pl.data.view);
+				if (pl.map.has("showBy")) cus.setShowBy(pl.data.showBy);
 				if (pl.map.has("anniversaryReminderDelivery")) cus.setAnniversaryReminderDelivery(pl.data.anniversaryReminderDelivery);
 				if (pl.map.has("anniversaryReminderTime")) cus.setAnniversaryReminderTime(hmf.parseLocalTime(pl.data.anniversaryReminderTime));
 				

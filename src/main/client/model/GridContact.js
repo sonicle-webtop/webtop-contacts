@@ -39,6 +39,7 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.roField('uid', 'string'),
 		WTF.roField('id', 'int'),
 		WTF.roField('isList', 'boolean'),
+		WTF.roField('displayName', 'string'),
 		WTF.roField('title', 'string'),
 		WTF.roField('firstName', 'string'),
 		WTF.roField('lastName', 'string'),
@@ -57,20 +58,52 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec) {
 			return Sonicle.String.join(' ', rec.get('title'), rec.get('firstName'), rec.get('lastName'));
 		}),
+		WTF.calcField('avatarName', 'string', ['displayName'], function(v, rec) {
+			return Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
+					rec.get('isList') === true,
+					rec.get('firstName'),
+					rec.get('lastName'),
+					rec.get('displayName')
+			);
+		}),
+		WTF.calcField('calcDisplayName', 'string', ['displayName'], function(v, rec) {
+			return Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
+					rec.get('isList') === true,
+					rec.get('firstName'),
+					rec.get('lastName'),
+					rec.get('displayName')
+			);
+		}),
 		WTF.calcField('letter', 'string', ['firstName', 'lastName'], function(v, rec) {
-			return Sonicle.webtop.contacts.model.GridContact.calcLetter(rec);
+			var name = Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
+					rec.get('isList') === true,
+					rec.get('firstName'),
+					rec.get('lastName'),
+					rec.get('displayName')
+			);
+			return Sonicle.webtop.contacts.model.GridContact.calcLetter(name);
 		})
 	],
 	
 	statics: {
-		orderField: 'lastName',
+		showBy: 'dn',
 		
-		setOrderField: function(value) {
-			this.orderField = value;
+		setShowBy: function(value) {
+			this.showBy = value;
 		},
 		
-		calcLetter: function(mo) {
-			var name = mo.get(this.orderField), match;
+		calcDisplayName: function(isList, firstName, lastName, displayName) {
+			var sb = this.showBy;
+			if (!isList && sb === 'fnln') {
+				return Sonicle.String.join(' ', firstName, lastName);
+			} else if (!isList && sb === 'lnfn') {
+				return Sonicle.String.join(', ', lastName, firstName);
+			} else {
+				return displayName;
+			}
+		},
+		
+		calcLetter: function(name) {
 			if (Ext.isEmpty(name)) {
 				return '*';
 			} else {

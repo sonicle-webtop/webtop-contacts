@@ -37,8 +37,9 @@ Ext.define('Sonicle.webtop.contacts.store.ShowBy', {
 	
 	model: 'WTA.model.Simple',
 	data: [
-		['lastName',''],
-		['firstName','']
+		['fnln',''],
+		['lnfn',''],
+		['dn','']
 	],
 	
 	constructor: function(cfg) {

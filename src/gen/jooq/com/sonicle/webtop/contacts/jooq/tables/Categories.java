@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord> {
 
-	private static final long serialVersionUID = -620848673;
+	private static final long serialVersionUID = 424183765;
 
 	/**
 	 * The reference instance of <code>contacts.categories</code>
@@ -52,6 +52,11 @@ public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.conta
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Boolean> BUILT_IN = createField("built_in", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaulted(true), this, "");
 
 	/**
+	 * The column <code>contacts.categories.provider</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PROVIDER = createField("provider", org.jooq.impl.SQLDataType.VARCHAR.length(20).nullable(false).defaulted(true), this, "");
+
+	/**
 	 * The column <code>contacts.categories.name</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> NAME = createField("name", org.jooq.impl.SQLDataType.VARCHAR.length(100).nullable(false), this, "");
@@ -75,11 +80,6 @@ public class Categories extends org.jooq.impl.TableImpl<com.sonicle.webtop.conta
 	 * The column <code>contacts.categories.is_default</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Boolean> IS_DEFAULT = createField("is_default", org.jooq.impl.SQLDataType.BOOLEAN.nullable(false).defaulted(true), this, "");
-
-	/**
-	 * The column <code>contacts.categories.provider</code>.
-	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.String> PROVIDER = createField("provider", org.jooq.impl.SQLDataType.VARCHAR.length(20).nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>contacts.categories.parameters</code>.

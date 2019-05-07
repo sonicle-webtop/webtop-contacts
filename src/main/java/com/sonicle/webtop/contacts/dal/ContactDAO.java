@@ -337,8 +337,10 @@ AND (ccnts.href IS NULL)
 		DSLContext dsl = getDSL(con);
 		Condition typeCndt = toContactTypeCondition(type);
 		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		ArrayList<SortField<?>> sortFlds = toSortClause(orderFields);
 		
 		// Define sort fields
+		/*
 		ArrayList<SortField<?>> sortFlds = new ArrayList<>();
 		// TODO: maybe sort on joined field otherwise order could be inaccurate (company can be an ID)
 		for (OrderField of : orderFields) {
@@ -350,6 +352,7 @@ AND (ccnts.href IS NULL)
 				sortFlds.add(CONTACTS.COMPANY.asc());
 			}
 		}
+		*/
 		
 		return dsl
 			.select(
@@ -360,6 +363,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS.TITLE,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.NICKNAME,
 				CONTACTS.COMPANY,
 				CONTACTS.FUNCTION,
@@ -729,6 +733,7 @@ AND (ccnts.href IS NULL)
 			.set(CONTACTS.TITLE, item.getTitle())
 			.set(CONTACTS.FIRSTNAME, item.getFirstname())
 			.set(CONTACTS.LASTNAME, item.getLastname())
+			.set(CONTACTS.DISPLAY_NAME, item.getDisplayName())
 			.set(CONTACTS.NICKNAME, item.getNickname())
 			.set(CONTACTS.GENDER, item.getGender())
 			.set(CONTACTS.COMPANY, item.getCompany())
@@ -791,7 +796,9 @@ AND (ccnts.href IS NULL)
 			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
 			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
 			.set(CONTACTS.SEARCHFIELD, item.getSearchfield())
-			.set(CONTACTS.LASTNAME, item.getLastname())
+			.set(CONTACTS.DISPLAY_NAME, item.getDisplayName())
+			.set(CONTACTS.FIRSTNAME, item.getDisplayName())
+			.set(CONTACTS.LASTNAME, item.getDisplayName())
 			.where(
 					CONTACTS.CONTACT_ID.equal(item.getContactId())
 			)
@@ -1000,12 +1007,23 @@ AND (ccnts.href IS NULL)
 	}
 	*/
 
-	public static enum OrderField {
-		FIRSTNAME, LASTNAME, COMPANY
-	}
 	
-	public static enum OrderByMode {
-		FIRSTNAME, LASTNAME, COMPANY
+	
+	private ArrayList<SortField<?>> toSortClause(Collection<OrderField> orderFields) {
+		ArrayList<SortField<?>> fields = new ArrayList<>();
+		// TODO: maybe sort on joined field otherwise order could be inaccurate (company can be an ID)
+		for (OrderField of : orderFields) {
+			if (OrderField.DISPLAYNAME.equals(of)) {
+				fields.add(CONTACTS.DISPLAY_NAME.asc());
+			} else if (OrderField.FIRSTNAME.equals(of)) {
+				fields.add(CONTACTS.FIRSTNAME.asc());
+			} else if (OrderField.LASTNAME.equals(of)) {
+				fields.add(CONTACTS.LASTNAME.asc());
+			} else if (OrderField.COMPANY.equals(of)) {
+				fields.add(CONTACTS.COMPANY.asc());
+			}
+		}
+		return fields;
 	}
 	
 	private Condition toContactTypeCondition(ContactType type) {
@@ -1033,5 +1051,9 @@ AND (ccnts.href IS NULL)
 					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
 		}
 		return cndt;
+	}
+	
+	public static enum OrderField {
+		DISPLAYNAME, FIRSTNAME, LASTNAME, COMPANY
 	}
 }
