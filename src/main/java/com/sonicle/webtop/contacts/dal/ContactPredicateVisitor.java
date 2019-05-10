@@ -58,7 +58,7 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 		switch(fieldName) {
 			case "name":
 				return CONTACTS.FIRSTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
-							.or(CONTACTS.LASTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
+						.or(CONTACTS.LASTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
 				
 			case "company":
 				return CONTACTS.COMPANY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))

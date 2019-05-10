@@ -93,6 +93,7 @@ public class ContactDAO extends BaseDAO {
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.CATEGORY_ID,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME
 			)
@@ -110,8 +111,7 @@ public class ContactDAO extends BaseDAO {
 				)
 			)
 			.orderBy(
-				CONTACTS.LASTNAME.asc(),
-				CONTACTS.FIRSTNAME.asc()
+				CONTACTS.DISPLAY_NAME.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -123,6 +123,7 @@ public class ContactDAO extends BaseDAO {
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.CATEGORY_ID,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME
 			)
@@ -140,8 +141,7 @@ public class ContactDAO extends BaseDAO {
 				)
 			)
 			.orderBy(
-				CONTACTS.LASTNAME.asc(),
-				CONTACTS.FIRSTNAME.asc()
+				CONTACTS.DISPLAY_NAME.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -360,6 +360,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID,
 				CONTACTS.IS_LIST,
 				//CONTACTS.SEARCHFIELD,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.TITLE,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
@@ -426,6 +427,7 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(VContactCompany.class);
 	}
 	
+	/*
 	public List<VContact> viewByCategoryPattern(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
@@ -450,6 +452,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID,
 				CONTACTS.IS_LIST,
 				CONTACTS.SEARCHFIELD,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.TITLE,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
@@ -484,12 +487,12 @@ AND (ccnts.href IS NULL)
 				)
 			)
 			.orderBy(
-				CONTACTS.LASTNAME.asc(),
-				CONTACTS.FIRSTNAME.asc(),
+				CONTACTS.DISPLAY_NAME.asc(),
 				CONTACTS.COMPANY.asc()
 			)
 			.fetchInto(VContact.class);
 	}
+	*/
 
 	public List<VContact> viewRecipientsByFieldCategoryQuery(Connection con, RecipientFieldType fieldType, RecipientFieldCategory fieldCategory, Collection<Integer> categoryIds, String queryText) throws DAOException {
 		DSLContext dsl = getDSL(con);
@@ -507,12 +510,13 @@ AND (ccnts.href IS NULL)
 				patt2 = "%" + queryText + "%";
 			}
 			
-			searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
+			searchCndt = CONTACTS.DISPLAY_NAME.likeIgnoreCase(patt1)
+				.or(CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
 				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
 				.or(targetField.likeIgnoreCase(patt1)
 				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
 				.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)
-			))));
+			)))));
 			
 			if (!fieldType.equals(RecipientFieldType.EMAIL)) {
 				searchCndt = searchCndt.or(
@@ -538,6 +542,7 @@ AND (ccnts.href IS NULL)
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.IS_LIST,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
 				targetField
