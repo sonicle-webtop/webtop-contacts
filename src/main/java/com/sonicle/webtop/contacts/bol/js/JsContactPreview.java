@@ -38,7 +38,6 @@ import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import org.jooq.tools.StringUtils;
@@ -81,7 +80,7 @@ public class JsContactPreview {
 		this.title = item.getTitle();
 		this.firstName = item.getFirstName();
 		this.lastName = item.getLastName();
-		this.company = itemCompany.getCompanyDescription();
+		if (itemCompany != null) this.company = itemCompany.getCompanyDescription();
 		this.data1 = new ArrayList<>();
 		addValueItem(this.data1, "rcp1", item.getEmail1(), "work");
 		addValueItem(this.data1, "rcp2", item.getEmail2(), "home");
@@ -92,7 +91,7 @@ public class JsContactPreview {
 		addValueItem(this.data2, "tel3", item.getHomeTelephone1(), "home");
 		this.data3 = new ArrayList<>();
 		addValueItem(this.data3, "fn", item.getFullName(false), "fullName");
-		addValueItem(this.data3, "comp", itemCompany.getCompanyDescription(), "company");
+		if (itemCompany != null) addValueItem(this.data3, "comp", itemCompany.getCompanyDescription(), "company");
 		addValueItem(this.data3, "add1", item.getWorkFullAddress(), "workadd");
 		addValueItem(this.data3, "add2", item.getHomeFullAddress(), "homeadd");
 		this.notes = item.getNotes();

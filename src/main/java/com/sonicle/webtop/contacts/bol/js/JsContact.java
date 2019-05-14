@@ -36,6 +36,7 @@ import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
+import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import org.apache.commons.lang3.StringUtils;
@@ -144,7 +145,7 @@ public class JsContact {
 		otherCity = contact.getOtherCity();
 		otherState = contact.getOtherState();
 		otherCountry = contact.getOtherCountry();
-		company = contact.getCompany();
+		company = contact.hasCompany() ? contact.getCompany().getIdOrValue() : null;
 		function = contact.getFunction();
 		department = contact.getDepartment();
 		manager = contact.getManager();
@@ -212,7 +213,7 @@ public class JsContact {
 		item.setOtherCity(js.otherCity);
 		item.setOtherState(js.otherState);
 		item.setOtherCountry(js.otherCountry);
-		item.setCompany(js.company);
+		if (!StringUtils.isBlank(js.company)) item.setCompany(new ContactCompany(null, js.company));
 		item.setFunction(js.function);
 		item.setDepartment(js.department);
 		item.setManager(js.manager);

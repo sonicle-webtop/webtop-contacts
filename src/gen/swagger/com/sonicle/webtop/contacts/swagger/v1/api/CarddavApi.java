@@ -19,7 +19,7 @@ import javax.validation.Valid;
 
 @Path("/carddav")
 @Api(description = "the carddav API")
-@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2019-01-18T14:59:42.003+01:00")
+@javax.annotation.Generated(value = "io.swagger.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2019-05-13T11:03:17.919+02:00")
 public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST

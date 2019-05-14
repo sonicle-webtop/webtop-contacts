@@ -84,7 +84,7 @@ public class JsGridContact {
 			this.firstName = this.displayName;
 			this.lastName = this.displayName;
 		}
-		this.company = item.getCompany();
+		this.company = item.getCompanyDescription();
 		this.function = item.getFunction();
 		
 		if (GridView.WORK.equals(view)) {

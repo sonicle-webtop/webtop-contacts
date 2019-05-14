@@ -4,7 +4,8 @@
 -- Update structure for categories
 -- ----------------------------
 ALTER TABLE "contacts"."contacts"
-ADD COLUMN "display_name" varchar(255);
+ADD COLUMN "display_name" varchar(255),
+ADD COLUMN "company_master_data_id" varchar(36);
 
 -- ----------------------------
 -- Fix data for contacts

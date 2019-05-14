@@ -22,7 +22,6 @@ public class Keys {
 	// -------------------------------------------------------------------------
 
 	public static final org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Integer> IDENTITY_CATEGORIES = Identities0.IDENTITY_CATEGORIES;
-	public static final org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> IDENTITY_CONTACTS = Identities0.IDENTITY_CONTACTS;
 	public static final org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, java.lang.Integer> IDENTITY_LIST_RECIPIENTS = Identities0.IDENTITY_LIST_RECIPIENTS;
 
 	// -------------------------------------------------------------------------
@@ -55,7 +54,6 @@ public class Keys {
 
 	private static class Identities0 extends org.jooq.impl.AbstractKeys {
 		public static org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord, java.lang.Integer> IDENTITY_CATEGORIES = createIdentity(com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES, com.sonicle.webtop.contacts.jooq.tables.Categories.CATEGORIES.CATEGORY_ID);
-		public static org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> IDENTITY_CONTACTS = createIdentity(com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS, com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS.CONTACT_ID);
 		public static org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, java.lang.Integer> IDENTITY_LIST_RECIPIENTS = createIdentity(com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS, com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS.LIST_RECIPIENT_ID);
 	}
 

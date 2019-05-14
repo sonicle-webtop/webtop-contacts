@@ -57,12 +57,13 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 	protected Condition toCondition(String fieldName, ComparisonOperator operator, Collection<?> values, ComparisonNode node) {
 		switch(fieldName) {
 			case "name":
-				return CONTACTS.FIRSTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
+				return CONTACTS.DISPLAY_NAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
+						.or(CONTACTS.FIRSTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.LASTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
 				
 			case "company":
 				return CONTACTS.COMPANY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
-						.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
+						.or(CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
 				
 			case "email":
 				return CONTACTS.WORK_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
@@ -79,7 +80,11 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 						.or(CONTACTS.HOME_PAGER.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_FAX.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
 			case "any":
-				return CONTACTS.SEARCHFIELD.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
+				return CONTACTS.DISPLAY_NAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
+						.or(CONTACTS.FIRSTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.LASTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.COMPANY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.WORK_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))

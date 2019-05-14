@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = -1407886496;
+	private static final long serialVersionUID = -1763492532;
 
 	/**
 	 * The reference instance of <code>contacts.contacts</code>
@@ -34,7 +34,7 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	/**
 	 * The column <code>contacts.contacts.contact_id</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> CONTACT_ID = createField("contact_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaulted(true), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> CONTACT_ID = createField("contact_id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.category_id</code>.
@@ -50,11 +50,6 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	 * The column <code>contacts.contacts.revision_timestamp</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, org.joda.time.DateTime> REVISION_TIMESTAMP = createField("revision_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false), this, "", new com.sonicle.webtop.core.jooq.DateTimeConverter());
-
-	/**
-	 * The column <code>contacts.contacts.revision_sequence</code>.
-	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> REVISION_SEQUENCE = createField("revision_sequence", org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaulted(true), this, "");
 
 	/**
 	 * The column <code>contacts.contacts.public_uid</code>.
@@ -307,6 +302,11 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> NOTES = createField("notes", org.jooq.impl.SQLDataType.VARCHAR.length(2000), this, "");
 
 	/**
+	 * The column <code>contacts.contacts.revision_sequence</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> REVISION_SEQUENCE = createField("revision_sequence", org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaulted(true), this, "");
+
+	/**
 	 * The column <code>contacts.contacts.href</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> HREF = createField("href", org.jooq.impl.SQLDataType.VARCHAR.length(2048), this, "");
@@ -325,6 +325,11 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	 * The column <code>contacts.contacts.display_name</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> DISPLAY_NAME = createField("display_name", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
+
+	/**
+	 * The column <code>contacts.contacts.company_master_data_id</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> COMPANY_MASTER_DATA_ID = createField("company_master_data_id", org.jooq.impl.SQLDataType.VARCHAR.length(36), this, "");
 
 	/**
 	 * Create a <code>contacts.contacts</code> table reference
@@ -346,14 +351,6 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 
 	private Contacts(java.lang.String alias, org.jooq.Table<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> aliased, org.jooq.Field<?>[] parameters) {
 		super(alias, com.sonicle.webtop.contacts.jooq.Contacts.CONTACTS, aliased, parameters, "");
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public org.jooq.Identity<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.Integer> getIdentity() {
-		return com.sonicle.webtop.contacts.jooq.Keys.IDENTITY_CONTACTS;
 	}
 
 	/**

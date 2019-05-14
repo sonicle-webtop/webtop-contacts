@@ -81,6 +81,7 @@ CREATE TABLE "contacts"."contacts" (
 "nickname" varchar(60),
 "gender" varchar(6),
 "company" varchar(60),
+"company_master_data_id" varchar(36),
 "function" varchar(50),
 "work_address" varchar(100),
 "work_city" varchar(50),

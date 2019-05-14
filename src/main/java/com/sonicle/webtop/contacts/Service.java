@@ -84,6 +84,7 @@ import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactLookup;
+import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactType;
@@ -94,7 +95,6 @@ import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
-import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.CoreUserSettings;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -736,13 +736,13 @@ public class Service extends BaseService {
 				} else {
 					Contact contact = manager.getContact(contactId);
 					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
-					ContactCompany contactCompany = !StringUtils.isBlank(contact.getCompany()) ? manager.getContactCompany(contactId) : new ContactCompany();
+					ContactCompany company = contact.hasCompany() ? manager.getContactCompany(contactId) : null;
 					
 					ShareFolderCategory fold = folders.get(contact.getCategoryId());
 					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
 					
-					new JsonResult(new JsContactPreview(fold, pset, contact, contactCompany)).printTo(out);
+					new JsonResult(new JsContactPreview(fold, pset, contact, company)).printTo(out);
 				}
 			}
 			
@@ -1202,7 +1202,6 @@ public class Service extends BaseService {
 	
 	public void processPrintContactsDetail(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBContactDetail> items = new ArrayList<>();
-		CoreManager core = WT.getCoreManager();
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
@@ -1212,10 +1211,12 @@ public class Service extends BaseService {
 			for (Integer id : ids) {
 				Contact contact = manager.getContact(id);
 				ContactPictureWithBytes picture = null;
+				ContactCompany company = null;
 				
 				category = manager.getCategory(contact.getCategoryId());
 				if (contact.hasPicture()) picture = manager.getContactPicture(id);
-				items.add(new RBContactDetail(core, category, contact, picture));
+				if (contact.hasCompany()) company = manager.getContactCompany(id);
+				items.add(new RBContactDetail(category, contact, company, picture));
 			}
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
@@ -1241,20 +1242,9 @@ public class Service extends BaseService {
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 			VCardOutput vcout = new VCardOutput(prodId);
 			for (Integer id : ids) {
-				final Contact contact = manager.getContact(id);
-				if (contact == null) continue;
-				
-				if (contact.hasPicture()) {
-					ContactPictureWithBytes picture = manager.getContactPicture(id);
-					if (picture != null) {
-						contact.setPicture(picture);
-					} else {
-						logger.warn("Unable to extract picture [{}]", id);
-					}
-				}
-				
-				final String filename = buildContactFilename(contact) + ".vcf";
-				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contact))));
+				ContactObjectWithBean contactObj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
+				final String filename = buildContactFilename(contactObj.getContact()) + ".vcf";
+				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contactObj.getContact()))));
 				
 				items.add(new MapItem()
 					.add("uploadId", upfile.getUploadId())

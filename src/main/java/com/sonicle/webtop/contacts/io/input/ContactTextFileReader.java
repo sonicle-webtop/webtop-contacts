@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts.io.input;
 
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.model.Contact;
+import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.core.io.BeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
@@ -204,7 +205,9 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 		} else if (target.equals("OtherCountry")) {
 			contact.setOtherCountry(value);
 		} else if (target.equals("Company")) {
-			contact.setCompany(value);
+			if (!StringUtils.isBlank(value)) {
+				contact.setCompany(new ContactCompany(null, value));
+			}
 		} else if (target.equals("Function")) {
 			contact.setFunction(value);
 		} else if (target.equals("Department")) {

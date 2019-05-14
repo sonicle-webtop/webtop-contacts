@@ -42,6 +42,7 @@ public class VContactCompany {
 	public Integer contactId;
 	public Integer categoryId;
 	public String company;
+	public String companyRawId;
 	public String masterDataId;
 	public String masterDataDescription;
 
@@ -69,6 +70,14 @@ public class VContactCompany {
 		this.company = company;
 	}
 	
+	public String getCompanyRawId() {
+		return companyRawId;
+	}
+
+	public void setCompanyRawId(String companyRawId) {
+		this.companyRawId = companyRawId;
+	}
+	
 	public String getMasterDataId() {
 		return masterDataId;
 	}
@@ -83,13 +92,5 @@ public class VContactCompany {
 
 	public void setMasterDataDescription(String masterDataDescription) {
 		this.masterDataDescription = masterDataDescription;
-	}
-	
-	public String getCompanyId() {
-		return getMasterDataId();
-	}
-	
-	public String getCompanyDescription() {
-		return LangUtils.coalesceStrings(getMasterDataDescription(), getCompany());
 	}
 }

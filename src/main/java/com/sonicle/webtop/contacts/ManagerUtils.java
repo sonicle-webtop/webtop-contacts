@@ -51,6 +51,7 @@ import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactCompanyJoined;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactsList;
@@ -198,7 +199,7 @@ public class ManagerUtils {
 		if ((tgt != null) && (src != null)) {
 			fillBaseContact(tgt, src);
 			tgt.setIsList(src.getIsList());
-			tgt.setCompany(src.getCompanyDescription());
+			tgt.setCompany(createContactCompany(src));
 			tgt.setFunction(src.getFunction());
 			tgt.setWorkCity(src.getWorkCity());
 			tgt.setWorkTelephone(src.getWorkTelephone());
@@ -225,22 +226,6 @@ public class ManagerUtils {
 			tgt.setLastName(src.getLastname());
 			tgt.setDisplayName(src.getDisplayName());
 			tgt.setNickname(src.getNickname());
-		}
-		return tgt;
-	}
-	
-	static <T extends ContactCompany, S extends VContactCompany> T fillContactCompany(T tgt, S src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setCompanyId(src.getCompanyId());
-			tgt.setCompanyDescription(src.getCompanyDescription());
-		}
-		return tgt;
-	}
-	
-	static <T extends ContactCompany, S extends VContactBase> T fillContactCompany(T tgt, S src) {
-		if ((tgt != null) && (src != null)) {
-			tgt.setCompanyId(src.getCompanyId());
-			tgt.setCompanyDescription(src.getCompanyDescription());
 		}
 		return tgt;
 	}
@@ -292,7 +277,6 @@ public class ManagerUtils {
 			tgt.setOtherCity(src.getOtherCity());
 			tgt.setOtherState(src.getOtherState());
 			tgt.setOtherCountry(src.getOtherCountry());
-			tgt.setCompany(src.getCompany());
 			tgt.setFunction(src.getFunction());
 			tgt.setDepartment(src.getDepartment());
 			tgt.setManager(src.getManager());
@@ -305,8 +289,44 @@ public class ManagerUtils {
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
+			tgt.setCompany(ManagerUtils.createContactCompany(src));
 		}
 		return tgt;
+	}
+	
+	static <T extends Contact> T fillContact(T tgt, VContactObject src) {
+		if ((tgt != null) && (src != null)) {
+			fillContact(tgt, (OContact)src);
+			tgt.setCompany(createContactCompany(src));
+		}
+		return tgt;
+	}
+	
+	static ContactCompany createContactCompany(OContact src) {
+		if (src == null) return null;
+		if ((src.getCompany() != null) || (src.getCompanyMasterDataId() != null)) {
+			return new ContactCompany(src.getCompany(), src.getCompanyMasterDataId());
+		} else {
+			return null;
+		}
+	}
+	
+	static ContactCompany createContactCompany(VContactBase src) {
+		if (src == null) return null;
+		if ((src.getCompany() != null) || (src.getCompanyMasterDataId() != null)) {
+			return new ContactCompanyJoined(src.getCompany(), src.getCompanyMasterDataId(), src.getMasterDataId(), src.getMasterDataDescription());
+		} else {
+			return null;
+		}
+	}
+	
+	static ContactCompany createContactCompany(VContactCompany src) {
+		if (src == null) return null;
+		if ((src.getCompany() != null) || (src.getCompanyRawId() != null)) {
+			return new ContactCompanyJoined(src.getCompany(), src.getCompanyRawId(), src.getMasterDataId(), src.getMasterDataDescription());
+		} else {
+			return null;
+		}
 	}
 	
 	static ContactPicture createContactPicture(OContactPicture src) {
@@ -371,7 +391,6 @@ public class ManagerUtils {
 			tgt.setOtherCity(src.getOtherCity());
 			tgt.setOtherState(src.getOtherState());
 			tgt.setOtherCountry(src.getOtherCountry());
-			tgt.setCompany(src.getCompany());
 			tgt.setFunction(src.getFunction());
 			tgt.setDepartment(src.getDepartment());
 			tgt.setManager(src.getManager());
@@ -384,6 +403,7 @@ public class ManagerUtils {
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
+			// Company needs to be prepared outside
 		}
 		return tgt;
 	}
