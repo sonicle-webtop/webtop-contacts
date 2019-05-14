@@ -140,12 +140,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						name: 'phone',
 						type: 'string',
 						label: me.res('fld-search.field.phone.lbl')
-					}, {
+					}/*, {
 						name: 'any',
 						type: 'string',
 						textSink: true,
 						label: me.res('fld-search.field.any.lbl')
-					}],
+					}*/],
 					tooltip: me.res('fld-search.tip'),
 					emptyText: me.res('fld-search.emp'),
 					listeners: {
