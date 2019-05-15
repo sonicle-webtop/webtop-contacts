@@ -1,3 +1,14 @@
+$	5.7.0
+	%	Version 5.7.0
+	*	<h1>New categories layout</h1>
+		<p>New colored checkboxes presented in a new expanded view.</p>
+		<img src="5.7.0_newtree.png"/>
+	*	<h1>New search field</h1>
+		<p>You can now perform wide and aggregates queries on your contacts database.</p>
+		<img src="5.7.0_newsearch.png"/>
+	*	<h1>Field "Display name"</h1>
+		<p>You can now specify the name used to display a contact instead of the full-name.</p>
+		<img src="5.7.0_newdisplayname.png"/>
 $	5.5.2
 	%	Version 5.5.2
 	*	<h1>Move and copy multiple contacts</h1>
