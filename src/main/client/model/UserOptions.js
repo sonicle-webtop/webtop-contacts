@@ -34,7 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.model.UserOptions', {
 	extend: 'WTA.sdk.model.UserOptions',
 	
-	proxy: WT.optionsProxy('com.sonicle.webtop.contacts'),
+	proxy: WTF.optionsProxy('com.sonicle.webtop.contacts'),
 	fields: [
 		WTF.field('showBy', 'string', false),
 		WTF.field('view', 'string', false),

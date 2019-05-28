@@ -62,6 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
@@ -161,7 +162,7 @@ public class Eas extends EasApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactObjectWithBean card = (ContactObjectWithBean)manager.getContactObject(folderId, id, ContactObjectOutputType.BEAN);
+			ContactObjectWithBean card = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
 			if (card != null) {
 				return respOk(createSyncContact(card));
 			} else {
@@ -184,11 +185,11 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			Contact newContact = mergeContact(new Contact(), body);
+			Contact newContact = mergeContact(new Contact(), null, body);
 			newContact.setCategoryId(folderId);
 			
 			Contact contact = manager.addContact(newContact);
-			ContactObject card = manager.getContactObject(folderId, contact.getContactId(), ContactObjectOutputType.STAT);
+			ContactObject card = manager.getContactObject(contact.getContactId(), ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();
 			
 			return respOkCreated(createSyncContactStat(card));
@@ -211,11 +212,13 @@ public class Eas extends EasApi {
 		try {
 			Contact contact = manager.getContact(id, false, false);
 			if (contact == null) return respErrorNotFound();
+			ContactCompany contactCompany = null;
+			if (contact.hasCompany()) contactCompany = manager.getContactCompany(id);
 			
-			mergeContact(contact, body);
+			mergeContact(contact, contactCompany, body);
 			manager.updateContact(contact, false, false);
 			
-			ContactObject card = manager.getContactObject(folderId, id, ContactObjectOutputType.STAT);
+			ContactObject card = manager.getContactObject(id, ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();
 			
 			return respOk(createSyncContactStat(card));
@@ -273,7 +276,6 @@ public class Eas extends EasApi {
 	
 	private SyncContact createSyncContact(ContactObjectWithBean card) {
 		Contact cont = card.getContact();
-		ContactCompany ccomp = card.getContactCompany();
 		return new SyncContact()
 				.id(card.getContactId())
 				.etag(buildEtag(card.getRevisionTimestamp()))
@@ -311,8 +313,8 @@ public class Eas extends EasApi {
 				.otherCity(cont.getOtherCity())
 				.otherState(cont.getOtherState())
 				.otherCountry(cont.getOtherCountry())
-				.companyId(ccomp.getCompanyId())
-				.companyName(ccomp.getCompanyDescription())
+				.companyId(cont.hasCompany() ? cont.getCompany().getCompanyId(): null)
+				.companyName(cont.hasCompany() ? cont.getCompany().getCompanyDescription() : null)
 				.function(cont.getFunction())
 				.department(cont.getDepartment())
 				.assistant(cont.getAssistant())
@@ -325,54 +327,68 @@ public class Eas extends EasApi {
 				.notes(cont.getNotes());
 	}
 	
-	private Contact mergeContact(Contact tgt, SyncContactUpdate src) {
-		tgt.setTitle(src.getTitle());
-		tgt.setFirstName(src.getFirstName());
-		tgt.setLastName(src.getLastName());
-		tgt.setNickname(src.getNickname());
+	private Contact mergeContact(Contact orig, ContactCompany origCompany, SyncContactUpdate src) {
+		orig.setTitle(src.getTitle());
+		orig.setFirstName(src.getFirstName());
+		orig.setLastName(src.getLastName());
+		orig.setNickname(src.getNickname());
 		//tgt.setGender(EnumUtils.forSerializedName(src.getGender(), Contact.Gender.class));
-		tgt.setMobile(src.getMobile());
-		tgt.setPager1(src.getPager1());
-		tgt.setPager2(src.getPager2());
-		tgt.setEmail1(src.getEmail1());
-		tgt.setEmail2(src.getEmail2());
-		tgt.setEmail3(src.getEmail3());
-		tgt.setInstantMsg1(src.getIm1());
-		tgt.setInstantMsg2(src.getIm2());
-		tgt.setInstantMsg3(src.getIm3());
-		tgt.setWorkAddress(src.getWorkAddress());
-		tgt.setWorkPostalCode(src.getWorkPostalCode());
-		tgt.setWorkCity(src.getWorkCity());
-		tgt.setWorkState(src.getWorkState());
-		tgt.setWorkCountry(src.getWorkCountry());
-		tgt.setWorkTelephone1(src.getWorkTelephone1());
-		tgt.setWorkTelephone2(src.getWorkTelephone2());
-		tgt.setWorkFax(src.getWorkFax());
-		tgt.setHomeAddress(src.getHomeAddress());
-		tgt.setHomePostalCode(src.getHomePostalCode());
-		tgt.setHomeCity(src.getHomeCity());
-		tgt.setHomeState(src.getHomeState());
-		tgt.setHomeCountry(src.getHomeCountry());
-		tgt.setHomeTelephone1(src.getHomeTelephone1());
-		tgt.setHomeTelephone2(src.getHomeTelephone2());
-		tgt.setHomeFax(src.getHomeFax());
-		tgt.setOtherAddress(src.getOtherAddress());
-		tgt.setOtherPostalCode(src.getOtherPostalCode());
-		tgt.setOtherCity(src.getOtherCity());
-		tgt.setOtherState(src.getOtherState());
-		tgt.setOtherCountry(src.getOtherCountry());
-		tgt.setCompany(src.getCompanyName());
-		tgt.setFunction(src.getFunction());
-		tgt.setDepartment(src.getDepartment());
-		tgt.setManager(src.getManager());
-		tgt.setAssistant(src.getAssistant());
-		tgt.setAssistantTelephone(src.getAssistantTelephone());
-		tgt.setPartner(src.getPartner());
-		tgt.setBirthday(DateTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getBirthday()));
-		tgt.setAnniversary(DateTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getAnniversary()));
-		tgt.setUrl(src.getUrl());
-		tgt.setNotes(src.getNotes());
-		return tgt;
+		orig.setMobile(src.getMobile());
+		orig.setPager1(src.getPager1());
+		orig.setPager2(src.getPager2());
+		orig.setEmail1(src.getEmail1());
+		orig.setEmail2(src.getEmail2());
+		orig.setEmail3(src.getEmail3());
+		orig.setInstantMsg1(src.getIm1());
+		orig.setInstantMsg2(src.getIm2());
+		orig.setInstantMsg3(src.getIm3());
+		orig.setWorkAddress(src.getWorkAddress());
+		orig.setWorkPostalCode(src.getWorkPostalCode());
+		orig.setWorkCity(src.getWorkCity());
+		orig.setWorkState(src.getWorkState());
+		orig.setWorkCountry(src.getWorkCountry());
+		orig.setWorkTelephone1(src.getWorkTelephone1());
+		orig.setWorkTelephone2(src.getWorkTelephone2());
+		orig.setWorkFax(src.getWorkFax());
+		orig.setHomeAddress(src.getHomeAddress());
+		orig.setHomePostalCode(src.getHomePostalCode());
+		orig.setHomeCity(src.getHomeCity());
+		orig.setHomeState(src.getHomeState());
+		orig.setHomeCountry(src.getHomeCountry());
+		orig.setHomeTelephone1(src.getHomeTelephone1());
+		orig.setHomeTelephone2(src.getHomeTelephone2());
+		orig.setHomeFax(src.getHomeFax());
+		orig.setOtherAddress(src.getOtherAddress());
+		orig.setOtherPostalCode(src.getOtherPostalCode());
+		orig.setOtherCity(src.getOtherCity());
+		orig.setOtherState(src.getOtherState());
+		orig.setOtherCountry(src.getOtherCountry());
+		orig.setFunction(src.getFunction());
+		orig.setDepartment(src.getDepartment());
+		orig.setManager(src.getManager());
+		orig.setAssistant(src.getAssistant());
+		orig.setAssistantTelephone(src.getAssistantTelephone());
+		orig.setPartner(src.getPartner());
+		orig.setBirthday(DateTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getBirthday()));
+		orig.setAnniversary(DateTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getAnniversary()));
+		orig.setUrl(src.getUrl());
+		orig.setNotes(src.getNotes());
+		
+		if (origCompany == null) {
+			if (!StringUtils.isBlank(src.getCompanyId()) || !StringUtils.isBlank(src.getCompanyName())) {
+				orig.setCompany(new ContactCompany(src.getCompanyName(), src.getCompanyId()));
+			}
+		} else {
+			if (StringUtils.equals(src.getCompanyId(), origCompany.getCompanyId()) || StringUtils.equals(src.getCompanyName(), origCompany.getValue())) {
+				orig.setCompany(origCompany);
+			} else {
+				if (!StringUtils.isBlank(src.getCompanyId()) || !StringUtils.isBlank(src.getCompanyName())) {
+					orig.setCompany(new ContactCompany(src.getCompanyName(), src.getCompanyId()));
+				}
+			}
+		}
+		
+		return orig;
 	}
 	
 	private String buildEtag(DateTime revisionTimestamp) {

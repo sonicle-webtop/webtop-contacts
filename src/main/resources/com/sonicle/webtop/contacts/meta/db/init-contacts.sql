@@ -74,12 +74,14 @@ CREATE TABLE "contacts"."contacts" (
 "public_uid" varchar(255) NOT NULL,
 "is_list" bool DEFAULT false NOT NULL,
 "searchfield" varchar(1024),
+"display_name" varchar(255),
 "title" varchar(30),
 "firstname" varchar(255),
 "lastname" varchar(255),
 "nickname" varchar(60),
 "gender" varchar(6),
 "company" varchar(60),
+"company_master_data_id" varchar(36),
 "function" varchar(50),
 "work_address" varchar(100),
 "work_city" varchar(50),
@@ -295,4 +297,4 @@ ALTER TABLE "contacts"."list_recipients" ADD FOREIGN KEY ("contact_id") REFERENC
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.4.0');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.7.0');

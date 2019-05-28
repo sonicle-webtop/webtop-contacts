@@ -92,4 +92,16 @@ public class OContact extends Contacts {
 		}
 		return null;
 	}
+	
+	public void setCompanyData(CompanyData companyData) {
+		if (companyData != null) {
+			setCompany(companyData.company);
+			setCompanyMasterDataId(companyData.companyMasterDataId);
+		}
+	}
+	
+	public static class CompanyData {
+		public String company;
+		public String companyMasterDataId;
+	}
 }

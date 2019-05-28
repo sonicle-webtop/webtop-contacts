@@ -50,6 +50,7 @@ import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import static com.sonicle.webtop.core.jooq.core.Tables.MASTER_DATA;
@@ -92,6 +93,7 @@ public class ContactDAO extends BaseDAO {
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.CATEGORY_ID,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME
 			)
@@ -109,8 +111,7 @@ public class ContactDAO extends BaseDAO {
 				)
 			)
 			.orderBy(
-				CONTACTS.LASTNAME.asc(),
-				CONTACTS.FIRSTNAME.asc()
+				CONTACTS.DISPLAY_NAME.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -122,6 +123,7 @@ public class ContactDAO extends BaseDAO {
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.CATEGORY_ID,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME
 			)
@@ -139,8 +141,7 @@ public class ContactDAO extends BaseDAO {
 				)
 			)
 			.orderBy(
-				CONTACTS.LASTNAME.asc(),
-				CONTACTS.FIRSTNAME.asc()
+				CONTACTS.DISPLAY_NAME.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -182,12 +183,41 @@ AND (ccnts.href IS NULL)
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
 			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
 				.and(CONTACTS.CATEGORY_ID.equal(categoryId))
+				.and(CONTACTS.IS_LIST.equal(false))
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchOneInto(VContactObject.class);
+	}
+	
+	public VContactObject viewContactObjectById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		
+		return dsl
+			.select(
+				CONTACTS.fields()
+			)
+			.select(
+				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
+				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
+				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
+			)
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
 					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
@@ -221,7 +251,7 @@ AND (ccnts.href IS NULL)
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
 			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
@@ -290,10 +320,31 @@ AND (ccnts.href IS NULL)
 			.fetchInto(VContactObjectChanged.class);
 	}
 	
-	public int countByCategoryTypePattern(Connection con, Collection<Integer> categoryIds, boolean listOnly, String searchMode, String pattern) throws DAOException {
+	public boolean existByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, ContactType type, Condition condition) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		Condition listOnlyCndt = toListOnlyCondition(listOnly);
-		Condition patternCndt = toSearchPatternCondition(pattern);
+		Condition typeCndt = toContactTypeCondition(type);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		return dsl.fetchExists(
+			dsl.selectOne()
+			.from(CONTACTS)
+			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				CONTACTS.CATEGORY_ID.in(categoryIds)
+				.and(typeCndt)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
+				.and(filterCndt)
+			)
+		);
+	}
+	
+	public int countByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, ContactType type, Condition condition) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition typeCndt = toContactTypeCondition(type);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
 		
 		return dsl
 			.selectCount()
@@ -301,24 +352,24 @@ AND (ccnts.href IS NULL)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
-				.and(listOnlyCndt)
+				.and(typeCndt)
 				.and(
 					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
-				.and(
-					patternCndt
-				)
+				.and(filterCndt)
 			)
 			.fetchOne(0, Integer.class);
 	}
 	
-	public List<VContactLookup> viewByCategoryTypePattern(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, boolean listOnly, String searchMode, String pattern, int limit, int offset) throws DAOException {
+	public List<VContactLookup> viewByCategoryTypeCondition(Connection con, Collection<OrderField> orderFields, Collection<Integer> categoryIds, ContactType type, Condition condition, int limit, int offset) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		Condition listOnlyCndt = toListOnlyCondition(listOnly);
-		Condition patternCndt = toSearchPatternCondition(pattern);
+		Condition typeCndt = toContactTypeCondition(type);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		ArrayList<SortField<?>> sortFlds = toSortClause(orderFields);
 		
 		// Define sort fields
+		/*
 		ArrayList<SortField<?>> sortFlds = new ArrayList<>();
 		// TODO: maybe sort on joined field otherwise order could be inaccurate (company can be an ID)
 		for (OrderField of : orderFields) {
@@ -330,18 +381,21 @@ AND (ccnts.href IS NULL)
 				sortFlds.add(CONTACTS.COMPANY.asc());
 			}
 		}
+		*/
 		
 		return dsl
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.CATEGORY_ID,
 				CONTACTS.IS_LIST,
-				//CONTACTS.SEARCHFIELD,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.TITLE,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.NICKNAME,
 				CONTACTS.COMPANY,
+				CONTACTS.COMPANY_MASTER_DATA_ID,
 				CONTACTS.FUNCTION,
 				CONTACTS.WORK_ADDRESS,
 				CONTACTS.WORK_CITY,
@@ -363,18 +417,16 @@ AND (ccnts.href IS NULL)
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
-				.and(listOnlyCndt)
+				.and(typeCndt)
 				.and(
 					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
 					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 				)
-				.and(
-					patternCndt
-				)
+				.and(filterCndt)
 			)
 			.orderBy(sortFlds)
 			.limit(limit)
@@ -389,84 +441,20 @@ AND (ccnts.href IS NULL)
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.CATEGORY_ID,
-				CONTACTS.COMPANY
+				CONTACTS.COMPANY,
+				CONTACTS.COMPANY_MASTER_DATA_ID
 			)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description")
 			)
 			.from(CONTACTS)
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.where(
 				CONTACTS.CONTACT_ID.in(contactId)
 				.and(CONTACTS.IS_LIST.equal(false))
 			)
 			.fetchOneInto(VContactCompany.class);
-	}
-	
-	public List<VContact> viewByCategoryPattern(Connection con, int categoryId, String searchMode, String pattern) throws DAOException {
-		DSLContext dsl = getDSL(con);
-		
-		Condition patternCndt = DSL.trueCondition();
-		if (!StringUtils.isBlank(pattern)) {
-			if (searchMode.equals("lastname")) {
-				//searchCndt = CONTACTS.LASTNAME.lower().like(query);
-				patternCndt = CONTACTS.LASTNAME.lower().likeRegex(pattern);
-				if (pattern.equals("^.*")) patternCndt = patternCndt.or(CONTACTS.LASTNAME.isNull());
-			} else {
-				patternCndt = CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
-					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
-					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
-			}
-		}
-		
-		return dsl
-			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.CATEGORY_ID,
-				CONTACTS.IS_LIST,
-				CONTACTS.SEARCHFIELD,
-				CONTACTS.TITLE,
-				CONTACTS.FIRSTNAME,
-				CONTACTS.LASTNAME,
-				CONTACTS.NICKNAME,
-				CONTACTS.COMPANY,
-				CONTACTS.FUNCTION,
-				CONTACTS.WORK_ADDRESS,
-				CONTACTS.WORK_CITY,
-				CONTACTS.WORK_TELEPHONE,
-				CONTACTS.WORK_MOBILE,
-				CONTACTS.WORK_EMAIL,
-				CONTACTS.HOME_TELEPHONE,
-				CONTACTS.HOME_EMAIL,
-				CONTACTS.BIRTHDAY
-			)
-			.select(
-				MASTER_DATA.DESCRIPTION.as("company_as_master_data_id"),
-				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
-				CATEGORIES.USER_ID.as("category_user_id")
-			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
-			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
-				)
-				.and(
-					patternCndt
-				)
-			)
-			.orderBy(
-				CONTACTS.LASTNAME.asc(),
-				CONTACTS.FIRSTNAME.asc(),
-				CONTACTS.COMPANY.asc()
-			)
-			.fetchInto(VContact.class);
 	}
 
 	public List<VContact> viewRecipientsByFieldCategoryQuery(Connection con, RecipientFieldType fieldType, RecipientFieldCategory fieldCategory, Collection<Integer> categoryIds, String queryText) throws DAOException {
@@ -485,12 +473,13 @@ AND (ccnts.href IS NULL)
 				patt2 = "%" + queryText + "%";
 			}
 			
-			searchCndt = CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
+			searchCndt = CONTACTS.DISPLAY_NAME.likeIgnoreCase(patt1)
+				.or(CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
 				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
 				.or(targetField.likeIgnoreCase(patt1)
 				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
 				.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)
-			))));
+			)))));
 			
 			if (!fieldType.equals(RecipientFieldType.EMAIL)) {
 				searchCndt = searchCndt.or(
@@ -516,6 +505,7 @@ AND (ccnts.href IS NULL)
 			.select(
 				CONTACTS.CONTACT_ID,
 				CONTACTS.IS_LIST,
+				CONTACTS.DISPLAY_NAME,
 				CONTACTS.FIRSTNAME,
 				CONTACTS.LASTNAME,
 				targetField
@@ -525,7 +515,7 @@ AND (ccnts.href IS NULL)
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(
@@ -707,13 +697,14 @@ AND (ccnts.href IS NULL)
 			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
 			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
 			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
-			.set(CONTACTS.SEARCHFIELD, item.getSearchfield())
 			.set(CONTACTS.TITLE, item.getTitle())
 			.set(CONTACTS.FIRSTNAME, item.getFirstname())
 			.set(CONTACTS.LASTNAME, item.getLastname())
+			.set(CONTACTS.DISPLAY_NAME, item.getDisplayName())
 			.set(CONTACTS.NICKNAME, item.getNickname())
 			.set(CONTACTS.GENDER, item.getGender())
 			.set(CONTACTS.COMPANY, item.getCompany())
+			.set(CONTACTS.COMPANY_MASTER_DATA_ID, item.getCompanyMasterDataId())
 			.set(CONTACTS.FUNCTION, item.getFunction())
 			.set(CONTACTS.WORK_ADDRESS, item.getWorkAddress())
 			.set(CONTACTS.WORK_CITY, item.getWorkCity())
@@ -772,8 +763,9 @@ AND (ccnts.href IS NULL)
 			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
 			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
 			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
-			.set(CONTACTS.SEARCHFIELD, item.getSearchfield())
-			.set(CONTACTS.LASTNAME, item.getLastname())
+			.set(CONTACTS.DISPLAY_NAME, item.getDisplayName())
+			.set(CONTACTS.FIRSTNAME, item.getDisplayName())
+			.set(CONTACTS.LASTNAME, item.getDisplayName())
 			.where(
 					CONTACTS.CONTACT_ID.equal(item.getContactId())
 			)
@@ -982,12 +974,32 @@ AND (ccnts.href IS NULL)
 	}
 	*/
 
-	public static enum OrderField {
-		FIRSTNAME, LASTNAME, COMPANY
+	
+	
+	private ArrayList<SortField<?>> toSortClause(Collection<OrderField> orderFields) {
+		ArrayList<SortField<?>> fields = new ArrayList<>();
+		for (OrderField of : orderFields) {
+			if (OrderField.DISPLAYNAME.equals(of)) {
+				fields.add(CONTACTS.DISPLAY_NAME.asc());
+			} else if (OrderField.FIRSTNAME.equals(of)) {
+				fields.add(CONTACTS.FIRSTNAME.asc());
+			} else if (OrderField.LASTNAME.equals(of)) {
+				fields.add(CONTACTS.LASTNAME.asc());
+			} else if (OrderField.COMPANY.equals(of)) {
+				fields.add(CONTACTS.COMPANY.asc());
+			}
+		}
+		return fields;
 	}
 	
-	public static enum OrderByMode {
-		FIRSTNAME, LASTNAME, COMPANY
+	private Condition toContactTypeCondition(ContactType type) {
+		if (ContactType.CONTACT.equals(type)) {
+			return CONTACTS.IS_LIST.isFalse();
+		} else if (ContactType.LIST.equals(type)) {
+			return CONTACTS.IS_LIST.isTrue();
+		} else {
+			return DSL.trueCondition();
+		}
 	}
 	
 	private Condition toListOnlyCondition(boolean listOnly) {
@@ -1000,9 +1012,12 @@ AND (ccnts.href IS NULL)
 			return CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
 					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
 					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern))
-					.or(CONTACTS.SEARCHFIELD.likeIgnoreCase(pattern));
+					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern));
 		}
 		return cndt;
+	}
+	
+	public static enum OrderField {
+		DISPLAYNAME, FIRSTNAME, LASTNAME, COMPANY
 	}
 }

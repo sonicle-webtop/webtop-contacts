@@ -39,9 +39,9 @@ import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
+import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -51,7 +51,7 @@ public class JsGridContact {
 	public String uid;
 	public Integer id;
 	public boolean isList;
-	public String title;
+	public String displayName;
 	public String firstName;
 	public String lastName;
 	public String company;
@@ -75,10 +75,16 @@ public class JsGridContact {
 		this.uid = Id.build(item.getContactId(), item.getIsList()).toString();
 		this.id = item.getContactId();
 		this.isList = item.getIsList();
-		this.title = item.getTitle();
-		this.firstName = item.getFirstName();
-		this.lastName = item.getLastName();
-		this.company = item.getCompany();
+		if (!item.getIsList()) {
+			this.displayName = item.getDisplayName();
+			this.firstName = item.getFirstName();
+			this.lastName = item.getLastName();
+		} else {
+			this.displayName = item.getDisplayName();
+			this.firstName = this.displayName;
+			this.lastName = this.displayName;
+		}
+		this.company = item.getCompanyDescription();
 		this.function = item.getFunction();
 		
 		if (GridView.WORK.equals(view)) {

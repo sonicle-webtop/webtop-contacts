@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord> {
 
-	private static final long serialVersionUID = -1520139336;
+	private static final long serialVersionUID = -1763492532;
 
 	/**
 	 * The reference instance of <code>contacts.contacts</code>
@@ -320,6 +320,16 @@ public class Contacts extends org.jooq.impl.TableImpl<com.sonicle.webtop.contact
 	 * The column <code>contacts.contacts.creation_timestamp</code>.
 	 */
 	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, org.joda.time.DateTime> CREATION_TIMESTAMP = createField("creation_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false).defaulted(true), this, "", new com.sonicle.webtop.core.jooq.DateTimeConverter());
+
+	/**
+	 * The column <code>contacts.contacts.display_name</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> DISPLAY_NAME = createField("display_name", org.jooq.impl.SQLDataType.VARCHAR.length(255), this, "");
+
+	/**
+	 * The column <code>contacts.contacts.company_master_data_id</code>.
+	 */
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord, java.lang.String> COMPANY_MASTER_DATA_ID = createField("company_master_data_id", org.jooq.impl.SQLDataType.VARCHAR.length(36), this, "");
 
 	/**
 	 * Create a <code>contacts.contacts</code> table reference

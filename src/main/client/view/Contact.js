@@ -150,6 +150,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					bind: '{record.lastName}',
 					fieldLabel: me.mys.res('contact.fld-lastName.lbl')
 				}, {
+					xtype: 'textfield',
+					bind: {
+						value: '{record.displayName}',
+						emptyText: '{record.calcDisplayName}'
+					},
+					fieldLabel: me.mys.res('contact.fld-displayName.lbl')
+				}, {
 					xtype: 'formseparator'
 				}, Ext.create(
 					WTF.remoteCombo('id', 'desc', {

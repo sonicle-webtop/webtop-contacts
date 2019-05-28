@@ -68,6 +68,8 @@ public class VContactBase extends OContact {
 		this.hasPicture = hasPicture;
 	}
 	
+	
+	/*
 	public String getCompanyId() {
 		return !StringUtils.isBlank(getMasterDataId()) ? getMasterDataId() : null;
 	}
@@ -75,4 +77,5 @@ public class VContactBase extends OContact {
 	public String getCompanyDescription() {
 		return LangUtils.coalesceStrings(getMasterDataDescription(), getCompany());
 	}
+	*/
 }

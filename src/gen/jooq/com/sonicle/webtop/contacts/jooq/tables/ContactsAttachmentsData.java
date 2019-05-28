@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ContactsAttachmentsData extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord> {
 
-	private static final long serialVersionUID = -972486229;
+	private static final long serialVersionUID = -1640122841;
 
 	/**
 	 * The reference instance of <code>contacts.contacts_attachments_data</code>
@@ -34,7 +34,7 @@ public class ContactsAttachmentsData extends org.jooq.impl.TableImpl<com.sonicle
 	/**
 	 * The column <code>contacts.contacts_attachments_data.contact_attachment_id</code>.
 	 */
-	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord, java.lang.String> CONTACT_ATTACHMENT_ID = createField("contact_attachment_id", org.jooq.impl.SQLDataType.VARCHAR.length(32).nullable(false), this, "");
+	public final org.jooq.TableField<com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsDataRecord, java.lang.String> CONTACT_ATTACHMENT_ID = createField("contact_attachment_id", org.jooq.impl.SQLDataType.VARCHAR.length(36).nullable(false), this, "");
 
 	/**
 	 * The column <code>contacts.contacts_attachments_data.bytes</code>.

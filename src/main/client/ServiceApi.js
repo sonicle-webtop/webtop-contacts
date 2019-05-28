@@ -44,6 +44,7 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	/**
 	 * Adds a new contact.
 	 * @param {Object} data An object containing event data.
+	 * @param {String} [data.displayName]
 	 * @param {String} [data.title]
 	 * @param {String} [data.firstName]
 	 * @param {String} [data.lastName]

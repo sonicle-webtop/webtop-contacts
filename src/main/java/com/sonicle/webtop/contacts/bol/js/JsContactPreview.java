@@ -50,6 +50,7 @@ public class JsContactPreview {
 	public String uid;
 	public Integer id;
 	public boolean isList;
+	public String displayName;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -75,10 +76,11 @@ public class JsContactPreview {
 		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
 		this.id = item.getContactId();
 		this.isList = false;
+		this.displayName = item.getDisplayName();
 		this.title = item.getTitle();
 		this.firstName = item.getFirstName();
 		this.lastName = item.getLastName();
-		this.company = itemCompany.getCompanyDescription();
+		if (itemCompany != null) this.company = itemCompany.getCompanyDescription();
 		this.data1 = new ArrayList<>();
 		addValueItem(this.data1, "rcp1", item.getEmail1(), "work");
 		addValueItem(this.data1, "rcp2", item.getEmail2(), "home");
@@ -88,7 +90,8 @@ public class JsContactPreview {
 		addValueItem(this.data2, "tel2", item.getWorkTelephone1(), "work");
 		addValueItem(this.data2, "tel3", item.getHomeTelephone1(), "home");
 		this.data3 = new ArrayList<>();
-		addValueItem(this.data3, "comp", itemCompany.getCompanyDescription(), "company");
+		addValueItem(this.data3, "fn", item.getFullName(false), "fullName");
+		if (itemCompany != null) addValueItem(this.data3, "comp", itemCompany.getCompanyDescription(), "company");
 		addValueItem(this.data3, "add1", item.getWorkFullAddress(), "workadd");
 		addValueItem(this.data3, "add2", item.getHomeFullAddress(), "homeadd");
 		this.notes = item.getNotes();
@@ -108,7 +111,7 @@ public class JsContactPreview {
 		this.uid = JsGridContact.Id.build(item.getContactId(), true).toString();
 		this.id = item.getContactId();
 		this.isList = true;
-		this.firstName = item.getName();
+		this.displayName = item.getName();
 		this.data1 = new ArrayList<>();
 		this.data2 = new ArrayList<>();
 		this.data3 = new ArrayList<>();

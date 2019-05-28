@@ -36,6 +36,7 @@ import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
+import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +49,7 @@ import org.joda.time.format.DateTimeFormatter;
 public class JsContact {
 	public Integer id;
 	public Integer categoryId;
+	public String displayName;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -107,6 +109,7 @@ public class JsContact {
 		
 		id = contact.getContactId();
 		categoryId = contact.getCategoryId();
+		displayName = contact.getDisplayName();
 		title = contact.getTitle();
 		firstName = contact.getFirstName();
 		lastName = contact.getLastName();
@@ -142,7 +145,7 @@ public class JsContact {
 		otherCity = contact.getOtherCity();
 		otherState = contact.getOtherState();
 		otherCountry = contact.getOtherCountry();
-		company = contact.getCompany();
+		company = contact.hasCompany() ? contact.getCompany().getIdOrValue() : null;
 		function = contact.getFunction();
 		department = contact.getDepartment();
 		manager = contact.getManager();
@@ -174,6 +177,7 @@ public class JsContact {
 		Contact item = new Contact();
 		item.setContactId(js.id);
 		item.setCategoryId(js.categoryId);
+		item.setDisplayName(js.displayName);
 		item.setTitle(js.title);
 		item.setFirstName(js.firstName);
 		item.setLastName(js.lastName);
@@ -209,7 +213,7 @@ public class JsContact {
 		item.setOtherCity(js.otherCity);
 		item.setOtherState(js.otherState);
 		item.setOtherCountry(js.otherCountry);
-		item.setCompany(js.company);
+		if (!StringUtils.isBlank(js.company)) item.setCompany(new ContactCompany(null, js.company));
 		item.setFunction(js.function);
 		item.setDepartment(js.department);
 		item.setManager(js.manager);

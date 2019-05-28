@@ -33,7 +33,8 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
-import com.sonicle.commons.web.json.JsonResult;
+import com.sonicle.commons.web.json.bean.IntegerSet;
+import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
@@ -41,7 +42,6 @@ import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.text.MessageFormat;
-import java.util.HashSet;
 import org.joda.time.LocalTime;
 
 /**
@@ -104,28 +104,20 @@ public class ContactsUserSettings extends BaseUserSettings {
 		return setString(ANNIVERSARY_REMINDER_DELIVERY, value);
 	}
 	
-	public String getSelectedRoot() {
-		return getString(SELECTED_ROOT, null);
+	public StringSet getInactiveCategoryRoots() {
+		return getObject(INACTIVE_CATEGORY_ROOTS, new StringSet(), StringSet.class);
 	}
 	
-	public boolean setSelectedRoot(String value) {
-		return setString(SELECTED_ROOT, value);
+	public boolean setInactiveCategoryRoots(StringSet value) {
+		return setObject(INACTIVE_CATEGORY_ROOTS, value, StringSet.class);
 	}
 	
-	public CheckedRoots getCheckedCategoryRoots() {
-		return getObject(CHECKED_CATEGORY_ROOTS, new CheckedRoots(), CheckedRoots.class);
+	public IntegerSet getInactiveCategoryFolders() {
+		return getObject(INACTIVE_CATEGORY_FOLDERS, new IntegerSet(), IntegerSet.class);
 	}
 	
-	public boolean setCheckedCategoryRoots(CheckedRoots value) {
-		return setObject(CHECKED_CATEGORY_ROOTS, value, CheckedRoots.class);
-	}
-	
-	public CheckedFolders getCheckedCategoryFolders() {
-		return getObject(CHECKED_CATEGORY_FOLDERS, new CheckedFolders(), CheckedFolders.class);
-	}
-	
-	public boolean setCheckedCategoryFolders(CheckedFolders value) {
-		return setObject(CHECKED_CATEGORY_FOLDERS, value, CheckedFolders.class);
+	public boolean setInactiveCategoryFolders(IntegerSet value) {
+		return setObject(INACTIVE_CATEGORY_FOLDERS, value, IntegerSet.class);
 	}
 	
 	public GroupMeta getGridContactsGroupInfo(String view) {
@@ -156,31 +148,37 @@ public class ContactsUserSettings extends BaseUserSettings {
 		}
 	}
 	
-	public static class CheckedRoots extends HashSet<String> {
-		public CheckedRoots() {
-			super();
-		}
-		
-		public static CheckedRoots fromJson(String value) {
-			return JsonResult.gson.fromJson(value, CheckedRoots.class);
-		}
-		
-		public static String toJson(CheckedRoots value) {
-			return JsonResult.gson.toJson(value, CheckedRoots.class);
-		}
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
+	 * @return
+	 */
+	@Deprecated
+	public StringSet getCheckedCategoryRoots() {
+		return getObject(CHECKED_CATEGORY_ROOTS, null, StringSet.class);
 	}
 	
-	public static class CheckedFolders extends HashSet<Integer> {
-		public CheckedFolders() {
-			super();
-		}
-		
-		public static CheckedFolders fromJson(String value) {
-			return JsonResult.gson.fromJson(value, CheckedFolders.class);
-		}
-		
-		public static String toJson(CheckedFolders value) {
-			return JsonResult.gson.toJson(value, CheckedFolders.class);
-		}
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
+	 */
+	@Deprecated
+	public void clearCheckedCategoryRoots() {
+		clear(CHECKED_CATEGORY_ROOTS);
+	}
+	
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
+	 * @return
+	 */
+	@Deprecated
+	public IntegerSet getCheckedCategoryFolders() {
+		return getObject(CHECKED_CATEGORY_FOLDERS, null, IntegerSet.class);
+	}
+	
+	/**
+	 * @deprecated Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
+	 */
+	@Deprecated
+	public void clearCheckedCategoryFolders() {
+		clear(CHECKED_CATEGORY_FOLDERS);
 	}
 }

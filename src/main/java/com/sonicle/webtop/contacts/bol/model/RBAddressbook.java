@@ -70,7 +70,7 @@ public class RBAddressbook {
 		this.title = contact.getTitle();
 		this.firstName = contact.getFirstName();
 		this.lastName = contact.getLastName();
-		this.company = contact.getCompany();
+		this.company = contact.getCompanyDescription();
 		this.workTelephone = contact.getWorkTelephone();
 		this.workMobile = contact.getWorkMobile();
 		this.workEmail = contact.getWorkEmail();

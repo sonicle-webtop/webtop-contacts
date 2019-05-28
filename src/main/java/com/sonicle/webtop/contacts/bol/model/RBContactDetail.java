@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts.bol.model;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.model.MasterData;
@@ -42,7 +43,6 @@ import com.sonicle.webtop.core.sdk.WTException;
 import com.sonicle.webtop.core.util.JRHelper;
 import java.awt.Image;
 import java.util.Date;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -104,7 +104,7 @@ public class RBContactDetail {
 	public String notes;
 	public Image picture;
 		
-	public RBContactDetail(CoreManager coreMgr, Category category, Contact contact, ContactPictureWithBytes picture) throws WTException {
+	public RBContactDetail(Category category, Contact contact, ContactCompany company, ContactPictureWithBytes picture) throws WTException {
 		this.categoryId = contact.getCategoryId();
 		this.categoryName = category.getName();
 		this.categoryColor = Category.getHexColor(category.getColor());
@@ -147,7 +147,7 @@ public class RBContactDetail {
 		this.otherCity = contact.getOtherCity();
 		this.otherState = contact.getOtherState();
 		this.otherCountry = contact.getOtherCountry();
-		this.company = StringUtils.defaultIfBlank(lookupMasterDataDescription(coreMgr, contact.getCompany()), contact.getCompany());	
+		if (company != null) this.company = company.getCompanyDescription();
 		this.function = contact.getFunction();
 		this.department = contact.getDepartment();
 		this.manager = contact.getManager();

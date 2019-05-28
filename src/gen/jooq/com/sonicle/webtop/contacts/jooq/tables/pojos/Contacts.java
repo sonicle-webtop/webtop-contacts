@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables.pojos;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts implements java.io.Serializable {
 
-	private static final long serialVersionUID = -2044779498;
+	private static final long serialVersionUID = -197470110;
 
 	private java.lang.Integer       contactId;
 	private java.lang.Integer       categoryId;
@@ -76,6 +76,8 @@ public class Contacts implements java.io.Serializable {
 	private java.lang.String        href;
 	private java.lang.String        etag;
 	private org.joda.time.DateTime  creationTimestamp;
+	private java.lang.String        displayName;
+	private java.lang.String        companyMasterDataId;
 
 	public Contacts() {}
 
@@ -137,7 +139,9 @@ public class Contacts implements java.io.Serializable {
 		java.lang.Integer       revisionSequence,
 		java.lang.String        href,
 		java.lang.String        etag,
-		org.joda.time.DateTime  creationTimestamp
+		org.joda.time.DateTime  creationTimestamp,
+		java.lang.String        displayName,
+		java.lang.String        companyMasterDataId
 	) {
 		this.contactId = contactId;
 		this.categoryId = categoryId;
@@ -197,6 +201,8 @@ public class Contacts implements java.io.Serializable {
 		this.href = href;
 		this.etag = etag;
 		this.creationTimestamp = creationTimestamp;
+		this.displayName = displayName;
+		this.companyMasterDataId = companyMasterDataId;
 	}
 
 	public java.lang.Integer getContactId() {
@@ -661,5 +667,21 @@ public class Contacts implements java.io.Serializable {
 
 	public void setCreationTimestamp(org.joda.time.DateTime creationTimestamp) {
 		this.creationTimestamp = creationTimestamp;
+	}
+
+	public java.lang.String getDisplayName() {
+		return this.displayName;
+	}
+
+	public void setDisplayName(java.lang.String displayName) {
+		this.displayName = displayName;
+	}
+
+	public java.lang.String getCompanyMasterDataId() {
+		return this.companyMasterDataId;
+	}
+
+	public void setCompanyMasterDataId(java.lang.String companyMasterDataId) {
+		this.companyMasterDataId = companyMasterDataId;
 	}
 }

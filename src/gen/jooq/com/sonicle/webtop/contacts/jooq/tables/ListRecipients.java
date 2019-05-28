@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ListRecipients extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord> {
 
-	private static final long serialVersionUID = 701796625;
+	private static final long serialVersionUID = -1536784870;
 
 	/**
 	 * The reference instance of <code>contacts.list_recipients</code>
@@ -100,6 +100,14 @@ public class ListRecipients extends org.jooq.impl.TableImpl<com.sonicle.webtop.c
 	@Override
 	public java.util.List<org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord>> getKeys() {
 		return java.util.Arrays.<org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord>>asList(com.sonicle.webtop.contacts.jooq.Keys.LIST_RECIPIENTS_PKEY);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public java.util.List<org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, ?>> getReferences() {
+		return java.util.Arrays.<org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord, ?>>asList(com.sonicle.webtop.contacts.jooq.Keys.LIST_RECIPIENTS__LIST_RECIPIENTS_CONTACT_ID_FKEY, com.sonicle.webtop.contacts.jooq.Keys.LIST_RECIPIENTS__LIST_RECIPIENTS_RECIPIENT_CONTACT_ID_FKEY);
 	}
 
 	/**

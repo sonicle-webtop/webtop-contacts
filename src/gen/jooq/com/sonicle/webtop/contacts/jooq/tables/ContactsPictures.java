@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq.tables;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ContactsPictures extends org.jooq.impl.TableImpl<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord> {
 
-	private static final long serialVersionUID = 1307843748;
+	private static final long serialVersionUID = -1265598255;
 
 	/**
 	 * The reference instance of <code>contacts.contacts_pictures</code>
@@ -92,6 +92,14 @@ public class ContactsPictures extends org.jooq.impl.TableImpl<com.sonicle.webtop
 	@Override
 	public java.util.List<org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord>> getKeys() {
 		return java.util.Arrays.<org.jooq.UniqueKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord>>asList(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PICTURES_PKEY);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public java.util.List<org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord, ?>> getReferences() {
+		return java.util.Arrays.<org.jooq.ForeignKey<com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord, ?>>asList(com.sonicle.webtop.contacts.jooq.Keys.CONTACTS_PICTURES__CONTACTS_PICTURES_CONTACT_ID_FKEY);
 	}
 
 	/**

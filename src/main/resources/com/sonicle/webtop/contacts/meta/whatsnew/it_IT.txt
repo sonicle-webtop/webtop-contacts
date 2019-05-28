@@ -1,3 +1,14 @@
+$	5.7.0
+	%	Versione 5.7.0
+	*	<h1>Nuovo layout delle categorie</h1>
+		<p>Nuove checkbox colorate presentate in una visualizzazione più intuitiva.</p>
+		<img src="5.7.0_newtree.png"/>
+	*	<h1>Nuovo campo di ricerca</h1>
+		<p>Puoi ora eseguire ricerche generiche ed aggregate sulla tua lista contatti.</p>
+		<img src="5.7.0_newsearch.png"/>
+	*	<h1>Campo "Nome visualizzato"</h1>
+		<p>Sì può ora specificare il nome con cui mostrare il contatto al posto del nome completo.</p>
+		<img src="5.7.0_newdisplayname.png"/>
 $	5.5.2
 	%	Versione 5.5.2
 	*	<h1>Sposta e copia contatti multpli</h1>
