@@ -72,7 +72,8 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 						fn: me.onBlurAutoSave,
 						scope: me
 					}
-				}
+				},
+				needReload: true
 			}), {
 				xtype: 'sospacer'
 			}, {
