@@ -317,6 +317,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 				height: 180
 			}, {
 				xtype: 'tabpanel',
+				border: false,
 				items: [{
 					xtype: 'wtpanel',
 					title: me.mys.res('contactPreview.single.contact.tit'),
