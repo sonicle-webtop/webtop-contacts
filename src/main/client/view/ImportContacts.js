@@ -75,7 +75,6 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	addPathPage: function() {
 		this.callParent();
 		this.getVM().set('path', 'vcf');
-		this.getVM().set('path', 'ldif');
 	},
 	
 	createPages: function(path) {
