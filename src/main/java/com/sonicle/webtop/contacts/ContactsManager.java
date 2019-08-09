@@ -2562,7 +2562,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
 							String personal = vcont.getDisplayName();
-							if (StringUtils.isBlank(personal)) personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
+							if (StringUtils.isBlank(personal)) personal = InternetAddressUtils.toPersonal(vcont.getFirstname(), vcont.getLastname());
 							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value, Recipient.Type.TO, recipientId));
 						}
 					}
