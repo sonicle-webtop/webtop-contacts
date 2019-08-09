@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
+import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -40,7 +41,6 @@ import org.apache.commons.lang3.StringUtils;
  * @author malbinola
  */
 public class VListRecipient extends OListRecipient {
-	
 	private String firstname;
 	private String lastname;
 	private String workEmail;
@@ -49,21 +49,16 @@ public class VListRecipient extends OListRecipient {
 
 	@Override
 	public String getRecipient() {
-		String recipient=super.getRecipient();
-		Integer rcid=getRecipientContactId();
-		if (rcid!=null && rcid>0) {
-			String email=LangUtils.coalesceStrings(workEmail,homeEmail,otherEmail);
-			if (email!=null) {
-				String name=StringUtils.join(new String[] { firstname, lastname}, " ");
-				if (!StringUtils.isEmpty(name)) email=name+" <"+email+">";
-				recipient=email;
+		String recipient = super.getRecipient();
+		if (getRecipientContactId() != null) {
+			String address = LangUtils.coalesceStrings(workEmail, homeEmail, otherEmail);
+			if (!StringUtils.isBlank(address)) {
+				String personal = InternetAddressUtils.buildPersonal(firstname, lastname);
+				recipient = InternetAddressUtils.toFullAddress(address, personal);
 			}
 		}
 		return recipient;
 	}
-	
-	
-	// added fields getters and setters	
 
 	public String getFirstname() {
 		return firstname;
@@ -103,8 +98,5 @@ public class VListRecipient extends OListRecipient {
 
 	public void setOtherEmail(String otherEmail) {
 		this.otherEmail = otherEmail;
-	}
-	
-
-	
+	}	
 }
