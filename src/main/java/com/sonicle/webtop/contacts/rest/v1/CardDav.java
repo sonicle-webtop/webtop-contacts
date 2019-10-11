@@ -118,9 +118,9 @@ public class CardDav extends CarddavApi {
 			
 			return respOk(items);
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getAddressBooks()", currentProfileId, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getAddressBooks()", currentProfileId, t);
+			return respError(t);
 		}
 	}
 
@@ -151,9 +151,9 @@ public class CardDav extends CarddavApi {
 				return respOk(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, null));
 			}
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getAddressBook({})", currentProfileId, addressBookUid, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getAddressBook({})", currentProfileId, addressBookUid, t);
+			return respError(t);
 		}
 	}
 
@@ -175,9 +175,9 @@ public class CardDav extends CarddavApi {
 			// Categories are always added in currentProfile so we do not handle perms here (passing null = full rights)
 			return respOkCreated(createAddressBook(currentProfileId, cat, null, null, null));
 			
-		} catch(WTException ex) {
-			logger.error("[{}] addAddressBook(...)", currentProfileId, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] addAddressBook(...)", currentProfileId, t);
+			return respError(t);
 		}
 	}
 
@@ -207,9 +207,9 @@ public class CardDav extends CarddavApi {
 			
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
-		} catch(WTException ex) {
-			logger.error("[{}] updateAddressBook({}, ...)", RunContext.getRunProfileId(), addressBookUid, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] updateAddressBook({}, ...)", RunContext.getRunProfileId(), addressBookUid, t);
+			return respError(t);
 		}
 	}
 
@@ -233,9 +233,9 @@ public class CardDav extends CarddavApi {
 			
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
-		} catch(WTException ex) {
-			logger.error("[{}] deleteAddressBook({})", RunContext.getRunProfileId(), addressBookUid, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] deleteAddressBook({})", RunContext.getRunProfileId(), addressBookUid, t);
+			return respError(t);
 		}
 	}
 	
@@ -269,9 +269,9 @@ public class CardDav extends CarddavApi {
 				return respOk(items);
 			}
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid, t);
+			return respError(t);
 		}
 	}
 
@@ -300,9 +300,9 @@ public class CardDav extends CarddavApi {
 			CollectionChangeSet<ContactObjectChanged> changes = manager.listContactObjectsChanges(categoryId, since, limit);
 			return respOk(createCardsChanges(revisions.get(categoryId), changes));
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getCardsChanges({}, {}, {})", RunContext.getRunProfileId(), addressBookUid, syncToken, limit, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getCardsChanges({}, {}, {})", RunContext.getRunProfileId(), addressBookUid, syncToken, limit, t);
+			return respError(t);
 		}
 	}
 
@@ -327,9 +327,9 @@ public class CardDav extends CarddavApi {
 				return respErrorNotFound();
 			}
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, t);
+			return respError(t);
 		}
 	}
 
@@ -349,9 +349,9 @@ public class CardDav extends CarddavApi {
 			manager.addContactObject(categoryId, body.getHref(), vCard);
 			return respOk();
 			
-		} catch(WTException ex) {
-			logger.error("[{}] addCard({}, ...)", RunContext.getRunProfileId(), addressBookUid, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] addCard({}, ...)", RunContext.getRunProfileId(), addressBookUid, t);
+			return respError(t);
 		}
 	}
 
@@ -373,9 +373,9 @@ public class CardDav extends CarddavApi {
 			
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
-		} catch(WTException ex) {
-			logger.error("[{}] updateCard({}, {}, ...)", RunContext.getRunProfileId(), addressBookUid, href, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] updateCard({}, {}, ...)", RunContext.getRunProfileId(), addressBookUid, href, t);
+			return respError(t);
 		}
 	}
 
@@ -394,9 +394,9 @@ public class CardDav extends CarddavApi {
 			
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
-		} catch(WTException ex) {
-			logger.error("[{}] deleteCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] deleteCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, t);
+			return respError(t);
 		}
 	}
 	
