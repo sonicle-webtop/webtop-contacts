@@ -1240,7 +1240,8 @@ public class Service extends BaseService {
 			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
-			VCardOutput vcout = new VCardOutput(prodId);
+			VCardOutput vcout = new VCardOutput(prodId)
+					.withEnableCaretEncoding(manager.VCARD_CARETENCODINGENABLED);
 			for (Integer id : ids) {
 				ContactObjectWithBean contactObj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
 				final String filename = buildContactFilename(contactObj.getContact()) + ".vcf";

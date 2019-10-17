@@ -189,6 +189,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String GROUPNAME_CATEGORY = "CATEGORY";
 	
+	public final boolean VCARD_CARETENCODINGENABLED;
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
 	
@@ -196,6 +197,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
+		VCARD_CARETENCODINGENABLED = Boolean.valueOf(WT.getProperties().getProperty("webtop.contacts.vcardwriter.caretencodingenabled", "true"));
 		if (!fastInit) {
 			shareCache.init();
 		}
@@ -804,7 +806,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		String rawData = null;
 		if (vCard != null) {
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
-			rawData = new VCardOutput(prodId).write(vCard);
+			rawData = new VCardOutput(prodId)
+					.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED)
+					.write(vCard);
 		}
 		
 		addContact(ci.contact, rawData);
@@ -1868,7 +1872,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (ContactObjectOutputType.VCARD.equals(outputType)) {
 				ContactObjectWithVCard cc = ManagerUtils.fillContactCard(new ContactObjectWithVCard(), vcont);
 				
-				VCardOutput out = new VCardOutput(VCardUtils.buildProdId(ManagerUtils.getProductName()));
+				VCardOutput out = new VCardOutput(VCardUtils.buildProdId(ManagerUtils.getProductName()))
+						.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED);
 				VCard vCard = out.toVCard(cont);
 				if (vcont.getHasVcard()) {
 					//TODO: in order to be fully compliant, merge generated vcard with the original one in db table!
