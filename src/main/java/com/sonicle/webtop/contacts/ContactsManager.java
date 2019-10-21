@@ -1920,7 +1920,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				masterDataIds.add(contact.getCompany().getCompanyId());
 			}
 		}
-		Map<String, MasterDataLookup> masterDataMap = coreMgr.lookupMasterData(masterDataIds);
+		
+		Map<String, MasterDataLookup> masterDataMap = null;
+		if (!masterDataIds.isEmpty()) masterDataMap = coreMgr.lookupMasterData(masterDataIds);
 		
 		for (Contact contact : contacts) {
 			OContact ocont = ManagerUtils.createOContact(contact);
