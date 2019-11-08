@@ -166,6 +166,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
@@ -335,12 +336,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public List<Integer> listCategoryIds() throws WTException {
-		return new ArrayList<>(listCategories().keySet());
+	public Set<Integer> listCategoryIds() throws WTException {
+		return listCategories().keySet();
 	}
 	
 	@Override
-	public List<Integer> listIncomingCategoryIds() throws WTException {
+	public Set<Integer> listIncomingCategoryIds() throws WTException {
 		return shareCache.getFolderIds();
 	}
 	
