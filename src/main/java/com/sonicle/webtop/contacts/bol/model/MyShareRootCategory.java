@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
+import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 
@@ -45,5 +46,10 @@ public class MyShareRootCategory extends ShareRootCategory {
 	
 	public MyShareRootCategory(UserProfileId ownerId) {
 		super(SHARE_ID, SharePermsRoot.full(), ownerId, null);
+	}
+
+	@Override
+	public String getDescription() {
+		return WT.getUserData(getOwnerProfileId()).getDisplayName();
 	}
 }
