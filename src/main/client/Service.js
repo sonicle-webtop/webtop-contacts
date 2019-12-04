@@ -140,6 +140,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						name: 'phone',
 						type: 'string',
 						label: me.res('fld-search.field.phone.lbl')
+					}, {
+						name: 'address',
+						type: 'string',
+						label: me.res('fld-search.field.address.lbl')
+					}, {
+						name: 'notes',
+						type: 'string',
+						label: me.res('fld-search.field.notes.lbl')
 					}/*, {
 						name: 'any',
 						type: 'string',
