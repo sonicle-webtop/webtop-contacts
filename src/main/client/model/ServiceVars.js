@@ -38,6 +38,7 @@ Ext.define('Sonicle.webtop.contacts.model.ServiceVars', {
 		WTF.field('categoryRemoteSyncEnabled', 'boolean', true),
 		WTF.field('defaultCategorySync', 'string', true),
 		WTF.field('view', 'string', true),
-		WTF.field('showBy', 'string', true)
+		WTF.field('showBy', 'string', true),
+		WTF.field('groupBy', 'string', true)
 	]
 });

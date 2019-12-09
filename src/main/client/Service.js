@@ -83,6 +83,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		
 		me.activeView = me.getVar('view');
+		me.activeGroupBy = me.getVar('groupBy');
 		Sonicle.webtop.contacts.model.GridContact.setShowBy(me.getVar('showBy'));
 		me.initActions();
 		me.initCxm();

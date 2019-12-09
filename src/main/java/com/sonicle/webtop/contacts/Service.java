@@ -202,6 +202,7 @@ public class Service extends BaseService {
 		co.put("defaultCategorySync", EnumUtils.toSerializedName(ss.getDefaultCategorySync()));
 		co.put("view", EnumUtils.toSerializedName(us.getView()));
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
+		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
 		return co;
 	}
 	

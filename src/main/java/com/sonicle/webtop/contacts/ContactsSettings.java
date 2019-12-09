@@ -91,6 +91,13 @@ public class ContactsSettings {
 	public static final String SHOW_BY = "showby";
 	
 	/**
+	 * [user][default]
+	 * [enum {alpha:ALPHABETIC, company:COMPANY}](alphabetic)
+	 * Contacts grid view
+	 */
+	public static final String GROUP_BY = "groupby";
+	
+	/**
 	 * [user]
 	 * [time(hh:mm)]
 	 * Anniversary reminder notification time

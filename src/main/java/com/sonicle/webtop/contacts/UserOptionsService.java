@@ -72,6 +72,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 				// Main
 				jso.view = EnumUtils.toSerializedName(cus.getView());
 				jso.showBy = EnumUtils.toSerializedName(cus.getShowBy());
+				jso.groupBy = EnumUtils.toSerializedName(cus.getGroupBy());
 				jso.anniversaryReminderDelivery = cus.getAnniversaryReminderDelivery();
 				jso.anniversaryReminderTime = hmf.print(cus.getAnniversaryReminderTime());
 				
@@ -85,6 +86,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 				if (pl.map.has("showBy")) cus.setShowBy(pl.data.showBy);
 				if (pl.map.has("anniversaryReminderDelivery")) cus.setAnniversaryReminderDelivery(pl.data.anniversaryReminderDelivery);
 				if (pl.map.has("anniversaryReminderTime")) cus.setAnniversaryReminderTime(hmf.parseLocalTime(pl.data.anniversaryReminderTime));
+				if (pl.map.has("groupBy")) cus.setGroupBy(pl.data.groupBy);
 				
 				new JsonResult().printTo(out);
 			}
