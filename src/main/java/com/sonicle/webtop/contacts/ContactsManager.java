@@ -879,7 +879,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, "READ"))
 					.collect(Collectors.toList());
 			
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor()
+					.withIgnoreCase(true)
+					.withForceStringLikeComparison(true)
+			);
 			
 			con = WT.getConnection(SERVICE_ID);
 			return contDao.existByCategoryTypeCondition(con, okCategoryIds, ContactType.CONTACT, condition);
@@ -921,7 +924,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, "READ"))
 					.collect(Collectors.toList());
 			
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor()
+					.withIgnoreCase(true)
+					.withForceStringLikeComparison(true)
+			);
 			int offset = ManagerUtils.toOffset(page, limit);
 			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
 			

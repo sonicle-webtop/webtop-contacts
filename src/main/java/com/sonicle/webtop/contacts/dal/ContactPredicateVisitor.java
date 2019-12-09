@@ -49,10 +49,6 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 		super();
 	}
 	
-	public ContactPredicateVisitor(boolean ignoreCase) {
-		super(ignoreCase);
-	}
-	
 	@Override
 	protected Condition toCondition(String fieldName, ComparisonOperator operator, Collection<?> values, ComparisonNode node) {
 		switch(fieldName) {
