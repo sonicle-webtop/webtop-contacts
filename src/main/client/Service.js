@@ -1387,6 +1387,19 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		vw.showView();
 	},
 	
+	expandRecipientsList : function(address, opts) {
+		var me = this;
+		
+		WT.ajaxReq(me.ID, 'ExpandRecipientsList', {
+			params: {
+				address: address
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope, [success, json]);
+			}
+		});
+	},
+	
 	addToContactsListUI: function(emails) {
 		var me = this,
 				vw = me.createContactListChooser('');

@@ -101,5 +101,16 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 			dirty: opts.dirty,
 			uploadTag: opts.uploadTag
 		});
+	},
+	
+	/**
+	 * Get emails list from a contact list
+	 */
+	expandRecipientsList: function(data, opts) {		
+		opts = opts || {};
+		this.service.expandRecipientsList(data.address, {
+			callback: opts.callback,
+			scope: opts.scope
+		});
 	}
 });

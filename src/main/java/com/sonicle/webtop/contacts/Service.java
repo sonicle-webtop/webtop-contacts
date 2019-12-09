@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
@@ -95,6 +96,7 @@ import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
+import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.CoreUserSettings;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -110,6 +112,7 @@ import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
+import com.sonicle.webtop.core.model.Recipient;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
@@ -749,6 +752,30 @@ public class Service extends BaseService {
 		} catch(Exception ex) {
 			logger.error("Error in ManageContactDetails", ex);
 			new JsonResult(ex).printTo(out);	
+		}
+	}
+	
+	public void processExpandRecipientsList(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		
+		try {
+			String emailAddress = ServletUtils.getStringParameter(request, "address", true);
+			CoreManager coreManager = WT.getCoreManager();
+			
+			List<Recipient> recipients = coreManager.expandVirtualProviderRecipient(emailAddress);
+			List<String> emails = new ArrayList<>();
+			
+			recipients.forEach(recipient -> {
+				String email = recipient.getAddress();
+				String personal = recipient.getPersonal();
+				
+				String fullAddress = InternetAddressUtils.toFullAddress(email, personal);
+				emails.add(fullAddress);
+			});
+				
+			new JsonResult(emails).printTo(out);
+		} catch (ParameterException | WTException ex) {
+			logger.error("Error in ExpandListRecipient", ex);
+			new JsonResult(false, "Error").printTo(out);
 		}
 	}
 	
