@@ -124,6 +124,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				{
 					xtype: 'wtsearchfield',
 					reference: 'fldsearch',
+					highlightKeywords: ['name', 'company', 'email', 'phone'],
 					fields: [{
 						name: 'name',
 						type: 'string',
@@ -273,6 +274,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						},
 						load: function(s) {
 							me.pnlPreview().setContacts(me.getSelectedContacts(true));
+							me.fldSearch().highlight(me.gpContacts().getEl(), '.x-grid-item-container');
 							/*
 							var rec = me.getSelectedContact(), cmp;
 							if (rec && (s.getById(rec.getId()) === null)) { // Record is selected but no more existent in store
