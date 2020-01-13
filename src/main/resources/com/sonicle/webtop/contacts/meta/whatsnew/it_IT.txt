@@ -1,3 +1,10 @@
+$	5.8.0
+	%	Versione 5.8.0
+	*	<h1>Nuovi campi di ricerca</h1>
+		<p>E' ora possibile cercare per indirizzo e note.</p>
+		<img src="5.8.0_searchbyaddressandnotes.png"/>
+	*	<h1>Ricerca su Azienda migliorata</h1>
+		<p>Ricercando per Azienda, vengono inclusi i campi dipartimento e mansione.</p>
 $	5.7.0
 	%	Versione 5.7.0
 	*	<h1>Nuovo layout delle categorie</h1>
