@@ -213,7 +213,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		onViewLoad: function(s, success) {
 			if (!success) return;
 			var me = this,
-				rg = me.lref('gprecipients');
+				stoRcpt = me.getModel().recipients();
 
 			if (me.isMode(me.MODE_NEW)) {
 				me.getAct('saveClose').setDisabled(false);
@@ -228,7 +228,13 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				me.getAct('delete').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 			}
-			if (rg.getRecipientsCount() === 0) rg.addRecipient('to', '');
+			// Add dummy recipient (if necessary)
+			if (stoRcpt.getCount() === 0) {
+				stoRcpt.add(stoRcpt.createModel({
+					recipientType: 'to',
+					recipient: ''
+				}));
+			}
 			me.lref('fldname').focus(true);
 		}
 	}
