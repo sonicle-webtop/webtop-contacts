@@ -83,6 +83,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		
 		me.activeView = me.getVar('view');
+		me.activeGroupBy = me.getVar('groupBy');
 		Sonicle.webtop.contacts.model.GridContact.setShowBy(me.getVar('showBy'));
 		me.initActions();
 		me.initCxm();
@@ -124,6 +125,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				{
 					xtype: 'wtsearchfield',
 					reference: 'fldsearch',
+					highlightKeywords: ['name', 'company', 'email', 'phone'],
 					fields: [{
 						name: 'name',
 						type: 'string',
@@ -140,6 +142,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						name: 'phone',
 						type: 'string',
 						label: me.res('fld-search.field.phone.lbl')
+					}, {
+						name: 'address',
+						type: 'string',
+						label: me.res('fld-search.field.address.lbl')
+					}, {
+						name: 'notes',
+						type: 'string',
+						label: me.res('fld-search.field.notes.lbl')
 					}/*, {
 						name: 'any',
 						type: 'string',
@@ -265,6 +275,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						},
 						load: function(s) {
 							me.pnlPreview().setContacts(me.getSelectedContacts(true));
+							me.fldSearch().highlight(me.gpContacts().getEl(), '.x-grid-item-container');
 							/*
 							var rec = me.getSelectedContact(), cmp;
 							if (rec && (s.getById(rec.getId()) === null)) { // Record is selected but no more existent in store
@@ -1377,6 +1388,19 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			*/
 		});
 		vw.showView();
+	},
+	
+	expandRecipientsList : function(address, opts) {
+		var me = this;
+		
+		WT.ajaxReq(me.ID, 'ExpandRecipientsList', {
+			params: {
+				address: address
+			},
+			callback: function(success, json) {
+				Ext.callback(opts.callback, opts.scope, [success, json]);
+			}
+		});
 	},
 	
 	addToContactsListUI: function(emails) {

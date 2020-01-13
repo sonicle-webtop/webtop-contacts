@@ -34,8 +34,8 @@
 Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
+		'Sonicle.form.field.ComboBox',
 		'Sonicle.webtop.core.ux.RecipientsGrid',
-		'Sonicle.form.field.ColorComboBox',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.ContactsList',
 		'Sonicle.webtop.core.store.RcptType'
@@ -73,32 +73,42 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					}
 				}),
 				'->',
-				WTF.localCombo('id', 'desc', {
-					reference: 'fldowner',
-					bind: '{record._profileId}',
-					store: {
-						autoLoad: true,
-						model: 'WTA.ux.data.SimpleModel',
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
-					},
-					fieldLabel: me.mys.res('contact.fld-owner.lbl'),
-					labelWidth: 75,
-					listeners: {
-						select: function(s, rec) {
-							me.updateCategoryFilters();
-						}
-					}
-				}),
-				WTF.lookupCombo('categoryId', 'name', {
-					xtype: 'socolorcombo',
+				WTF.lookupCombo('categoryId', '_label', {
+					xtype: 'socombo',
 					reference: 'fldcategory',
 					bind: '{record.categoryId}',
+					listConfig: {
+						displayField: 'name',
+						groupCls: 'wt-theme-text-greyed'
+					},
 					autoLoadOnValue: true,
 					store: {
 						model: me.mys.preNs('model.CategoryLkp'),
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
+						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
+						grouper: {
+							property: '_profileId',
+							sortProperty: '_order'
+						},
+						filters: [{
+							filterFn: function(rec) {
+								var mo = me.getModel();
+								if (mo && me.isMode(me.MODE_NEW)) {
+									return rec.get('_writable');
+								} else if (mo && me.isMode(me.MODE_VIEW)) {
+									if (rec.getId() === mo.get('categoryId')) return true;
+								} else if (mo && me.isMode(me.MODE_EDIT)) {
+									if (rec.getId() === mo.get('categoryId')) return true;
+									if (rec.get('_profileId') === mo.get('_profileId') && rec.get('_writable')) return true;
+								}
+								return false;
+							}
+						}]
 					},
-					colorField: 'color'
+					groupField: '_profileDescription',
+					colorField: 'color',
+					fieldLabel: me.mys.res('contact.fld-category.lbl'),
+					labelAlign: 'right',
+					width: 400
 				})
 			]
 		});
@@ -158,53 +168,6 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		me.on('viewload', me.onViewLoad);
 	},
 	
-	onViewLoad: function(s, success) {
-		if(!success) return;
-		var me = this,
-			rg = me.lref('gprecipients'),
-			owner = me.lref('fldowner');
-		
-		me.updateCategoryFilters();
-		if(me.isMode(me.MODE_NEW)) {
-			me.getAct('saveClose').setDisabled(false);
-			me.getAct('delete').setDisabled(true);
-			owner.setDisabled(false);
-		} else if(me.isMode(me.MODE_VIEW)) {
-			me.getAct('saveClose').setDisabled(true);
-			me.getAct('delete').setDisabled(true);
-			owner.setDisabled(true);
-		} else if(me.isMode(me.MODE_EDIT)) {
-			me.getAct('saveClose').setDisabled(false);
-			me.getAct('delete').setDisabled(false);
-			owner.setDisabled(true);
-		}
-		
-		if (rg.getRecipientsCount()===0)
-			rg.addRecipient('to','');
-		
-		me.lref('fldname').focus(true);
-	},
-	
-	updateCategoryFilters: function() {
-		var me = this,
-				mo = me.getModel(),
-				sto = me.lref('fldcategory').getStore();
-		sto.clearFilter();
-		sto.addFilter([{
-				property: '_profileId',
-				value: mo.get('_profileId')
-			}, {
-				filterFn: function(rec) {
-					if (rec.get('_writable') === false) {
-						if (me.isMode(me.MODE_NEW)) return false;
-						return rec.getId() === mo.get('categoryId');
-					} else {
-						return true;
-					}
-				}
-		}]);
-	},
-	
 	delectContactsList: function() {
 		var me = this,
 				rec = me.getModel();
@@ -244,6 +207,36 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			multiline: 200,
 			value: ''
 		});
+	},
+	
+	privates: {
+		onViewLoad: function(s, success) {
+			if (!success) return;
+			var me = this,
+				stoRcpt = me.getModel().recipients();
+
+			if (me.isMode(me.MODE_NEW)) {
+				me.getAct('saveClose').setDisabled(false);
+				me.getAct('delete').setDisabled(true);
+				me.lref('fldcategory').setReadOnly(false);
+			} else if (me.isMode(me.MODE_VIEW)) {
+				me.getAct('saveClose').setDisabled(true);
+				me.getAct('delete').setDisabled(true);
+				me.lref('fldcategory').setReadOnly(true);
+			} else if (me.isMode(me.MODE_EDIT)) {
+				me.getAct('saveClose').setDisabled(false);
+				me.getAct('delete').setDisabled(false);
+				me.lref('fldcategory').setReadOnly(false);
+			}
+			// Add dummy recipient (if necessary)
+			if (stoRcpt.getCount() === 0) {
+				stoRcpt.add(stoRcpt.createModel({
+					recipientType: 'to',
+					recipient: ''
+				}));
+			}
+			me.lref('fldname').focus(true);
+		}
 	}
 	
 	/*addRecipient: function() {

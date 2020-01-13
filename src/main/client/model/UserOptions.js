@@ -39,6 +39,7 @@ Ext.define('Sonicle.webtop.contacts.model.UserOptions', {
 		WTF.field('showBy', 'string', false),
 		WTF.field('view', 'string', false),
 		WTF.field('anniversaryReminderDelivery', 'string', false),
-		WTF.field('anniversaryReminderTime', 'date', false, {dateFormat: 'H:i'})
+		WTF.field('anniversaryReminderTime', 'date', false, {dateFormat: 'H:i'}),
+		WTF.field('groupBy', 'string', true)
 	]
 });

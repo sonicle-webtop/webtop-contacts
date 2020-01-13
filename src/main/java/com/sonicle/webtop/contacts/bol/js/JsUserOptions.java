@@ -42,6 +42,7 @@ public class JsUserOptions extends JsUserOptionsBase {
 	public String view;
 	
 	public String showBy;
+	public String groupBy;
 	public String anniversaryReminderDelivery;
 	public String anniversaryReminderTime;
 	

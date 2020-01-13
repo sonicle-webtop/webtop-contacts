@@ -53,7 +53,7 @@ public class VListRecipient extends OListRecipient {
 		if (getRecipientContactId() != null) {
 			String address = LangUtils.coalesceStrings(workEmail, homeEmail, otherEmail);
 			if (!StringUtils.isBlank(address)) {
-				String personal = InternetAddressUtils.buildPersonal(firstname, lastname);
+				String personal = InternetAddressUtils.toPersonal(firstname, lastname);
 				recipient = InternetAddressUtils.toFullAddress(address, personal);
 			}
 		}

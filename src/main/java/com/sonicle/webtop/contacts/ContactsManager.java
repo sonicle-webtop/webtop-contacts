@@ -1,4 +1,4 @@
-/* 
+	/* 
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -166,6 +166,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
@@ -174,6 +175,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.subject.Subject;
 import org.imgscalr.Scalr;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -197,7 +199,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
-		VCARD_CARETENCODINGENABLED = Boolean.valueOf(System.getProperties().getProperty("webtop.contacts.vcardwriter.caretencodingenabled", "true"));
+		VCARD_CARETENCODINGENABLED = Boolean.valueOf(WT.getProperties().getProperty("webtop.contacts.vcardwriter.caretencodingenabled", "true"));
 		if (!fastInit) {
 			shareCache.init();
 		}
@@ -335,12 +337,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public List<Integer> listCategoryIds() throws WTException {
-		return new ArrayList<>(listCategories().keySet());
+	public Set<Integer> listCategoryIds() throws WTException {
+		return listCategories().keySet();
 	}
 	
 	@Override
-	public List<Integer> listIncomingCategoryIds() throws WTException {
+	public Set<Integer> listIncomingCategoryIds() throws WTException {
 		return shareCache.getFolderIds();
 	}
 	
@@ -395,7 +397,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			List<Integer> okCategoryIds = categoryIds.stream()
-					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
+					.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, "READ"))
 					.collect(Collectors.toList());
 			
 			con = WT.getConnection(SERVICE_ID);
@@ -414,7 +416,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryFolder(categoryId, "READ");
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "READ");
 			
 			con = WT.getConnection(SERVICE_ID);
 			OCategory ocat = catDao.selectById(con, categoryId);
@@ -436,7 +438,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			OCategory ocat = catdao.selectBuiltInByProfile(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
 			if (ocat == null) return null;
-			checkRightsOnCategoryFolder(ocat.getCategoryId(), "READ");
+			checkRightsOnCategory(ocat.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 			
 			return ManagerUtils.createCategory(ocat);
 			
@@ -448,7 +450,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	public Map<String, String> getCategoryLinks(int categoryId) throws WTException {
-		checkRightsOnCategoryFolder(categoryId, "READ");
+		checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "READ");
 		
 		UserProfile.Data ud = WT.getUserData(getTargetProfileId());
 		String davServerBaseUrl = WT.getDavServerBaseUrl(getTargetProfileId().getDomainId());
@@ -523,7 +525,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			int categoryId = category.getCategoryId();
-			checkRightsOnCategoryFolder(categoryId, "UPDATE");
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "UPDATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			boolean updated = doCategoryUpdate(con, category);
@@ -547,7 +549,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryFolder(categoryId, "DELETE");
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "DELETE");
 			
 			// Retrieve sharing status (for later)
 			String sharingId = buildSharingId(categoryId);
@@ -669,7 +671,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryFolder(categoryId, "READ");
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "READ");
 			
 			ArrayList<ContactObject> items = new ArrayList<>();
 			Map<String, List<VContactObject>> map = contDao.viewContactObjectByCategory(con, categoryId);
@@ -699,7 +701,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryFolder(categoryId, "READ");
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "READ");
 			
 			ArrayList<ContactObjectChanged> inserted = new ArrayList<>();
 			ArrayList<ContactObjectChanged> updated = new ArrayList<>();
@@ -750,7 +752,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			
-			checkRightsOnCategoryFolder(categoryId, "READ");
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, "READ");
 			
 			ArrayList<ContactObjectWithVCard> items = new ArrayList<>();
 			Map<String, List<VContactObject>> map = contDao.viewContactObjectByCategoryHrefs(con, categoryId, hrefs);
@@ -783,7 +785,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			VContactObject cobj = contDao.viewContactObjectById(con, contactId);
 			if (cobj != null) {
-				checkRightsOnCategoryFolder(cobj.getCategoryId(), "READ");
+				checkRightsOnCategory(cobj.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 				return doContactObjectPrepare(con, cobj, outputType);
 			} else {
 				return null;
@@ -874,10 +876,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			List<Integer> okCategoryIds = categoryIds.stream()
-					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
+					.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, "READ"))
 					.collect(Collectors.toList());
 			
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor()
+					.withIgnoreCase(true)
+					.withForceStringLikeComparison(true)
+			);
 			
 			con = WT.getConnection(SERVICE_ID);
 			return contDao.existByCategoryTypeCondition(con, okCategoryIds, ContactType.CONTACT, condition);
@@ -916,10 +921,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			List<Integer> okCategoryIds = categoryIds.stream()
-					.filter(categoryId -> quietlyCheckRightsOnCategoryFolder(categoryId, "READ"))
+					.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, "READ"))
 					.collect(Collectors.toList());
 			
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor(true));
+			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor()
+					.withIgnoreCase(true)
+					.withForceStringLikeComparison(true)
+			);
 			int offset = ManagerUtils.toOffset(page, limit);
 			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
 			
@@ -971,7 +979,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			Contact cont = doContactGet(con, contactId, processPicture, processAttachments);
 			if (cont == null) return null;
-			checkRightsOnCategoryFolder(cont.getCategoryId(), "READ");
+			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 			
 			return cont;
 		
@@ -992,7 +1000,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			Integer catId = contDao.selectCategoryId(con, contactId);
 			if (catId == null) return null;
-			checkRightsOnCategoryFolder(catId, "READ");
+			checkRightsOnCategory(catId, CheckRightsTarget.FOLDER, "READ");
 			
 			OContactAttachment oatt = attDao.selectByIdContact(con, attachmentId, contactId);
 			if (oatt == null) return null;
@@ -1016,7 +1024,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			VContactCompany vcc = contDao.viewContactCompanyByContact(con, contactId);
 			if (vcc == null) return null;
-			checkRightsOnCategoryFolder(vcc.getCategoryId(), "READ");
+			checkRightsOnCategory(vcc.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 			
 			return ManagerUtils.createContactCompany(vcc);
 		
@@ -1039,7 +1047,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(contact.getCategoryId(), "CREATE");
+			checkRightsOnCategory(contact.getCategoryId(), CheckRightsTarget.ELEMENTS, "CREATE");
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			String provider = catDao.selectProviderById(con, contact.getCategoryId());
@@ -1079,7 +1087,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(contact.getCategoryId(), "UPDATE");
+			checkRightsOnCategory(contact.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			String provider = catDao.selectProviderById(con, contact.getCategoryId());
@@ -1108,7 +1116,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			Integer catId = contDao.selectCategoryId(con, contactId);
 			if (catId == null) return null;
-			checkRightsOnCategoryFolder(catId, "READ");
+			checkRightsOnCategory(catId, CheckRightsTarget.FOLDER, "READ");
 			
 			OContactPicture opic = cpicDao.select(con, contactId);
 			if (opic == null) return null;
@@ -1132,7 +1140,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (picture == null) throw new WTException("Picture is null");
 			OContact ocont = contDao.selectById(con, contactId);
 			if (ocont == null || ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
-			checkRightsOnCategoryElements(ocont.getCategoryId(), "UPDATE");
+			checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
 			
 			contDao.updateRevision(con, contactId, BaseDAO.createRevisionTimestamp());
 			doContactPictureUpdate(con, contactId, picture);
@@ -1158,7 +1166,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			OContact cont = contDao.selectById(con, contactId);
 			//TODO: Speed-up below query...
 			if (cont == null || cont.getIsList()) throw new WTException("Contact not found [{0}]", contactId);
-			checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE");
+			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
 			
 			doContactDelete(con, contactId, true);
 			DbUtils.commitQuietly(con);
@@ -1184,7 +1192,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				if (contactId == null) continue;
 				OContact ocont = contDao.selectById(con, contactId);
 				if (ocont == null || ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
-				checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+				checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
 				
 				doContactDelete(con, contactId, true);
 			}
@@ -1211,11 +1219,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			for (Integer contactId : contactIds) {
 				OContact ocont = contDao.selectById(con, contactId);
 				if (ocont == null || ocont.getIsList()) throw new WTException("Unable to get contact [{0}]", contactId);
-				checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
+				checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 				
 				if (copy || (targetCategoryId != ocont.getCategoryId())) {
-					checkRightsOnCategoryElements(targetCategoryId, "CREATE");
-					if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+					checkRightsOnCategory(targetCategoryId, CheckRightsTarget.ELEMENTS, "CREATE");
+					if (!copy) checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
 
 					Contact contact = ManagerUtils.fillContact(new Contact(), ocont);
 					doContactMove(coreMgr, con, copy, contact, targetCategoryId);
@@ -1244,7 +1252,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			OContact ocont = contDao.selectById(con, contactId);
 			if ((ocont == null) || !ocont.getIsList()) return null;
-			checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
+			checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 			
 			List<VListRecipient> vlrecs = lrecDao.viewByContact(con, contactId);
 			return ManagerUtils.createContactsList(ocont, vlrecs);
@@ -1263,7 +1271,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(list.getCategoryId(), "CREATE");
+			checkRightsOnCategory(list.getCategoryId(), CheckRightsTarget.ELEMENTS, "CREATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			
@@ -1294,7 +1302,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			OContact cont = condao.selectById(con, contactsListId);
 			if (cont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
 			if (!cont.getIsList()) throw new WTException("Not a contacts list");
-			checkRightsOnCategoryElements(cont.getCategoryId(), "UPDATE");
+			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
 			
 			boolean updated = doContactsListAddTo(con, list);
 			if (!updated) throw new WTException("Contacts list cannot be updated [{}]", list.getContactId());
@@ -1315,7 +1323,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(list.getCategoryId(), "UPDATE"); // Rights check!
+			checkRightsOnCategory(list.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			boolean updated = doContactsListUpdate(coreMgr, con, list);
@@ -1342,7 +1350,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			OContact cont = condao.selectById(con, contactsListId);
 			if (cont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
 			if (!cont.getIsList()) throw new WTException("Not a contacts list");
-			checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE");
+			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
 			
 			int deleted = doContactDelete(con, contactsListId, true);
 			DbUtils.commitQuietly(con);
@@ -1368,7 +1376,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				OContact cont = condao.selectById(con, contactsListId);
 				if (cont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
 				if (!cont.getIsList()) throw new WTException("Not a contacts list");
-				checkRightsOnCategoryElements(cont.getCategoryId(), "DELETE");
+				checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
 				
 				doContactDelete(con, contactsListId, true);
 			}
@@ -1397,11 +1405,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				OContact ocont = contDao.selectById(con, contactsListId);
 				if (ocont == null) throw new NotFoundException("Contact list not found [{}]", contactsListId);
 				if (!ocont.getIsList()) throw new WTException("Not a contacts list");
-				checkRightsOnCategoryFolder(ocont.getCategoryId(), "READ");
+				checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 				
 				if (copy || (targetCategoryId != ocont.getCategoryId())) {
-					checkRightsOnCategoryElements(targetCategoryId, "CREATE");
-					if (!copy) checkRightsOnCategoryElements(ocont.getCategoryId(), "DELETE");
+					checkRightsOnCategory(targetCategoryId, CheckRightsTarget.ELEMENTS, "CREATE");
+					if (!copy) checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
 				
 					List<VListRecipient> recipients = lrecDao.viewByContact(con, contactsListId);
 					ContactsList clist = ManagerUtils.createContactsList(ocont, recipients);
@@ -1469,8 +1477,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		LogEntries log = new LogEntries();
 		Connection con = null;
 		
-		checkRightsOnCategoryElements(categoryId, "CREATE");
-		if (mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE");
+		checkRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "CREATE");
+		if (mode.equals("copy")) checkRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "DELETE");
 		
 		log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Started at {0}", new DateTime()));
 		
@@ -1629,7 +1637,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 		
 		try {
-			//checkRightsOnCategoryFolder(categoryId, "READ");
+			//checkRightsOnCategoryFolder(categoryId, CheckRightsTarget.FOLDER, "READ");
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			Category cat = ManagerUtils.createCategory(catDao.selectById(con, categoryId));
@@ -1920,7 +1928,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				masterDataIds.add(contact.getCompany().getCompanyId());
 			}
 		}
-		Map<String, MasterDataLookup> masterDataMap = coreMgr.lookupMasterData(masterDataIds);
+		
+		Map<String, MasterDataLookup> masterDataMap = null;
+		if (!masterDataIds.isEmpty()) masterDataMap = coreMgr.lookupMasterData(masterDataIds);
 		
 		for (Contact contact : contacts) {
 			OContact ocont = ManagerUtils.createOContact(contact);
@@ -2340,14 +2350,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (shareId == null) throw new WTException("ownerToRootShareId({0}) -> null", owner);
 		CoreManager coreMgr = WT.getCoreManager(targetPid);
 		if (coreMgr.isShareRootPermitted(shareId, action)) return;
-		//if (core.isShareRootPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
 		
-		throw new AuthException("Action not allowed on root share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
+		UserProfileId runPid = RunContext.getRunProfileId();
+		throw new AuthException("Action '{}' not allowed for '{}' on root share '{}' [{}, {}]", action, runPid, shareId, GROUPNAME_CATEGORY, targetPid.toString());
 	}
 	
-	private boolean quietlyCheckRightsOnCategoryFolder(int categoryId, String action) {
+	private boolean quietlyCheckRightsOnCategory(int categoryId, String action) {
 		try {
-			checkRightsOnCategoryFolder(categoryId, action);
+			checkRightsOnCategory(categoryId, CheckRightsTarget.FOLDER, action);
 			return true;
 		} catch(AuthException ex1) {
 			return false;
@@ -2357,58 +2367,69 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private void checkRightsOnCategoryFolder(int categoryId, String action) throws WTException {
-		UserProfileId targetPid = getTargetProfileId();
-		
-		if (RunContext.isWebTopAdmin()) return;
-		
-		// Skip rights check if running user is resource's owner
-		UserProfileId owner = ownerCache.get(categoryId);
-		if (owner == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
-		if (owner.equals(targetPid)) return;
-		
-		// Checks rights on the wildcard instance (if present)
-		CoreManager core = WT.getCoreManager(targetPid);
-		String wildcardShareId = shareCache.getWildcardShareFolderIdByOwner(owner);
-		if (wildcardShareId != null) {
-			if (core.isShareFolderPermitted(wildcardShareId, action)) return;
-			//if (core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
-		}
-		
-		// Checks rights on category instance
-		String shareId = shareCache.getShareFolderIdByFolderId(categoryId);
-		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if (core.isShareFolderPermitted(shareId, action)) return;
-		//if (core.isShareFolderPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
-		
-		throw new AuthException("Action not allowed on folder share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
+	private enum CheckRightsTarget {
+		FOLDER, ELEMENTS
 	}
 	
-	private void checkRightsOnCategoryElements(int categoryId, String action) throws WTException {
+	private void checkRightsOnCategory(int categoryId, CheckRightsTarget target, String action) throws WTException {
 		UserProfileId targetPid = getTargetProfileId();
-		
-		if (RunContext.isWebTopAdmin()) return;
-		
-		// Skip rights check if running user is resource's owner
+		Subject subject = RunContext.getSubject();
+		UserProfileId runPid = RunContext.getRunProfileId(subject);
 		UserProfileId owner = ownerCache.get(categoryId);
 		if (owner == null) throw new WTException("categoryToOwner({0}) -> null", categoryId);
-		if (owner.equals(targetPid)) return;
 		
-		// Checks rights on the wildcard instance (if present)
-		CoreManager core = WT.getCoreManager(targetPid);
-		String wildcardShareId = shareCache.getWildcardShareFolderIdByOwner(owner);
-		if (wildcardShareId != null) {
-			if (core.isShareElementsPermitted(wildcardShareId, action)) return;
-			//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+		if (RunContext.isWebTopAdmin(subject)) {
+			// Skip checks for running wtAdmin and sysAdmin target
+			if (targetPid.equals(RunContext.getSysAdminProfileId())) return;
+			
+			// Skip checks if target is the resource owner
+			if (owner.equals(targetPid)) return;
+			
+			// Skip checks if resource is a valid incoming folder
+			if (shareCache.getFolderIds().contains(categoryId)) return;
+			
+			String exMsg = null;
+			if (CheckRightsTarget.FOLDER.equals(target)) {
+				exMsg = "Action '{}' not allowed for '{}' on folder '{}' [{}, {}]";
+			} else if (CheckRightsTarget.ELEMENTS.equals(target)) {
+				exMsg = "Action '{}' not allowed for '{}' on elements of folder '{}' [{}, {}]";
+			}
+			throw new AuthException(exMsg, action, runPid, categoryId, GROUPNAME_CATEGORY, targetPid.toString());
+			
+		} else {
+			// Skip checks if target is the resource owner and it's the running profile
+			if (owner.equals(targetPid) && targetPid.equals(runPid)) return;
+			
+			// Checks rights on the wildcard instance (if present)
+			CoreManager core = WT.getCoreManager(targetPid);
+			String wildcardShareId = shareCache.getWildcardShareFolderIdByOwner(owner);
+			if (wildcardShareId != null) {
+				if (CheckRightsTarget.FOLDER.equals(target)) {
+					if (core.isShareFolderPermitted(wildcardShareId, action)) return;
+				} else if (CheckRightsTarget.ELEMENTS.equals(target)) {
+					if (core.isShareElementsPermitted(wildcardShareId, action)) return;
+					//if(core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+				}
+			}
+			
+			// Checks rights on category instance
+			String shareId = shareCache.getShareFolderIdByFolderId(categoryId);
+			if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
+			if (CheckRightsTarget.FOLDER.equals(target)) {
+				if (core.isShareFolderPermitted(shareId, action)) return;
+			} else if (CheckRightsTarget.ELEMENTS.equals(target)) {
+				if (core.isShareElementsPermitted(shareId, action)) return;
+				//if(core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, wildcardShareId)) return;
+			}
+			
+			String exMsg = null;
+			if (CheckRightsTarget.FOLDER.equals(target)) {
+				exMsg = "Action '{}' not allowed for '{}' on folder '{}' [{}, {}, {}]";
+			} else if (CheckRightsTarget.ELEMENTS.equals(target)) {
+				exMsg = "Action '{}' not allowed for '{}' on elements of folder '{}' [{}, {}, {}]";
+			}
+			throw new AuthException(exMsg, action, runPid, categoryId, shareId, GROUPNAME_CATEGORY, targetPid.toString());
 		}
-		
-		// Checks rights on category instance
-		String shareId = shareCache.getShareFolderIdByFolderId(categoryId);
-		if (shareId == null) throw new WTException("categoryToLeafShareId({0}) -> null", categoryId);
-		if (core.isShareElementsPermitted(shareId, action)) return;
-		//if (core.isShareElementsPermitted(SERVICE_ID, RESOURCE_CATEGORY, action, shareId)) return;
-		
-		throw new AuthException("Action not allowed on folderEls share [{0}, {1}, {2}, {3}]", shareId, action, GROUPNAME_CATEGORY, targetPid.toString());
 	}
 	
 	private OCategory fillOCategoryWithDefaults(OCategory tgt) {
@@ -2567,7 +2588,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
 							String personal = vcont.getDisplayName();
-							if (StringUtils.isBlank(personal)) personal = InternetAddressUtils.buildPersonal(vcont.getFirstname(), vcont.getLastname());
+							if (StringUtils.isBlank(personal)) personal = InternetAddressUtils.toPersonal(vcont.getFirstname(), vcont.getLastname());
 							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value, Recipient.Type.TO, recipientId));
 						}
 					}
@@ -2782,8 +2803,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
-			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
+			checkRightsOnCategoryFolder(categoryId, "CREATE"); // Rights check!
+			if(mode.equals("copy")) checkRightsOnCategoryFolder(categoryId, "DELETE"); // Rights check!
 			
 			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Started at {0}", new DateTime()));
 			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Reading source file..."));
@@ -2840,8 +2861,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			checkRightsOnCategoryElements(categoryId, "CREATE"); // Rights check!
-			if(mode.equals("copy")) checkRightsOnCategoryElements(categoryId, "DELETE"); // Rights check!
+			checkRightsOnCategoryFolder(categoryId, CheckRightsTarget.ELEMENTS, "CREATE"); // Rights check!
+			if(mode.equals("copy")) checkRightsOnCategoryFolder(categoryId, CheckRightsTarget.ELEMENTS, "DELETE"); // Rights check!
 			
 			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Started at {0}", new DateTime()));
 			log.addMaster(new MessageLogEntry(LogEntry.Level.INFO, "Reading vCard file..."));

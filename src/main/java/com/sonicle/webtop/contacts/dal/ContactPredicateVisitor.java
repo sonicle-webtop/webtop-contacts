@@ -49,10 +49,6 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 		super();
 	}
 	
-	public ContactPredicateVisitor(boolean ignoreCase) {
-		super(ignoreCase);
-	}
-	
 	@Override
 	protected Condition toCondition(String fieldName, ComparisonOperator operator, Collection<?> values, ComparisonNode node) {
 		switch(fieldName) {
@@ -63,12 +59,15 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 				
 			case "company":
 				return CONTACTS.COMPANY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
-						.or(CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
+						.or(CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.DEPARTMENT.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.FUNCTION.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
 				
 			case "email":
 				return CONTACTS.WORK_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
 						.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
+				
 			case "phone":
 				return CONTACTS.WORK_MOBILE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
 						.or(CONTACTS.WORK_TELEPHONE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
@@ -79,6 +78,27 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 						.or(CONTACTS.HOME_TELEPHONE2.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_PAGER.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
 						.or(CONTACTS.HOME_FAX.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
+				
+			case "address":
+				return CONTACTS.WORK_ADDRESS.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
+						.or(CONTACTS.WORK_POSTALCODE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.WORK_CITY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.WORK_STATE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.WORK_COUNTRY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.HOME_ADDRESS.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.HOME_POSTALCODE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.HOME_CITY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.HOME_STATE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.HOME_COUNTRY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.OTHER_ADDRESS.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.OTHER_POSTALCODE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.OTHER_CITY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.OTHER_STATE.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))
+						.or(CONTACTS.OTHER_COUNTRY.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))));
+				
+			case "notes":
+				return CONTACTS.NOTES.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)));
+				
 			case "any":
 				return CONTACTS.DISPLAY_NAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
 						.or(CONTACTS.FIRSTNAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values))))

@@ -34,7 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
-		'Sonicle.form.field.ColorComboBox',
+		'Sonicle.form.field.ComboBox',
 		'Sonicle.form.field.Image',
 		'Sonicle.plugin.FileDrop',
 		'WTA.ux.UploadBar',
@@ -89,32 +89,42 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					}
 				}),
 				'->',
-				WTF.localCombo('id', 'desc', {
-					reference: 'fldowner',
-					bind: '{record._profileId}',
-					store: {
-						autoLoad: true,
-						model: 'WTA.ux.data.SimpleModel',
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryRoots', 'roots')
-					},
-					fieldLabel: me.mys.res('contact.fld-owner.lbl'),
-					labelWidth: 75,
-					listeners: {
-						select: function(s, rec) {
-							me.updateCategoryFilters();
-						}
-					}
-				}),
-				WTF.lookupCombo('categoryId', 'name', {
-					xtype: 'socolorcombo',
+				WTF.lookupCombo('categoryId', '_label', {
+					xtype: 'socombo',
 					reference: 'fldcategory',
 					bind: '{record.categoryId}',
+					listConfig: {
+						displayField: 'name',
+						groupCls: 'wt-theme-text-greyed'
+					},
 					autoLoadOnValue: true,
 					store: {
 						model: me.mys.preNs('model.CategoryLkp'),
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders')
+						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
+						grouper: {
+							property: '_profileId',
+							sortProperty: '_order'
+						},
+						filters: [{
+							filterFn: function(rec) {
+								var mo = me.getModel();
+								if (mo && me.isMode(me.MODE_NEW)) {
+									return rec.get('_writable');
+								} else if (mo && me.isMode(me.MODE_VIEW)) {
+									if (rec.getId() === mo.get('categoryId')) return true;
+								} else if (mo && me.isMode(me.MODE_EDIT)) {
+									if (rec.getId() === mo.get('categoryId')) return true;
+									if (rec.get('_profileId') === mo.get('_profileId') && rec.get('_writable')) return true;
+								}
+								return false;
+							}
+						}]
 					},
-					colorField: 'color'
+					groupField: '_profileDescription',
+					colorField: 'color',
+					fieldLabel: me.mys.res('contact.fld-category.lbl'),
+					labelAlign: 'right',
+					width: 400
 				})
 			]
 		});
@@ -521,54 +531,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.on('viewclose', me.onViewClose);
 	},
 	
-	onViewLoad: function(s, success) {
-		if (!success) return;
-		var me = this,
-				owner = me.lref('fldowner');
-		
-		me.updateCategoryFilters();
-		if (me.isMode(me.MODE_NEW)) {
-			me.getAct('saveClose').setDisabled(false);
-			me.getAct('delete').setDisabled(true);
-			owner.setDisabled(false);
-		} else if (me.isMode(me.MODE_VIEW)) {
-			me.getAct('saveClose').setDisabled(true);
-			me.getAct('delete').setDisabled(true);
-			owner.setDisabled(true);
-			me.lref('fldpic').setDisabled(true);
-		} else if (me.isMode(me.MODE_EDIT)) {
-			me.getAct('saveClose').setDisabled(false);
-			me.getAct('delete').setDisabled(false);
-			owner.setDisabled(true);
-		}
-		
-		me.lref('fldfirstname').focus(true);
-	},
-	
-	onViewClose: function(s) {
-		s.mys.cleanupUploadedFiles(s.uploadTag);
-	},
-	
-	updateCategoryFilters: function() {
-		var me = this,
-				mo = me.getModel(),
-				sto = me.lref('fldcategory').getStore();
-		sto.clearFilter();
-		sto.addFilter([{
-				property: '_profileId',
-				value: mo.get('_profileId')
-			}, {
-				filterFn: function(rec) {
-					if (rec.get('_writable') === false) {
-						if (me.isMode(me.MODE_NEW)) return false;
-						return rec.getId() === mo.get('categoryId');
-					} else {
-						return true;
-					}
-				}
-		}]);
-	},
-	
 	openAttachmentUI: function(rec, download) {
 		var me = this,
 				name = rec.get('name'),
@@ -624,6 +586,35 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			WT.warn(WT.res('warn.print.notsaved'));
 		} else {
 			me.mys.printContactsDetail([contactId]);
+		}
+	},
+	
+	privates: {
+		onViewLoad: function(s, success) {
+			if (!success) return;
+			var me = this;
+
+			if (me.isMode(me.MODE_NEW)) {
+				me.getAct('saveClose').setDisabled(false);
+				me.getAct('delete').setDisabled(true);
+				me.lref('fldcategory').setReadOnly(false);
+				me.lref('fldpic').setDisabled(false);
+			} else if (me.isMode(me.MODE_VIEW)) {
+				me.getAct('saveClose').setDisabled(true);
+				me.getAct('delete').setDisabled(true);
+				me.lref('fldcategory').setReadOnly(true);
+				me.lref('fldpic').setDisabled(true);
+			} else if (me.isMode(me.MODE_EDIT)) {
+				me.getAct('saveClose').setDisabled(false);
+				me.getAct('delete').setDisabled(false);
+				me.lref('fldcategory').setReadOnly(false);
+				me.lref('fldpic').setDisabled(false);
+			}
+			me.lref('fldfirstname').focus(true);
+		},
+		
+		onViewClose: function(s) {
+			s.mys.cleanupUploadedFiles(s.uploadTag);
 		}
 	}
 });

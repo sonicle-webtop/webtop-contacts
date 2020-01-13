@@ -36,6 +36,7 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 	requires: [
 		'Sonicle.webtop.contacts.store.View',
 		'Sonicle.webtop.contacts.store.ShowBy',
+		'Sonicle.webtop.contacts.store.GroupBy',
 		'Sonicle.webtop.contacts.store.ReminderDelivery'
 	],
 		
@@ -60,12 +61,28 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 						scope: me
 					}
 				}
-			}), WTF.lookupCombo('id', 'desc', {
+			}),
+			WTF.lookupCombo('id', 'desc', {
 				bind: '{record.showBy}',
 				store: Ext.create('Sonicle.webtop.contacts.store.ShowBy', {
 					autoLoad: true
 				}),
 				fieldLabel: WT.res(me.ID, 'opts.main.fld-showBy.lbl'),
+				width: 280,
+				listeners: {
+					blur: {
+						fn: me.onBlurAutoSave,
+						scope: me
+					}
+				},
+				needReload: true
+			}),
+			WTF.lookupCombo('id', 'desc', {
+				bind: '{record.groupBy}',
+				store: Ext.create('Sonicle.webtop.contacts.store.GroupBy', {
+					autoLoad: true
+				}),
+				fieldLabel: WT.res(me.ID, 'opts.main.fld-groupBy.lbl'),
 				width: 280,
 				listeners: {
 					blur: {

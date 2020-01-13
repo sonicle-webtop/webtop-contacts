@@ -38,6 +38,7 @@ import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
 import com.sonicle.commons.web.json.extjs.SortMeta;
 import static com.sonicle.webtop.contacts.ContactsSettings.*;
+import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfileId;
@@ -82,6 +83,20 @@ public class ContactsUserSettings extends BaseUserSettings {
 	
 	public boolean setShowBy(String value) {
 		return setShowBy(EnumUtils.forSerializedName(value, ShowBy.class));
+	}
+	
+	public Grouping getGroupBy() {
+		Grouping value = getEnum(GROUP_BY, null, Grouping.class);
+		if (value != null) return value;
+		return ss.getDefaultGroupBy();
+	}
+	
+	public boolean setGroupBy(Grouping value) {
+		return setEnum(GROUP_BY, value);
+	}
+	
+	public boolean setGroupBy(String value) {
+		return setGroupBy(EnumUtils.forSerializedName(value, Grouping.class));
 	}
 	
 	public LocalTime getAnniversaryReminderTime() {

@@ -57,7 +57,6 @@ import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsFolder;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
-import com.sonicle.webtop.core.sdk.WTException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -117,9 +116,9 @@ public class Eas extends EasApi {
 			
 			return respOk(items);
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getFolders()", currentProfileId, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getFolders()", currentProfileId, t);
+			return respError(t);
 		}
 	}
 
@@ -143,9 +142,9 @@ public class Eas extends EasApi {
 			}
 			return respOk(items);
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getMessagesStats({})", RunContext.getRunProfileId(), folderId, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getMessagesStats({})", RunContext.getRunProfileId(), folderId, t);
+			return respError(t);
 		}
 	}
 
@@ -169,9 +168,9 @@ public class Eas extends EasApi {
 				return respErrorNotFound();
 			}
 			
-		} catch(WTException ex) {
-			logger.error("[{}] getMessage({}, {})", RunContext.getRunProfileId(), folderId, id, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] getMessage({}, {})", RunContext.getRunProfileId(), folderId, id, t);
+			return respError(t);
 		}
 	}
 
@@ -194,9 +193,9 @@ public class Eas extends EasApi {
 			
 			return respOkCreated(createSyncContactStat(card));
 			
-		} catch(WTException ex) {
-			logger.error("[{}] addMessage({}, ...)", RunContext.getRunProfileId(), folderId, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] addMessage({}, ...)", RunContext.getRunProfileId(), folderId, t);
+			return respError(t);
 		}
 	}
 
@@ -223,9 +222,9 @@ public class Eas extends EasApi {
 			
 			return respOk(createSyncContactStat(card));
 			
-		} catch(WTException ex) {
-			logger.error("[{}] updateMessage({}, {}, ...)", RunContext.getRunProfileId(), folderId, id, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] updateMessage({}, {}, ...)", RunContext.getRunProfileId(), folderId, id, t);
+			return respError(t);
 		}
 	}
 
@@ -243,9 +242,9 @@ public class Eas extends EasApi {
 			
 		} catch(NotFoundException ex) {
 			return respErrorNotFound();
-		} catch(WTException ex) {
-			logger.error("[{}] deleteMessage({}, {})", RunContext.getRunProfileId(), folderId, id, ex);
-			return respError(ex);
+		} catch(Throwable t) {
+			logger.error("[{}] deleteMessage({}, {})", RunContext.getRunProfileId(), folderId, id, t);
+			return respError(t);
 		}
 	}
 	

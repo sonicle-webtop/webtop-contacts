@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
+import com.sonicle.webtop.contacts.model.ShareRootCategory;
 
 /**
  *
@@ -42,25 +43,25 @@ import com.sonicle.webtop.contacts.model.ShareFolderCategory;
  */
 public class JsCategoryLkp {
 	public Integer categoryId;
-	public String domainId;
-	public String userId;
 	public String name;
-	public Boolean isDefault;
 	public String color;
+	public Boolean isDefault;
+	public String _profileId;
+	public String _profileDescription;
 	public Boolean _writable;
+	public Integer _order;
 	
 	public JsCategoryLkp(Category cat) {
 		categoryId = cat.getCategoryId();
-		domainId = cat.getDomainId();
-		userId = cat.getUserId();
 		name = cat.getName();
-		isDefault = cat.getIsDefault();
 		color = cat.getColor();
+		isDefault = cat.getIsDefault();
+		_profileId = cat.getProfileId().toString();
 	}
 	
-	public JsCategoryLkp(ShareFolderCategory folder, CategoryPropSet folderProps) {
-		this(folder.getCategory());
-		if (folderProps != null) color = folderProps.getColorOrDefault(color);
+	public JsCategoryLkp(ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, int order) {
+		this(folder.getCategory().applyPropSet(folderProps));
+		_profileDescription = root.getDescription();
 		_writable = folder.getElementsPerms().implies("CREATE");
 	}
 }

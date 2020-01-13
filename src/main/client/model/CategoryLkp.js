@@ -37,14 +37,22 @@ Ext.define('Sonicle.webtop.contacts.model.CategoryLkp', {
 	idProperty: 'categoryId',
 	fields: [
 		WTF.field('categoryId', 'int', false),
-		WTF.field('domainId', 'string', false),
-		WTF.field('userId', 'string', false),
+		// For backward compatibility
+		WTF.calcField('domainId', 'string', ['_profileId'], function(v, rec) {
+			return Sonicle.String.substrAfterLast(rec.get('_profileId'), '@');
+		}),
+		// For backward compatibility
+		WTF.calcField('userId', 'string', ['_profileId'], function(v, rec) {
+			return Sonicle.String.substrBeforeLast(rec.get('_profileId'), '@');
+		}),
 		WTF.field('name', 'string', false),
-		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
 		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
-		WTF.field('_writable', 'boolean', false),
-		WTF.calcField('_profileId', 'string', ['domainId', 'userId'], function(v, rec) {
-			return rec.get('userId') + '@' + rec.get('domainId');
-		})
+		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
+		WTF.roField('_profileId', 'string'),
+		WTF.roField('_profileDescription', 'string'),
+		WTF.calcField('_label', 'string', ['name', '_profileDescription'], function(v, rec) {
+			return Ext.String.format('[{0}] {1}', rec.get('_profileDescription'), rec.get('name'));
+		}),
+		WTF.roField('_writable', 'boolean')
 	]
 });
