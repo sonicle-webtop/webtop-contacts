@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
@@ -60,6 +61,7 @@ public class JsContactPreview {
 	public ArrayList<ValueItem> data2;
 	public ArrayList<ValueItem> data3;
 	public String notes;
+	public String tags;
 	public boolean pic;
 	public String userProfile;
 	public String userDisplayName;
@@ -95,6 +97,7 @@ public class JsContactPreview {
 		addValueItem(this.data3, "add1", item.getWorkFullAddress(), "workadd");
 		addValueItem(this.data3, "add2", item.getHomeFullAddress(), "homeadd");
 		this.notes = item.getNotes();
+		this.tags = new CompositeId(item.getTags()).toString();
 		this.pic = item.hasPicture();
 
 		this.catId = category.getCategoryId();
@@ -113,9 +116,11 @@ public class JsContactPreview {
 		this.isList = true;
 		this.displayName = item.getName();
 		this.data1 = new ArrayList<>();
+		addValueItem(this.data1, "rcp1", item.getEmail(), "email");
 		this.data2 = new ArrayList<>();
 		this.data3 = new ArrayList<>();
 		this.notes = null;
+		this.tags = new CompositeId(item.getTags()).toString();
 		this.pic = false;
 
 		this.catId = category.getCategoryId();

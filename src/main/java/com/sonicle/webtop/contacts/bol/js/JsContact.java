@@ -34,11 +34,13 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.DateTimeFormatter;
 
@@ -96,6 +98,7 @@ public class JsContact {
 	public String anniversary;
 	public String url;
 	public String notes;
+	public String tags;
 	public String picture;
 	public ArrayList<Attachment> attachments;
 	
@@ -156,16 +159,18 @@ public class JsContact {
 		anniversary = (contact.getAnniversary() != null) ? ymdFmt.print(contact.getAnniversary()) : null;
 		url = contact.getUrl();
 		notes = contact.getNotes();
+		tags = new CompositeId(contact.getTags()).toString();
 		picture = contact.hasPicture() ? String.valueOf(id) : null;
-		
 		attachments = new ArrayList<>();
-		for (ContactAttachment att : contact.getAttachments()) {
-			Attachment jsatt = new Attachment();
-			jsatt.id = att.getAttachmentId();
-			//jsatt.lastModified = DateTimeUtils.printYmdHmsWithZone(att.getRevisionTimestamp(), profileTz);
-			jsatt.name = att.getFilename();
-			jsatt.size = att.getSize();
-			attachments.add(jsatt);
+		if (contact.hasAttachments()) {
+			for (ContactAttachment att : contact.getAttachments()) {
+				Attachment jsatt = new Attachment();
+				jsatt.id = att.getAttachmentId();
+				//jsatt.lastModified = DateTimeUtils.printYmdHmsWithZone(att.getRevisionTimestamp(), profileTz);
+				jsatt.name = att.getFilename();
+				jsatt.size = att.getSize();
+				attachments.add(jsatt);
+			}
 		}
 		
 		_profileId = ownerId.toString();
@@ -224,7 +229,7 @@ public class JsContact {
 		if (!StringUtils.isEmpty(js.anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(js.anniversary));
 		item.setUrl(js.url);
 		item.setNotes(js.notes);
-		
+		item.setTags(new LinkedHashSet<>(new CompositeId().parse(js.tags).getTokens()));
 		// Attachment needs to be treated outside this class in order to have complete access to their streams
 		return item;
 	}

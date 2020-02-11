@@ -433,7 +433,7 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error in action ManageSharing", ex);
+			logger.error("Error in ManageSharing", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}
@@ -488,11 +488,19 @@ public class Service extends BaseService {
 				runSyncRemoteCategory(id, item.getName(), full);
 				
 				new JsonResult().printTo(out);
+				
+			} else if (crud.equals("updateTag")) {
+				int id = ServletUtils.getIntParameter(request, "id", true);
+				UpdateTagsOperation op = ServletUtils.getEnumParameter(request, "op", true, UpdateTagsOperation.class);
+				ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+				
+				manager.updateContactTags(op, id, new HashSet<>(tags));
+				new JsonResult().printTo(out);
 			}
 			
 		} catch(Throwable t) {
 			logger.error("Error in ManageCategory", t);
-			new JsonResult(false, "Error").printTo(out);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
@@ -642,6 +650,19 @@ public class Service extends BaseService {
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
+				if (queryObj.hasCondition("tag")) {
+					CoreManager coreMgr = WT.getCoreManager();
+					Map<String, List<String>> tags = coreMgr.listTagIdsByName();
+					
+					for (QueryObj.Condition condition : queryObj.conditions) {
+						if ("tag".equals(condition.keyword)) {
+							if (tags.containsKey(condition.value)) {
+								condition.value = tags.get(condition.value).get(0);
+							}
+						}
+					}
+				}
+				
 				//TODO: optimize call to skip fullCount for subsequent calls
 				ContactType type = GridView.CONTACTS_LIST.equals(view) ? ContactType.LIST : ContactType.ANY;
 				
@@ -705,15 +726,29 @@ public class Service extends BaseService {
 						contactIds.add(contactId);
 					}
 				}
-				manager.moveContacts(copy, contactIds, categoryId);
+				manager.moveContact(copy, contactIds, categoryId);
 				manager.moveContactsList(copy, contactsListIds, categoryId);
+				
+				new JsonResult().printTo(out);
+				
+			} else if (crud.equals("updateTag")) {
+				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
+				UpdateTagsOperation op = ServletUtils.getEnumParameter(request, "op", true, UpdateTagsOperation.class);
+				ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+				
+				ArrayList<Integer> ids = new ArrayList<>();
+				for (String uid : uids) {
+					CompositeId cid = JsGridContact.Id.parse(uid);
+					ids.add(JsGridContact.Id.contactId(cid));
+				}
+				manager.updateContactTags(op, ids, new HashSet<>(tags));
 				
 				new JsonResult().printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in ManageGridContacts", ex);
-			new JsonResult(ex).printTo(out);
+		} catch(Throwable t) {
+			logger.error("Error in ManageGridContacts", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
@@ -880,7 +915,7 @@ public class Service extends BaseService {
 			String type = ServletUtils.getStringParameter(request, "type", true);
 			int contactId = Integer.parseInt(id);
 			
-			Contact contact = manager.getContact(contactId, false, false);
+			Contact contact = manager.getContact(contactId, false, false, true);
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);

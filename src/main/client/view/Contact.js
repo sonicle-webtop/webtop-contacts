@@ -34,8 +34,10 @@
 Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
+		'Sonicle.String',
 		'Sonicle.form.field.ComboBox',
 		'Sonicle.form.field.Image',
+		'Sonicle.form.field.TagDisplay',
 		'Sonicle.plugin.FileDrop',
 		'WTA.ux.UploadBar',
 		'WTA.ux.field.SuggestCombo',
@@ -43,6 +45,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.Contact'
+	],
+	uses: [
+		'Sonicle.webtop.core.view.Tags'
 	],
 	
 	dockableConfig: {
@@ -57,75 +62,114 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	
 	uploadTag: null,
 	
+	constructor: function(cfg) {
+		var me = this;
+		me.callParent([cfg]);
+		
+		WTU.applyFormulas(me.getVM(), {
+			foHasTags: WTF.foIsEmpty('record', 'tags', true)
+		});
+	},
+	
 	initComponent: function() {
 		var me = this;
 		Ext.apply(me, {
-			tbar: [
-				me.addAct('saveClose', {
-					text: WT.res('act-saveClose.lbl'),
-					tooltip: null,
-					iconCls: 'wt-icon-saveClose-xs',
-					handler: function() {
-						me.saveView(true);
-					}
-				}),
-				'-',
-				me.addAct('delete', {
-					text: null,
-					tooltip: WT.res('act-delete.lbl'),
-					iconCls: 'wt-icon-delete',
-					handler: function() {
-						me.deleteContact();
-					}
-				}),
-				'-',
-				me.addAct('print', {
-					text: null,
-					tooltip: WT.res('act-print.lbl'),
-					iconCls: 'wt-icon-print',
-					handler: function() {
-						//TODO: aggiungere l'azione 'salva' permettendo così la stampa senza chiudere la form
-						me.printContact(me.getModel().getId());
-					}
-				}),
-				'->',
-				WTF.lookupCombo('categoryId', '_label', {
-					xtype: 'socombo',
-					reference: 'fldcategory',
-					bind: '{record.categoryId}',
-					listConfig: {
-						displayField: 'name',
-						groupCls: 'wt-theme-text-greyed'
-					},
-					autoLoadOnValue: true,
-					store: {
-						model: me.mys.preNs('model.CategoryLkp'),
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
-						grouper: {
-							property: '_profileId',
-							sortProperty: '_order'
-						},
-						filters: [{
-							filterFn: function(rec) {
-								var mo = me.getModel();
-								if (mo && me.isMode(me.MODE_NEW)) {
-									return rec.get('_writable');
-								} else if (mo && me.isMode(me.MODE_VIEW)) {
-									if (rec.getId() === mo.get('categoryId')) return true;
-								} else if (mo && me.isMode(me.MODE_EDIT)) {
-									if (rec.getId() === mo.get('categoryId')) return true;
-									if (rec.get('_profileId') === mo.get('_profileId') && rec.get('_writable')) return true;
-								}
-								return false;
+			dockedItems: [
+				{
+					xtype: 'toolbar',
+					dock: 'top',
+					items: [
+						me.addAct('saveClose', {
+							text: WT.res('act-saveClose.lbl'),
+							tooltip: null,
+							iconCls: 'wt-icon-saveClose-xs',
+							handler: function() {
+								me.saveView(true);
 							}
-						}]
+						}),
+						'-',
+						me.addAct('delete', {
+							text: null,
+							tooltip: WT.res('act-delete.lbl'),
+							iconCls: 'wt-icon-delete',
+							handler: function() {
+								me.deleteContact();
+							}
+						}),
+						'-',
+						me.addAct('print', {
+							text: null,
+							tooltip: WT.res('act-print.lbl'),
+							iconCls: 'wt-icon-print',
+							handler: function() {
+								//TODO: aggiungere l'azione 'salva' permettendo così la stampa senza chiudere la form
+								me.printContact(me.getModel().getId());
+							}
+						}),
+						me.addAct('tags', {
+							text: null,
+							tooltip: me.mys.res('act-manageTags.lbl'),
+							iconCls: 'wt-icon-tag',
+							handler: function() {
+								me.manageTagsUI(Sonicle.String.split(me.getModel().get('tags'), '|'));
+							}
+						}),
+						'->',
+						WTF.lookupCombo('categoryId', '_label', {
+							xtype: 'socombo',
+							reference: 'fldcategory',
+							bind: '{record.categoryId}',
+							listConfig: {
+								displayField: 'name',
+								groupCls: 'wt-theme-text-greyed'
+							},
+							autoLoadOnValue: true,
+							store: {
+								model: me.mys.preNs('model.CategoryLkp'),
+								proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
+								grouper: {
+									property: '_profileId',
+									sortProperty: '_order'
+								},
+								filters: [{
+									filterFn: function(rec) {
+										var mo = me.getModel();
+										if (mo && me.isMode(me.MODE_NEW)) {
+											return rec.get('_writable');
+										} else if (mo && me.isMode(me.MODE_VIEW)) {
+											if (rec.getId() === mo.get('categoryId')) return true;
+										} else if (mo && me.isMode(me.MODE_EDIT)) {
+											if (rec.getId() === mo.get('categoryId')) return true;
+											if (rec.get('_profileId') === mo.get('_profileId') && rec.get('_writable')) return true;
+										}
+										return false;
+									}
+								}]
+							},
+							groupField: '_profileDescription',
+							colorField: 'color',
+							fieldLabel: me.mys.res('contact.fld-category.lbl'),
+							labelAlign: 'right',
+							width: 400
+						})
+					]
+				}, {
+					xtype: 'sotagdisplayfield',
+					dock : 'top',
+					bind: {
+						value: '{record.tags}',
+						hidden: '{!foHasTags}'
 					},
-					groupField: '_profileDescription',
+					delimiter: '|',
+					valueField: 'id',
+					displayField: 'name',
 					colorField: 'color',
-					fieldLabel: me.mys.res('contact.fld-category.lbl'),
-					labelAlign: 'right',
-					width: 400
-				})
+					store: WT.getTagsStore(),
+					dummyIcon: 'loading',
+					hidden: true,
+					hideLabel: true,
+					margin: '0 0 5 0'
+				}
 			]
 		});
 		me.callParent(arguments);
@@ -531,6 +575,22 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.on('viewclose', me.onViewClose);
 	},
 	
+	manageTagsUI: function(selTagIds) {
+		var me = this,
+				vw = WT.createView(WT.ID, 'view.Tags', {
+					swapReturn: true,
+					viewCfg: {
+						data: {
+							selection: selTagIds
+						}
+					}
+				});
+		vw.on('viewok', function(s, data) {
+			me.getModel().set('tags', Sonicle.String.join('|', data.selection));
+		});
+		vw.showView();
+	},
+	
 	openAttachmentUI: function(rec, download) {
 		var me = this,
 				name = rec.get('name'),
@@ -597,16 +657,19 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			if (me.isMode(me.MODE_NEW)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(true);
+				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
 			} else if (me.isMode(me.MODE_VIEW)) {
 				me.getAct('saveClose').setDisabled(true);
 				me.getAct('delete').setDisabled(true);
+				me.getAct('tags').setDisabled(true);
 				me.lref('fldcategory').setReadOnly(true);
 				me.lref('fldpic').setDisabled(true);
 			} else if (me.isMode(me.MODE_EDIT)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(false);
+				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
 			}

@@ -156,7 +156,17 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	
+	static Contact createContact(ContactsList src) {
+		if (src == null) return null;
+		Contact tgt = new Contact();
+		tgt.setContactId(src.getContactId());
+		tgt.setCategoryId(src.getCategoryId());
+		tgt.setDisplayName(src.getName());
+		tgt.setFirstName(src.getName());
+		tgt.setLastName(src.getName());
+		tgt.setTags(src.getTags());
+		return tgt;
+	}
 	
 	static <T extends ContactObject> T fillContactCard(T tgt, VContactObject src) {
 		if ((tgt != null) && (src != null)) {
@@ -179,6 +189,7 @@ public class ManagerUtils {
 		item.setContactId(ocontlst.getContactId());
 		item.setCategoryId(ocontlst.getCategoryId());
 		item.setName(ocontlst.getLastname());
+		item.setEmail(ocontlst.getWorkEmail());
 		for (OListRecipient olrec : olrecs) {
 			item.addRecipient(fillContactsListRecipient(new ContactsListRecipient(), olrec));
 		}
@@ -201,15 +212,16 @@ public class ManagerUtils {
 			tgt.setIsList(src.getIsList());
 			tgt.setCompany(createContactCompany(src));
 			tgt.setFunction(src.getFunction());
+			tgt.setMobile(src.getWorkMobile());
+			tgt.setEmail1(src.getWorkEmail());
+			tgt.setEmail2(src.getHomeEmail());
 			tgt.setWorkCity(src.getWorkCity());
-			tgt.setWorkTelephone(src.getWorkTelephone());
-			tgt.setWorkMobile(src.getWorkMobile());
-			tgt.setWorkEmail(src.getWorkEmail());
-			tgt.setHomeTelephone(src.getHomeTelephone());
-			tgt.setHomeEmail(src.getHomeEmail());
+			tgt.setWorkTelephone1(src.getWorkTelephone());
+			tgt.setHomeTelephone1(src.getHomeTelephone());
 			tgt.setCategoryName(src.getCategoryName());
 			tgt.setCategoryDomainId(src.getCategoryDomainId());
 			tgt.setCategoryUserId(src.getCategoryUserId());
+			tgt.setTags(src.getTags());
 			tgt.setHasPicture(src.getHasPicture());
 		}
 		return tgt;
@@ -429,6 +441,21 @@ public class ManagerUtils {
 			tgt.setFilename(src.getFilename());
 			tgt.setSize(src.getSize());
 			tgt.setMediaType(src.getMediaType());
+		}
+		return tgt;
+	}
+	
+	static OListRecipient createOListRecipient(ContactsListRecipient src) {
+		if (src == null) return null;
+		return fillOListRecipient(new OListRecipient(), src);
+	}
+	
+	static <T extends OListRecipient> T fillOListRecipient(T tgt, ContactsListRecipient src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setListRecipientId(src.getListRecipientId());
+			tgt.setRecipient(src.getRecipient());
+			tgt.setRecipientType(src.getRecipientType());
+			tgt.setRecipientContactId(src.getRecipientContactId());
 		}
 		return tgt;
 	}

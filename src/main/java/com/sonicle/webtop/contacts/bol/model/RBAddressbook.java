@@ -71,11 +71,11 @@ public class RBAddressbook {
 		this.firstName = contact.getFirstName();
 		this.lastName = contact.getLastName();
 		this.company = contact.getCompanyDescription();
-		this.workTelephone = contact.getWorkTelephone();
-		this.workMobile = contact.getWorkMobile();
-		this.workEmail = contact.getWorkEmail();
-		this.homeTelephone = contact.getHomeTelephone();
-		this.homeEmail = contact.getHomeEmail();
+		this.workTelephone = contact.getWorkTelephone1();
+		this.workMobile = contact.getMobile();
+		this.workEmail = contact.getEmail1();
+		this.homeTelephone = contact.getHomeTelephone1();
+		this.homeEmail = contact.getEmail2();
 	}
 	
 	public Boolean getIsList() {

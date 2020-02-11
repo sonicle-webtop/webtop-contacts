@@ -39,7 +39,6 @@ import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
-import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 
@@ -59,6 +58,7 @@ public class JsGridContact {
 	public String email;
 	public String telephone;
 	public String mobile;
+	public String tags;
 	public boolean pic;
 	public Integer catId;
 	public String catName;
@@ -88,17 +88,17 @@ public class JsGridContact {
 		this.function = item.getFunction();
 		
 		if (GridView.WORK.equals(view)) {
-			this.email = item.getWorkEmail();
-			this.telephone = item.getWorkTelephone();
-			this.mobile = item.getWorkMobile();
+			this.email = item.getEmail1();
+			this.telephone = item.getWorkTelephone1();
+			this.mobile = item.getMobile();
 		} else if (GridView.HOME.equals(view)) {
-			this.email = item.getHomeEmail();
-			this.telephone = item.getHomeTelephone();
-			this.mobile = item.getWorkMobile();
+			this.email = item.getEmail2();
+			this.telephone = item.getHomeTelephone1();
+			this.mobile = item.getMobile();
 		} else if (GridView.CONTACTS_LIST.equals(view)) {
-			this.email = item.getWorkEmail();
+			this.email = item.getEmail1();
 		}
-		
+		this.tags = item.getTags();
 		this.pic = item.isHasPicture();
 		
 		this.catId = category.getCategoryId();

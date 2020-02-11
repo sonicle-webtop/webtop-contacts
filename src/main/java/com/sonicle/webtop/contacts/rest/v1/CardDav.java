@@ -38,7 +38,6 @@ import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.ContactsUtils;
-import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactObjectChanged;
@@ -56,6 +55,7 @@ import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardsChanges;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
 import com.sonicle.webtop.core.model.SharePerms;
 import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsFolder;
@@ -205,7 +205,7 @@ public class CardDav extends CarddavApi {
 			manager.updateCategory(cat);
 			return respOk();
 			
-		} catch(NotFoundException ex) {
+		} catch(WTNotFoundException ex) {
 			return respErrorNotFound();
 		} catch(Throwable t) {
 			logger.error("[{}] updateAddressBook({}, ...)", RunContext.getRunProfileId(), addressBookUid, t);
@@ -231,7 +231,7 @@ public class CardDav extends CarddavApi {
 				return respErrorNotAllowed();
 			}
 			
-		} catch(NotFoundException ex) {
+		} catch(WTNotFoundException ex) {
 			return respErrorNotFound();
 		} catch(Throwable t) {
 			logger.error("[{}] deleteAddressBook({})", RunContext.getRunProfileId(), addressBookUid, t);
@@ -371,7 +371,7 @@ public class CardDav extends CarddavApi {
 			manager.updateContactObject(categoryId, href, vCard);
 			return respOkNoContent();
 			
-		} catch(NotFoundException ex) {
+		} catch(WTNotFoundException ex) {
 			return respErrorNotFound();
 		} catch(Throwable t) {
 			logger.error("[{}] updateCard({}, {}, ...)", RunContext.getRunProfileId(), addressBookUid, href, t);
@@ -392,7 +392,7 @@ public class CardDav extends CarddavApi {
 			manager.deleteContactObject(categoryId, href);
 			return respOkNoContent();
 			
-		} catch(NotFoundException ex) {
+		} catch(WTNotFoundException ex) {
 			return respErrorNotFound();
 		} catch(Throwable t) {
 			logger.error("[{}] deleteCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, t);

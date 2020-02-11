@@ -44,6 +44,7 @@ import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
@@ -204,6 +205,20 @@ public class CategoryDAO extends BaseDAO {
 				CATEGORIES.CATEGORY_ID.asc()
 			)
 			.fetchInto(OCategory.class);
+	}
+	
+	public Set<Integer> selectIdsByProfile(Connection con, String domainId, String userId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CATEGORIES.CATEGORY_ID
+			)
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.DOMAIN_ID.equal(domainId)
+				.and(CATEGORIES.USER_ID.equal(userId))
+			)
+			.fetchSet(CATEGORIES.CATEGORY_ID);
 	}
 	
 	public int insert(Connection con, OCategory item) throws DAOException {

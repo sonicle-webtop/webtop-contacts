@@ -95,6 +95,7 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('anniversary', 'date', true, {dateFormat: 'Y-m-d'}),
 		WTF.field('url', 'string', true),
 		WTF.field('notes', 'string', true),
+		WTF.field('tags', 'string', true),
 		WTF.field('picture', 'string', true),
 		WTF.field('_profileId', 'string', false),
 		WTF.calcField('calcDisplayName', 'string', ['firstName', 'lastName'], function(v, rec) {

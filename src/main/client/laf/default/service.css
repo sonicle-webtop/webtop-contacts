@@ -40,3 +40,36 @@
 	font-size: 0.9em;
 	color: #888;
 }
+
+/* --- UX grid.column.Contact --- */
+.wtcon-contactcolumn-head {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.wtcon-contactcolumn-head > span {
+	vertical-align: top;
+	color: #767676;
+	font-size: 0.9em;
+}
+.wtcon-contactcolumn-body {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-top: 5px;
+}
+.wtcon-contactcolumn-body > span {
+	color: #767676;
+	font-size: 0.9em;
+}
+.wtcon-contactcolumn-body-float {
+	display: inline-block;
+	float: right;
+	margin-top: 5px;
+}
+.wtcon-contactcolumn-glyph {
+	display: inline-block;
+	margin: 0 0 0 2px;
+	text-align: center;
+}
+/* ------------------------------ */

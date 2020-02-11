@@ -37,7 +37,9 @@ import com.github.rutledgepaulv.qbuilders.operators.ComparisonOperator;
 import java.util.Collection;
 import org.jooq.Condition;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import com.sonicle.webtop.core.app.sdk.BaseJOOQVisitor;
+import static org.jooq.impl.DSL.*;
 
 /**
  *
@@ -98,6 +100,16 @@ public class ContactPredicateVisitor extends BaseJOOQVisitor {
 				
 			case "notes":
 				return CONTACTS.NOTES.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)));
+				
+			case "tag":
+				return exists(
+					selectOne()
+					.from(CONTACTS_TAGS)
+					.where(
+						CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+						.and(CONTACTS_TAGS.TAG_ID.equal(singleAsString(values)))
+					)
+				);
 				
 			case "any":
 				return CONTACTS.DISPLAY_NAME.likeIgnoreCase(valueToSmartLikePattern(singleAsString(values)))
