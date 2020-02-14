@@ -42,6 +42,7 @@ import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
+import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.dav.CardDav;
 import com.sonicle.dav.CardDavFactory;
 import com.sonicle.dav.DavSyncStatus;
@@ -109,6 +110,7 @@ import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
+import com.sonicle.webtop.core.app.sdk.AuditReferenceDataEntry;
 import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
 import com.sonicle.webtop.core.bol.OShare;
 import com.sonicle.webtop.core.sdk.BaseManager;
@@ -164,6 +166,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -501,8 +504,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID, false);
 			category.setBuiltIn(false);
 			category = doCategoryInsert(con, category);
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_INSERT", category.getCategoryId().toString());
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, category.getCategoryId(), null);
+			}
 			
 			return category;
 			
@@ -535,8 +541,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			cat.setDescription("");
 			cat.setIsDefault(true);
 			cat = doCategoryInsert(con, cat);
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_INSERT", cat.getCategoryId().toString());
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, cat.getCategoryId(), null);
+			}
 			
 			return cat;
 			
@@ -561,7 +570,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (!ret) throw new WTNotFoundException("Category not found [{}]", categoryId);
 			
 			DbUtils.commitQuietly(con);
-			writeLog("CATEGORY_UPDATE", String.valueOf(categoryId));
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CATEGORY, AuditAction.UPDATE, categoryId, null);
+			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -572,7 +583,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void deleteCategory(int categoryId) throws WTException {
+	public boolean deleteCategory(int categoryId) throws WTException {
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		CategoryPropsDAO psetDao = CategoryPropsDAO.getInstance();
 		Connection con = null;
@@ -600,11 +611,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CATEGORY, AuditAction.DELETE, categoryId, null);
+				writeAuditLog(AuditContext.CATEGORY, AuditAction.DELETE, "*", categoryId);
+			}
 			
-			final String ref = String.valueOf(categoryId);
-			writeLog("CATEGORY_DELETE", ref);
-			writeLog("CONTACT_DELETE", "*@"+ref);
-			writeLog("CONTACTLIST_DELETE", "*@"+ref);
+			return ret == 1;
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1084,9 +1096,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			Set<String> validTags = coreMgr.listTagIds();
 			ContactInsertResult result = doContactInsert(coreMgr, con, false, contact, vCardRawData, true, true, true, validTags);
-			DbUtils.commitQuietly(con);
 			
-			writeLog("CONTACT_INSERT", String.valueOf(result.ocontact.getContactId()));
+			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, result.ocontact.getContactId(), null);
+			}
 			
 			Contact newContact = ManagerUtils.createContact(result.ocontact);
 			newContact.setPicture(ManagerUtils.createContactPicture(result.opicture));
@@ -1125,10 +1139,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			Set<String> validTags = processTags ? coreMgr.listTagIds() : null;
 			boolean ret = doContactUpdate(coreMgr, con, false, contact, processPicture, processAttachments, processTags, validTags);
-			if (!ret) throw new WTException("Contact not updated [{}]", contact.getContactId());
-			DbUtils.commitQuietly(con);
+			if (!ret) throw new WTNotFoundException("Contact not found [{}]", contact.getContactId());
 			
-			writeLog("CONTACT_UPDATE", String.valueOf(contact.getContactId()));
+			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contact.getContactId(), null);
+			}
 			
 		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1171,13 +1187,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			if (picture == null) throw new WTException("Picture is null");
 			OContact ocont = contDao.selectById(con, contactId);
-			if (ocont == null || ocont.getIsList()) throw new WTException("Contact not found [{}]", contactId);
+			if (ocont == null || ocont.getIsList()) throw new WTNotFoundException("Contact not found [{}]", contactId);
 			checkRightsOnCategory(ocont.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
 			
 			contDao.updateRevision(con, contactId, BaseDAO.createRevisionTimestamp());
 			doContactPictureUpdate(con, contactId, picture);
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACT_UPDATE", String.valueOf(contactId));
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
+			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1201,17 +1220,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID, false);
 			Set<Integer> deleteOkCache = new HashSet<>();
 			Map<Integer, Integer> map = contDao.selectCategoriesByIdsType(con, contactIds, false);
+			ArrayList<AuditReferenceDataEntry> deleted = new ArrayList<>();
 			for (Integer contactId : contactIds) {
 				if (contactId == null) continue;
 				if (!map.containsKey(contactId)) throw new WTNotFoundException("Contact not found [{}]", contactId);
 				checkRightsOnCategory(deleteOkCache, map.get(contactId), CheckRightsTarget.ELEMENTS, "DELETE");
 				
-				doContactDelete(con, contactId, true);
+				if (doContactDelete(con, contactId, true)) {
+					deleted.add(new AuditContactObj(contactId));
+				} else {
+					throw new WTNotFoundException("Contact not found [{}]", contactId);
+				}
 			}
-			DbUtils.commitQuietly(con);
 			
-			if (!contactIds.isEmpty()) {
-				writeLog("CONTACT_DELETE", contactIds.size() == 1 ? String.valueOf(contactIds.iterator().next()) : "*");
+			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, deleted);
 			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
@@ -1245,6 +1269,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Set<Integer> readOkCache = new HashSet<>();
 			Set<Integer> deleteOkCache = new HashSet<>();
 			Map<Integer, Integer> map = contDao.selectCategoriesByIdsType(con, contactIds, false);
+			ArrayList<AuditReferenceDataEntry> copied = new ArrayList<>();
+			ArrayList<AuditReferenceDataEntry> moved = new ArrayList<>();
 			for (Integer contactId : contactIds) {
 				if (contactId == null) continue;
 				if (!map.containsKey(contactId)) throw new WTNotFoundException("Contact not found [{}]", contactId);
@@ -1257,19 +1283,26 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						if (origContact == null) throw new WTNotFoundException("Contact not found [{}]", contactId);
 						ContactInsertResult result = doContactCopy(coreMgr, con, origContact, targetCategoryId);
 						
-						//FIXME move log below to avoid log in case of errors
-						writeLog("CONTACT_CREATE", String.valueOf(result.ocontact.getContactId()));
+						copied.add(new AuditContactCopyObj(result.ocontact.getContactId(), origContact.getContactId()));
 						
 					} else {
 						checkRightsOnCategory(deleteOkCache, categoryId, CheckRightsTarget.ELEMENTS, "DELETE");
 						boolean ret = doContactMove(con, contactId, targetCategoryId);
+						if (!ret) throw new WTNotFoundException("Contact not found [{}]", contactId);
 						
-						//FIXME move log below to avoid log in case of errors
-						writeLog("CONTACT_UPDATE", String.valueOf(contactId));
+						moved.add(new AuditContactMoveObj(contactId, categoryId));
 					}	
 				}
 			}
+			
 			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				if (copy) {
+					writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, copied);
+				} else {
+					writeAuditLog(AuditContext.CONTACT, AuditAction.MOVE, moved);
+				}
+			}
 			
 		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1319,8 +1352,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			Set<String> validTags = coreMgr.listTagIds();
 			ContactsListInsertResult result = doContactsListInsert(coreMgr, con, list, true, validTags);
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_INSERT", String.valueOf(result.ocontact.getContactId()));
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, result.ocontact.getContactId(), null);
+			}
 			
 		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1331,7 +1367,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void updateContactTags(final UpdateTagsOperation operation, final int categoryId, final Set<String> tagIds) throws WTException {
+	public void updateContactCategoryTags(final UpdateTagsOperation operation, final int categoryId, final Set<String> tagIds) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactTagDAO ctagDao = ContactTagDAO.getInstance();
 		Connection con = null;
@@ -1350,12 +1386,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				for (String tagId : okTagIds) {
 					ctagDao.insertByCategory(con, categoryId, tagId);
 				}
-				DbUtils.commitQuietly(con);
 				
 			} else if (UpdateTagsOperation.UNSET.equals(operation)) {
 				con = WT.getConnection(SERVICE_ID, false);
 				ctagDao.deleteByCategoryTags(con, categoryId, tagIds);
-				DbUtils.commitQuietly(con);
+			}
+			
+			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, "*", categoryId);
 			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
@@ -1388,12 +1427,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				for (String tagId : okTagIds) {
 					ctagDao.insertByCategoriesContacts(con, okCategoryIds, contactIds, tagId);
 				}
-				DbUtils.commitQuietly(con);
 				
 			} else if (UpdateTagsOperation.UNSET.equals(operation)) {
 				con = WT.getConnection(SERVICE_ID, false);
 				ctagDao.deleteByCategoriesContactsTags(con, okCategoryIds, contactIds, tagIds);
-				DbUtils.commitQuietly(con);
+			}
+			
+			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				ArrayList<AuditReferenceDataEntry> updated = new ArrayList<>();
+				Iterator it = contactIds.iterator();
+				while (it.hasNext()) updated.add(new AuditContactObj((Integer)it.next()));
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, updated);
 			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
@@ -1418,8 +1463,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			boolean ret = doContactsListAddTo(con, list);
 			if (!ret) throw new WTException("Contact-list cannot be updated [{}]", list.getContactId());
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_ADDTO", String.valueOf(contactsListId));
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactsListId, null);
+			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1445,8 +1493,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Set<String> validTags = processTags ? coreMgr.listTagIds() : null;
 			boolean ret = doContactsListUpdate(coreMgr, con, list, processTags, validTags);
 			if (!ret) throw new WTNotFoundException("Contacts-list not found [{}]", list.getContactId());
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_UPDATE", String.valueOf(list.getContactId()));
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, list.getContactId(), null);
+			}
 			
 		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1470,8 +1521,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			boolean ret = doContactDelete(con, contactsListId, true);
 			if (!ret) throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
+			
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_DELETE", String.valueOf(contactsListId));
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, contactsListId, null);
+			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1483,23 +1537,29 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public void deleteContactsList(Collection<Integer> contactsListIds) throws WTException {
-		ContactDAO condao = ContactDAO.getInstance();
+		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID, false);
-			
+			Set<Integer> deleteOkCache = new HashSet<>();
+			Map<Integer, Integer> map = contDao.selectCategoriesByIdsType(con, contactsListIds, true);
+			ArrayList<AuditReferenceDataEntry> deleted = new ArrayList<>();
 			for (Integer contactsListId : contactsListIds) {
-				OContact cont = condao.selectById(con, contactsListId);
-				if (cont == null || !cont.getIsList()) throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
-				checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "DELETE");
+				if (contactsListId == null) continue;
+				if (!map.containsKey(contactsListId)) throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
+				checkRightsOnCategory(deleteOkCache, map.get(contactsListId), CheckRightsTarget.ELEMENTS, "DELETE");
 				
-				boolean ret = doContactDelete(con, contactsListId, true);
-				if (!ret) throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
+				if (doContactDelete(con, contactsListId, true)) {
+					deleted.add(new AuditContactObj(contactsListId));
+				} else {
+					throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
+				}
 			}
-			
 			DbUtils.commitQuietly(con);
-			writeLog("CONTACTLIST_DELETE", "*");
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, deleted);
+			}
 			
 		} catch(SQLException | DAOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -1527,31 +1587,39 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Set<Integer> readOkCache = new HashSet<>();
 			Set<Integer> deleteOkCache = new HashSet<>();
 			Map<Integer, Integer> map = contDao.selectCategoriesByIdsType(con, contactsListIds, true);
-			for (Integer contactId : contactsListIds) {
-				if (contactId == null) continue;
-				if (!map.containsKey(contactId)) throw new WTNotFoundException("Contact-list not found [{}]", contactId);
-				int categoryId = map.get(contactId);
+			ArrayList<AuditReferenceDataEntry> copied = new ArrayList<>();
+			ArrayList<AuditReferenceDataEntry> moved = new ArrayList<>();
+			for (Integer contactListId : contactsListIds) {
+				if (contactListId == null) continue;
+				if (!map.containsKey(contactListId)) throw new WTNotFoundException("Contact-list not found [{}]", contactListId);
+				int categoryId = map.get(contactListId);
 				checkRightsOnCategory(readOkCache, categoryId, CheckRightsTarget.FOLDER, "READ");
 				
 				if (copy || (targetCategoryId != categoryId)) {
 					if (copy) {
-						ContactsList origContactsList = doContactsListGet(con, contactId, true);
-						if (origContactsList == null) throw new WTNotFoundException("Contact-list not found [{}]", contactId);
+						ContactsList origContactsList = doContactsListGet(con, contactListId, true);
+						if (origContactsList == null) throw new WTNotFoundException("Contact-list not found [{}]", contactListId);
 						ContactsListInsertResult result = doContactsListCopy(coreMgr, con, origContactsList, targetCategoryId);
 						
-						//FIXME move log below to avoid log in case of errors
-						writeLog("CONTACTLIST_CREATE", String.valueOf(result.ocontact.getContactId()));
+						copied.add(new AuditContactCopyObj(result.ocontact.getContactId(), origContactsList.getContactId()));
 						
 					} else {
 						checkRightsOnCategory(deleteOkCache, categoryId, CheckRightsTarget.ELEMENTS, "DELETE");
-						boolean ret = doContactsListMove(con, contactId, targetCategoryId);
+						boolean ret = doContactsListMove(con, contactListId, targetCategoryId);
+						if (!ret) throw new WTNotFoundException("Contact-list not found [{}]", contactListId);
 						
-						//FIXME move log below to avoid log in case of errors
-						writeLog("CONTACTLIST_UPDATE", String.valueOf(contactId));
+						moved.add(new AuditContactMoveObj(contactListId, categoryId));
 					}	
 				}
 			}
 			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				if (copy) {
+					writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, copied);
+				} else {
+					writeAuditLog(AuditContext.CONTACT, AuditAction.MOVE, moved);
+				}
+			}
 			
 		} catch(SQLException | DAOException | IOException | WTException ex) {
 			DbUtils.rollbackQuietly(con);
@@ -2605,10 +2673,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private enum CheckRightsTarget {
-		FOLDER, ELEMENTS
-	}
-	
 	private OCategory fillOCategoryWithDefaults(OCategory tgt) {
 		if (tgt != null) {
 			ContactsServiceSettings ss = getServiceSettings();
@@ -2958,6 +3022,84 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			} catch(WTException ex) {
 				throw new WTRuntimeException(ex.getMessage());
 			}
+		}
+	}
+	
+	private enum CheckRightsTarget {
+		FOLDER, ELEMENTS
+	}
+	
+	private enum AuditContext {
+		CATEGORY, CONTACT
+	}
+	
+	private enum AuditAction {
+		CREATE, UPDATE, DELETE, MOVE
+	}
+	
+	private void writeAuditLog(AuditContext context, AuditAction action, Object reference, Object data) {
+		writeAuditLog(EnumUtils.getName(context), EnumUtils.getName(action), (reference != null) ? String.valueOf(reference) : null, (data != null) ? String.valueOf(data) : null);
+	}
+	
+	private void writeAuditLog(AuditContext context, AuditAction action, Collection<AuditReferenceDataEntry> entries) {
+		writeAuditLog(EnumUtils.getName(context), EnumUtils.getName(action), entries);
+	}
+	
+	private class AuditContactObj implements AuditReferenceDataEntry {
+		public final int contactId;
+		
+		public AuditContactObj(int contactId) {
+			this.contactId = contactId;
+		}
+
+		@Override
+		public String getReference() {
+			return String.valueOf(contactId);
+		}
+
+		@Override
+		public String getData() {
+			return null;
+		}
+	}
+	
+	private class AuditContactMoveObj implements AuditReferenceDataEntry {
+		public final int contactId;
+		public final int origCategoryId;
+		
+		public AuditContactMoveObj(int contactId, int origCategoryId) {
+			this.contactId = contactId;
+			this.origCategoryId = origCategoryId;
+		}
+
+		@Override
+		public String getReference() {
+			return String.valueOf(contactId);
+		}
+
+		@Override
+		public String getData() {
+			return String.valueOf(origCategoryId);
+		}
+	}
+	
+	private class AuditContactCopyObj implements AuditReferenceDataEntry {
+		public final int contactId;
+		public final int origContactId;
+		
+		public AuditContactCopyObj(int contactId, int origContactId) {
+			this.contactId = contactId;
+			this.origContactId = origContactId;
+		}
+
+		@Override
+		public String getReference() {
+			return String.valueOf(contactId);
+		}
+
+		@Override
+		public String getData() {
+			return String.valueOf(origContactId);
 		}
 	}
 	
