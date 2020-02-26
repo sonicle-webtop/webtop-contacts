@@ -209,13 +209,13 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			Contact contact = manager.getContact(id, false, false, false);
+			Contact contact = manager.getContact(id, false, false, false, false);
 			if (contact == null) return respErrorNotFound();
 			ContactCompany contactCompany = null;
 			if (contact.hasCompany()) contactCompany = manager.getContactCompany(id);
 			
 			mergeContact(contact, contactCompany, body);
-			manager.updateContact(contact, false, false, false);
+			manager.updateContact(contact, false, false, false, false);
 			
 			ContactObject card = manager.getContactObject(id, ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();

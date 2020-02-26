@@ -506,6 +506,25 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this,
 				hdscale = WT.getHeaderScale();
 		
+		if (WT.isPermitted(WT.ID, 'CUSTOM_FIELDS', 'MANAGE')) {
+			me.addAct('toolbox', 'manageCustomFields', {
+				text: WT.res('act-manageCustomFields.lbl'),
+				tooltip: WT.res('act-manageCustomFields.tip'),
+				iconCls: 'wt-icon-customField',
+				handler: function() {
+					me.showCustomFieldsUI();
+				}
+			});
+			me.addAct('toolbox', 'manageCustomPanels', {
+				text: WT.res('act-manageCustomPanels.lbl'),
+				tooltip: WT.res('act-manageCustomPanels.tip'),
+				iconCls: 'wt-icon-customPanel',
+				handler: function() {
+					me.showCustomPanelsUI();
+				}
+			});
+		}
+		
 		me.addAct('new', 'newContact', {
 			ignoreSize: true,
 			handler: function() {
@@ -1073,20 +1092,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
-	createEventUI: function(rec) {
-		var me = this;
-		me.confirmEventCreation(me.res('contact.confirm.eventCreation'), function(bid, value) {
-			if (bid === 'ok') {
-				me.createEvent(value, rec.get('id'), {
-					firstName: rec.get('firstName'),
-					lastName: rec.get('lastName'),
-					company: rec.get('company'),
-					role: rec.get('function')
-				});
-			}
-		}, me);
-	},
-	
 	confirmEventCreation: function(msg, cb, scope) {
 		var me = this,
 		    defaultValue = me.activeView;
@@ -1219,6 +1224,32 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var sel = this.getSelectedContacts();
 		if (forceSingle && sel.length !== 1) return null;
 		return (sel.length > 0) ? sel[0] : null;
+	},
+	
+	showCustomPanelsUI: function() {
+		var me = this;
+		WT.createView(WT.ID, 'view.CustomPanels', {
+			swapReturn: true,
+			viewCfg: {
+				dockableConfig: {
+					title: WT.res('customPanels.tit') + ' [' + me.getName() + ']'
+				},
+				serviceId: me.ID
+			}
+		}).showView();
+	},
+	
+	showCustomFieldsUI: function() {
+		var me = this;
+		WT.createView(WT.ID, 'view.CustomFields', {
+			swapReturn: true,
+			viewCfg: {
+				dockableConfig: {
+					title: WT.res('customFields.tit') + ' [' + me.getName() + ']'
+				},
+				serviceId: me.ID
+			}
+		}).showView();
 	},
 	
 	addCategoryUI: function(domainId, userId) {
@@ -1515,6 +1546,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (success) me.reloadContacts();
 			}
 		});
+	},
+	
+	createEventUI: function(rec) {
+		var me = this;
+		me.confirmEventCreation(me.res('contact.confirm.eventCreation'), function(bid, value) {
+			if (bid === 'ok') {
+				me.createEvent(value, rec.get('id'), {
+					firstName: rec.get('firstName'),
+					lastName: rec.get('lastName'),
+					company: rec.get('company'),
+					role: rec.get('function')
+				});
+			}
+		}, me);
 	},
 	
 	editShare: function(id) {

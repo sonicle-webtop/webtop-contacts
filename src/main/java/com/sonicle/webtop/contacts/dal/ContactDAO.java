@@ -70,7 +70,6 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.SortField;
 import org.jooq.impl.DSL;
-import static org.jooq.impl.DSL.*;
 
 /**
  *

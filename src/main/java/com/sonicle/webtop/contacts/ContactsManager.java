@@ -55,6 +55,7 @@ import com.sonicle.webtop.contacts.bol.OCategoryPropSet;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactAttachment;
 import com.sonicle.webtop.contacts.bol.OContactAttachmentData;
+import com.sonicle.webtop.contacts.bol.OContactCustomValue;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OContactPictureMetaOnly;
 import com.sonicle.webtop.contacts.bol.OContactVCard;
@@ -76,6 +77,7 @@ import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.CategoryPropsDAO;
 import com.sonicle.webtop.contacts.dal.ContactAttachmentDAO;
+import com.sonicle.webtop.contacts.dal.ContactCustomValueDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ContactVCardDAO;
@@ -127,6 +129,7 @@ import com.sonicle.webtop.core.dal.DAOIntegrityViolationException;
 import com.sonicle.webtop.core.io.BatchBeanHandler;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.model.BaseMasterData;
+import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.model.MasterData;
 import com.sonicle.webtop.core.model.MasterDataLookup;
 import com.sonicle.webtop.core.model.RecipientFieldCategory;
@@ -1010,15 +1013,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public Contact getContact(int contactId) throws WTException {
-		return getContact(contactId, true, true, true);
+		return getContact(contactId, true, true, true, true);
 	}
 	
-	public Contact getContact(int contactId, boolean processPicture, boolean processAttachments, boolean processTags) throws WTException {
+	public Contact getContact(int contactId, boolean processPicture, boolean processAttachments, boolean processTags, boolean processCustomValues) throws WTException {
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			Contact cont = doContactGet(con, contactId, processPicture, processAttachments, processTags);
+			Contact cont = doContactGet(con, contactId, processPicture, processAttachments, processTags, processCustomValues);
 			if (cont == null) return null;
 			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.FOLDER, "READ");
 			
@@ -1095,7 +1098,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
 			Set<String> validTags = coreMgr.listTagIds();
-			ContactInsertResult result = doContactInsert(coreMgr, con, false, contact, vCardRawData, true, true, true, validTags);
+			ContactInsertResult result = doContactInsert(coreMgr, con, false, contact, vCardRawData, true, true, true, true, validTags);
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
@@ -1122,10 +1125,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public void updateContact(Contact contact, boolean processPicture) throws WTException {
-		updateContact(contact, processPicture, true, true);
+		updateContact(contact, processPicture, true, true, true);
 	}
 	
-	public void updateContact(Contact contact, boolean processPicture, boolean processAttachments, boolean processTags) throws WTException {
+	public void updateContact(Contact contact, boolean processPicture, boolean processAttachments, boolean processTags, boolean processCustomValues) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
@@ -1138,7 +1141,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
 			Set<String> validTags = processTags ? coreMgr.listTagIds() : null;
-			boolean ret = doContactUpdate(coreMgr, con, false, contact, processPicture, processAttachments, processTags, validTags);
+			boolean ret = doContactUpdate(coreMgr, con, false, contact, processPicture, processAttachments, processTags, processCustomValues, validTags);
 			if (!ret) throw new WTNotFoundException("Contact not found [{}]", contact.getContactId());
 			
 			DbUtils.commitQuietly(con);
@@ -1279,7 +1282,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				
 				if (copy || (targetCategoryId != categoryId)) {
 					if (copy) {
-						Contact origContact = doContactGet(con, contactId, true, false, true);
+						Contact origContact = doContactGet(con, contactId, true, false, true, true);
 						if (origContact == null) throw new WTNotFoundException("Contact not found [{}]", contactId);
 						ContactInsertResult result = doContactCopy(coreMgr, con, origContact, targetCategoryId);
 						
@@ -1913,7 +1916,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									ci.contact.setCategoryId(categoryId);
 									ci.contact.setHref(href);
 									ci.contact.setEtag(dcard.geteTag());
-									doContactInsert(coreMgr, con, false, ci.contact, null, true, false, false, null);
+									doContactInsert(coreMgr, con, false, ci.contact, null, true, false, false, false, null);
 								}
 							}
 							
@@ -1993,10 +1996,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									ci.contact.setEtag(etag);
 									
 									if (matchingContactId == null) {
-										doContactInsert(coreMgr, con, false, ci.contact, null, true, false, false, null);
+										doContactInsert(coreMgr, con, false, ci.contact, null, true, false, false, false, null);
 									} else {
 										ci.contact.setContactId(matchingContactId);
-										boolean updated = doContactUpdate(coreMgr, con, false, ci.contact, true, false, false, null);
+										boolean updated = doContactUpdate(coreMgr, con, false, ci.contact, true, false, false, false, null);
 										if (!updated) throw new WTException("Contact not found [{}]", ci.contact.getContactId());
 									}
 								}
@@ -2091,11 +2094,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private Contact doContactGet(Connection con, int contactId, boolean processPicture, boolean processAttachments, boolean processTags) throws DAOException, WTException {
+	private Contact doContactGet(Connection con, int contactId, boolean processPicture, boolean processAttachments, boolean processTags, boolean processCustomValues) throws DAOException, WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactTagDAO tagDao = ContactTagDAO.getInstance();
 		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
 		ContactAttachmentDAO attDao = ContactAttachmentDAO.getInstance();
+		ContactCustomValueDAO cvalDao = ContactCustomValueDAO.getInstance();
 		
 		OContact ocont = contDao.selectById(con, contactId);
 		if ((ocont == null) || (ocont.getIsList())) return null;
@@ -2111,6 +2115,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (processAttachments) {
 			List<OContactAttachment> oatts = attDao.selectByContact(con, contactId);
 			cont.setAttachments(ManagerUtils.createContactAttachmentList(oatts));
+		}
+		if (processCustomValues) {
+			List<OContactCustomValue> ovals = cvalDao.selectByContact(con, contactId);
+			cont.setCustomValues(ManagerUtils.createCustomValuesMap(ovals));
 		}
 		return cont;
 	}
@@ -2183,9 +2191,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return cd;
 	}
 	
-	private ContactInsertResult doContactInsert(CoreManager coreMgr, Connection con, boolean isList, Contact contact, String rawVCard, boolean processPicture, boolean processAttachments, boolean processTags, Set<String> validTags) throws DAOException, IOException {
+	private ContactInsertResult doContactInsert(CoreManager coreMgr, Connection con, boolean isList, Contact contact, String rawVCard, boolean processPicture, boolean processAttachments, boolean processTags, boolean processCustomValues, Set<String> validTags) throws DAOException, IOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactTagDAO tagDao = ContactTagDAO.getInstance();
+		ContactCustomValueDAO cvalDao = ContactCustomValueDAO.getInstance();
 		
 		OContact ocont = ManagerUtils.createOContact(contact);
 		ocont.setContactId(contDao.getSequence(con).intValue());
@@ -2212,21 +2221,21 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 		
 		if (isList) {
-			return new ContactInsertResult(ocont, otags, null, null);
+			return new ContactInsertResult(ocont, otags, null, null, null);
 			
 		} else {
-			OContactPicture ocpic = null;
-			ArrayList<OContactAttachment> oatts = null;
-			
 			if (!StringUtils.isBlank(rawVCard)) {
 				doContactVCardInsert(con, ocont.getContactId(), rawVCard);
 			}
+			
+			OContactPicture ocpic = null;
 			if (processPicture && contact.hasPicture()) {
 				ContactPicture pic = contact.getPicture();
 				if (!(pic instanceof ContactPictureWithBytes)) throw new IOException("Picture bytes not available");
 				ocpic = doContactPictureInsert(con, ocont.getContactId(), (ContactPictureWithBytes)pic);
 			}
 			
+			ArrayList<OContactAttachment> oatts = null;
 			if (processAttachments && contact.hasAttachments()) {
 				oatts = new ArrayList<>();
 				for (ContactAttachment att : contact.getAttachments()) {
@@ -2234,14 +2243,27 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					oatts.add(doContactAttachmentInsert(con, ocont.getContactId(), (ContactAttachmentWithStream)att));
 				}
 			}
-			return new ContactInsertResult(ocont, otags, ocpic, oatts);
+			
+			ArrayList<OContactCustomValue> ocvals = null;
+			if (processCustomValues && contact.hasCustomValues()) {
+				ocvals = new ArrayList<>(contact.getCustomValues().size());
+				for (CustomFieldValue cfv : contact.getCustomValues().values()) {
+					OContactCustomValue ocv = ManagerUtils.createOContactCustomValue(cfv);
+					ocv.setContactId(ocont.getContactId());
+					ocvals.add(ocv);
+				}
+				cvalDao.batchInsert(con, ocvals);
+			}
+			
+			return new ContactInsertResult(ocont, otags, ocpic, oatts, ocvals);
 		}
 	}
 	
-	private boolean doContactUpdate(CoreManager coreMgr, Connection con, boolean isList, Contact contact, boolean processPicture, boolean processAttachments, boolean processTags, Set<String> validTags) throws DAOException, IOException {
+	private boolean doContactUpdate(CoreManager coreMgr, Connection con, boolean isList, Contact contact, boolean processPicture, boolean processAttachments, boolean processTags, boolean processCustomValues, Set<String> validTags) throws DAOException, IOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactTagDAO tagDao = ContactTagDAO.getInstance();
 		ContactAttachmentDAO attDao = ContactAttachmentDAO.getInstance();
+		ContactCustomValueDAO cvalDao = ContactCustomValueDAO.getInstance();
 		
 		OContact ocont = ManagerUtils.createOContact(contact);
 		fillDefaultsForUpdate(ocont);
@@ -2298,6 +2320,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					attDao.delete(con, att.getAttachmentId());
 				}
 			}
+			if (processCustomValues && contact.hasCustomValues()) {
+				ArrayList<OContactCustomValue> ocvals = new ArrayList<>(contact.getCustomValues().size());
+				for (CustomFieldValue cfv : contact.getCustomValues().values()) {
+					OContactCustomValue ocv = ManagerUtils.createOContactCustomValue(cfv);
+					ocv.setContactId(ocont.getContactId());
+					ocvals.add(ocv);
+				}
+				cvalDao.deleteByContact(con, ocont.getContactId());
+				cvalDao.batchInsert(con, ocvals);
+			}
 		}
 		return ret;
 	}
@@ -2345,7 +2377,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		String rawVCard = (ovca != null) ? ovca.getRawData() : null;
 		//TODO: maybe add support to attachments copy
 		
-		return doContactInsert(coreMgr, con, false, contact, rawVCard, true, false, true, null);
+		return doContactInsert(coreMgr, con, false, contact, rawVCard, true, false, true, true, null);
 	}
 	
 	private boolean doContactMove(Connection con, int contactId, int targetCategoryId) throws DAOException {
@@ -2503,7 +2535,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private ContactsListInsertResult doContactsListInsert(CoreManager coreMgr, Connection con, ContactsList list, boolean processTags, Set<String> validTags) throws DAOException, IOException {
-		ContactInsertResult result = doContactInsert(coreMgr, con, true, ManagerUtils.createContact(list), null, false, false, processTags, validTags);
+		ContactInsertResult result = doContactInsert(coreMgr, con, true, ManagerUtils.createContact(list), null, false, false, processTags, false, validTags);
 		ArrayList<OListRecipient> orecipients = new ArrayList<>();
 		for (ContactsListRecipient recipient : list.getRecipients()) {
 			orecipients.add(doContactListRecipientInsert(con, result.ocontact.getContactId(), recipient));
@@ -2526,7 +2558,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private boolean doContactsListUpdate(CoreManager coreMgr, Connection con, ContactsList list, boolean processTags, Set<String> validTags) throws DAOException, IOException {
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
 		
-		if (!doContactUpdate(coreMgr, con, true, ManagerUtils.createContact(list), false, false, processTags, validTags)) return false;
+		if (!doContactUpdate(coreMgr, con, true, ManagerUtils.createContact(list), false, false, processTags, false, validTags)) return false;
 		//TODO: maybe evaluate added/deleted records?
 		lrecDao.deleteByContact(con, list.getContactId());
 		for (ContactsListRecipient recipient : list.getRecipients()) {
@@ -2954,12 +2986,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		public final Set<String> otags;
 		public final OContactPicture opicture;
 		public final List<OContactAttachment> oattachments;
+		public final List<OContactCustomValue> ocustomvalues;
 		
-		public ContactInsertResult(OContact ocontact, Set<String> otags, OContactPicture opicture, List<OContactAttachment> oattachments) {
+		public ContactInsertResult(OContact ocontact, Set<String> otags, OContactPicture opicture, List<OContactAttachment> oattachments, ArrayList<OContactCustomValue> ocustomvalues) {
 			this.ocontact = ocontact;
 			this.otags = otags;
 			this.opicture = opicture;
 			this.oattachments = oattachments;
+			this.ocustomvalues = ocustomvalues;
 		}
 	}
 	

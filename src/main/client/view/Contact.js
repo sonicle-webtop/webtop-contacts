@@ -42,6 +42,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		'WTA.ux.UploadBar',
 		'WTA.ux.field.SuggestCombo',
 		'WTA.ux.grid.Attachments',
+		'WTA.ux.panel.CustomFields',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.Contact'
@@ -67,12 +68,19 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.callParent([cfg]);
 		
 		WTU.applyFormulas(me.getVM(), {
+			foTags: WTF.foTwoWay('record', 'tags', function(v) {
+					return Sonicle.String.split(v, '|');
+				}, function(v) {
+					return Sonicle.String.join('|', v);
+			}),
 			foHasTags: WTF.foIsEmpty('record', 'tags', true)
 		});
 	},
 	
 	initComponent: function() {
-		var me = this;
+		var me = this,
+				vm = me.getViewModel();
+		
 		Ext.apply(me, {
 			dockedItems: [
 				{
@@ -157,14 +165,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					xtype: 'sotagdisplayfield',
 					dock : 'top',
 					bind: {
-						value: '{record.tags}',
+						value: '{foTags}',
 						hidden: '{!foHasTags}'
 					},
-					delimiter: '|',
+					store: WT.getTagsStore(),
 					valueField: 'id',
 					displayField: 'name',
 					colorField: 'color',
-					store: WT.getTagsStore(),
 					dummyIcon: 'loading',
 					hidden: true,
 					hideLabel: true,
@@ -175,7 +182,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		me.callParent(arguments);
 		
 		if (Ext.isEmpty(me.uploadTag)) me.uploadTag = WT.uiid(me.getId());
-		var main, work, more, home, other, notes, attachs;
+		var main, work, more, home, other, notes, attachs, cfields;
 		main = {
 			xtype: 'wtform',
 			layout: 'column',
@@ -560,19 +567,33 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						size: file.size,
 						_uplId: uploadId
 					}));
-					me.getComponent(0).getLayout().setActiveItem(s);
+					me.lref('tpnlmain').getLayout().setActiveItem(s);
 				}
 			}
+		};
+		
+		cfields = {
+			xtype: 'wtcustomfieldspanel',
+			reference: 'tabcfields',
+			title: 'Campi personalizzati',
+			bind: {
+				store: '{record.cvalues}',
+				fieldsDefs: '{record._cfdefs}'
+			},
+			defaultLabelWidth: 120
 		};
 		
 		me.add({
 			region: 'center',
 			xtype: 'wttabpanel',
-			items: [main, work, home, other, more, notes, attachs]
+			reference: 'tpnlmain',
+			items: [main, work, home, other, more, notes, attachs, cfields]
 		});
 		
 		me.on('viewload', me.onViewLoad);
 		me.on('viewclose', me.onViewClose);
+		me.on('beforemodelsave', me.onBeforeModelSave, me);
+		vm.bind('{foTags}', me.onTagsChanged, me);
 	},
 	
 	manageTagsUI: function(selTagIds) {
@@ -678,6 +699,49 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		
 		onViewClose: function(s) {
 			s.mys.cleanupUploadedFiles(s.uploadTag);
+		},
+		
+		onBeforeModelSave: function(s) {
+			var cp = this.lref('tabcfields');
+			if (!cp.isValid()) {
+				this.lref('tpnlmain').getLayout().setActiveItem(cp);
+				return false;
+			}
+		},
+		
+		onTagsChanged: function(nv, ov) {
+			var me = this, mo, cftab;
+			if (ov && Sonicle.String.difference(nv, ov).length > 0) { // Make sure that there are really differences!
+				mo = me.getModel();
+				cftab = me.lref('tabcfields');
+				cftab.wait();
+				me.getCustomFieldsDefsData(nv, {
+					callback: function(success, json) {
+						if (success) {
+							Ext.iterate(json.data.cvalues, function(cval) {
+								if (!mo.cvalues().getById(cval.id)) {
+									mo.cvalues().add(cval);
+								}
+							});
+							mo.set('_cfdefs', json.data.cfdefs);
+						}
+						cftab.unwait();
+					}
+				});
+			}
+		},
+		
+		getCustomFieldsDefsData: function(tags, opts) {
+			opts = opts || {};
+			var me = this;
+			WT.ajaxReq(me.mys.ID, 'GetCustomFieldsDefsData', {
+				params: {
+					tags: WTU.arrayAsParam(tags)
+				},
+				callback: function(success, json) {
+					Ext.callback(opts.callback, opts.scope || me, [success, json]);
+				}
+			});
 		}
 	}
 });

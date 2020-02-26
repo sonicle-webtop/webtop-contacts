@@ -102,6 +102,7 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.WebTopSession;
 import com.sonicle.webtop.core.app.WebTopSession.UploadedFile;
+import com.sonicle.webtop.core.bol.js.JsCustomFieldDefsData;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.js.JsWizardData;
@@ -112,6 +113,8 @@ import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
+import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.model.Recipient;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
@@ -141,6 +144,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.supercsv.prefs.CsvPreference;
 
@@ -816,6 +820,8 @@ public class Service extends BaseService {
 	}
 	
 	public void processManageContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
 		JsContact item = null;
 		
 		try {
@@ -826,14 +832,22 @@ public class Service extends BaseService {
 				int contactId = Integer.parseInt(id);
 				Contact contact = manager.getContact(contactId);
 				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
-				item = new JsContact(ownerId, contact);
 				
+				Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
+				Map<String, CustomField> cfields = new HashMap<>();
+				for (CustomPanel cpanel : cpanels.values()) {
+					for (String fieldId : cpanel.getFields()) {
+						CustomField cfield = coreMgr.getCustomField(SERVICE_ID, fieldId);
+						if (cfield != null) cfields.put(fieldId, cfield);
+					}
+				}
+				item = new JsContact(ownerId, contact, cpanels.values(), cfields, up.getLanguageTag(), up.getTimeZone());
 				new JsonResult(item).printTo(out);
 				
 			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				Contact contact = JsContact.buildContact(pl.data);
+				Contact contact = pl.data.toContact(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
@@ -851,14 +865,13 @@ public class Service extends BaseService {
 					contact.getAttachments().add(att);
 				}
 				manager.addContact(contact);
-				
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
 				boolean processPicture = false;
-				Contact contact = JsContact.buildContact(pl.data);
+				Contact contact = pl.data.toContact(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
@@ -888,7 +901,6 @@ public class Service extends BaseService {
 					}
 				}
 				manager.updateContact(contact, processPicture);
-				
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.DELETE)) {
@@ -903,9 +915,9 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in ManageContacts", ex);
-			new JsonResult(false, "Error").printTo(out);	
+		} catch(Throwable t) {
+			logger.error("Error in ManageContacts", t);
+			new JsonResult(t).printTo(out);	
 		}
 	}
 	
@@ -915,7 +927,7 @@ public class Service extends BaseService {
 			String type = ServletUtils.getStringParameter(request, "type", true);
 			int contactId = Integer.parseInt(id);
 			
-			Contact contact = manager.getContact(contactId, false, false, true);
+			Contact contact = manager.getContact(contactId, false, false, true, false);
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);
@@ -980,9 +992,32 @@ public class Service extends BaseService {
 				}
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in DownloadContactAttachment", ex);
-			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		} catch(Throwable t) {
+			logger.error("Error in DownloadContactAttachment", t);
+			ServletUtils.writeErrorHandlingJs(response, t.getMessage());
+		}
+	}
+	
+	public void processGetCustomFieldsDefsData(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
+		
+		try {
+			ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+			
+			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, tags);
+			Map<String, CustomField> cfields = new HashMap<>();
+			for (CustomPanel cpanel : cpanels.values()) {
+				for (String fieldId : cpanel.getFields()) {
+					CustomField cfield = coreMgr.getCustomField(SERVICE_ID, fieldId);
+					if (cfield != null) cfields.put(fieldId, cfield);
+				}
+			}
+			new JsonResult(new JsCustomFieldDefsData(cpanels.values(), cfields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
+			
+		} catch(Throwable t) {
+			logger.error("Error in GetCustomFieldsDefsData", t);
+			ServletUtils.writeErrorHandlingJs(response, t.getMessage());
 		}
 	}
 	

@@ -32,19 +32,15 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
-import com.sonicle.commons.EnumUtils;
-import com.sonicle.webtop.contacts.jooq.Tables;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import com.sonicle.webtop.contacts.jooq.tables.ContactsTags;
-import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.Set;
 import org.jooq.DSLContext;
-import org.jooq.Field;
 import static org.jooq.impl.DSL.*;
 
 /**
