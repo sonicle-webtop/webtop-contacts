@@ -114,6 +114,7 @@ import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
 import com.sonicle.webtop.core.app.sdk.AuditReferenceDataEntry;
 import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
+import com.sonicle.webtop.core.app.util.ExceptionUtils;
 import com.sonicle.webtop.core.bol.OShare;
 import com.sonicle.webtop.core.sdk.BaseManager;
 import com.sonicle.webtop.core.bol.Owner;
@@ -379,8 +380,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			return catDao.selectIdsByProfile(con, pid.getDomainId(), pid.getUserId());
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -398,8 +399,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			return items;
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -418,8 +419,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			return items;
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -438,8 +439,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			return contDao.selectMaxRevTimestampByCategoriesType(con, okCategoryIds, false);
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -457,8 +458,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			OCategory ocat = catDao.selectById(con, categoryId);
 			return ManagerUtils.createCategory(ocat);
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -477,8 +478,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return ManagerUtils.createCategory(ocat);
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -515,9 +516,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return category;
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -552,9 +553,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return cat;
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -577,9 +578,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.UPDATE, categoryId, null);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -621,9 +622,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return ret == 1;
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -643,8 +644,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			OCategoryPropSet opset = psetDao.selectByProfileCategory(con, profileId.getDomainId(), profileId.getUserId(), categoryId);
 			return (opset == null) ? new CategoryPropSet() : ManagerUtils.createCategoryPropSet(opset);
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -669,8 +670,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			return psets;
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -700,8 +701,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			return propertySet;
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -730,8 +731,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			return items;
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -775,8 +776,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return new CollectionChangeSet<>(inserted, updated, deleted);
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -813,8 +814,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			return items;
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -835,8 +836,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				return null;
 			}
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -906,8 +907,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (throwExIfManyMatchesFound && (ids.size() > 1)) throw new WTException("Many matches for href [{}]", href);
 			return ids.get(ids.size()-1);
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -931,8 +932,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			con = WT.getConnection(SERVICE_ID);
 			return contDao.existByCategoryTypeCondition(con, okCategoryIds, ContactType.CONTACT, condition);
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -985,8 +986,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return new ListContactsResult(items, fullCount);
 			
-		} catch (SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1027,8 +1028,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return cont;
 		
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1052,8 +1053,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			OContactAttachmentData oattData = attDao.selectBytes(con, attachmentId);
 			return ManagerUtils.fillContactAttachment(new ContactAttachmentWithBytes(oattData.getBytes()), oatt);
 		
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1072,8 +1073,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return ManagerUtils.createContactCompany(vcc);
 		
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1110,9 +1111,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			newContact.setAttachments(ManagerUtils.createContactAttachmentList(result.oattachments));
 			return newContact;
 			
-		} catch(SQLException | DAOException | IOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1149,9 +1150,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contact.getContactId(), null);
 			}
 			
-		} catch(SQLException | DAOException | IOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1173,8 +1174,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (opic == null) return null;
 			return ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic);
 		
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1201,9 +1202,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1241,9 +1242,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, deleted);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1307,9 +1308,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				}
 			}
 			
-		} catch(SQLException | DAOException | IOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1331,8 +1332,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			return contList;
 		
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1361,9 +1362,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, result.ocontact.getContactId(), null);
 			}
 			
-		} catch(SQLException | DAOException | IOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1400,9 +1401,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, "*", categoryId);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1444,9 +1445,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, updated);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1472,9 +1473,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactsListId, null);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1502,9 +1503,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, list.getContactId(), null);
 			}
 			
-		} catch(SQLException | DAOException | IOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1530,9 +1531,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, contactsListId, null);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1564,9 +1565,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, deleted);
 			}
 			
-		} catch(SQLException | DAOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1624,9 +1625,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				}
 			}
 			
-		} catch(SQLException | DAOException | IOException | WTException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -1662,9 +1663,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			
-		} catch(SQLException | DAOException ex) {
+		} catch (Throwable t) {
 			DbUtils.rollbackQuietly(con);
-			throw wrapException(ex);
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -2031,8 +2032,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				throw new WTException("Unsupported provider [{0}]", cat.getProvider());
 			}
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 			pendingRemoteCategorySyncs.remove(PENDING_KEY);
@@ -2603,8 +2604,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Owner owner = dao.selectOwnerById(con, categoryId);
 			return (owner == null) ? null : new UserProfileId(owner.getDomainId(), owner.getUserId());
 			
-		} catch(SQLException | DAOException ex) {
-			throw wrapException(ex);
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
