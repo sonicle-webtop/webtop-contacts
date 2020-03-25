@@ -84,7 +84,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	init: function() {
 		var me = this,
-				tagsStore = WT.getTagsStore();
+				tagsStore = WT.getTagsStore(),
+				scfields = WTA.ux.field.Search.customFieldDefs2Fields(me.getVar('cfieldsSearchable'));
 		
 		me.activeView = me.getVar('view');
 		me.activeGroupBy = me.getVar('groupBy');
@@ -130,7 +131,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					xtype: 'wtsearchfield',
 					reference: 'fldsearch',
 					highlightKeywords: ['name', 'company', 'email', 'phone'],
-					fields: [
+					fields: Ext.Array.push([
 						{
 							name: 'name',
 							type: 'string',
@@ -157,7 +158,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							label: me.res('fld-search.field.notes.lbl')
 						}, {
 							name: 'tag',
-							type: 'tag[]',
+							type: 'tag',
 							label: me.res('fld-search.field.tags.lbl'),
 							customConfig: {
 								valueField: 'id',
@@ -165,12 +166,21 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								colorField: 'color',
 								store: WT.getTagsStore() // This is filterable, let's do a separate copy!
 							}
-						}/*, {
-							name: 'any',
-							type: 'string',
-							textSink: true,
-							label: me.res('fld-search.field.any.lbl')
-						}*/
+						}//, {
+							//name: 'any',
+							//type: 'string',
+							//textSink: true,
+							//label: me.res('fld-search.field.any.lbl')
+						//}
+					], scfields),
+					tabs: Ext.isEmpty(scfields) ? undefined: [
+						{
+							title: WT.res('wtsearchfield.main.tit'),
+							fields: ['name', 'company', 'email', 'phone', 'address', 'notes', 'tag']
+						}, {
+							title: WT.res('wtsearchfield.customFields.tit'),
+							fields: Ext.Array.pluck(scfields, 'name')
+						}
 					],
 					tooltip: me.res('fld-search.tip'),
 					searchTooltip: me.res('fld-search.tip'),

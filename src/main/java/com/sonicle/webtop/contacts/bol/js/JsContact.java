@@ -39,8 +39,8 @@ import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactCompany;
-import com.sonicle.webtop.core.bol.js.JsCustomFieldDefs;
-import com.sonicle.webtop.core.bol.js.JsCustomFieldValue;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
 import com.sonicle.webtop.core.model.CustomField;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.model.CustomPanel;
@@ -110,7 +110,7 @@ public class JsContact {
 	public String tags;
 	public String picture;
 	public ArrayList<Attachment> attachments;
-	public ArrayList<JsCustomFieldValue> cvalues;
+	public ArrayList<ObjCustomFieldValue> cvalues;
 	public String _profileId; // Read-only
 	public String _cfdefs; // Read-only
 	
@@ -183,22 +183,22 @@ public class JsContact {
 		}
 		
 		cvalues = new ArrayList<>();
-		ArrayList<JsCustomFieldDefs.Panel> panels = new ArrayList<>();
+		ArrayList<ObjCustomFieldDefs.Panel> panels = new ArrayList<>();
 		for (CustomPanel panel : customPanels) {
-			panels.add(new JsCustomFieldDefs.Panel(panel, profileLanguageTag));
+			panels.add(new ObjCustomFieldDefs.Panel(panel, profileLanguageTag));
 		}
-		ArrayList<JsCustomFieldDefs.Field> fields = new ArrayList<>();
+		ArrayList<ObjCustomFieldDefs.Field> fields = new ArrayList<>();
 		for (CustomField field : customFields.values()) {
 			CustomFieldValue cvalue = null;
 			if (contact.hasCustomValues()) {
 				cvalue = contact.getCustomValues().get(field.getFieldId());
 			}
-			cvalues.add(cvalue != null ? new JsCustomFieldValue(field.getType(), cvalue, profileTz) : new JsCustomFieldValue(field.getType(), field.getFieldId()));
-			fields.add(new JsCustomFieldDefs.Field(field, profileLanguageTag));
+			cvalues.add(cvalue != null ? new ObjCustomFieldValue(field.getType(), cvalue, profileTz) : new ObjCustomFieldValue(field.getType(), field.getFieldId()));
+			fields.add(new ObjCustomFieldDefs.Field(field, profileLanguageTag));
 		}
 		
 		_profileId = ownerPid.toString();
-		_cfdefs = LangUtils.serialize(new JsCustomFieldDefs(panels, fields), JsCustomFieldDefs.class);
+		_cfdefs = LangUtils.serialize(new ObjCustomFieldDefs(panels, fields), ObjCustomFieldDefs.class);
 	}
 	
 	public Contact toContact(DateTimeZone profileTz) {
@@ -257,7 +257,7 @@ public class JsContact {
 		item.setTags(new LinkedHashSet<>(new CompositeId().parse(tags).getTokens()));
 		
 		ArrayList<CustomFieldValue> customValues = new ArrayList<>();
-		for (JsCustomFieldValue jscfv : cvalues) {
+		for (ObjCustomFieldValue jscfv : cvalues) {
 			customValues.add(jscfv.toCustomFieldValue(profileTz));
 		}
 		item.setCustomValues(customValues);

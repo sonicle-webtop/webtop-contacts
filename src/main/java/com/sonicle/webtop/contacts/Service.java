@@ -34,8 +34,10 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.InternetAddressUtils;
+import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
+import com.sonicle.commons.cache.AbstractPassiveExpiringCache;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
@@ -102,10 +104,12 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.WebTopSession;
 import com.sonicle.webtop.core.app.WebTopSession.UploadedFile;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
 import com.sonicle.webtop.core.bol.js.JsCustomFieldDefsData;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.js.JsWizardData;
+import com.sonicle.webtop.core.bol.js.ObjSearchableCustomField;
 import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.io.output.AbstractReport;
@@ -114,6 +118,7 @@ import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
 import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.model.Recipient;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
@@ -138,6 +143,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
@@ -161,6 +167,7 @@ public class Service extends BaseService {
 	private ContactsUserSettings us;
 	private ContactsServiceSettings ss;
 	
+	private final SearchableCustomFieldTypeCache cacheSearchableCustomFieldType = new SearchableCustomFieldTypeCache(5, TimeUnit.SECONDS);
 	private final LinkedHashMap<String, ShareRootCategory> roots = new LinkedHashMap<>();
 	private final LinkedHashMap<Integer, ShareFolderCategory> folders = new LinkedHashMap<>();
 	private final HashMap<Integer, CategoryPropSet> folderProps = new HashMap<>();
@@ -207,7 +214,24 @@ public class Service extends BaseService {
 		co.put("view", EnumUtils.toSerializedName(us.getView()));
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
+		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjSearchableCustomField.List.class));
 		return co;
+	}
+	
+	private ObjSearchableCustomField.List getSearchableCustomFieldDefs() {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
+		
+		try {
+			ObjSearchableCustomField.List scfields = new ObjSearchableCustomField.List();
+			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, true).values()) {
+				scfields.add(new ObjCustomFieldDefs.Field(cfield, up.getLanguageTag()));
+			}
+			return scfields;
+			
+		} catch(Throwable t) {
+			return null;
+		}
 	}
 	
 	private WebTopSession getWts() {
@@ -645,6 +669,9 @@ public class Service extends BaseService {
 		ArrayList<JsGridContact> items = new ArrayList<>();
 		
 		try {
+			UserProfile up = getEnv().getProfile();
+			DateTimeZone utz = up.getTimeZone();
+			
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if (crud.equals(Crud.READ)) {
 				GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
@@ -654,24 +681,12 @@ public class Service extends BaseService {
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
-				if (queryObj.hasCondition("tag")) {
-					CoreManager coreMgr = WT.getCoreManager();
-					Map<String, List<String>> tags = coreMgr.listTagIdsByName();
-					
-					for (QueryObj.Condition condition : queryObj.conditions) {
-						if ("tag".equals(condition.keyword)) {
-							if (tags.containsKey(condition.value)) {
-								condition.value = tags.get(condition.value).get(0);
-							}
-						}
-					}
-				}
-				
 				//TODO: optimize call to skip fullCount for subsequent calls
 				ContactType type = GridView.CONTACTS_LIST.equals(view) ? ContactType.LIST : ContactType.ANY;
 				
+				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj), page, limit, true);
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
@@ -1579,6 +1594,25 @@ public class Service extends BaseService {
 		if (!chooser) node.setChecked(active);
 		
 		return node;
+	}
+	
+	private class SearchableCustomFieldTypeCache extends AbstractPassiveExpiringCache<String, CustomField.Type> {
+		
+		public SearchableCustomFieldTypeCache(final long timeToLive, final TimeUnit timeUnit) {
+			super(timeToLive, timeUnit);
+		}
+		
+		@Override
+		protected Map<String, CustomField.Type> internalGetCache() {
+			try {
+				CoreManager coreMgr = WT.getCoreManager();
+				return coreMgr.listCustomFieldTypesById(SERVICE_ID, true);
+				
+			} catch(Throwable t) {
+				logger.error("[SearchableCustomFieldTypeCache] Unable to build cache", t);
+				throw new UnsupportedOperationException();
+			}
+		}
 	}
 	
 	private class SyncRemoteCategoryAA extends BaseServiceAsyncAction {
