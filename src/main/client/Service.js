@@ -52,6 +52,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.ux.panel.ContactPreview'
 	],
 	uses: [
+		'Sonicle.picker.Color',
 		'WTA.util.FoldersTree',
 		'WTA.ux.SelectTagsBox',
 		'Sonicle.webtop.contacts.view.Map',
@@ -679,14 +680,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			menu: {
 				showSeparator: false,
 				itemId: 'categoryColor',
-				items: [{
-						xtype: 'colorpicker',
-						colors: WT.getColorPalette(),
+				items: [
+					{
+						xtype: 'socolorpicker',
+						colors: WT.getColorPalette('default'),
+						tilesPerRow: 11,
 						listeners: {
 							select: function(s, color) {
 								var node = s.menuData.node;
 								me.getRef('cxmFolder').hide();
-								if (node) me.updateCategoryColorUI(node, '#'+color);
+								if (node) me.updateCategoryColorUI(node, Sonicle.String.prepend(color, '#', true));
 							}
 						}
 					},
