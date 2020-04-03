@@ -517,7 +517,17 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this,
 				hdscale = WT.getHeaderScale();
 		
-		if (WT.isPermitted(WT.ID, 'CUSTOM_FIELDS', 'MANAGE')) {
+		if (WT.isPermitted(WT.ID, 'TAGS', 'MANAGE')) {
+			me.addAct('toolbox', 'manageTags', {
+				text: WT.res('act-manageTags.lbl'),
+				tooltip: WT.res('act-manageTags.tip'),
+				iconCls: 'wt-icon-tag',
+				handler: function() {
+					me.showManageTagsUI();
+				}
+			});
+		}
+		if (WT.isPermitted(WT.ID, 'CUSTOM_FIELDS', 'MANAGE')) {		
 			me.addAct('toolbox', 'manageCustomFields', {
 				text: WT.res('act-manageCustomFields.lbl'),
 				tooltip: WT.res('act-manageCustomFields.tip'),
@@ -1252,6 +1262,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}).showView();
 	},
 	
+	showManageTagsUI: function() {
+		var me = this,
+				vw = WT.createView(WT.ID, 'view.Tags', {
+					swapReturn: true,
+					viewCfg: {
+						enableSelection: false
+					}
+				});
+		vw.on('viewclose', function(s) {
+			if (s.syncCount > 0) me.reloadContacts();
+		});
+		vw.showView();
+	},
+	
 	showCustomFieldsUI: function() {
 		var me = this;
 		WT.createView(WT.ID, 'view.CustomFields', {
@@ -1483,6 +1507,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				});
 			}	
 		});
+		//FIXME: reload contacts (like showManageTagsUI) when closing view with reload. Keep attention to avoid multiple reloads.
 		vw.showView();
 	},
 	
