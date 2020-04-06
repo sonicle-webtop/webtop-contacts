@@ -40,9 +40,13 @@ import org.jooq.Condition;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_CUSTOM_VALUES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
+import com.sonicle.webtop.contacts.jooq.tables.ContactsCustomValues;
+import com.sonicle.webtop.contacts.jooq.tables.ContactsTags;
 import com.sonicle.webtop.core.app.sdk.JOOQPredicateVisitorWithCValues;
 import com.sonicle.webtop.core.app.sdk.QueryBuilderWithCValues;
 import org.apache.commons.lang3.StringUtils;
+import org.jooq.Field;
+import org.jooq.TableLike;
 import static org.jooq.impl.DSL.*;
 
 /**
@@ -50,6 +54,8 @@ import static org.jooq.impl.DSL.*;
  * @author malbinola
  */
 public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
+	private final ContactsCustomValues PV_CONTACTS_CUSTOM_VALUES = CONTACTS_CUSTOM_VALUES.as("pvis_cv");
+	private final ContactsTags PV_CONTACTS_TAGS = CONTACTS_TAGS.as("pvis_ct");
 	
 	public ContactPredicateVisitor() {
 		super(false);
@@ -143,30 +149,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 		} else if (StringUtils.startsWith(fieldName, "CV")) {
 			CompId fn = new CompId(2).parse(fieldName, false);
 			if (fn.isTokenEmpty(1)) throw new UnsupportedOperationException("Field name invalid: " + fieldName);
-			
-			CValueCondition cvCondition = getCustomFieldCondition(fn, operator, values);
-			if (cvCondition.negated) {
-				return notExists(
-					selectOne()
-					.from(CONTACTS_CUSTOM_VALUES)
-					.where(
-						CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
-						.and(CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.equal(fn.getToken(1)))
-						.and(cvCondition.condition)
-					)
-				);
-				
-			} else {
-				return exists(
-					selectOne()
-					.from(CONTACTS_CUSTOM_VALUES)
-					.where(
-						CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
-						.and(CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.equal(fn.getToken(1)))
-						.and(cvCondition.condition)
-					)
-				);
-			}
+			return generateCValueCondition(fn, operator, values);
 			
 		} else {
 			throw new UnsupportedOperationException("Field not supported: " + fieldName);
@@ -174,21 +157,52 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	}
 	
 	@Override
-	protected Condition cvalueCondition(QueryBuilderWithCValues.Type cvalueType, ComparisonOperator operator, Collection<?> values) {
+	protected Field<?> getFieldEntityIdOfEntityTable() {
+		return CONTACTS.CONTACT_ID;
+	}
+	
+	@Override
+	protected TableLike<?> getTableTags() {
+		return PV_CONTACTS_TAGS;
+	}
+	
+	@Override
+	protected Field<String> getFieldTagIdOfTableTags() {
+		return PV_CONTACTS_TAGS.TAG_ID;
+	}
+	
+	@Override
+	protected Condition getConditionTagsForCurrentEntity() {
+		return PV_CONTACTS_TAGS.CONTACT_ID.eq(CONTACTS.CONTACT_ID);
+	}
+	
+	@Override
+	protected TableLike<?> getTableCustomValues() {
+		return PV_CONTACTS_CUSTOM_VALUES;
+	}
+	
+	@Override
+	protected Condition getConditionCustomValuesForCurrentEntityAndField(String fieldId) {
+		return PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.eq(CONTACTS.CONTACT_ID)
+				.and(PV_CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.eq(fieldId));
+	}
+	
+	@Override
+	protected Condition getConditionCustomValuesForFieldValue(QueryBuilderWithCValues.Type cvalueType, ComparisonOperator operator, Collection<?> values) {
 		if (QueryBuilderWithCValues.Type.CVSTRING.equals(cvalueType)) {
-			return defaultCondition(CONTACTS_CUSTOM_VALUES.STRING_VALUE, operator, values);
+			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.STRING_VALUE, operator, values);
 			
 		} else if (QueryBuilderWithCValues.Type.CVNUMBER.equals(cvalueType)) {
-			return defaultCondition(CONTACTS_CUSTOM_VALUES.NUMBER_VALUE, operator, values);
+			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.NUMBER_VALUE, operator, values);
 			
 		} else if (QueryBuilderWithCValues.Type.CVBOOL.equals(cvalueType)) {
-			return defaultCondition(CONTACTS_CUSTOM_VALUES.BOOLEAN_VALUE, operator, values);
+			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.BOOLEAN_VALUE, operator, values);
 			
 		} else if (QueryBuilderWithCValues.Type.CVDATE.equals(cvalueType)) {
-			return defaultCondition(CONTACTS_CUSTOM_VALUES.DATE_VALUE, operator, values);
+			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.DATE_VALUE, operator, values);
 			
 		} else if (QueryBuilderWithCValues.Type.CVTEXT.equals(cvalueType)) {
-			return defaultCondition(CONTACTS_CUSTOM_VALUES.TEXT_VALUE, operator, values);
+			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.TEXT_VALUE, operator, values);
 			
 		} else {
 			return null;
