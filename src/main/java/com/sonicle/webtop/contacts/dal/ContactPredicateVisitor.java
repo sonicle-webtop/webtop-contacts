@@ -32,8 +32,8 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
-import com.github.rutledgepaulv.qbuilders.nodes.ComparisonNode;
-import com.github.rutledgepaulv.qbuilders.operators.ComparisonOperator;
+import com.sonicle.commons.qbuilders.nodes.ComparisonNode;
+import com.sonicle.commons.qbuilders.operators.ComparisonOperator;
 import com.sonicle.commons.web.json.CompId;
 import java.util.Collection;
 import org.jooq.Condition;
@@ -150,6 +150,51 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 			CompId fn = new CompId(2).parse(fieldName, false);
 			if (fn.isTokenEmpty(1)) throw new UnsupportedOperationException("Field name invalid: " + fieldName);
 			return generateCValueCondition(fn, operator, values);
+			
+			/*
+			CustomFields PV_CUSTOM_FIELDS = CUSTOM_FIELDS.as("pvis_cf");
+			CustomPanelsFields PV_CUSTOM_PANELS_FIELDS = CUSTOM_PANELS_FIELDS.as("pvis_cpf");
+			CustomPanelsTags PV_CUSTOM_PANELS_TAGS = CUSTOM_PANELS_TAGS.as("pvis_cpt");
+			ContactsTags PV_CONTACTS_TAGS = CONTACTS_TAGS.as("pvis_ct");
+			
+			Condition fieldOnlineCond = exists(
+				selectOne()
+				.from(PV_CUSTOM_FIELDS)
+				.join(PV_CUSTOM_PANELS_FIELDS).on(PV_CUSTOM_FIELDS.CUSTOM_FIELD_ID.eq(PV_CUSTOM_PANELS_FIELDS.CUSTOM_FIELD_ID))
+				.join(PV_CUSTOM_PANELS_TAGS).on(PV_CUSTOM_PANELS_FIELDS.CUSTOM_PANEL_ID.eq(PV_CUSTOM_PANELS_TAGS.CUSTOM_PANEL_ID))
+				.join(PV_CONTACTS_TAGS).on(PV_CUSTOM_PANELS_TAGS.TAG_ID.eq(PV_CONTACTS_TAGS.TAG_ID))
+				.where(
+					PV_CUSTOM_FIELDS.CUSTOM_FIELD_ID.eq(fn.getToken(1))
+					.and(PV_CONTACTS_TAGS.CONTACT_ID.eq(CONTACTS.CONTACT_ID))
+				)
+			);
+			
+			CValueConditionObject valueCond = toCValueConditionObject(fn, operator, values);
+			if (valueCond.negated) {
+				return fieldOnlineCond
+						.andNotExists(
+							selectOne()
+							.from(PV_CONTACTS_CUSTOM_VALUES)
+							.where(
+								PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+								.and(PV_CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.equal(fn.getToken(1)))
+								.and(valueCond.condition)
+							)
+						);
+				
+			} else {
+				return fieldOnlineCond
+						.andExists(
+							selectOne()
+							.from(PV_CONTACTS_CUSTOM_VALUES)
+							.where(
+								PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.eq(CONTACTS.CONTACT_ID)
+								.and(PV_CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.eq(fn.getToken(1)))
+								.and(valueCond.condition)
+							)
+				);
+			}
+			*/
 			
 		} else {
 			throw new UnsupportedOperationException("Field not supported: " + fieldName);

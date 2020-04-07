@@ -32,7 +32,7 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.github.rutledgepaulv.qbuilders.conditions.Condition;
+import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.IdentifierUtils;
 import com.sonicle.commons.InternetAddressUtils;
