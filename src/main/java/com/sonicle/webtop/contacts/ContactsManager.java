@@ -1081,6 +1081,28 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
+	public Map<String, CustomFieldValue> getContactCustomValues(int contactId) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		ContactCustomValueDAO cvalDao = ContactCustomValueDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			Integer catId = contDao.selectCategoryId(con, contactId);
+			if (catId == null) return null;
+			checkRightsOnCategory(catId, CheckRightsTarget.FOLDER, "READ");
+			
+			List<OContactCustomValue> ovals = cvalDao.selectByContact(con, contactId);
+			return ManagerUtils.createCustomValuesMap(ovals);
+			
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
 	public Contact addContact(Contact contact) throws WTException {
 		return addContact(contact, null);
 	}
