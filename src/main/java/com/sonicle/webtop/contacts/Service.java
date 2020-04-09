@@ -1019,11 +1019,11 @@ public class Service extends BaseService {
 		UserProfile up = getEnv().getProfile();
 		
 		try {
-			String contactId = ServletUtils.getStringParameter(request, "contactId", true);
 			ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+			Integer contactId = ServletUtils.getIntParameter(request, "contactId", false);
 			
-			Map<String, CustomFieldValue> cvalues = manager.getContactCustomValues(Integer.parseInt(contactId));
 			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, tags);
+			Map<String, CustomFieldValue> cvalues = (contactId != null) ? manager.getContactCustomValues(contactId) : null;
 			Map<String, CustomField> cfields = new HashMap<>();
 			for (CustomPanel cpanel : cpanels.values()) {
 				for (String fieldId : cpanel.getFields()) {
