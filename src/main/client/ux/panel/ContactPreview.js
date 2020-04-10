@@ -40,6 +40,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		'Sonicle.form.field.TagDisplay',
 		'WTA.util.FoldersTree',
 		'WTA.ux.grid.TileList',
+		'WTA.ux.panel.CustomFieldsPreview',
 		'Sonicle.webtop.contacts.model.ContactPreview'
 	],
 	mixins: [
@@ -51,6 +52,17 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	 * The Store that holds available tags data.
 	 */
 	tagsStore: null,
+	
+	/**
+	 * @cfg {Object} customFieldDefs
+	 */
+	customFieldDefs: null,
+	
+	/**
+	 * @cfg {Number} loadContactBuffer
+	 * This is the time in milliseconds to buffer load requests when updating selection.
+	 */
+	loadContactBuffer: 200,
 	
 	layout: 'card',
 	referenceHolder: true,
@@ -414,20 +426,6 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							xtype: 'wtpanel',
 							title: me.mys.res('contactPreview.single.contact.tit'),
 							layout: 'anchor',
-							tbar: [{
-								xtype: 'tbtext',
-								text: me.mys.res('contactPreview.single.contact.tb.info')
-							}, '->', {
-								xtype: 'button',
-								bind: {
-									disabled: '{!foIsEditable}'
-								},
-								text: me.mys.res('contactPreview.single.contact.tb.edit.lbl'),
-								handler: function() {
-									var vm = me.getVM();
-									me.fireEvent('editcontact', me, vm.get('record.isList'), vm.get('record.id'));
-								}
-							}],
 							defaults: {
 								anchor: '100%',
 								margin: '15 0 15 0'
@@ -549,8 +547,33 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 									growMax: 200
 								}
 							]
+						}, {
+							xtype: 'wtcfieldspreviewpanel',
+							title: me.mys.res('contactPreview.single.cfields.tit'),
+							bind: {
+								store: '{record.cvalues}'
+							},
+							fieldDefs: me.customFieldDefs
 						}
-					]
+					],
+					tabBar:	{
+						items: [
+							{
+								xtype: 'tbfill'
+							}, {
+								xtype: 'button',
+								ui: 'default-toolbar',
+								bind: {
+									disabled: '{!foIsEditable}'
+								},
+								text: me.mys.res('contactPreview.single.contact.tb.edit.lbl'),
+								handler: function() {
+									var vm = me.getVM();
+									me.fireEvent('editcontact', me, vm.get('record.isList'), vm.get('record.id'));
+								}
+							}
+						]
+					}
 				}
 			]
 		};
@@ -631,13 +654,17 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	},
 	
 	loadContact: function(contactUid) {
-		this.clearModel();
-		if (contactUid) {
-			this.loadModel({
-				data: {uid: contactUid},
-				dirty: false
-			});
-		}
+		var me = this;
+		if (me.timLC) clearTimeout(me.timLC);
+		me.timLC = setTimeout(function() {
+			me.clearModel();
+			if (contactUid) {
+				me.loadModel({
+					data: {uid: contactUid},
+					dirty: false
+				});
+			}
+		}, me.loadContactBuffer || 200);
 	},
 	
 	privates: {

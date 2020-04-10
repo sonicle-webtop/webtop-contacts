@@ -142,8 +142,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.mail.internet.InternetAddress;
@@ -178,6 +180,7 @@ public class Service extends BaseService {
 	
 	private StringSet inactiveRoots = null;
 	private IntegerSet inactiveFolders = null;
+	private Map<String, CustomFieldEx> previewableCustomFields;
 	private final Object gridLock = new Object();
 	
 	//private ExportWizard wizard = null;
@@ -189,6 +192,7 @@ public class Service extends BaseService {
 		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
+		previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
 	}
 	
 	@Override
@@ -215,20 +219,51 @@ public class Service extends BaseService {
 		co.put("view", EnumUtils.toSerializedName(us.getView()));
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
-		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjSearchableCustomField.List.class));
+		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjCustomFieldDefs.FieldsList.class));
+		co.put("cfieldsPreviewable", LangUtils.serialize(getPreviewableCustomFieldDefs(), ObjCustomFieldDefs.class));
 		return co;
 	}
 	
-	private ObjSearchableCustomField.List getSearchableCustomFieldDefs() {
+	private ObjCustomFieldDefs.FieldsList getSearchableCustomFieldDefs() {
 		CoreManager coreMgr = WT.getCoreManager();
 		UserProfile up = getEnv().getProfile();
 		
 		try {
-			ObjSearchableCustomField.List scfields = new ObjSearchableCustomField.List();
-			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, true).values()) {
+			ObjCustomFieldDefs.FieldsList scfields = new ObjCustomFieldDefs.FieldsList();
+			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, true, null).values()) {
 				scfields.add(new ObjCustomFieldDefs.Field(cfield, up.getLanguageTag()));
 			}
 			return scfields;
+			
+		} catch(Throwable t) {
+			return null;
+		}
+	}
+	
+	private ObjCustomFieldDefs getPreviewableCustomFieldDefs() {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
+		
+		try {
+			ArrayList<ObjCustomFieldDefs.Panel> panels = new ArrayList<>();
+			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, coreMgr.listTagIds());
+			for (CustomPanel cpanel : cpanels.values()) {
+				Set<String> okFieldIds = new LinkedHashSet<>();
+				for (String fieldId : cpanel.getFields()) {
+					if (previewableCustomFields.containsKey(fieldId)) okFieldIds.add(fieldId);
+				}
+				if (!okFieldIds.isEmpty()) {
+					cpanel.setFields(okFieldIds);
+					panels.add(new ObjCustomFieldDefs.Panel(cpanel, up.getLanguageTag()));
+				}
+			}
+			
+			ArrayList<ObjCustomFieldDefs.Field> fields = new ArrayList<>();
+			for (CustomField field : previewableCustomFields.values()) {
+				fields.add(new ObjCustomFieldDefs.Field(field, up.getLanguageTag()));
+			}
+			
+			return new ObjCustomFieldDefs(panels, fields);
 			
 		} catch(Throwable t) {
 			return null;
@@ -793,7 +828,8 @@ public class Service extends BaseService {
 					new JsonResult(new JsContactPreview(fold, pset, contactsList)).printTo(out);
 					
 				} else {
-					Contact contact = manager.getContact(contactId);
+					UserProfile up = getEnv().getProfile();
+					Contact contact = manager.getContact(contactId, true, false, true, true);
 					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
 					ContactCompany company = contact.hasCompany() ? manager.getContactCompany(contactId) : null;
 					
@@ -801,7 +837,7 @@ public class Service extends BaseService {
 					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
 					
-					new JsonResult(new JsContactPreview(fold, pset, contact, company)).printTo(out);
+					new JsonResult(new JsContactPreview(fold, pset, contact, company, previewableCustomFields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
 				}
 			}
 			

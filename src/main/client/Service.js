@@ -449,6 +449,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				reference: 'pnlpreview',
 				mys: me,
 				tagsStore: tagsStore,
+				customFieldDefs: me.getVar('cfieldsPreviewable'),
 				hidden: !WT.plTags.desktop,
 				split: true,
 				listeners: {

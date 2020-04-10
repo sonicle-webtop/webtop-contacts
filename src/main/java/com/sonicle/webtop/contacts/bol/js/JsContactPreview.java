@@ -39,8 +39,13 @@ import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
+import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
+import java.util.Map;
+import org.joda.time.DateTimeZone;
 import org.jooq.tools.StringUtils;
 
 /**
@@ -63,6 +68,7 @@ public class JsContactPreview {
 	public String notes;
 	public String tags;
 	public boolean pic;
+	public ArrayList<ObjCustomFieldValue> cvalues;
 	public String userProfile;
 	public String userDisplayName;
 	public Integer catId;
@@ -72,7 +78,7 @@ public class JsContactPreview {
 	public String _frights;
 	public String _erights;
 
-	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany) {
+	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Map<String, ? extends CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
@@ -99,6 +105,15 @@ public class JsContactPreview {
 		this.notes = item.getNotes();
 		this.tags = new CompositeId(item.getTags()).toString();
 		this.pic = item.hasPicture();
+		
+		cvalues = new ArrayList<>();
+		for (CustomField field : customFields.values()) {
+			CustomFieldValue cvalue = null;
+			if (item.hasCustomValues()) {
+				cvalue = item.getCustomValues().get(field.getFieldId());
+			}
+			cvalues.add(cvalue != null ? new ObjCustomFieldValue(field.getType(), cvalue, profileTz) : new ObjCustomFieldValue(field.getType(), field.getFieldId()));
+		}
 
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();

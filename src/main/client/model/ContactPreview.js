@@ -80,7 +80,8 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 	hasMany: [
 		WTF.hasMany('data1', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Email addresses
 		WTF.hasMany('data2', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Telephones
-		WTF.hasMany('data3', 'Sonicle.webtop.contacts.model.ContactValueItem') // Other fields
+		WTF.hasMany('data3', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Other fields
+		WTF.hasMany('cvalues', 'Sonicle.webtop.core.ux.data.CustomFieldValueModel')
 	],
 	
 	hasData: function() {

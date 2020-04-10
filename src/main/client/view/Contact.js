@@ -42,7 +42,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		'WTA.ux.UploadBar',
 		'WTA.ux.field.SuggestCombo',
 		'WTA.ux.grid.Attachments',
-		'WTA.ux.panel.CustomFields',
+		'WTA.ux.panel.CustomFieldsEditor',
 		'Sonicle.webtop.core.store.Gender',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.Contact'
@@ -573,9 +573,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		};
 		
 		cfields = {
-			xtype: 'wtcustomfieldspanel',
+			xtype: 'wtcfieldseditorpanel',
 			reference: 'tabcfields',
-			title: 'Campi personalizzati',
+			title: me.mys.res('contact.cfields.tit'),
 			bind: {
 				store: '{record.cvalues}',
 				fieldsDefs: '{record._cfdefs}'
