@@ -41,10 +41,12 @@ import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
 import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import org.joda.time.DateTimeZone;
 import org.jooq.tools.StringUtils;
 
@@ -78,7 +80,7 @@ public class JsContactPreview {
 	public String _frights;
 	public String _erights;
 
-	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Map<String, ? extends CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
+	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Set<String> previewablePanels, Map<String, CustomFieldEx> previewableCustomFields, String profileLanguageTag, DateTimeZone profileTz) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
@@ -107,12 +109,18 @@ public class JsContactPreview {
 		this.pic = item.hasPicture();
 		
 		cvalues = new ArrayList<>();
-		for (CustomField field : customFields.values()) {
-			CustomFieldValue cvalue = null;
+		for (CustomField field : previewableCustomFields.values()) {
 			if (item.hasCustomValues()) {
-				cvalue = item.getCustomValues().get(field.getFieldId());
+				Set<String> fieldPanels = ((CustomFieldEx)field).getPanels();
+				boolean previewValue = fieldPanels.stream().anyMatch((p) -> {
+					return previewablePanels.contains(p);
+				});
+				
+				if (previewValue) {
+					CustomFieldValue cvalue = item.getCustomValues().get(field.getFieldId());
+					if (cvalue != null) cvalues.add(new ObjCustomFieldValue(field.getType(), cvalue, profileTz));
+				}	
 			}
-			cvalues.add(cvalue != null ? new ObjCustomFieldValue(field.getType(), cvalue, profileTz) : new ObjCustomFieldValue(field.getType(), field.getFieldId()));
 		}
 
 		this.catId = category.getCategoryId();

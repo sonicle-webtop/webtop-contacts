@@ -808,6 +808,7 @@ public class Service extends BaseService {
 	}
 	
 	public void processGetContactPreview(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
@@ -837,7 +838,8 @@ public class Service extends BaseService {
 					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
 					
-					new JsonResult(new JsContactPreview(fold, pset, contact, company, previewableCustomFields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
+					Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
+					new JsonResult(new JsContactPreview(fold, pset, contact, company, cpanels.keySet(), previewableCustomFields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
 				}
 			}
 			
