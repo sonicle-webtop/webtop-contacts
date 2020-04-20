@@ -56,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	/**
 	 * @cfg {Object} customFieldDefs
 	 */
-	customFieldDefs: null,
+	//customFieldDefs: null,
 	
 	/**
 	 * @cfg {Number} loadContactBuffer
@@ -138,6 +138,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			})
 		]);
 		me.setActiveItem('empty');
+		me.getViewModel().bind('{record._cfdefs}', me.onCFDefsUpdate, me);
 	},
 	
 	createEmptyItem: function() {
@@ -549,11 +550,15 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							]
 						}, {
 							xtype: 'wtcfieldspreviewpanel',
+							reference: 'tabcfields',
 							title: me.mys.res('contactPreview.single.cfields.tit'),
 							bind: {
 								store: '{record.cvalues}'
-							},
-							fieldDefs: me.customFieldDefs
+								// Do not use this binding here, it will cause internal exception
+								// in Ext.app.bind.Stub during model load with new ID. (see explicit vm.bind in initComponent)
+								//fieldsDefs: '{record._cfdefs}'
+							}
+							//fieldDefs: me.customFieldDefs
 						}
 					],
 					tabBar:	{
@@ -677,6 +682,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 				}
 			}
 			return arr;
+		},
+		
+		onCFDefsUpdate: function(nv, ov) {
+			var cmp = this.lookupReference('tabcfields');
+			if (cmp) cmp.setFieldsDefs(nv);
 		}
 	}
 });

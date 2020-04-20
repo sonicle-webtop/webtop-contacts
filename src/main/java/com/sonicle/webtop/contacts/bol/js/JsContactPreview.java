@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
@@ -39,12 +40,15 @@ import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
 import com.sonicle.webtop.core.model.CustomField;
 import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomFieldValue;
+import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.joda.time.DateTimeZone;
@@ -79,8 +83,9 @@ public class JsContactPreview {
 	public String _pid;
 	public String _frights;
 	public String _erights;
-
-	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Set<String> previewablePanels, Map<String, CustomFieldEx> previewableCustomFields, String profileLanguageTag, DateTimeZone profileTz) {
+	public String _cfdefs;
+	
+	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
@@ -109,18 +114,18 @@ public class JsContactPreview {
 		this.pic = item.hasPicture();
 		
 		cvalues = new ArrayList<>();
-		for (CustomField field : previewableCustomFields.values()) {
+		ArrayList<ObjCustomFieldDefs.Panel> panels = new ArrayList<>();
+		for (CustomPanel panel : customPanels) {
+			panels.add(new ObjCustomFieldDefs.Panel(panel, profileLanguageTag));
+		}
+		ArrayList<ObjCustomFieldDefs.Field> fields = new ArrayList<>();
+		for (CustomField field : customFields.values()) {
+			CustomFieldValue cvalue = null;
 			if (item.hasCustomValues()) {
-				Set<String> fieldPanels = ((CustomFieldEx)field).getPanels();
-				boolean previewValue = fieldPanels.stream().anyMatch((p) -> {
-					return previewablePanels.contains(p);
-				});
-				
-				if (previewValue) {
-					CustomFieldValue cvalue = item.getCustomValues().get(field.getFieldId());
-					if (cvalue != null) cvalues.add(new ObjCustomFieldValue(field.getType(), cvalue, profileTz));
-				}	
+				cvalue = item.getCustomValues().get(field.getFieldId());
 			}
+			cvalues.add(cvalue != null ? new ObjCustomFieldValue(field.getType(), cvalue, profileTz) : new ObjCustomFieldValue(field.getType(), field.getFieldId()));
+			fields.add(new ObjCustomFieldDefs.Field(field, profileLanguageTag));
 		}
 
 		this.catId = category.getCategoryId();
@@ -129,6 +134,7 @@ public class JsContactPreview {
 		this._pid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
 		this._frights = folder.getPerms().toString();
 		this._erights = folder.getElementsPerms().toString();
+		_cfdefs = LangUtils.serialize(new ObjCustomFieldDefs(panels, fields), ObjCustomFieldDefs.class);
 	}
 
 	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, ContactsList item) {

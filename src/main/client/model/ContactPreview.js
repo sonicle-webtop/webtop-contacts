@@ -75,7 +75,8 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 					rec.get('lastName'),
 					rec.get('displayName')
 			);
-		})
+		}),
+		WTF.roField('_cfdefs', 'string')
 	],
 	hasMany: [
 		WTF.hasMany('data1', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Email addresses

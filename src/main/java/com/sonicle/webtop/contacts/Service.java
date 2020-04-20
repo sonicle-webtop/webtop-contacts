@@ -180,7 +180,7 @@ public class Service extends BaseService {
 	
 	private StringSet inactiveRoots = null;
 	private IntegerSet inactiveFolders = null;
-	private Map<String, CustomFieldEx> previewableCustomFields;
+	//private Map<String, CustomFieldEx> previewableCustomFields;
 	private final Object gridLock = new Object();
 	
 	//private ExportWizard wizard = null;
@@ -192,7 +192,7 @@ public class Service extends BaseService {
 		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
-		previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
+		//previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
 	}
 	
 	@Override
@@ -220,7 +220,7 @@ public class Service extends BaseService {
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
 		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjCustomFieldDefs.FieldsList.class));
-		co.put("cfieldsPreviewable", LangUtils.serialize(getPreviewableCustomFieldDefs(), ObjCustomFieldDefs.class));
+		//co.put("cfieldsPreviewable", LangUtils.serialize(getPreviewableCustomFieldDefs(), ObjCustomFieldDefs.class));
 		return co;
 	}
 	
@@ -240,6 +240,7 @@ public class Service extends BaseService {
 		}
 	}
 	
+	/*
 	private ObjCustomFieldDefs getPreviewableCustomFieldDefs() {
 		CoreManager coreMgr = WT.getCoreManager();
 		UserProfile up = getEnv().getProfile();
@@ -269,6 +270,7 @@ public class Service extends BaseService {
 			return null;
 		}
 	}
+	*/
 	
 	private WebTopSession getWts() {
 		return getEnv().getWebTopSession();
@@ -838,8 +840,18 @@ public class Service extends BaseService {
 					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
 					
+					Set<String> pvwfields = coreMgr.listCustomFieldIds(SERVICE_ID, null, true);
 					Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
-					new JsonResult(new JsContactPreview(fold, pset, contact, company, cpanels.keySet(), previewableCustomFields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
+					Map<String, CustomField> cfields = new HashMap<>();
+					for (CustomPanel cpanel : cpanels.values()) {
+						for (String fieldId : cpanel.getFields()) {
+							if (!pvwfields.contains(fieldId)) continue;
+							CustomField cfield = coreMgr.getCustomField(SERVICE_ID, fieldId);
+							if (cfield != null) cfields.put(fieldId, cfield);
+						}
+					}
+					
+					new JsonResult(new JsContactPreview(fold, pset, contact, company, cpanels.values(), cfields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
 				}
 			}
 			
