@@ -124,16 +124,16 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		var me = this;
 		me.callParent(arguments);
 		me.add([
-			Ext.apply(me.createEmptyItem(), {
+			Ext.apply(me.createEmptyItemCfg(), {
 				itemId: 'empty'
 			}),
-			Ext.apply(me.createContactItem(), {
+			Ext.apply(me.createContactItemCfg(), {
 				itemId: 'contact'
 			}),
-			Ext.apply(me.createContactsListItem(), {
+			Ext.apply(me.createContactsListItemCfg(), {
 				itemId: 'list'
 			}),
-			Ext.apply(me.createMultiItem(), {
+			Ext.apply(me.createMultiItemCfg(), {
 				itemId: 'multi'
 			})
 		]);
@@ -141,7 +141,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		me.getViewModel().bind('{record._cfdefs}', me.onCFDefsUpdate, me);
 	},
 	
-	createEmptyItem: function() {
+	createEmptyItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
@@ -164,11 +164,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		};
 	},
 	
-	createContactsListItem: function() {
+	createContactsListItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
-			layout: 'anchor',
+			layout: 'fit',
 			items: [
 				{
 					xtype: 'container',
@@ -257,20 +257,22 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							height: 160
 					}],
 					padding: 20
-					//height: 200
 				}
 			]
 		};
 	},
 	
-	createContactItem: function() {
+	createContactItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
-			layout: 'anchor',
+			layout: 'border',
 			items: [
 				{
-					xtype: 'container',
+					xtype: 'wtpanel',
+					region: 'north',
+					height: 210,
+					bodyPadding: 20,
 					layout: 'hbox',
 					items: [
 						{
@@ -416,11 +418,10 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							margin: '10 0 0 20',
 							height: 160
 						}
-					],
-					padding: 20
-					//height: 200
+					]
 				}, {
 					xtype: 'tabpanel',
+					region: 'center',
 					border: false,
 					items: [
 						{
@@ -584,7 +585,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		};
 	},
 	
-	createMultiItem: function() {
+	createMultiItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
