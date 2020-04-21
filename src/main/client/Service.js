@@ -1250,19 +1250,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		return (sel.length > 0) ? sel[0] : null;
 	},
 	
-	showCustomPanelsUI: function() {
-		var me = this;
-		WT.createView(WT.ID, 'view.CustomPanels', {
-			swapReturn: true,
-			viewCfg: {
-				dockableConfig: {
-					title: WT.res('customPanels.tit') + ' [' + me.getName() + ']'
-				},
-				serviceId: me.ID
-			}
-		}).showView();
-	},
-	
 	showManageTagsUI: function() {
 		var me = this,
 				vw = WT.createView(WT.ID, 'view.Tags', {
@@ -1282,10 +1269,19 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		WT.createView(WT.ID, 'view.CustomFields', {
 			swapReturn: true,
 			viewCfg: {
-				dockableConfig: {
-					title: WT.res('customFields.tit') + ' [' + me.getName() + ']'
-				},
-				serviceId: me.ID
+				serviceId: me.ID,
+				serviceName: me.getName()
+			}
+		}).showView();
+	},
+	
+	showCustomPanelsUI: function() {
+		var me = this;
+		WT.createView(WT.ID, 'view.CustomPanels', {
+			swapReturn: true,
+			viewCfg: {
+				serviceId: me.ID,
+				serviceName: me.getName()
 			}
 		}).showView();
 	},
