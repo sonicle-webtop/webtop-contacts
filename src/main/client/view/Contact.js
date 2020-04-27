@@ -180,7 +180,23 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						triggers: {
 							clear: WTF.clearTrigger()
 						},
-						fieldLabel: me.mys.res('contact.fld-company.lbl')
+						fieldLabel: me.mys.res('contact.fld-company.lbl'),
+						onBlur: function(e) {
+							var mo=me.getModel();
+							var me = this;
+							
+							//trick to fix bug in Ext:
+							// combo with binding, valueField, displayField
+							// and forceSelection=false, will not update record
+							// when blurring quickly (tab) before loading the combo list
+							mo.set("company",me.getValue());
+							
+							me.removeCls(me.fieldFocusCls);
+							me.triggerWrap.removeCls(me.triggerWrapFocusCls);
+							me.inputWrap.removeCls(me.inputWrapFocusCls);
+							me.invokeTriggers('onFieldBlur', [e]);
+						}
+
 					})
 				), {
 					xtype: 'wtsuggestcombo',
