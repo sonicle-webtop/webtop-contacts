@@ -60,7 +60,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 public class MemoryContactExcelFileReader extends MemoryExcelFileReader implements MemoryContactFileReader {
 	
 	public static final String[] MAPPING_TARGETS = new String[]{
-		"Title","FirstName","LastName","Nickname",/*"Gender",*/
+		"Title","FirstName","LastName","DisplayName","Nickname",/*"Gender",*/
 		"WorkAddress","WorkPostalCode","WorkCity","WorkState","WorkCountry",
 		"WorkTelephone","WorkTelephone2","WorkMobile","WorkFax","WorkPager","WorkEmail","WorkInstantMsg",
 		"HomeAddress","HomePostalCode","HomeCity","HomeState","HomeCountry",
@@ -134,6 +134,8 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 			contact.setFirstName(value);
 		} else if (target.equals("LastName")) {
 			contact.setLastName(value);
+		} else if (target.equals("DisplayName")) {
+			contact.setDisplayName(value);
 		} else if (target.equals("Nickname")) {
 			contact.setNickname(value);
 		} else if (target.equals("Gender")) {

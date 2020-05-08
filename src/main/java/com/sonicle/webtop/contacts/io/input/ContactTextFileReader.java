@@ -60,7 +60,7 @@ import org.supercsv.prefs.CsvPreference;
 public class ContactTextFileReader extends TextFileReader implements ContactFileReader {
 	
 	public static final String[] MAPPING_TARGETS = new String[]{
-		"Title","FirstName","LastName","Nickname",/*"Gender",*/
+		"Title","FirstName","LastName","DisplayName","Nickname",/*"Gender",*/
 		"WorkAddress","WorkPostalCode","WorkCity","WorkState","WorkCountry",
 		"WorkTelephone","WorkTelephone2","WorkMobile","WorkFax","WorkPager","WorkEmail","WorkInstantMsg",
 		"HomeAddress","HomePostalCode","HomeCity","HomeState","HomeCountry",
@@ -139,6 +139,8 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 			contact.setFirstName(value);
 		} else if (target.equals("LastName")) {
 			contact.setLastName(value);
+		} else if (target.equals("DisplayName")) {
+			contact.setDisplayName(value);
 		} else if (target.equals("Nickname")) {
 			contact.setNickname(value);
 		} else if (target.equals("Gender")) {
