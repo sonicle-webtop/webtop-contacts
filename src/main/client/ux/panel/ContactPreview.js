@@ -54,11 +54,6 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	tagsStore: null,
 	
 	/**
-	 * @cfg {Object} customFieldDefs
-	 */
-	//customFieldDefs: null,
-	
-	/**
 	 * @cfg {Number} loadContactBuffer
 	 * This is the time in milliseconds to buffer load requests when updating selection.
 	 */
@@ -245,10 +240,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 										hidden: '{!foHasTags}'
 									},
 									delimiter: '|',
+									store: me.tagsStore,
 									valueField: 'id',
 									displayField: 'name',
 									colorField: 'color',
-									store: me.tagsStore,
+									sourceField: 'source',
 									hidden: true,
 									hideLabel: true
 							}],
@@ -406,10 +402,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 										hidden: '{!foHasTags}'
 									},
 									delimiter: '|',
+									store: me.tagsStore,
 									valueField: 'id',
 									displayField: 'name',
 									colorField: 'color',
-									store: me.tagsStore,
+									sourceField: 'source',
 									hidden: true,
 									hideLabel: true
 								}
@@ -559,7 +556,6 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								// in Ext.app.bind.Stub during model load with new ID. (see explicit vm.bind in initComponent)
 								//fieldsDefs: '{record._cfdefs}'
 							}
-							//fieldDefs: me.customFieldDefs
 						}
 					],
 					tabBar:	{

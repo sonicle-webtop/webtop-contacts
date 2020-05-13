@@ -148,8 +148,12 @@ Ext.define('Sonicle.webtop.contacts.ux.grid.column.Contact', {
 		if ((ids.length > 0) && sto) {
 			Ext.iterate(ids, function(id) {
 				if ((limit !== -1) && (arr.length >= limit)) return false;
-				var rec = sto.getById(id);
-				if (rec) arr.push({color: rec.get('color'), tooltip: rec.get('name')});
+				var rec = sto.getById(id), tip;
+				if (rec) {
+					tip = rec.get('name');
+					if (rec.get('personal')) tip += ' ('+WT.res('tags.gp.personal.true')+')';
+					arr.push({color: rec.get('color'), tooltip: tip});
+				}
 			});
 		}
 		return arr;

@@ -37,11 +37,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
 		'Sonicle.grid.column.Avatar',
-		'Sonicle.menu.TagItem',
 		'Sonicle.tree.Column',
 		'WTA.ux.data.EmptyModel',
 		'WTA.ux.data.SimpleModel',
 		'WTA.ux.field.Search',
+		'WTA.ux.menu.TagMenu',
 		'Sonicle.webtop.contacts.model.FolderNode',
 		'Sonicle.webtop.contacts.model.GridContact',
 		'Sonicle.webtop.contacts.store.View',
@@ -52,6 +52,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.ux.panel.ContactPreview'
 	],
 	uses: [
+		'Sonicle.Data',
 		'Sonicle.picker.Color',
 		'WTA.util.FoldersTree',
 		'WTA.ux.SelectTagsBox',
@@ -162,10 +163,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							type: 'tag',
 							label: me.res('fld-search.field.tags.lbl'),
 							customConfig: {
+								store: WT.getTagsStore(), // This is filterable, let's do a separate copy!
 								valueField: 'id',
 								displayField: 'name',
 								colorField: 'color',
-								store: WT.getTagsStore() // This is filterable, let's do a separate copy!
+								sourceField: 'source',
+								sourceCls: 'wt-source'
 							}
 						}//, {
 							//name: 'any',
@@ -419,6 +422,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('copyContact');
 						me.updateDisabled('moveContact');
 						me.updateDisabled('deleteContact');
+						me.updateDisabled('tags');
 						me.updateDisabled('addContactsListFromSel');
 						me.updateDisabled('addToContactsListFromSel');
 						me.updateDisabled('callTelephone');
@@ -449,7 +453,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				reference: 'pnlpreview',
 				mys: me,
 				tagsStore: tagsStore,
-				//customFieldDefs: me.getVar('cfieldsPreviewable'),
 				hidden: !WT.plTags.desktop,
 				split: true,
 				listeners: {
@@ -518,16 +521,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this,
 				hdscale = WT.getHeaderScale();
 		
-		if (WT.isPermitted(WT.ID, 'TAGS', 'MANAGE')) {
-			me.addAct('toolbox', 'manageTags', {
-				text: WT.res('act-manageTags.lbl'),
-				tooltip: WT.res('act-manageTags.tip'),
-				iconCls: 'wt-icon-tag',
-				handler: function() {
-					me.showManageTagsUI();
-				}
-			});
-		}
+		me.addAct('toolbox', 'manageTags', {
+			text: WT.res('act-manageTags.lbl'),
+			tooltip: WT.res('act-manageTags.tip'),
+			iconCls: 'wt-icon-tag',
+			handler: function() {
+				me.showManageTagsUI();
+			}
+		});
 		if (WT.isPermitted(WT.ID, 'CUSTOM_FIELDS', 'MANAGE')) {		
 			me.addAct('toolbox', 'manageCustomFields', {
 				text: WT.res('act-manageCustomFields.lbl'),
@@ -642,15 +643,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.applyCategoryTagsUI(node);
 			}
 		});
+		
 		me.addAct('tags', {
 			text: me.res('mni-tags.lbl'),
 			tooltip: null,
 			menu: {
-				xtype: 'sostoremenu',
-				useItemIdPrefix: true,
-				store: WT.getTagsStore(),
-				textField: 'name',
-				tagField: 'id',
+				xtype: 'wttagmenu',
 				bottomStaticItems: [
 					'-',
 					me.addAct('manageTags', {
@@ -661,26 +659,17 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						}
 					})
 				],
-				itemCfgCreator: function(rec) {
-					return {
-						xclass: 'Sonicle.menu.TagItem',
-						color: rec.get('color'),
-						hideOnClick: true
-					};
+				restoreSelectedTags: function() {
+					return me.toMutualTags(me.getSelectedContacts());
 				},
 				listeners: {
-					beforeshow: function(s) {
-						s.setCheckedItems(me.toMutualTags(me.getSelectedContacts()) || []);
-					},
-					click: function(s, itm, e) {
-						if (itm.tag) {
-							var ids = WTU.collectIds(me.getSelectedContacts());
-							me.updateContactsItemsTags(ids, !itm.checked ? 'unset' : 'set', [itm.tag], {
-								callback: function(success) {
-									if (success) me.reloadContacts();
-								}
-							});
-						}
+					tagclick: function(s, tagId, checked) {
+						var ids = Sonicle.Data.collectValues(me.getSelectedContacts());
+						me.updateContactsItemsTags(ids, !checked ? 'unset' : 'set', [tagId], {
+							callback: function(success) {
+								if (success) me.reloadContacts();
+							}
+						});
 					}
 				}
 			}
@@ -807,7 +796,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			tooltip: null,
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if (sel.length > 0) me.sendContactsAsEmail(WTU.collectIds(sel, 'id'));
+				if (sel.length > 0) me.sendContactsAsEmail(Sonicle.Data.collectValues(sel, 'id'));
 			}
 		});
 		me.addAct('addContactsListFromSel', {
@@ -869,7 +858,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			iconCls: 'wt-icon-print',
 			handler: function() {
 				var sel = me.getSelectedContacts();
-				if (sel.length > 0) me.printContactsDetail(WTU.collectIds(sel, 'id'));
+				if (sel.length > 0) me.printContactsDetail(Sonicle.Data.collectValues(sel, 'id'));
 			}
 		});
 		me.addAct('callTelephone', {
@@ -1447,7 +1436,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	deleteContactItemsUI: function(recs) {
 		var me = this,
-			ids = WTU.collectIds(recs),
+			ids = Sonicle.Data.collectValues(recs),
 			msg;
 		
 		if (recs.length === 1) {
@@ -1468,7 +1457,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	moveContactItemsUI: function(copy, recs) {
 		var me = this,
-			ids = WTU.collectIds(recs),
+			ids = Sonicle.Data.collectValues(recs),
 			vw = me.createCategoryChooser(copy);
 		
 		vw.on('viewok', function(s, categoryId) {
@@ -1485,7 +1474,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	manageContactItemTagsUI: function(recs) {
 		var me = this,
-				ids = WTU.collectIds(recs),
+				ids = Sonicle.Data.collectValues(recs),
 				tags = me.toMutualTags(recs),
 				vw = WT.createView(WT.ID, 'view.Tags', {
 					swapReturn: true,
@@ -2226,6 +2215,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					} else {
 						for (var i=0; i<sel.length; i++) {
 							if (!FT.toRightsObj(sel[i].get('_erights')).DELETE) return true;
+						}
+						return false;
+					}
+					break;
+				case 'tags':
+					sel = me.getSelectedContacts();
+					if (sel.length === 0) {
+						return true;
+					} else if (sel.length === 1) {
+						er = FT.toRightsObj(sel[0].get('_erights'));
+						return !er.UPDATE;
+					} else {
+						for (var i=0; i<sel.length; i++) {
+							if (!FT.toRightsObj(sel[i].get('_erights')).UPDATE) return true;
 						}
 						return false;
 					}

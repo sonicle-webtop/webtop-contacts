@@ -220,7 +220,6 @@ public class Service extends BaseService {
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
 		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjCustomFieldDefs.FieldsList.class));
-		//co.put("cfieldsPreviewable", LangUtils.serialize(getPreviewableCustomFieldDefs(), ObjCustomFieldDefs.class));
 		return co;
 	}
 	
