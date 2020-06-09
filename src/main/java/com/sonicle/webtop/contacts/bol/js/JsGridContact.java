@@ -87,15 +87,17 @@ public class JsGridContact {
 		this.company = item.getCompanyDescription();
 		this.function = item.getFunction();
 		
-		if (GridView.WORK.equals(view)) {
-			this.email = item.getEmail1();
-			this.telephone = item.getWorkTelephone1();
-			this.mobile = item.getMobile();
-		} else if (GridView.HOME.equals(view)) {
-			this.email = item.getEmail2();
-			this.telephone = item.getHomeTelephone1();
-			this.mobile = item.getMobile();
-		} else if (GridView.CONTACTS_LIST.equals(view)) {
+		if (!item.getIsList()) {
+			if (GridView.WORK.equals(view)) {
+				this.email = item.getEmail1();
+				this.telephone = item.getWorkTelephone1();
+				this.mobile = item.getMobile();
+			} else if (GridView.HOME.equals(view)) {
+				this.email = item.getEmail2();
+				this.telephone = item.getHomeTelephone1();
+				this.mobile = item.getMobile();
+			}
+		} else {
 			this.email = item.getEmail1();
 		}
 		this.tags = item.getTags();

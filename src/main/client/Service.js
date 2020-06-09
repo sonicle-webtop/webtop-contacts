@@ -37,6 +37,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
 		'Sonicle.grid.column.Avatar',
+		'Sonicle.menu.Header',
 		'Sonicle.tree.Column',
 		'WTA.ux.data.EmptyModel',
 		'WTA.ux.data.SimpleModel',
@@ -53,6 +54,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	],
 	uses: [
 		'Sonicle.Data',
+		'Sonicle.String',
 		'Sonicle.picker.Color',
 		'WTA.util.FoldersTree',
 		'WTA.ux.SelectTagsBox',
@@ -170,6 +172,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								sourceField: 'source',
 								sourceCls: 'wt-source'
 							}
+						}, {
+							name: 'lists',
+							type: 'boolean',
+							boolKeyword: 'only',
+							label: me.res('fld-search.field.onlyLists.lbl')
 						}//, {
 							//name: 'any',
 							//type: 'string',
@@ -180,7 +187,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					tabs: Ext.isEmpty(scfields) ? undefined: [
 						{
 							title: WT.res('wtsearchfield.main.tit'),
-							fields: ['name', 'company', 'email', 'phone', 'address', 'notes', 'tag']
+							fields: ['name', 'company', 'email', 'phone', 'address', 'notes', 'tag', 'lists']
 						}, {
 							title: WT.res('wtsearchfield.customFields.tit'),
 							fields: Ext.Array.pluck(scfields, 'name')
@@ -273,6 +280,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}]
 		}));
 		
+		var viewGroup = Ext.id(null, 'view-'),
+				groupByGroup = Ext.id(null, 'groupby-');
 		me.setMainComponent(Ext.create({
 			xtype: 'container',
 			layout: 'border',
@@ -383,37 +392,67 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					ftype: 'wtscrolltooltip'
 				}*/],
 				tbar: [
+					{
+						xtype: 'button',
+						iconCls: 'wtcon-icon-viewWork',
+						tooltip: me.res('gpcontacts.viewOptions.view.lbl') + ': ' + me.res('store.view.work'),
+						toggleGroup: viewGroup,
+						enableToggle: true,
+						allowDepress: false,
+						pressed: me.activeView === 'work',
+						toggleHandler: function() {
+							me.reloadContacts({view: 'work'});
+						}
+					}, {
+						xtype: 'button',
+						iconCls: 'wtcon-icon-viewHome',
+						tooltip: me.res('gpcontacts.viewOptions.view.lbl') + ': ' + me.res('store.view.home'),
+						toggleGroup: viewGroup,
+						enableToggle: true,
+						allowDepress: false,
+						pressed: me.activeView === 'home',
+						toggleHandler: function() {
+							me.reloadContacts({view: 'home'});
+						}
+					},
 					'->',
-					WTF.lookupCombo('id', 'desc', {
-						store: {
-							type: 'wtcongroupby',
-							autoLoad: true
-						},
-						value: me.activeGroupBy,
-						listeners: {
-							select: function(s, rec) {
-								me.applyGroupBy(rec.getId());
-							}
-						},
-						fieldLabel: me.res('fld-group.lbl'),
-						labelWidth: 70,
-						width: 180
-					}),
-					WTF.lookupCombo('id', 'desc', {
-						store: {
-							type: 'wtconview',
-							autoLoad: true
-						},
-						value: me.activeView,
-						listeners: {
-							select: function(s, rec) {
-								me.reloadContacts({view: rec.getId()});
-							}
-						},
-						width: 130
-					}),
+					me.getAct('deleteContact2'),
 					'-',
-					me.getAct('deleteContact2')
+					{
+						xtype: 'button',
+						iconCls: 'wt-icon-viewOptions',
+						menu: {
+							items: [
+								{
+									xtype: 'somenuheader',
+									text: me.res('gpcontacts.viewOptions.groupBy.lbl')
+								}, {
+									itemId: 'groupby-alpha',
+									group: groupByGroup,
+									text: me.res('store.groupBy.alpha'),
+									checked: false,
+									checkHandler: function(s, checked) {
+										if (checked) me.applyGroupBy(Sonicle.String.removeStart(s.getItemId(), 'groupby-'));
+									}
+								}, {
+									itemId: 'groupby-company',
+									group: groupByGroup,
+									text: me.res('store.groupBy.company'),
+									checked: false,
+									checkHandler: function(s, checked) {
+										if (checked) me.applyGroupBy(Sonicle.String.removeStart(s.getItemId(), 'groupby-'));
+									}
+								}
+							],
+							listeners: {
+								beforeshow: function(s) {
+									var itm = s.getComponent('groupby-' +  me.activeGroupBy);
+									if (itm) itm.setChecked(true);
+								}
+							}
+						}
+					},
+					' '
 				],
 				listeners: {
 					selectionchange: function(s) {

@@ -25,6 +25,11 @@
 .wtcon-add-trigger { background-image: url('add-trigger.png') !important; }
 .wtcon-add-trigger-touch { background-image: url('add-trigger-touch.png') !important; }
 
+.wtcon-icon-viewHome { background-image: url('view-home-grayed_16.svg') !important; background-size: contain; }
+.x-btn-pressed .wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; }
+.wtcon-icon-viewWork { background-image: url('view-work-grayed_16.svg') !important; background-size: contain; }
+.x-btn-pressed .wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; }
+
 .wtcon-gpcontacts .x-grid-empty { text-align: center; }
 .wtcon-gpcontacts .x-grid-group-hd {
 	background-color: #eff6fb;

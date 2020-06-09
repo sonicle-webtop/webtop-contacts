@@ -719,7 +719,7 @@ public class Service extends BaseService {
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
 				//TODO: optimize call to skip fullCount for subsequent calls
-				ContactType type = GridView.CONTACTS_LIST.equals(view) ? ContactType.LIST : ContactType.ANY;
+				ContactType type = queryObj.removeCondition("only", "lists") ? ContactType.LIST : ContactType.ANY;
 				
 				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
@@ -1329,20 +1329,22 @@ public class Service extends BaseService {
 		
 	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBAddressbook> items = new ArrayList<>();
+		UserProfile up = getEnv().getProfile();
+		DateTimeZone utz = up.getTimeZone();
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
+			//GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
 			Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
 			ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.DISPLAY, ShowBy.class);
-			String query = ServletUtils.getStringParameter(request, "query", null);
+			QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 			
-			boolean listOnly = GridView.CONTACTS_LIST.equals(view);
-			String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
 			int limit = 500;
+			ContactType type = queryObj.removeCondition("only", "lists") ? ContactType.LIST : ContactType.ANY;
 			
+			Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 			List<Integer> visibleCategoryIds = getActiveFolderIds();
-			ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, 1, limit, true);
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
 				final ShareFolderCategory fold = folders.get(item.getCategoryId());

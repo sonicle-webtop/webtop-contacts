@@ -34,3 +34,11 @@ WITH (OIDS=FALSE)
 ALTER TABLE "contacts"."contacts_custom_values" ADD PRIMARY KEY ("contact_id", "custom_field_id");
 ALTER TABLE "contacts"."contacts_custom_values" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "contacts"."contacts_custom_values" ADD FOREIGN KEY ("custom_field_id") REFERENCES "core"."custom_fields" ("custom_field_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ----------------------------
+-- Cleanup old settings
+-- ----------------------------
+@DataSource[default@com.sonicle.webtop.core]
+DELETE FROM "core"."user_settings" WHERE "service_id" = 'com.sonicle.webtop.contacts' AND "key" = 'view' AND "value" = 'list';
+DELETE FROM "core"."domain_settings" WHERE "service_id" = 'com.sonicle.webtop.contacts' AND "key" = 'default.view' AND "value" = 'list';
+DELETE FROM "core"."settings" WHERE "service_id" = 'com.sonicle.webtop.contacts' AND "key" = 'default.view' AND "value" = 'list';
