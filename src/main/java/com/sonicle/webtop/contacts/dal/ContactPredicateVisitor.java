@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.commons.qbuilders.nodes.ComparisonNode;
 import com.sonicle.commons.qbuilders.operators.ComparisonOperator;
-import com.sonicle.commons.web.json.CompId;
+import com.sonicle.commons.web.json.CId;
 import java.util.Collection;
 import org.jooq.Condition;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
@@ -147,7 +147,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 				.or(CONTACTS.HOME_FAX.likeIgnoreCase(singleAsString));
 			
 		} else if (StringUtils.startsWith(fieldName, "CV")) {
-			CompId fn = new CompId(2).parse(fieldName, false);
+			CId fn = new CId(fieldName, 2);
 			if (fn.isTokenEmpty(1)) throw new UnsupportedOperationException("Field name invalid: " + fieldName);
 			return generateCValueCondition(fn, operator, values);
 			
