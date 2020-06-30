@@ -1,3 +1,15 @@
+$	5.9.0
+	%	Versione 5.9.0
+	*	<h1>Etichette</h1>
+		<p>Le etichette ti aiutano ad ordinare: puoi aggiungerne quante vuoi a ogni contatto.</p>
+		<img src="5.9.0_tags.png"/>
+	*	<h1>Campi personalizzati</h1>
+		<p>Puoi creare nuovi campi personalizzati ed associarli ai tuoi contatti.</p>
+		<img src="5.9.0_cfields.png"/>
+	*	<h1>Nuove opzioni di visualizzazione</h1>
+		<p>I due nuovi bottoni consentono di passare rapidamente da una vista all'altra. 
+		Le liste di distribuzione possono ora essere filtrate dalla barra di ricerca in alto.</p>
+		<img src="5.9.0_viewopts.png"/>
 $	5.8.0
 	%	Versione 5.8.0
 	*	<h1>Nuovi campi di ricerca</h1>
