@@ -3,14 +3,14 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sonicle.webtop</groupId>
 	<artifactId>webtop-contacts</artifactId>
-	<version>5.8.1</version>
+	<version>5.9.1</version>
 	<packaging>jar</packaging>
 	<name>webtop-contacts</name>
 	
 	<parent>
 		<groupId>com.sonicle.webtop</groupId>
 		<artifactId>webtop-superpom-service</artifactId>
-		<version>2</version>
+		<version>4</version>
 	</parent>
 	
 	<properties>

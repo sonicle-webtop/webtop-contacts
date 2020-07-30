@@ -45,6 +45,7 @@ import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.contacts.model.Contact;
@@ -383,6 +384,13 @@ AND (ccnts.href IS NULL)
 		}
 		*/
 		
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+			).asField("tags");
+		
 		return dsl
 			.select(
 				CONTACTS.CONTACT_ID,
@@ -406,6 +414,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS.HOME_EMAIL
 			)
 			.select(
+				tags,
 				CATEGORIES.NAME.as("category_name"),
 				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
 				CATEGORIES.USER_ID.as("category_user_id"),
@@ -657,6 +666,21 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CONTACT_ID.asc()
 			)
 			.fetchMap(CONTACTS.CONTACT_ID, OContact.class);
+	}
+	
+	public Map<Integer, Integer> selectCategoriesByIdsType(Connection con, Collection<Integer> contactIds, boolean isList) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID
+			)
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CONTACT_ID.in(contactIds)
+				.and(CONTACTS.IS_LIST.equal(isList))
+			)
+			.fetchMap(CONTACTS.CONTACT_ID, CONTACTS.CATEGORY_ID);
 	}
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {

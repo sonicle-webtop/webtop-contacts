@@ -35,7 +35,6 @@ package com.sonicle.webtop.contacts.rest.v1;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
-import com.sonicle.webtop.contacts.NotFoundException;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
@@ -52,6 +51,7 @@ import com.sonicle.webtop.contacts.swagger.v1.model.SyncContactUpdate;
 import com.sonicle.webtop.contacts.swagger.v1.model.SyncFolder;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
 import com.sonicle.webtop.core.model.SharePerms;
 import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsFolder;
@@ -209,13 +209,13 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			Contact contact = manager.getContact(id, false, false);
+			Contact contact = manager.getContact(id, false, false, false, false);
 			if (contact == null) return respErrorNotFound();
 			ContactCompany contactCompany = null;
 			if (contact.hasCompany()) contactCompany = manager.getContactCompany(id);
 			
 			mergeContact(contact, contactCompany, body);
-			manager.updateContact(contact, false, false);
+			manager.updateContact(contact, false, false, false, false);
 			
 			ContactObject card = manager.getContactObject(id, ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();
@@ -240,7 +240,7 @@ public class Eas extends EasApi {
 			manager.deleteContact(id);
 			return respOkNoContent();
 			
-		} catch(NotFoundException ex) {
+		} catch(WTNotFoundException ex) {
 			return respErrorNotFound();
 		} catch(Throwable t) {
 			logger.error("[{}] deleteMessage({}, {})", RunContext.getRunProfileId(), folderId, id, t);

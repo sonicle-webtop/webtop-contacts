@@ -39,9 +39,18 @@ import com.sonicle.webtop.core.sdk.UserProfileId;
  * @author malbinola
  */
 public class VContactLookup extends VContactBase {
+	protected String tags;
 	protected String categoryName;
 	protected String categoryDomainId;
 	protected String categoryUserId;
+	
+	public String getTags() {
+		return tags;
+	}
+
+	public void setTags(String tags) {
+		this.tags = tags;
+	}
 	
 	public String getCategoryName() {
 		return categoryName;

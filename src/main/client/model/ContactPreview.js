@@ -55,6 +55,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 		WTF.roField('catId', 'int'),
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
+		WTF.roField('tags', 'string'),
 		WTF.roField('_pid', 'string'),
 		WTF.roField('_frights', 'string'),
 		WTF.roField('_erights', 'string'),
@@ -74,12 +75,14 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 					rec.get('lastName'),
 					rec.get('displayName')
 			);
-		})
+		}),
+		WTF.roField('_cfdefs', 'string')
 	],
 	hasMany: [
 		WTF.hasMany('data1', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Email addresses
 		WTF.hasMany('data2', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Telephones
-		WTF.hasMany('data3', 'Sonicle.webtop.contacts.model.ContactValueItem') // Other fields
+		WTF.hasMany('data3', 'Sonicle.webtop.contacts.model.ContactValueItem'), // Other fields
+		WTF.hasMany('cvalues', 'Sonicle.webtop.core.ux.data.CustomFieldValueModel')
 	],
 	
 	hasData: function() {

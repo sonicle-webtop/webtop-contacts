@@ -52,6 +52,7 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.roField('catId', 'int'),
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
+		WTF.roField('tags', 'string'),
 		WTF.roField('_pid', 'string'),
 		WTF.roField('_frights', 'string'),
 		WTF.roField('_erights', 'string'),

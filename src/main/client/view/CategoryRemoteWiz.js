@@ -160,36 +160,49 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 				defaults: {
 					labelWidth: 80
 				},
-				items: [{
-					xtype: 'textfield',
-					bind: '{name}',
-					allowBlank: false,
-					fieldLabel: me.mys.res('categoryRemoteWiz.fld-name.lbl'),
-					anchor: '100%'
-				}, {
-					xtype: 'sopalettefield',
-					bind: '{color}',
-					allowBlank: false,
-					colors: WT.getColorPalette(),
-					fieldLabel: me.mys.res('categoryRemoteWiz.fld-color.lbl'),
-					width: 80+100
-				}, {
-					xtype: 'combo',
-					bind: '{syncFrequency}',
-					editable: false,
-					store: Ext.create('Sonicle.webtop.contacts.store.RemoteSyncFreq', {
-						autoLoad: true
-					}),
-					valueField: 'id',
-					displayField: 'desc',
-					triggers: {
-						clear: WTF.clearTrigger()
-					},
-					hidden: !me.mys.getVar('categoryRemoteSyncEnabled', false),
-					fieldLabel: me.mys.res('categoryRemoteWiz.fld-syncFrequency.lbl'),
-					emptyText: me.mys.res('categoryRemoteWiz.fld-syncFrequency.emp'),
-					width: 80+140
-				}]
+				items: [
+					{
+						xtype: 'fieldcontainer',
+						layout: {
+							type: 'hbox',
+							padding: '0 0 1 0' // fixes classic-theme bottom border issue
+						},
+						items: [
+							{
+								xtype: 'textfield',
+								bind: '{name}',
+								allowBlank: false,
+								margin: '0 5 0 0',
+								flex: 1
+							}, {
+								xtype: 'sopalettefield',
+								bind: '{color}',
+								hideTrigger: true,
+								colors: WT.getColorPalette('default'),
+								tilesPerRow: 11,
+								width: 24
+							}
+						],
+						fieldLabel: me.mys.res('categoryRemoteWiz.fld-name.lbl'),
+						anchor: '100%'
+					}, {
+						xtype: 'combo',
+						bind: '{syncFrequency}',
+						editable: false,
+						store: Ext.create('Sonicle.webtop.contacts.store.RemoteSyncFreq', {
+							autoLoad: true
+						}),
+						valueField: 'id',
+						displayField: 'desc',
+						triggers: {
+							clear: WTF.clearTrigger()
+						},
+						hidden: !me.mys.getVar('categoryRemoteSyncEnabled', false),
+						fieldLabel: me.mys.res('categoryRemoteWiz.fld-syncFrequency.lbl'),
+						emptyText: me.mys.res('categoryRemoteWiz.fld-syncFrequency.emp'),
+						width: 80+140
+					}
+				]
 			}]
 		}, {
 			itemId: 's3',

@@ -32,11 +32,13 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.bol.js.JsFkModel;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 
 /**
  *
@@ -47,24 +49,26 @@ public class JsContactsList {
 	public Integer contactId;
 	public Integer categoryId;
 	public String name;
+	public String tags;
 	public ArrayList<Recipient> recipients;
 	public String _profileId;
 	
 	public JsContactsList() {}
 	
-	public JsContactsList(UserProfileId ownerId, ContactsList cl) {
-		id = cl.getContactId().toString();
-		contactId = cl.getContactId();
-		categoryId = cl.getCategoryId();
-		name = cl.getName();
+	public JsContactsList(UserProfileId ownerId, ContactsList contact) {
+		id = contact.getContactId().toString();
+		contactId = contact.getContactId();
+		categoryId = contact.getCategoryId();
+		name = contact.getName();
+		tags = new CompositeId(contact.getTags()).toString();
 		recipients = new ArrayList<>();
-		for(ContactsListRecipient rcpt : cl.getRecipients()) {
-			recipients.add(new Recipient(id, rcpt));
+		for(ContactsListRecipient rcpt : contact.getRecipients()) {
+			recipients.add(new Recipient(rcpt));
 		}
 		_profileId = ownerId.toString();
 	}
 	
-	public static class Recipient extends JsFkModel {
+	public static class Recipient {
 		public Integer listRecipientId;
 		public String recipient;
 		public String recipientType;
@@ -72,8 +76,7 @@ public class JsContactsList {
 		
 		public Recipient() {}
 		
-		public Recipient(String fk, ContactsListRecipient rcpt) {
-			super(fk);
+		public Recipient(ContactsListRecipient rcpt) {
 			listRecipientId = rcpt.getListRecipientId();
 			recipient = rcpt.getRecipient();
 			recipientType = rcpt.getRecipientType();
@@ -82,10 +85,11 @@ public class JsContactsList {
 	}
 	
 	public static ContactsList buildContactsList(JsContactsList js) {
-		ContactsList cl = new ContactsList();
-		cl.setContactId(js.contactId);
-		cl.setCategoryId(js.categoryId);
-		cl.setName(js.name);
+		ContactsList item = new ContactsList();
+		item.setContactId(js.contactId);
+		item.setCategoryId(js.categoryId);
+		item.setName(js.name);
+		item.setTags(new LinkedHashSet<>(new CompositeId().parse(js.tags).getTokens()));
 		for(Recipient jsRcpt : js.recipients) {
 			if (jsRcpt.recipientType!=null && jsRcpt.recipient!=null && jsRcpt.recipient.trim().length()>0) {
 				ContactsListRecipient rcpt = new ContactsListRecipient();
@@ -93,9 +97,9 @@ public class JsContactsList {
 				rcpt.setRecipient(jsRcpt.recipient);
 				rcpt.setRecipientContactId(jsRcpt.recipientContactId);
 				rcpt.setRecipientType(jsRcpt.recipientType);
-				cl.getRecipients().add(rcpt);
+				item.getRecipients().add(rcpt);
 			}
 		}
-		return cl;
+		return item;
 	}
 }

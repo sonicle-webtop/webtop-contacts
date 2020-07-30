@@ -16,7 +16,7 @@ package com.sonicle.webtop.contacts.jooq;
 @java.lang.SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Contacts extends org.jooq.impl.SchemaImpl {
 
-	private static final long serialVersionUID = 1906953447;
+	private static final long serialVersionUID = -512915342;
 
 	/**
 	 * The reference instance of <code>contacts</code>
@@ -58,7 +58,9 @@ public class Contacts extends org.jooq.impl.SchemaImpl {
 			com.sonicle.webtop.contacts.jooq.tables.Contacts.CONTACTS,
 			com.sonicle.webtop.contacts.jooq.tables.ContactsAttachments.CONTACTS_ATTACHMENTS,
 			com.sonicle.webtop.contacts.jooq.tables.ContactsAttachmentsData.CONTACTS_ATTACHMENTS_DATA,
+			com.sonicle.webtop.contacts.jooq.tables.ContactsCustomValues.CONTACTS_CUSTOM_VALUES,
 			com.sonicle.webtop.contacts.jooq.tables.ContactsPictures.CONTACTS_PICTURES,
+			com.sonicle.webtop.contacts.jooq.tables.ContactsTags.CONTACTS_TAGS,
 			com.sonicle.webtop.contacts.jooq.tables.ContactsVcards.CONTACTS_VCARDS,
 			com.sonicle.webtop.contacts.jooq.tables.ListRecipients.LIST_RECIPIENTS);
 	}

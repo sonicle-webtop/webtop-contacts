@@ -40,6 +40,5 @@ import com.google.gson.annotations.SerializedName;
  */
 public enum GridView {
 	@SerializedName("work") WORK,
-	@SerializedName("home") HOME,
-	@SerializedName("list") CONTACTS_LIST,
+	@SerializedName("home") HOME
 }

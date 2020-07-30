@@ -55,6 +55,10 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		me.callParent([cfg]);
 		
 		WTU.applyFormulas(me.getVM(), {
+			//foColor: WTF.foTwoWay('record', 'color', 
+			//	function(v) { return Sonicle.String.removeStart(v, '#'); },
+			//	function(v) { return Sonicle.String.prepend(v, '#', true); }
+			//),
 			isDefault: WTF.checkboxBind('record', 'isDefault'),
 			foIsRemote: WTF.foGetFn('record', 'provider', function(v) {
 				return Sonicle.webtop.contacts.view.Category.isRemote(v);
@@ -90,9 +94,27 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 						width: 110+140
 					}),
 					{
-						xtype: 'textfield',
-						reference: 'fldname',
-						bind: '{record.name}',
+						xtype: 'fieldcontainer',
+						layout: {
+							type: 'hbox',
+							padding: '0 0 1 0' // fixes classic-theme bottom border issue
+						},
+						items: [
+							{
+								xtype: 'textfield',
+								reference: 'fldname',
+								bind: '{record.name}',
+								margin: '0 5 0 0',
+								flex: 1
+							}, {
+								xtype: 'sopalettefield',
+								bind: '{record.color}',
+								hideTrigger: true,
+								colors: WT.getColorPalette('default'),
+								tilesPerRow: 11,
+								width: 24
+							}
+						],
 						fieldLabel: me.mys.res('category.fld-name.lbl'),
 						anchor: '100%'
 					}, {
@@ -108,12 +130,6 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 						bind: '{record.description}',
 						fieldLabel: me.mys.res('category.fld-description.lbl'),
 						anchor: '100%'
-					}, {
-						xtype: 'sopalettefield',
-						bind: '{record.color}',
-						colors: WT.getColorPalette(),
-						fieldLabel: me.mys.res('category.fld-color.lbl'),
-						width: 110+100
 					},
 					WTF.lookupCombo('id', 'desc', {
 						reference: 'fldsync',

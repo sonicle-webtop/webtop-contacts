@@ -25,6 +25,11 @@
 .wtcon-add-trigger { background-image: url('add-trigger.png') !important; }
 .wtcon-add-trigger-touch { background-image: url('add-trigger-touch.png') !important; }
 
+.wtcon-icon-viewHome { background-image: url('view-home-grayed_16.svg') !important; background-size: contain; }
+.x-btn-pressed .wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; }
+.wtcon-icon-viewWork { background-image: url('view-work-grayed_16.svg') !important; background-size: contain; }
+.x-btn-pressed .wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; }
+
 .wtcon-gpcontacts .x-grid-empty { text-align: center; }
 .wtcon-gpcontacts .x-grid-group-hd {
 	background-color: #eff6fb;
@@ -40,3 +45,36 @@
 	font-size: 0.9em;
 	color: #888;
 }
+
+/* --- UX grid.column.Contact --- */
+.wtcon-contactcolumn-head {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.wtcon-contactcolumn-head > span {
+	vertical-align: top;
+	color: #767676;
+	font-size: 0.9em;
+}
+.wtcon-contactcolumn-body {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-top: 5px;
+}
+.wtcon-contactcolumn-body > span {
+	color: #767676;
+	font-size: 0.9em;
+}
+.wtcon-contactcolumn-body-float {
+	display: inline-block;
+	float: right;
+	margin-top: 5px;
+}
+.wtcon-contactcolumn-glyph {
+	display: inline-block;
+	margin: 0 0 0 2px;
+	text-align: center;
+}
+/* ------------------------------ */

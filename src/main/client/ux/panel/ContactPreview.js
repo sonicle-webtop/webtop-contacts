@@ -37,13 +37,27 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		'Sonicle.form.field.InitialsAvatar',
 		'Sonicle.form.field.DisplayImage',
 		'Sonicle.form.field.ColorDisplay',
+		'Sonicle.form.field.TagDisplay',
 		'WTA.util.FoldersTree',
 		'WTA.ux.grid.TileList',
+		'WTA.ux.panel.CustomFieldsPreview',
 		'Sonicle.webtop.contacts.model.ContactPreview'
 	],
 	mixins: [
 		'WTA.mixin.HasModel'
 	],
+	
+	/*
+	 * @cfg {Ext.data.Store} tagsStore
+	 * The Store that holds available tags data.
+	 */
+	tagsStore: null,
+	
+	/**
+	 * @cfg {Number} loadContactBuffer
+	 * This is the time in milliseconds to buffer load requests when updating selection.
+	 */
+	loadContactBuffer: 200,
 	
 	layout: 'card',
 	referenceHolder: true,
@@ -90,12 +104,14 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			foHasUser: WTF.foIsEmpty('record', 'userProfile', true),
 			foHasBusinessInfo: WTF.foIsEmpty('record', 'businessInfo', true),
 			foWriteMessageTip: WTF.foResFormat(null, 'foMainEmail', me.mys.ID, 'contactPreview.single.tb.writeMessage.tip'),
+			foWriteListMessageTip: WTF.foResFormat('record', 'avatarName', me.mys.ID, 'contactPreview.single.tb.writeMessage.tip'),
 			foOpenChatTip: WTF.foResFormat('record', 'userDisplayName', me.mys.ID, 'contactPreview.single.tb.openChat.tip'),
 			foCallNumberTip: WTF.foResFormat(null, 'foMainTelephone', me.mys.ID, 'contactPreview.single.tb.callNumber.tip'),
 			foWriteSMSTip: WTF.foResFormat(null, 'foMobile', me.mys.ID, 'contactPreview.single.tb.writeSms.tip'),
 			foMultiSelTitle: WTF.foGetFn(null, 'contacts', function(val) {
 				return val ? me.mys.res('contactPreview.multi.tit', val.length) : null;
-			})
+			}),
+			foHasTags: WTF.foIsEmpty('record', 'tags', true)
 		});
 	},
 	
@@ -103,23 +119,24 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		var me = this;
 		me.callParent(arguments);
 		me.add([
-			Ext.apply(me.createEmptyItem(), {
+			Ext.apply(me.createEmptyItemCfg(), {
 				itemId: 'empty'
 			}),
-			Ext.apply(me.createContactItem(), {
+			Ext.apply(me.createContactItemCfg(), {
 				itemId: 'contact'
 			}),
-			Ext.apply(me.createContactsListItem(), {
+			Ext.apply(me.createContactsListItemCfg(), {
 				itemId: 'list'
 			}),
-			Ext.apply(me.createMultiItem(), {
+			Ext.apply(me.createMultiItemCfg(), {
 				itemId: 'multi'
 			})
 		]);
 		me.setActiveItem('empty');
+		me.getViewModel().bind('{record._cfdefs}', me.onCFDefsUpdate, me);
 	},
 	
-	createEmptyItem: function() {
+	createEmptyItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
@@ -142,325 +159,429 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		};
 	},
 	
-	createContactsListItem: function() {
+	createContactsListItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
-			layout: 'anchor',
-			items: [{
-				xtype: 'container',
-				layout: 'hbox',
-				items: [{
+			layout: 'fit',
+			items: [
+				{
 					xtype: 'container',
-					layout: 'anchor',
-					items: [{
-						xtype: 'sointialsavatarfield',
-						bind: '{record.avatarName}',
-						margin: 5,
-						avatarSize: 110
-					}]
-				}, {
-					xtype: 'container',
-					layout: 'anchor',
-					items: [{
-						xtype: 'displayfield',
-						bind: '{record.avatarName}',
-						fieldStyle: {
-							fontSize: '2em'
-						}
-					}, {
-						xtype: 'label',
-						text: me.mys.res('contactsList.tit'),
-						cls: 'wt-theme-text-sub',
-						style: 'font-size:0.9em'
-					}, {
-						xtype: 'fieldcontainer',
-						layout: 'hbox',
-						items: [{
-							xtype: 'socolordisplayfield',
-							bind: '{record.catColor}'
-						}, {
-							xtype: 'displayfield',
-							bind: '{record.catName}'
-						}]
-					}],
-					margin: '10 0 0 20'
-				}],
-				padding: 20,
-				height: 180
-			}]
-		};
-	},
-	
-	createContactItem: function() {
-		var me = this;
-		return {
-			xtype: 'container',
-			layout: 'anchor',
-			items: [{
-				xtype: 'container',
-				layout: 'hbox',
-				items: [{
-					xtype: 'container',
-					layout: 'anchor',
-					items: [{
-						xtype: 'sointialsavatarfield',
-						bind: {
-							value: '{record.avatarName}',
-							hidden: '{record.pic}'
-						},
-						margin: 5,
-						avatarSize: 110
-					}, {
-						xtype: 'sodisplayimage',
-						bind: {
-							value: '{record.pictureId}',
-							hidden: '{!record.pic}'
-						},
-						hidden: true,
-						imageWidth: 110,
-						imageHeight: 110,
-						geometry: 'circle',
-						border: false,
-						baseImageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
-						placeholderImageUrl: me.mys.resourceUrl('contact-placeholder.png')
-					}]
-				}, {
-					xtype: 'container',
-					layout: 'anchor',
-					items: [{
-						xtype: 'displayfield',
-						bind: '{record.avatarName}',
-						fieldStyle: {
-							fontSize: '2em'
-						}
-					}, {
-						xtype: 'label',
-						bind: {
-							text: '{record.businessInfo}',
-							hidden: '{!foHasBusinessInfo}'
-						},
-						cls: 'wt-theme-text-sub'
-						//style: 'font-size:0.9em'	
-					}, {
-						xtype: 'fieldcontainer',
-						layout: 'hbox',
-						items: [{
-							xtype: 'socolordisplayfield',
-							bind: '{record.catColor}'
-						}, {
-							xtype: 'displayfield',
-							bind: '{record.catName}'
-						}]
-					}, {
-						xtype: 'toolbar',
-						overflowHandler: 'menu',
-						items: [{
-							xtype: 'button',
-							bind: {
-								disabled: '{!foHasEmails}',
-								tooltip: '{foWriteMessageTip}'
-							},
-							//text: me.mys.res('contactPreview.single.tb.writeMessage.lbl'),
-							tooltip: me.mys.res('contactPreview.single.tb.writeMessage.tip'),
-							iconCls: 'wtcon-icon-writeMessage',
-							handler: function() {
-								var vm = me.getVM();
-								me.fireEvent('writeemail', me, [vm.get('foMainEmail')], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-							}
-						}, {
-							xtype: 'button',
-							bind: {
-								disabled: '{!foHasUser}',
-								tooltip: '{foOpenChatTip}'
-							},
-							hidden: !WT.getVar('imEnabled'),
-							//text: me.mys.res('contactPreview.single.tb.openChat.lbl'),
-							tooltip: me.mys.res('contactPreview.single.tb.openChat.tip'),
-							iconCls: 'wt-icon-im-chat',
-							handler: function() {
-								me.fireEvent('openchat', me, null);
-							}
-						}, {
-							xtype: 'button',
-							bind: {
-								disabled: '{!foHasTelephones}',
-								tooltip: '{foCallNumberTip}'
-							},
-							hidden: !WT.getVar('pbxConfigured'),
-							//text: me.mys.res('contactPreview.single.tb.callNumber.lbl'),
-							tooltip: me.mys.res('contactPreview.single.tb.callNumber.tip'),
-							iconCls: 'wt-icon-call',
-							handler: function() {
-								var vm = me.getVM();
-								me.fireEvent('callnumber', me, vm.get('foMainTelephone'), vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-							}
-						}, {
-							xtype: 'button',
-							bind: {
-								disabled: '{!foHasMobile}',
-								tooltip: '{foWriteSMSTip}'
-							},
-							hidden: !WT.getVar('smsConfigured'),
-							//text: me.mys.res('contactPreview.single.tb.writeSms.lbl'),
-							tooltip: me.mys.res('contactPreview.single.tb.writeSms.tip'),
-							iconCls: 'wt-icon-sms',
-							handler: function() {
-								var vm = me.getVM();
-								me.fireEvent('writesms', me, vm.get('foMobile'), vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-							}
-						}]
-					}],
-					margin: '10 0 0 20'
-				}],
-				padding: 20,
-				height: 180
-			}, {
-				xtype: 'tabpanel',
-				border: false,
-				items: [{
-					xtype: 'wtpanel',
-					title: me.mys.res('contactPreview.single.contact.tit'),
-					layout: 'anchor',
-					tbar: [{
-						xtype: 'tbtext',
-						text: me.mys.res('contactPreview.single.contact.tb.info')
-					}, '->', {
-						xtype: 'button',
-						bind: {
-							disabled: '{!foIsEditable}'
-						},
-						text: me.mys.res('contactPreview.single.contact.tb.edit.lbl'),
-						handler: function() {
-							var vm = me.getVM();
-							me.fireEvent('editcontact', me, vm.get('record.isList'), vm.get('record.id'));
-						}
-					}],
-					defaults: {
-						anchor: '100%',
-						margin: '15 0 15 0'
-					},
-					items: [{
-						xtype: 'container',
-						items: [{
+					layout: 'hbox',
+					items: [
+						{
 							xtype: 'container',
-							bind: {
-								hidden: '{!foHasData}'
-							},
-							hidden: true,
-							layout: 'hbox',
-							items: [{
-								xtype: 'wttilelist',
-								reference: 'gpemaillist',
-								linkifyValue: true,
-								bind: {
-									store: '{record.data1}',
-									hidden: '{!foHasEmails}'
-								},
-								labelField: 'type',
-								labelTexts: {
-									work: me.mys.res('contactPreview.single.workEmail'),
-									home: me.mys.res('contactPreview.single.homeEmail')
-								},
-								listeners: {
-									cellvalueclick: function(s, val) {
-										var vm = me.getVM();
-										me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+							layout: 'anchor',
+							items: [
+								{
+									xtype: 'sointialsavatarfield',
+									bind: '{record.avatarName}',
+									margin: 5,
+									avatarSize: 110
+								}
+							],
+							width: 140
+						}, {
+							xtype: 'container',
+							layout: 'anchor',
+							items: [
+								{
+									xtype: 'displayfield',
+									bind: '{record.avatarName}',
+									fieldStyle: {
+										fontSize: '2em'
 									}
-								},
-								margin: '0 5 0 5',
-								flex: 1,
-								maxWidth: 230
-							}, {
-								xtype: 'wttilelist',
-								reference: 'gptelephonelist',
-								linkifyValue: true,
-								bind: {
-									store: '{record.data2}',
-									hidden: '{!foHasTelephones}'
-								},
-								labelField: 'type',
-								labelTexts: {
-									mobile: me.mys.res('contactPreview.single.mobile'),
-									work: me.mys.res('contactPreview.single.workTelephone'),
-									home: me.mys.res('contactPreview.single.homeTelephone')
-								},
-								listeners: {
-									cellvalueclick: function(s, val) {
-										var vm = me.getVM();
-										me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-									}
-								},
-								margin: '0 5 0 5',
-								flex: 1,
-								maxWidth: 180
-							}, {
-								xtype: 'wttilelist',
-								reference: 'gpmorelist',
-								linkifyValue: true,
-								bind: {
-									store: '{record.data3}'
-								},
-								labelField: 'type',
-								labelTexts: {
-									fullName: me.mys.res('contactPreview.single.fullName'),
-									company: me.mys.res('contactPreview.single.company'),
-									workadd: me.mys.res('contactPreview.single.workAddress'),
-									homeadd: me.mys.res('contactPreview.single.homeAddress')
-								},
-								listeners: {
-									cellvalueclick: function(s, val, rec) {
-										if (['workadd', 'homeadd'].indexOf(rec.get('type')) !== -1) {
-											var vm = me.getVM();
-											me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+								}, {
+									xtype: 'label',
+									text: me.mys.res('contactsList.tit'),
+									cls: 'wt-theme-text-sub',
+									// Display as inline to keep height dimension
+									style: 'display:inline-block;font-size:0.9em'
+								}, {
+									xtype: 'fieldcontainer',
+									layout: 'hbox',
+									items: [
+										{
+											xtype: 'socolordisplayfield',
+											bind: '{record.catColor}'
+										}, {
+											xtype: 'displayfield',
+											bind: '{record.catName}'
 										}
-									}
-								},
-								margin: '0 5 0 5',
-								flex: 1,
-								maxWidth: 230
-							}]
-							//margin: '5 0 5 0',
-							//height: '100%'
-						}, {
-							xtype: 'container',
-							bind: {
-								hidden: '{foHasData}'
-							},
-							hidden: true,
-							layout: {
-								type: 'vbox',
-								pack: 'center',
-								align: 'middle'
-							},
-							items: [{
-								xtype: 'label',
-								text: me.mys.res('contactPreview.single.contact.emp'),
-								cls: 'wt-theme-text-sub',
-								style: 'font-size:0.9em'
-							}]
-							//margin: '10 0 10 0'
-						}]
-					}, {
-						xtype: 'formseparator'
-					}, {
-						xtype: 'textarea',
-						bind: {
-							value: '{record.notes}'
-						},
-						fieldLabel: 'Note',
-						labelAlign: 'top',
-						readOnly: true,
-						grow: true,
-						growMin: 60,
-						growMax: 200
-					}]
-				}]
-			}]
+									]
+								}, {
+									xtype: 'container',
+									layout: 'hbox',
+									defaults: {
+										margin: '0 2 0 0',
+										ui: 'default-toolbar'
+									},
+									items: [
+										{
+											xtype: 'button',
+											bind: {
+												disabled: '{!foHasEmails}',
+												tooltip: '{foWriteListMessageTip}'
+											},
+											tooltip: me.mys.res('contactPreview.single.tb.writeMessage.tip'),
+											iconCls: 'wtcon-icon-writeMessage',
+											handler: function() {
+												var vm = me.getVM();
+												me.fireEvent('writeemail', me, [vm.get('foMainEmail')], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+											}
+										}
+									],
+									// Bottom margin to space tags
+									margin: '0 0 5 0'
+								}, {
+									xtype: 'sotagdisplayfield',
+									bind: {
+										value: '{record.tags}',
+										hidden: '{!foHasTags}'
+									},
+									delimiter: '|',
+									store: me.tagsStore,
+									valueField: 'id',
+									displayField: 'name',
+									colorField: 'color',
+									sourceField: 'source',
+									hidden: true,
+									hideLabel: true
+							}],
+							flex: 1,
+							margin: '10 0 0 20',
+							height: 160
+					}],
+					padding: 20
+				}
+			]
 		};
 	},
 	
-	createMultiItem: function() {
+	createContactItemCfg: function() {
+		var me = this;
+		return {
+			xtype: 'container',
+			layout: 'border',
+			items: [
+				{
+					xtype: 'wtpanel',
+					region: 'north',
+					height: 210,
+					bodyPadding: 20,
+					layout: 'hbox',
+					items: [
+						{
+							xtype: 'container',
+							layout: 'anchor',
+							items: [
+								{
+									xtype: 'sointialsavatarfield',
+									bind: {
+										value: '{record.avatarName}',
+										hidden: '{record.pic}'
+									},
+									margin: 5,
+									avatarSize: 110
+								}, {
+									xtype: 'sodisplayimage',
+									bind: {
+										value: '{record.pictureId}',
+										hidden: '{!record.pic}'
+									},
+									hidden: true,
+									imageWidth: 110,
+									imageHeight: 110,
+									geometry: 'circle',
+									border: false,
+									baseImageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
+									placeholderImageUrl: me.mys.resourceUrl('contact-placeholder.png')
+								}
+							],
+							width: 140
+						}, {
+							xtype: 'container',
+							layout: 'anchor',
+							items: [
+								{
+									xtype: 'displayfield',
+									bind: '{record.avatarName}',
+									fieldStyle: {
+										fontSize: '2em'
+									}
+								}, {
+									xtype: 'label',
+									bind: {
+										text: '{record.businessInfo}'
+										//hidden: '{!foHasBusinessInfo}'
+									},
+									cls: 'wt-theme-text-sub',
+									// Display as inline to keep height dimension
+									style: 'display:inline-block;font-size:0.9em'
+								}, {
+									xtype: 'fieldcontainer',
+									layout: 'hbox',
+									items: [
+										{
+											xtype: 'socolordisplayfield',
+											bind: '{record.catColor}'
+										}, {
+											xtype: 'displayfield',
+											bind: '{record.catName}'
+										}
+									]
+								}, {
+									xtype: 'container',
+									layout: 'hbox',
+									defaults: {
+										margin: '0 2 0 0',
+										ui: 'default-toolbar'
+									},
+									items: [
+										{
+											xtype: 'button',
+											bind: {
+												disabled: '{!foHasEmails}',
+												tooltip: '{foWriteMessageTip}'
+											},
+											tooltip: me.mys.res('contactPreview.single.tb.writeMessage.tip'),
+											iconCls: 'wtcon-icon-writeMessage',
+											handler: function() {
+												var vm = me.getVM();
+												me.fireEvent('writeemail', me, [vm.get('foMainEmail')], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+											}
+										}, {
+											xtype: 'button',
+											bind: {
+												disabled: '{!foHasUser}',
+												tooltip: '{foOpenChatTip}'
+											},
+											hidden: !WT.getVar('imEnabled'),
+											//text: me.mys.res('contactPreview.single.tb.openChat.lbl'),
+											tooltip: me.mys.res('contactPreview.single.tb.openChat.tip'),
+											iconCls: 'wt-icon-im-chat',
+											handler: function() {
+												me.fireEvent('openchat', me, null);
+											}
+										}, {
+											xtype: 'button',
+											bind: {
+												disabled: '{!foHasTelephones}',
+												tooltip: '{foCallNumberTip}'
+											},
+											hidden: !WT.getVar('pbxConfigured'),
+											//text: me.mys.res('contactPreview.single.tb.callNumber.lbl'),
+											tooltip: me.mys.res('contactPreview.single.tb.callNumber.tip'),
+											iconCls: 'wt-icon-call',
+											handler: function() {
+												var vm = me.getVM();
+												me.fireEvent('callnumber', me, vm.get('foMainTelephone'), vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+											}
+										}, {
+											xtype: 'button',
+											bind: {
+												disabled: '{!foHasMobile}',
+												tooltip: '{foWriteSMSTip}'
+											},
+											hidden: !WT.getVar('smsConfigured'),
+											//text: me.mys.res('contactPreview.single.tb.writeSms.lbl'),
+											tooltip: me.mys.res('contactPreview.single.tb.writeSms.tip'),
+											iconCls: 'wt-icon-sms',
+											handler: function() {
+												var vm = me.getVM();
+												me.fireEvent('writesms', me, vm.get('foMobile'), vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+											}
+										}
+									],
+									// Bottom margin to space tags
+									margin: '0 0 5 0'
+								}, {
+									xtype: 'sotagdisplayfield',
+									bind: {
+										value: '{record.tags}',
+										hidden: '{!foHasTags}'
+									},
+									delimiter: '|',
+									store: me.tagsStore,
+									valueField: 'id',
+									displayField: 'name',
+									colorField: 'color',
+									sourceField: 'source',
+									hidden: true,
+									hideLabel: true
+								}
+							],
+							flex: 1,
+							margin: '10 0 0 20',
+							height: 160
+						}
+					]
+				}, {
+					xtype: 'tabpanel',
+					region: 'center',
+					border: false,
+					items: [
+						{
+							xtype: 'wtpanel',
+							title: me.mys.res('contactPreview.single.contact.tit'),
+							layout: 'anchor',
+							defaults: {
+								anchor: '100%',
+								margin: '15 0 15 0'
+							},
+							items: [
+								{
+									xtype: 'container',
+									items: [{
+										xtype: 'container',
+										bind: {
+											hidden: '{!foHasData}'
+										},
+										hidden: true,
+										layout: 'hbox',
+										items: [{
+											xtype: 'wttilelist',
+											reference: 'gpemaillist',
+											linkifyValue: true,
+											bind: {
+												store: '{record.data1}',
+												hidden: '{!foHasEmails}'
+											},
+											labelField: 'type',
+											labelTexts: {
+												work: me.mys.res('contactPreview.single.workEmail'),
+												home: me.mys.res('contactPreview.single.homeEmail')
+											},
+											listeners: {
+												cellvalueclick: function(s, val) {
+													var vm = me.getVM();
+													me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+												}
+											},
+											margin: '0 5 0 5',
+											flex: 1,
+											maxWidth: 230
+										}, {
+											xtype: 'wttilelist',
+											reference: 'gptelephonelist',
+											linkifyValue: true,
+											bind: {
+												store: '{record.data2}',
+												hidden: '{!foHasTelephones}'
+											},
+											labelField: 'type',
+											labelTexts: {
+												mobile: me.mys.res('contactPreview.single.mobile'),
+												work: me.mys.res('contactPreview.single.workTelephone'),
+												home: me.mys.res('contactPreview.single.homeTelephone')
+											},
+											listeners: {
+												cellvalueclick: function(s, val) {
+													var vm = me.getVM();
+													me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+												}
+											},
+											margin: '0 5 0 5',
+											flex: 1,
+											maxWidth: 180
+										}, {
+											xtype: 'wttilelist',
+											reference: 'gpmorelist',
+											linkifyValue: true,
+											bind: {
+												store: '{record.data3}'
+											},
+											labelField: 'type',
+											labelTexts: {
+												fullName: me.mys.res('contactPreview.single.fullName'),
+												company: me.mys.res('contactPreview.single.company'),
+												workadd: me.mys.res('contactPreview.single.workAddress'),
+												homeadd: me.mys.res('contactPreview.single.homeAddress')
+											},
+											listeners: {
+												cellvalueclick: function(s, val, rec) {
+													if (['workadd', 'homeadd'].indexOf(rec.get('type')) !== -1) {
+														var vm = me.getVM();
+														me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+													}
+												}
+											},
+											margin: '0 5 0 5',
+											flex: 1,
+											maxWidth: 230
+										}]
+										//margin: '5 0 5 0',
+										//height: '100%'
+									}, {
+										xtype: 'container',
+										bind: {
+											hidden: '{foHasData}'
+										},
+										hidden: true,
+										layout: {
+											type: 'vbox',
+											pack: 'center',
+											align: 'middle'
+										},
+										items: [{
+											xtype: 'label',
+											text: me.mys.res('contactPreview.single.contact.emp'),
+											cls: 'wt-theme-text-sub',
+											style: 'font-size:0.9em'
+										}]
+										//margin: '10 0 10 0'
+									}]
+								}, {
+									xtype: 'formseparator'
+								}, {
+									xtype: 'textarea',
+									bind: {
+										value: '{record.notes}'
+									},
+									fieldLabel: 'Note',
+									labelAlign: 'top',
+									readOnly: true,
+									grow: true,
+									growMin: 60,
+									growMax: 200
+								}
+							]
+						}, {
+							xtype: 'wtcfieldspreviewpanel',
+							reference: 'tabcfields',
+							title: me.mys.res('contactPreview.single.cfields.tit'),
+							bind: {
+								store: '{record.cvalues}'
+								// Do not use this binding here, it will cause internal exception
+								// in Ext.app.bind.Stub during model load with new ID. (see explicit vm.bind in initComponent)
+								//fieldsDefs: '{record._cfdefs}'
+							}
+						}
+					],
+					tabBar:	{
+						items: [
+							{
+								xtype: 'tbfill'
+							}, {
+								xtype: 'button',
+								ui: 'default-toolbar',
+								bind: {
+									disabled: '{!foIsEditable}'
+								},
+								text: me.mys.res('contactPreview.single.contact.tb.edit.lbl'),
+								handler: function() {
+									var vm = me.getVM();
+									me.fireEvent('editcontact', me, vm.get('record.isList'), vm.get('record.id'));
+								}
+							}
+						]
+					}
+				}
+			]
+		};
+	},
+	
+	createMultiItemCfg: function() {
 		var me = this;
 		return {
 			xtype: 'container',
@@ -535,13 +656,17 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	},
 	
 	loadContact: function(contactUid) {
-		this.clearModel();
-		if (contactUid) {
-			this.loadModel({
-				data: {uid: contactUid},
-				dirty: false
-			});
-		}
+		var me = this;
+		if (me.timLC) clearTimeout(me.timLC);
+		me.timLC = setTimeout(function() {
+			me.clearModel();
+			if (contactUid) {
+				me.loadModel({
+					data: {uid: contactUid},
+					dirty: false
+				});
+			}
+		}, me.loadContactBuffer || 200);
 	},
 	
 	privates: {
@@ -554,6 +679,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 				}
 			}
 			return arr;
+		},
+		
+		onCFDefsUpdate: function(nv, ov) {
+			var cmp = this.lookupReference('tabcfields');
+			if (cmp) cmp.setFieldsDefs(nv);
 		}
 	}
 });

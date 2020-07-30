@@ -35,10 +35,14 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
 		'Sonicle.form.field.ComboBox',
+		'Sonicle.form.field.TagDisplay',
 		'Sonicle.webtop.core.ux.RecipientsGrid',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.ContactsList',
 		'Sonicle.webtop.core.store.RcptType'
+	],
+	uses: [
+		'Sonicle.webtop.core.view.Tags'
 	],
 	
 	dockableConfig: {
@@ -51,65 +55,103 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.ContactsList',
 	
+	constructor: function(cfg) {
+		var me = this;
+		me.callParent([cfg]);
+		
+		WTU.applyFormulas(me.getVM(), {
+			foHasTags: WTF.foIsEmpty('record', 'tags', true)
+		});
+	},
+	
 	initComponent: function() {
 		var me = this;
 		Ext.apply(me, {
-			tbar: [
-				me.addAct('saveClose', {
-					text: WT.res('act-saveClose.lbl'),
-					tooltip: null,
-					iconCls: 'wt-icon-saveClose-xs',
-					handler: function() {
-						me.saveView(true);
-					}
-				}),
-				'-',
-				me.addAct('delete', {
-					text: null,
-					tooltip: WT.res('act-delete.lbl'),
-					iconCls: 'wt-icon-delete',
-					handler: function() {
-						me.delectContactsList();
-					}
-				}),
-				'->',
-				WTF.lookupCombo('categoryId', '_label', {
-					xtype: 'socombo',
-					reference: 'fldcategory',
-					bind: '{record.categoryId}',
-					listConfig: {
-						displayField: 'name',
-						groupCls: 'wt-theme-text-greyed'
-					},
-					autoLoadOnValue: true,
-					store: {
-						model: me.mys.preNs('model.CategoryLkp'),
-						proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
-						grouper: {
-							property: '_profileId',
-							sortProperty: '_order'
-						},
-						filters: [{
-							filterFn: function(rec) {
-								var mo = me.getModel();
-								if (mo && me.isMode(me.MODE_NEW)) {
-									return rec.get('_writable');
-								} else if (mo && me.isMode(me.MODE_VIEW)) {
-									if (rec.getId() === mo.get('categoryId')) return true;
-								} else if (mo && me.isMode(me.MODE_EDIT)) {
-									if (rec.getId() === mo.get('categoryId')) return true;
-									if (rec.get('_profileId') === mo.get('_profileId') && rec.get('_writable')) return true;
-								}
-								return false;
+			dockedItems: [
+				{
+					xtype: 'toolbar',
+					items: [
+						me.addAct('saveClose', {
+							text: WT.res('act-saveClose.lbl'),
+							tooltip: null,
+							iconCls: 'wt-icon-saveClose-xs',
+							handler: function() {
+								me.saveView(true);
 							}
-						}]
+						}),
+						'-',
+						me.addAct('delete', {
+							text: null,
+							tooltip: WT.res('act-delete.lbl'),
+							iconCls: 'wt-icon-delete',
+							handler: function() {
+								me.delectContactsList();
+							}
+						}),
+						me.addAct('tags', {
+							text: null,
+							tooltip: me.mys.res('act-manageTags.lbl'),
+							iconCls: 'wt-icon-tag',
+							handler: function() {
+								me.manageTagsUI(Sonicle.String.split(me.getModel().get('tags'), '|'));
+							}
+						}),
+						'->',
+						WTF.lookupCombo('categoryId', '_label', {
+							xtype: 'socombo',
+							reference: 'fldcategory',
+							bind: '{record.categoryId}',
+							listConfig: {
+								displayField: 'name',
+								groupCls: 'wt-theme-text-greyed'
+							},
+							autoLoadOnValue: true,
+							store: {
+								model: me.mys.preNs('model.CategoryLkp'),
+								proxy: WTF.proxy(me.mys.ID, 'LookupCategoryFolders', 'folders'),
+								grouper: {
+									property: '_profileId',
+									sortProperty: '_order'
+								},
+								filters: [{
+									filterFn: function(rec) {
+										var mo = me.getModel();
+										if (mo && me.isMode(me.MODE_NEW)) {
+											return rec.get('_writable');
+										} else if (mo && me.isMode(me.MODE_VIEW)) {
+											if (rec.getId() === mo.get('categoryId')) return true;
+										} else if (mo && me.isMode(me.MODE_EDIT)) {
+											if (rec.getId() === mo.get('categoryId')) return true;
+											if (rec.get('_profileId') === mo.get('_profileId') && rec.get('_writable')) return true;
+										}
+										return false;
+									}
+								}]
+							},
+							groupField: '_profileDescription',
+							colorField: 'color',
+							fieldLabel: me.mys.res('contact.fld-category.lbl'),
+							labelAlign: 'right',
+							width: 400
+						})
+					]
+				}, {
+					xtype: 'sotagdisplayfield',
+					dock : 'top',
+					bind: {
+						value: '{record.tags}',
+						hidden: '{!foHasTags}'
 					},
-					groupField: '_profileDescription',
+					delimiter: '|',
+					valueField: 'id',
+					displayField: 'name',
 					colorField: 'color',
-					fieldLabel: me.mys.res('contact.fld-category.lbl'),
-					labelAlign: 'right',
-					width: 400
-				})
+					store: WT.getTagsStore(),
+					dummyIcon: 'loading',
+					hidden: true,
+					hideLabel: true,
+					margin: '0 0 5 0'
+				}
 			]
 		});
 		me.callParent(arguments);
@@ -207,6 +249,22 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 			multiline: 200,
 			value: ''
 		});
+	},
+	
+	manageTagsUI: function(selTagIds) {
+		var me = this,
+				vw = WT.createView(WT.ID, 'view.Tags', {
+					swapReturn: true,
+					viewCfg: {
+						data: {
+							selection: selTagIds
+						}
+					}
+				});
+		vw.on('viewok', function(s, data) {
+			me.getModel().set('tags', Sonicle.String.join('|', data.selection));
+		});
+		vw.showView();
 	},
 	
 	privates: {

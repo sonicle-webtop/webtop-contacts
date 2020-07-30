@@ -34,8 +34,10 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.InternetAddressUtils;
+import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
+import com.sonicle.commons.cache.AbstractPassiveExpiringCache;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
@@ -102,9 +104,12 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.WebTopSession;
 import com.sonicle.webtop.core.app.WebTopSession.UploadedFile;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
+import com.sonicle.webtop.core.bol.js.JsCustomFieldDefsData;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.js.JsWizardData;
+import com.sonicle.webtop.core.bol.js.ObjSearchableCustomField;
 import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.io.output.AbstractReport;
@@ -112,6 +117,10 @@ import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
 import com.sonicle.webtop.core.io.input.TextFileReader;
+import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.CustomFieldEx;
+import com.sonicle.webtop.core.model.CustomFieldValue;
+import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.model.Recipient;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
@@ -133,14 +142,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.mail.internet.InternetAddress;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
 import org.supercsv.prefs.CsvPreference;
 
@@ -157,6 +170,7 @@ public class Service extends BaseService {
 	private ContactsUserSettings us;
 	private ContactsServiceSettings ss;
 	
+	private final SearchableCustomFieldTypeCache cacheSearchableCustomFieldType = new SearchableCustomFieldTypeCache(5, TimeUnit.SECONDS);
 	private final LinkedHashMap<String, ShareRootCategory> roots = new LinkedHashMap<>();
 	private final LinkedHashMap<Integer, ShareFolderCategory> folders = new LinkedHashMap<>();
 	private final HashMap<Integer, CategoryPropSet> folderProps = new HashMap<>();
@@ -166,6 +180,7 @@ public class Service extends BaseService {
 	
 	private StringSet inactiveRoots = null;
 	private IntegerSet inactiveFolders = null;
+	//private Map<String, CustomFieldEx> previewableCustomFields;
 	private final Object gridLock = new Object();
 	
 	//private ExportWizard wizard = null;
@@ -177,6 +192,7 @@ public class Service extends BaseService {
 		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
+		//previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
 	}
 	
 	@Override
@@ -203,8 +219,57 @@ public class Service extends BaseService {
 		co.put("view", EnumUtils.toSerializedName(us.getView()));
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
+		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjCustomFieldDefs.FieldsList.class));
 		return co;
 	}
+	
+	private ObjCustomFieldDefs.FieldsList getSearchableCustomFieldDefs() {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
+		
+		try {
+			ObjCustomFieldDefs.FieldsList scfields = new ObjCustomFieldDefs.FieldsList();
+			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, true, null).values()) {
+				scfields.add(new ObjCustomFieldDefs.Field(cfield, up.getLanguageTag()));
+			}
+			return scfields;
+			
+		} catch(Throwable t) {
+			return null;
+		}
+	}
+	
+	/*
+	private ObjCustomFieldDefs getPreviewableCustomFieldDefs() {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
+		
+		try {
+			ArrayList<ObjCustomFieldDefs.Panel> panels = new ArrayList<>();
+			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, coreMgr.listTagIds());
+			for (CustomPanel cpanel : cpanels.values()) {
+				Set<String> okFieldIds = new LinkedHashSet<>();
+				for (String fieldId : cpanel.getFields()) {
+					if (previewableCustomFields.containsKey(fieldId)) okFieldIds.add(fieldId);
+				}
+				if (!okFieldIds.isEmpty()) {
+					cpanel.setFields(okFieldIds);
+					panels.add(new ObjCustomFieldDefs.Panel(cpanel, up.getLanguageTag()));
+				}
+			}
+			
+			ArrayList<ObjCustomFieldDefs.Field> fields = new ArrayList<>();
+			for (CustomField field : previewableCustomFields.values()) {
+				fields.add(new ObjCustomFieldDefs.Field(field, up.getLanguageTag()));
+			}
+			
+			return new ObjCustomFieldDefs(panels, fields);
+			
+		} catch(Throwable t) {
+			return null;
+		}
+	}
+	*/
 	
 	private WebTopSession getWts() {
 		return getEnv().getWebTopSession();
@@ -433,7 +498,7 @@ public class Service extends BaseService {
 			}
 			
 		} catch(Exception ex) {
-			logger.error("Error in action ManageSharing", ex);
+			logger.error("Error in ManageSharing", ex);
 			new JsonResult(false, "Error").printTo(out);
 		}
 	}
@@ -488,11 +553,19 @@ public class Service extends BaseService {
 				runSyncRemoteCategory(id, item.getName(), full);
 				
 				new JsonResult().printTo(out);
+				
+			} else if (crud.equals("updateTag")) {
+				int id = ServletUtils.getIntParameter(request, "id", true);
+				UpdateTagsOperation op = ServletUtils.getEnumParameter(request, "op", true, UpdateTagsOperation.class);
+				ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+				
+				manager.updateContactCategoryTags(op, id, new HashSet<>(tags));
+				new JsonResult().printTo(out);
 			}
 			
 		} catch(Throwable t) {
 			logger.error("Error in ManageCategory", t);
-			new JsonResult(false, "Error").printTo(out);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
@@ -633,6 +706,9 @@ public class Service extends BaseService {
 		ArrayList<JsGridContact> items = new ArrayList<>();
 		
 		try {
+			UserProfile up = getEnv().getProfile();
+			DateTimeZone utz = up.getTimeZone();
+			
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			if (crud.equals(Crud.READ)) {
 				GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
@@ -643,10 +719,11 @@ public class Service extends BaseService {
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
 				//TODO: optimize call to skip fullCount for subsequent calls
-				ContactType type = GridView.CONTACTS_LIST.equals(view) ? ContactType.LIST : ContactType.ANY;
+				ContactType type = queryObj.removeCondition("only", "lists") ? ContactType.LIST : ContactType.ANY;
 				
+				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj), page, limit, true);
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
@@ -705,19 +782,34 @@ public class Service extends BaseService {
 						contactIds.add(contactId);
 					}
 				}
-				manager.moveContacts(copy, contactIds, categoryId);
+				manager.moveContact(copy, contactIds, categoryId);
 				manager.moveContactsList(copy, contactsListIds, categoryId);
+				
+				new JsonResult().printTo(out);
+				
+			} else if (crud.equals("updateTag")) {
+				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
+				UpdateTagsOperation op = ServletUtils.getEnumParameter(request, "op", true, UpdateTagsOperation.class);
+				ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+				
+				ArrayList<Integer> ids = new ArrayList<>();
+				for (String uid : uids) {
+					CompositeId cid = JsGridContact.Id.parse(uid);
+					ids.add(JsGridContact.Id.contactId(cid));
+				}
+				manager.updateContactTags(op, ids, new HashSet<>(tags));
 				
 				new JsonResult().printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in ManageGridContacts", ex);
-			new JsonResult(ex).printTo(out);
+		} catch(Throwable t) {
+			logger.error("Error in ManageGridContacts", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
 	public void processGetContactPreview(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
 		
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
@@ -738,7 +830,8 @@ public class Service extends BaseService {
 					new JsonResult(new JsContactPreview(fold, pset, contactsList)).printTo(out);
 					
 				} else {
-					Contact contact = manager.getContact(contactId);
+					UserProfile up = getEnv().getProfile();
+					Contact contact = manager.getContact(contactId, true, false, true, true);
 					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
 					ContactCompany company = contact.hasCompany() ? manager.getContactCompany(contactId) : null;
 					
@@ -746,7 +839,18 @@ public class Service extends BaseService {
 					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
 					
-					new JsonResult(new JsContactPreview(fold, pset, contact, company)).printTo(out);
+					Set<String> pvwfields = coreMgr.listCustomFieldIds(SERVICE_ID, null, true);
+					Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
+					Map<String, CustomField> cfields = new HashMap<>();
+					for (CustomPanel cpanel : cpanels.values()) {
+						for (String fieldId : cpanel.getFields()) {
+							if (!pvwfields.contains(fieldId)) continue;
+							CustomField cfield = coreMgr.getCustomField(SERVICE_ID, fieldId);
+							if (cfield != null) cfields.put(fieldId, cfield);
+						}
+					}
+					
+					new JsonResult(new JsContactPreview(fold, pset, contact, company, cpanels.values(), cfields, up.getLanguageTag(), up.getTimeZone())).printTo(out);
 				}
 			}
 			
@@ -781,6 +885,8 @@ public class Service extends BaseService {
 	}
 	
 	public void processManageContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
 		JsContact item = null;
 		
 		try {
@@ -791,14 +897,22 @@ public class Service extends BaseService {
 				int contactId = Integer.parseInt(id);
 				Contact contact = manager.getContact(contactId);
 				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
-				item = new JsContact(ownerId, contact);
 				
+				Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
+				Map<String, CustomField> cfields = new HashMap<>();
+				for (CustomPanel cpanel : cpanels.values()) {
+					for (String fieldId : cpanel.getFields()) {
+						CustomField cfield = coreMgr.getCustomField(SERVICE_ID, fieldId);
+						if (cfield != null) cfields.put(fieldId, cfield);
+					}
+				}
+				item = new JsContact(ownerId, contact, cpanels.values(), cfields, up.getLanguageTag(), up.getTimeZone());
 				new JsonResult(item).printTo(out);
 				
 			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				Contact contact = JsContact.buildContact(pl.data);
+				Contact contact = pl.data.toContact(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
@@ -816,14 +930,13 @@ public class Service extends BaseService {
 					contact.getAttachments().add(att);
 				}
 				manager.addContact(contact);
-				
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
 				boolean processPicture = false;
-				Contact contact = JsContact.buildContact(pl.data);
+				Contact contact = pl.data.toContact(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
@@ -853,7 +966,6 @@ public class Service extends BaseService {
 					}
 				}
 				manager.updateContact(contact, processPicture);
-				
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.DELETE)) {
@@ -868,9 +980,9 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in ManageContacts", ex);
-			new JsonResult(false, "Error").printTo(out);	
+		} catch(Throwable t) {
+			logger.error("Error in ManageContacts", t);
+			new JsonResult(t).printTo(out);	
 		}
 	}
 	
@@ -880,7 +992,7 @@ public class Service extends BaseService {
 			String type = ServletUtils.getStringParameter(request, "type", true);
 			int contactId = Integer.parseInt(id);
 			
-			Contact contact = manager.getContact(contactId, false, false);
+			Contact contact = manager.getContact(contactId, false, false, true, false);
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);
@@ -945,9 +1057,34 @@ public class Service extends BaseService {
 				}
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in DownloadContactAttachment", ex);
-			ServletUtils.writeErrorHandlingJs(response, ex.getMessage());
+		} catch(Throwable t) {
+			logger.error("Error in DownloadContactAttachment", t);
+			ServletUtils.writeErrorHandlingJs(response, t.getMessage());
+		}
+	}
+	
+	public void processGetCustomFieldsDefsData(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
+		UserProfile up = getEnv().getProfile();
+		
+		try {
+			ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
+			Integer contactId = ServletUtils.getIntParameter(request, "contactId", false);
+			
+			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, tags);
+			Map<String, CustomFieldValue> cvalues = (contactId != null) ? manager.getContactCustomValues(contactId) : null;
+			Map<String, CustomField> cfields = new HashMap<>();
+			for (CustomPanel cpanel : cpanels.values()) {
+				for (String fieldId : cpanel.getFields()) {
+					CustomField cfield = coreMgr.getCustomField(SERVICE_ID, fieldId);
+					if (cfield != null) cfields.put(fieldId, cfield);
+				}
+			}
+			new JsonResult(new JsCustomFieldDefsData(cpanels.values(), cfields, cvalues, up.getLanguageTag(), up.getTimeZone())).printTo(out);
+			
+		} catch(Throwable t) {
+			logger.error("Error in GetCustomFieldsDefsData", t);
+			new JsonResult(false, "Error").printTo(out);
 		}
 	}
 	
@@ -1192,20 +1329,22 @@ public class Service extends BaseService {
 		
 	public void processPrintAddressbook(HttpServletRequest request, HttpServletResponse response) {
 		ArrayList<RBAddressbook> items = new ArrayList<>();
+		UserProfile up = getEnv().getProfile();
+		DateTimeZone utz = up.getTimeZone();
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
+			//GridView view = ServletUtils.getEnumParameter(request, "view", GridView.WORK, GridView.class);
 			Grouping groupBy = ServletUtils.getEnumParameter(request, "groupBy", Grouping.ALPHABETIC, Grouping.class);
 			ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.DISPLAY, ShowBy.class);
-			String query = ServletUtils.getStringParameter(request, "query", null);
+			QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 			
-			boolean listOnly = GridView.CONTACTS_LIST.equals(view);
-			String pattern = StringUtils.isBlank(query) ? null : "%" + query + "%";
 			int limit = 500;
+			ContactType type = queryObj.removeCondition("only", "lists") ? ContactType.LIST : ContactType.ANY;
 			
+			Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 			List<Integer> visibleCategoryIds = getActiveFolderIds();
-			ListContactsResult result = manager.listContacts(visibleCategoryIds, listOnly, groupBy, showBy, pattern, 1, limit, true);
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
 				final ShareFolderCategory fold = folders.get(item.getCategoryId());
@@ -1509,6 +1648,25 @@ public class Service extends BaseService {
 		if (!chooser) node.setChecked(active);
 		
 		return node;
+	}
+	
+	private class SearchableCustomFieldTypeCache extends AbstractPassiveExpiringCache<String, CustomField.Type> {
+		
+		public SearchableCustomFieldTypeCache(final long timeToLive, final TimeUnit timeUnit) {
+			super(timeToLive, timeUnit);
+		}
+		
+		@Override
+		protected Map<String, CustomField.Type> internalGetCache() {
+			try {
+				CoreManager coreMgr = WT.getCoreManager();
+				return coreMgr.listCustomFieldTypesById(SERVICE_ID, true);
+				
+			} catch(Throwable t) {
+				logger.error("[SearchableCustomFieldTypeCache] Unable to build cache", t);
+				throw new UnsupportedOperationException();
+			}
+		}
 	}
 	
 	private class SyncRemoteCategoryAA extends BaseServiceAsyncAction {

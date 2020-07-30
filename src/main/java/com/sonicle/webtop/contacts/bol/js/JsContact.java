@@ -33,13 +33,24 @@
 package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
+import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
+import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.CustomFieldValue;
+import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 
 /**
@@ -96,15 +107,16 @@ public class JsContact {
 	public String anniversary;
 	public String url;
 	public String notes;
+	public String tags;
 	public String picture;
 	public ArrayList<Attachment> attachments;
-	
-	// Read-only fields
-	public String _profileId;
+	public ArrayList<ObjCustomFieldValue> cvalues;
+	public String _profileId; // Read-only
+	public String _cfdefs; // Read-only
 	
 	public JsContact() {}
 	
-	public JsContact(UserProfileId ownerId, Contact contact) {
+	public JsContact(UserProfileId ownerPid, Contact contact, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
 		id = contact.getContactId();
@@ -156,75 +168,99 @@ public class JsContact {
 		anniversary = (contact.getAnniversary() != null) ? ymdFmt.print(contact.getAnniversary()) : null;
 		url = contact.getUrl();
 		notes = contact.getNotes();
+		tags = new CompositeId(contact.getTags()).toString();
 		picture = contact.hasPicture() ? String.valueOf(id) : null;
-		
 		attachments = new ArrayList<>();
-		for (ContactAttachment att : contact.getAttachments()) {
-			Attachment jsatt = new Attachment();
-			jsatt.id = att.getAttachmentId();
-			//jsatt.lastModified = DateTimeUtils.printYmdHmsWithZone(att.getRevisionTimestamp(), profileTz);
-			jsatt.name = att.getFilename();
-			jsatt.size = att.getSize();
-			attachments.add(jsatt);
+		if (contact.hasAttachments()) {
+			for (ContactAttachment att : contact.getAttachments()) {
+				Attachment jsatt = new Attachment();
+				jsatt.id = att.getAttachmentId();
+				//jsatt.lastModified = DateTimeUtils.printYmdHmsWithZone(att.getRevisionTimestamp(), profileTz);
+				jsatt.name = att.getFilename();
+				jsatt.size = att.getSize();
+				attachments.add(jsatt);
+			}
 		}
 		
-		_profileId = ownerId.toString();
+		cvalues = new ArrayList<>();
+		ArrayList<ObjCustomFieldDefs.Panel> panels = new ArrayList<>();
+		for (CustomPanel panel : customPanels) {
+			panels.add(new ObjCustomFieldDefs.Panel(panel, profileLanguageTag));
+		}
+		ArrayList<ObjCustomFieldDefs.Field> fields = new ArrayList<>();
+		for (CustomField field : customFields.values()) {
+			CustomFieldValue cvalue = null;
+			if (contact.hasCustomValues()) {
+				cvalue = contact.getCustomValues().get(field.getFieldId());
+			}
+			cvalues.add(cvalue != null ? new ObjCustomFieldValue(field.getType(), cvalue, profileTz) : new ObjCustomFieldValue(field.getType(), field.getFieldId()));
+			fields.add(new ObjCustomFieldDefs.Field(field, profileLanguageTag));
+		}
+		
+		_profileId = ownerPid.toString();
+		_cfdefs = LangUtils.serialize(new ObjCustomFieldDefs(panels, fields), ObjCustomFieldDefs.class);
 	}
 	
-	public static Contact buildContact(JsContact js) {
+	public Contact toContact(DateTimeZone profileTz) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
 		Contact item = new Contact();
-		item.setContactId(js.id);
-		item.setCategoryId(js.categoryId);
-		item.setDisplayName(js.displayName);
-		item.setTitle(js.title);
-		item.setFirstName(js.firstName);
-		item.setLastName(js.lastName);
-		item.setNickname(js.nickname);
-		item.setGender(EnumUtils.forSerializedName(js.gender, Contact.Gender.class));
-		item.setMobile(js.mobile);
-		item.setPager1(js.pager1);
-		item.setPager2(js.pager2);
-		item.setEmail1(js.email1);
-		item.setEmail2(js.email2);
-		item.setEmail3(js.email3);
-		item.setInstantMsg1(js.instantMsg1);
-		item.setInstantMsg2(js.instantMsg2);
-		item.setInstantMsg3(js.instantMsg3);
-		item.setWorkAddress(js.workAddress);
-		item.setWorkPostalCode(js.workPostalCode);
-		item.setWorkCity(js.workCity);
-		item.setWorkState(js.workState);
-		item.setWorkCountry(js.workCountry);
-		item.setWorkTelephone1(js.workTelephone1);
-		item.setWorkTelephone2(js.workTelephone2);
-		item.setWorkFax(js.workFax);
-		item.setHomeAddress(js.homeAddress);
-		item.setHomePostalCode(js.homePostalCode);
-		item.setHomeCity(js.homeCity);
-		item.setHomeState(js.homeState);
-		item.setHomeCountry(js.homeCountry);
-		item.setHomeTelephone1(js.homeTelephone1);
-		item.setHomeTelephone2(js.homeTelephone2);
-		item.setHomeFax(js.homeFax);
-		item.setOtherAddress(js.otherAddress);
-		item.setOtherPostalCode(js.otherPostalCode);
-		item.setOtherCity(js.otherCity);
-		item.setOtherState(js.otherState);
-		item.setOtherCountry(js.otherCountry);
-		if (!StringUtils.isBlank(js.company)) item.setCompany(new ContactCompany(null, js.company));
-		item.setFunction(js.function);
-		item.setDepartment(js.department);
-		item.setManager(js.manager);
-		item.setAssistant(js.assistant);
-		item.setAssistantTelephone(js.assistantTelephone);
-		item.setPartner(js.partner);
-		if (!StringUtils.isEmpty(js.birthday)) item.setBirthday(ymdFmt.parseLocalDate(js.birthday));
-		if (!StringUtils.isEmpty(js.anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(js.anniversary));
-		item.setUrl(js.url);
-		item.setNotes(js.notes);
+		item.setContactId(id);
+		item.setCategoryId(categoryId);
+		item.setDisplayName(displayName);
+		item.setTitle(title);
+		item.setFirstName(firstName);
+		item.setLastName(lastName);
+		item.setNickname(nickname);
+		item.setGender(EnumUtils.forSerializedName(gender, Contact.Gender.class));
+		item.setMobile(mobile);
+		item.setPager1(pager1);
+		item.setPager2(pager2);
+		item.setEmail1(email1);
+		item.setEmail2(email2);
+		item.setEmail3(email3);
+		item.setInstantMsg1(instantMsg1);
+		item.setInstantMsg2(instantMsg2);
+		item.setInstantMsg3(instantMsg3);
+		item.setWorkAddress(workAddress);
+		item.setWorkPostalCode(workPostalCode);
+		item.setWorkCity(workCity);
+		item.setWorkState(workState);
+		item.setWorkCountry(workCountry);
+		item.setWorkTelephone1(workTelephone1);
+		item.setWorkTelephone2(workTelephone2);
+		item.setWorkFax(workFax);
+		item.setHomeAddress(homeAddress);
+		item.setHomePostalCode(homePostalCode);
+		item.setHomeCity(homeCity);
+		item.setHomeState(homeState);
+		item.setHomeCountry(homeCountry);
+		item.setHomeTelephone1(homeTelephone1);
+		item.setHomeTelephone2(homeTelephone2);
+		item.setHomeFax(homeFax);
+		item.setOtherAddress(otherAddress);
+		item.setOtherPostalCode(otherPostalCode);
+		item.setOtherCity(otherCity);
+		item.setOtherState(otherState);
+		item.setOtherCountry(otherCountry);
+		if (!StringUtils.isBlank(company)) item.setCompany(new ContactCompany(null, company));
+		item.setFunction(function);
+		item.setDepartment(department);
+		item.setManager(manager);
+		item.setAssistant(assistant);
+		item.setAssistantTelephone(assistantTelephone);
+		item.setPartner(partner);
+		if (!StringUtils.isEmpty(birthday)) item.setBirthday(ymdFmt.parseLocalDate(birthday));
+		if (!StringUtils.isEmpty(anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(anniversary));
+		item.setUrl(url);
+		item.setNotes(notes);
+		item.setTags(new LinkedHashSet<>(new CompositeId().parse(tags).getTokens()));
 		
+		ArrayList<CustomFieldValue> customValues = new ArrayList<>();
+		for (ObjCustomFieldValue jscfv : cvalues) {
+			customValues.add(jscfv.toCustomFieldValue(profileTz));
+		}
+		item.setCustomValues(customValues);
 		// Attachment needs to be treated outside this class in order to have complete access to their streams
 		return item;
 	}

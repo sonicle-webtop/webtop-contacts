@@ -37,6 +37,7 @@ import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OCategoryPropSet;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactAttachment;
+import com.sonicle.webtop.contacts.bol.OContactCustomValue;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContactBase;
@@ -57,8 +58,11 @@ import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.model.CustomFieldValue;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -156,7 +160,17 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	
+	static Contact createContact(ContactsList src) {
+		if (src == null) return null;
+		Contact tgt = new Contact();
+		tgt.setContactId(src.getContactId());
+		tgt.setCategoryId(src.getCategoryId());
+		tgt.setDisplayName(src.getName());
+		tgt.setFirstName(src.getName());
+		tgt.setLastName(src.getName());
+		tgt.setTags(src.getTags());
+		return tgt;
+	}
 	
 	static <T extends ContactObject> T fillContactCard(T tgt, VContactObject src) {
 		if ((tgt != null) && (src != null)) {
@@ -179,6 +193,7 @@ public class ManagerUtils {
 		item.setContactId(ocontlst.getContactId());
 		item.setCategoryId(ocontlst.getCategoryId());
 		item.setName(ocontlst.getLastname());
+		item.setEmail(ocontlst.getWorkEmail());
 		for (OListRecipient olrec : olrecs) {
 			item.addRecipient(fillContactsListRecipient(new ContactsListRecipient(), olrec));
 		}
@@ -201,15 +216,16 @@ public class ManagerUtils {
 			tgt.setIsList(src.getIsList());
 			tgt.setCompany(createContactCompany(src));
 			tgt.setFunction(src.getFunction());
+			tgt.setMobile(src.getWorkMobile());
+			tgt.setEmail1(src.getWorkEmail());
+			tgt.setEmail2(src.getHomeEmail());
 			tgt.setWorkCity(src.getWorkCity());
-			tgt.setWorkTelephone(src.getWorkTelephone());
-			tgt.setWorkMobile(src.getWorkMobile());
-			tgt.setWorkEmail(src.getWorkEmail());
-			tgt.setHomeTelephone(src.getHomeTelephone());
-			tgt.setHomeEmail(src.getHomeEmail());
+			tgt.setWorkTelephone1(src.getWorkTelephone());
+			tgt.setHomeTelephone1(src.getHomeTelephone());
 			tgt.setCategoryName(src.getCategoryName());
 			tgt.setCategoryDomainId(src.getCategoryDomainId());
 			tgt.setCategoryUserId(src.getCategoryUserId());
+			tgt.setTags(src.getTags());
 			tgt.setHasPicture(src.getHasPicture());
 		}
 		return tgt;
@@ -429,6 +445,63 @@ public class ManagerUtils {
 			tgt.setFilename(src.getFilename());
 			tgt.setSize(src.getSize());
 			tgt.setMediaType(src.getMediaType());
+		}
+		return tgt;
+	}
+	
+	static Map<String, CustomFieldValue> createCustomValuesMap(List<OContactCustomValue> items) {
+		LinkedHashMap<String, CustomFieldValue> map = new LinkedHashMap<>(items.size());
+		for (OContactCustomValue item : items) {
+			map.put(item.getCustomFieldId(), createCustomValue(item));
+		}
+		return map;
+	}
+	
+	static CustomFieldValue createCustomValue(OContactCustomValue src) {
+		if (src == null) return null;
+		return fillCustomFieldValue(new CustomFieldValue(), src);
+	}
+	
+	static <T extends CustomFieldValue> T fillCustomFieldValue(T tgt, OContactCustomValue src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setFieldId(src.getCustomFieldId());
+			tgt.setStringValue(src.getStringValue());
+			tgt.setNumberValue(src.getNumberValue());
+			tgt.setBooleanValue(src.getBooleanValue());
+			tgt.setDateValue(src.getDateValue());
+			tgt.setTextValue(src.getTextValue());
+		}
+		return tgt;
+	}
+	
+	static OContactCustomValue createOContactCustomValue(CustomFieldValue src) {
+		if (src == null) return null;
+		return fillOContactCustomValue(new OContactCustomValue(), src);
+	}
+	
+	static <T extends OContactCustomValue> T fillOContactCustomValue(T tgt, CustomFieldValue src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setCustomFieldId(src.getFieldId());
+			tgt.setStringValue(src.getStringValue());
+			tgt.setNumberValue(src.getNumberValue());
+			tgt.setBooleanValue(src.getBooleanValue());
+			tgt.setDateValue(src.getDateValue());
+			tgt.setTextValue(src.getTextValue());
+		}
+		return tgt;
+	}
+	
+	static OListRecipient createOListRecipient(ContactsListRecipient src) {
+		if (src == null) return null;
+		return fillOListRecipient(new OListRecipient(), src);
+	}
+	
+	static <T extends OListRecipient> T fillOListRecipient(T tgt, ContactsListRecipient src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setListRecipientId(src.getListRecipientId());
+			tgt.setRecipient(src.getRecipient());
+			tgt.setRecipientType(src.getRecipientType());
+			tgt.setRecipientContactId(src.getRecipientContactId());
 		}
 		return tgt;
 	}
