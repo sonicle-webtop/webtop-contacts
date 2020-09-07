@@ -1474,34 +1474,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.closeQuietly(con);
 		}
 	}
-
-	@Override
-	public void addToContactsList(int contactsListId, ContactsList list) throws WTException {
-		ContactDAO condao = ContactDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			con = WT.getConnection(SERVICE_ID, false);
-			
-			OContact cont = condao.selectById(con, contactsListId);
-			if (cont == null || !cont.getIsList()) throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
-			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
-			
-			boolean ret = doContactsListAddTo(con, list);
-			if (!ret) throw new WTException("Contact-list cannot be updated [{}]", list.getContactId());
-			
-			DbUtils.commitQuietly(con);
-			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactsListId, null);
-			}
-			
-		} catch (Throwable t) {
-			DbUtils.rollbackQuietly(con);
-			throw ExceptionUtils.wrapThrowable(t);
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
 	
 	@Override
 	public void updateContactsList(ContactsList list) throws WTException {
@@ -1523,6 +1495,35 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, list.getContactId(), null);
+			}
+			
+		} catch (Throwable t) {
+			DbUtils.rollbackQuietly(con);
+			throw ExceptionUtils.wrapThrowable(t);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public void updateContactsListRecipients(int contactsListId, Collection<ContactsListRecipient> recipients, boolean append) throws WTException {
+		ContactDAO conDao = ContactDAO.getInstance();
+		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID, false);
+			
+			OContact cont = conDao.selectById(con, contactsListId);
+			if (cont == null || !cont.getIsList()) throw new WTNotFoundException("Contact-list not found [{}]", contactsListId);
+			checkRightsOnCategory(cont.getCategoryId(), CheckRightsTarget.ELEMENTS, "UPDATE");
+			
+			if (!append) lrecDao.deleteByContact(con, contactsListId);
+			lrecDao.batchInsert(con, contactsListId, recipients);
+			
+			DbUtils.commitQuietly(con);
+			if (isAuditEnabled()) {
+				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactsListId, null);
 			}
 			
 		} catch (Throwable t) {
@@ -2897,8 +2898,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			try {
 				con = WT.getConnection(SERVICE_ID);
-				int contactId=ContactsUtils.getListIdFromVirtualRecipient(virtualRecipient);
-				if (contactId>=0) {
+				Integer contactId = ContactsUtils.virtualRecipientToListId(virtualRecipient);
+				if (contactId != null) {
 					UserProfileId pid = new UserProfileId(getId());
 					List<VListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
 					for (VListRecipient recipient : recipients) {
