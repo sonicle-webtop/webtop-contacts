@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_LIST_RECIPIENTS;
@@ -40,12 +41,15 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.LIST_RECIPIENTS;
 import com.sonicle.webtop.contacts.jooq.tables.Contacts;
 import com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord;
+import com.sonicle.webtop.contacts.model.Contact;
+import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
+import java.util.Collection;
 import java.util.List;
+import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 
 /**
  *
@@ -130,6 +134,10 @@ public class ListRecipientDAO extends BaseDAO {
 				CATEGORIES.DOMAIN_ID.equal(domainId)
 				.and(CATEGORIES.USER_ID.equal(userId))
 				.and(LIST_RECIPIENTS.CONTACT_ID.equal(contactId))
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+				)
 			)
 			.orderBy(
 				LIST_RECIPIENTS.RECIPIENT.asc()
@@ -144,6 +152,28 @@ public class ListRecipientDAO extends BaseDAO {
 			.insertInto(LIST_RECIPIENTS)
 			.set(record)
 			.execute();
+	}
+	
+	public int[] batchInsert(Connection con, int contactId, Collection<ContactsListRecipient> recipients) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		BatchBindStep batch = dsl.batch(
+			dsl.insertInto(LIST_RECIPIENTS, 
+				LIST_RECIPIENTS.CONTACT_ID, 
+				LIST_RECIPIENTS.RECIPIENT,
+				LIST_RECIPIENTS.RECIPIENT_TYPE,
+				LIST_RECIPIENTS.RECIPIENT_CONTACT_ID
+			)
+			.values((Integer)null, null, null, null)
+		);
+		for (ContactsListRecipient recipient : recipients) {
+			batch.bind(
+				contactId,
+				recipient.getRecipient(),
+				recipient.getRecipientType(),
+				recipient.getRecipientContactId()
+			);
+		}
+		return batch.execute();
 	}
 	
 	public int update(Connection con, OListRecipient item) throws DAOException {

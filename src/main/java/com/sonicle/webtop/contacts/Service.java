@@ -861,26 +861,22 @@ public class Service extends BaseService {
 	}
 	
 	public void processExpandRecipientsList(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		CoreManager coreMgr = WT.getCoreManager();
 		
 		try {
 			String emailAddress = ServletUtils.getStringParameter(request, "address", true);
-			CoreManager coreManager = WT.getCoreManager();
 			
-			List<Recipient> recipients = coreManager.expandVirtualProviderRecipient(emailAddress);
 			List<String> emails = new ArrayList<>();
-			
+			List<Recipient> recipients = coreMgr.expandVirtualProviderRecipient(emailAddress);
 			recipients.forEach(recipient -> {
-				String email = recipient.getAddress();
-				String personal = recipient.getPersonal();
-				
-				String fullAddress = InternetAddressUtils.toFullAddress(email, personal);
-				emails.add(fullAddress);
+				emails.add(InternetAddressUtils.toFullAddress(recipient.getAddress(), recipient.getPersonal()));
 			});
 				
 			new JsonResult(emails).printTo(out);
-		} catch (ParameterException | WTException ex) {
-			logger.error("Error in ExpandListRecipient", ex);
-			new JsonResult(false, "Error").printTo(out);
+		
+		} catch(Throwable t) {
+			logger.error("Error in ExpandListRecipient", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
@@ -1139,26 +1135,28 @@ public class Service extends BaseService {
 	
 	public void processAddToContactsList(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
-			String list = ServletUtils.getStringParameter(request, "list", true);
+			String virtualRecipient = ServletUtils.getStringParameter(request, "list", true);
 			String recipientType = ServletUtils.getStringParameter(request, "recipientType", true);
 			ArrayList<String> emails=ServletUtils.getStringParameters(request, "emails");
 			
-			int idlist=ContactsUtils.getListIdFromInternetAddress(new InternetAddress(list));
+			InternetAddress iaVirtualRecipient = InternetAddressUtils.toInternetAddress(virtualRecipient);
+			if (iaVirtualRecipient == null) throw new WTException("Unable to parse '{}' as internetAddress", virtualRecipient);
+			Integer listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
+			if (listId == null) throw new WTException("Recipient address is not a list [{}]", iaVirtualRecipient.getAddress());
 			
-			ContactsList cl=new ContactsList();
-			cl.setContactId(idlist);
+			ArrayList<ContactsListRecipient> recipients = new ArrayList<>();
 			for (String email: emails) {
 				ContactsListRecipient rcpt = new ContactsListRecipient();
 				rcpt.setRecipient(email);
 				rcpt.setRecipientType(recipientType);
-				cl.getRecipients().add(rcpt);
+				recipients.add(rcpt);
 			}
-			manager.addToContactsList(idlist, cl);
-			
+			manager.updateContactsListRecipients(listId, recipients, true);
 			new JsonResult().printTo(out);
-		} catch(Exception ex) {
-			logger.error("Error in AddToContactsList", ex);
-			new JsonResult(false, "Error").printTo(out);
+			
+		} catch(Throwable t) {
+			logger.error("Error in AddToContactsList", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
