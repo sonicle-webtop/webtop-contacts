@@ -2345,13 +2345,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				}
 			}
 			if (processCustomValues && contact.hasCustomValues()) {
+				ArrayList<String> customFieldIds = new ArrayList<>();
 				ArrayList<OContactCustomValue> ocvals = new ArrayList<>(contact.getCustomValues().size());
 				for (CustomFieldValue cfv : contact.getCustomValues().values()) {
 					OContactCustomValue ocv = ManagerUtils.createOContactCustomValue(cfv);
 					ocv.setContactId(ocont.getContactId());
 					ocvals.add(ocv);
+					customFieldIds.add(ocv.getCustomFieldId());
 				}
-				cvalDao.deleteByContact(con, ocont.getContactId());
+				//TODO: use upsert when available
+				cvalDao.deleteByContactFields(con, ocont.getContactId(), customFieldIds);
 				cvalDao.batchInsert(con, ocvals);
 			}
 		}
