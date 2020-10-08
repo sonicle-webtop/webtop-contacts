@@ -102,12 +102,13 @@ public class ContactCustomValueDAO extends BaseDAO {
 		return batch.execute();
 	}
 	
-	public int deleteByContact(Connection con, int contactId) throws DAOException {
+	public int deleteByContactFields(Connection con, int contactId, Collection<String> customFieldIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_CUSTOM_VALUES)
 			.where(
 				CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(contactId)
+				.and(CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.in(customFieldIds))
 			)
 			.execute();
 	}
