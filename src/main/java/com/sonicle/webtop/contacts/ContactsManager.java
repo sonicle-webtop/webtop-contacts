@@ -510,6 +510,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			category = doCategoryInsert(con, category);
 			
 			DbUtils.commitQuietly(con);
+			onAfterCategoryAction(category.getCategoryId(), category.getProfileId());
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, category.getCategoryId(), null);
 			}
@@ -547,6 +548,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			cat = doCategoryInsert(con, cat);
 			
 			DbUtils.commitQuietly(con);
+			onAfterCategoryAction(cat.getCategoryId(), cat.getProfileId());
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, cat.getCategoryId(), null);
 			}
@@ -574,6 +576,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (!ret) throw new WTNotFoundException("Category not found [{}]", categoryId);
 			
 			DbUtils.commitQuietly(con);
+			onAfterCategoryAction(categoryId, category.getProfileId());
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.UPDATE, categoryId, null);
 			}
@@ -615,6 +618,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 			DbUtils.commitQuietly(con);
+			onAfterCategoryAction(categoryId, cat.getProfileId());
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.DELETE, categoryId, null);
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.DELETE, "*", categoryId);
@@ -2635,6 +2639,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
+	}
+	
+	private void onAfterCategoryAction(int categoryId, UserProfileId owner) {
+		if (!owner.equals(getTargetProfileId())) shareCache.init();
 	}
 	
 	private void checkRightsOnCategoryRoot(UserProfileId owner, String action) throws WTException {
