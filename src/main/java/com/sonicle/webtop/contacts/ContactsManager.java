@@ -373,12 +373,20 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private Set<Integer> listCategoryIds(UserProfileId pid) throws WTException {
+		return listCategoryIdsIn(pid, null);
+	}
+	
+	private Set<Integer> listCategoryIdsIn(UserProfileId pid, Collection<Integer> categoryIds) throws WTException {
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			return catDao.selectIdsByProfile(con, pid.getDomainId(), pid.getUserId());
+			if (categoryIds == null) {
+				return catDao.selectIdsByProfile(con, pid.getDomainId(), pid.getUserId());
+			} else {
+				return catDao.selectIdsByProfileIn(con, pid.getDomainId(), pid.getUserId(), categoryIds);
+			}
 			
 		} catch(Throwable t) {
 			throw ExceptionUtils.wrapThrowable(t);
@@ -3070,20 +3078,38 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				for (ShareRootCategory root : internalListIncomingCategoryShareRoots()) {
 					shareRoots.add(root);
 					ownerToShareRoot.put(root.getOwnerProfileId(), root);
+					
+					// While getting folders, we need to keep implicit order defined
+					// in DB access layer. When dealing with wildcards, it's already
+					// ensured by the situation while with explicit share we have to
+					// use the internal query to ensure the correct semantic 
+					// ordering of folder IDs!
+					
+					boolean wildcardFound = false;
+					Map<Integer, OShare> explicitShares = new LinkedHashMap<>();
 					for (OShare folder : coreMgr.listIncomingShareFolders(root.getShareId(), GROUPNAME_CATEGORY)) {
 						if (folder.hasWildcard()) {
+							wildcardFound = true;
 							final UserProfileId ownerPid = coreMgr.userUidToProfileId(folder.getUserUid());
-							ownerToWildcardShareFolder.put(ownerPid, folder.getShareId().toString());
-							for (Category category : listCategories(ownerPid).values()) {
-								folderTo.add(category.getCategoryId());
-								rootShareToFolderShare.put(root.getShareId(), category.getCategoryId());
-								folderToWildcardShareFolder.put(category.getCategoryId(), folder.getShareId().toString());
+							for (Integer category : listCategoryIds(ownerPid)) {
+								folderTo.add(category);
+								rootShareToFolderShare.put(root.getShareId(), category);
+								folderToWildcardShareFolder.put(category, folder.getShareId().toString());
 							}
+							ownerToWildcardShareFolder.put(ownerPid, folder.getShareId().toString());
+							break; // If we have wildcard, it's enought...skip other folders!
+							
 						} else {
-							int categoryId = Integer.valueOf(folder.getInstance());
-							folderTo.add(categoryId);
-							rootShareToFolderShare.put(root.getShareId(), categoryId);
-							folderToShareFolder.put(categoryId, folder.getShareId().toString());
+							explicitShares.put(Integer.valueOf(folder.getInstance()), folder);
+						}
+					}
+					
+					if (!wildcardFound) {
+						for (Integer explicitCategoryId : listCategoryIdsIn(root.getOwnerProfileId(), explicitShares.keySet())) {
+							folderTo.add(explicitCategoryId);
+							rootShareToFolderShare.put(root.getShareId(), explicitCategoryId);
+							final OShare share = explicitShares.get(explicitCategoryId);
+							folderToShareFolder.put(explicitCategoryId, share.getShareId().toString());
 						}
 					}
 				}
