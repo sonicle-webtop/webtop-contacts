@@ -47,7 +47,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -89,6 +91,31 @@ public class CategoryDAO extends BaseDAO {
 			.fetchOneInto(String.class);
 	}
 	
+	public Set<Integer> selectIdsByProfile(Connection con, String domainId, String userId) throws DAOException {
+		return selectIdsByProfileIn(con, domainId, userId, null);
+	}
+	
+	public Set<Integer> selectIdsByProfileIn(Connection con, String domainId, String userId, Collection<Integer> categoryIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition cndtIn = categoryIds != null ? CATEGORIES.CATEGORY_ID.in(categoryIds) : DSL.trueCondition();
+		return dsl
+			.select(
+				CATEGORIES.CATEGORY_ID
+			)
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.DOMAIN_ID.equal(domainId)
+				.and(CATEGORIES.USER_ID.equal(userId))
+				.and(cndtIn)
+			)
+			.orderBy(
+				CATEGORIES.BUILT_IN.desc(),
+				//CATEGORIES.PROVIDER.asc(),
+				CATEGORIES.NAME.asc()
+			)
+			.fetchSet(CATEGORIES.CATEGORY_ID);
+	}
+	
 	public OCategory selectById(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -110,6 +137,7 @@ public class CategoryDAO extends BaseDAO {
 			)
 			.orderBy(
 				CATEGORIES.BUILT_IN.desc(),
+				//CATEGORIES.PROVIDER.asc(),
 				CATEGORIES.NAME.asc()
 			)
 			.fetchInto(OCategory.class);
@@ -126,6 +154,7 @@ public class CategoryDAO extends BaseDAO {
 			)
 			.orderBy(
 				CATEGORIES.BUILT_IN.desc(),
+				//CATEGORIES.PROVIDER.asc(),
 				CATEGORIES.NAME.asc()
 			)
 			.fetchInto(OCategory.class);
@@ -142,6 +171,7 @@ public class CategoryDAO extends BaseDAO {
 			)
 			.orderBy(
 				CATEGORIES.BUILT_IN.desc(),
+				//CATEGORIES.PROVIDER.asc(),
 				CATEGORIES.NAME.asc()
 			)
 			.fetchInto(OCategory.class);
@@ -159,6 +189,7 @@ public class CategoryDAO extends BaseDAO {
 			)
 			.orderBy(
 				CATEGORIES.BUILT_IN.desc(),
+				//CATEGORIES.PROVIDER.asc(),
 				CATEGORIES.NAME.asc()
 			)
 			.fetchInto(OCategory.class);
@@ -187,7 +218,10 @@ public class CategoryDAO extends BaseDAO {
 				.and(CATEGORIES.USER_ID.equal(userId))
 				.and(CATEGORIES.BUILT_IN.equal(false))
 			)
-			.orderBy(CATEGORIES.NAME)
+			.orderBy(
+				//CATEGORIES.PROVIDER.asc(),
+				CATEGORIES.NAME.asc()
+			)
 			.fetchInto(OCategory.class);
 	}
 	
@@ -207,7 +241,7 @@ public class CategoryDAO extends BaseDAO {
 			.fetchInto(OCategory.class);
 	}
 	
-	public Set<Integer> selectIdsByProfile(Connection con, String domainId, String userId) throws DAOException {
+	public Set<Integer> selectIdsByProfileIn(Connection con, String domainId, String userId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
