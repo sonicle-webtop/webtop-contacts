@@ -37,7 +37,7 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
-import com.sonicle.commons.cache.AbstractPassiveExpiringMap;
+import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
@@ -1648,7 +1648,7 @@ public class Service extends BaseService {
 		return node;
 	}
 	
-	private class SearchableCustomFieldTypeCache extends AbstractPassiveExpiringMap<String, CustomField.Type> {
+	private class SearchableCustomFieldTypeCache extends AbstractPassiveExpiringBulkMap<String, CustomField.Type> {
 		
 		public SearchableCustomFieldTypeCache(final long timeToLive, final TimeUnit timeUnit) {
 			super(timeToLive, timeUnit);
