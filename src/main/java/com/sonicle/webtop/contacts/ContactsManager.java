@@ -210,7 +210,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
-		VCARD_CARETENCODINGENABLED = Boolean.valueOf(WT.getProperties().getProperty("webtop.contacts.vcardwriter.caretencodingenabled", "true"));
+		VCARD_CARETENCODINGENABLED = ContactsProps.getVCardWriterCaretEncodingEnabled(WT.getProperties());
 		if (!fastInit) {
 			shareCache.init();
 		}
