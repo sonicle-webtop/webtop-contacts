@@ -37,7 +37,7 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
-import com.sonicle.commons.cache.AbstractPassiveExpiringCache;
+import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
@@ -1648,14 +1648,14 @@ public class Service extends BaseService {
 		return node;
 	}
 	
-	private class SearchableCustomFieldTypeCache extends AbstractPassiveExpiringCache<String, CustomField.Type> {
+	private class SearchableCustomFieldTypeCache extends AbstractPassiveExpiringBulkMap<String, CustomField.Type> {
 		
 		public SearchableCustomFieldTypeCache(final long timeToLive, final TimeUnit timeUnit) {
 			super(timeToLive, timeUnit);
 		}
 		
 		@Override
-		protected Map<String, CustomField.Type> internalGetCache() {
+		protected Map<String, CustomField.Type> internalGetMap() {
 			try {
 				CoreManager coreMgr = WT.getCoreManager();
 				return coreMgr.listCustomFieldTypesById(SERVICE_ID, true);

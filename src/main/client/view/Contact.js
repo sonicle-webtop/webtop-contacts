@@ -90,7 +90,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						me.addAct('saveClose', {
 							text: WT.res('act-saveClose.lbl'),
 							tooltip: null,
-							iconCls: 'wt-icon-saveClose-xs',
+							iconCls: 'wt-icon-saveClose',
 							handler: function() {
 								me.saveView(true);
 							}

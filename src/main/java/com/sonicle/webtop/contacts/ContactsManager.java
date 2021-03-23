@@ -210,7 +210,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
-		VCARD_CARETENCODINGENABLED = Boolean.valueOf(WT.getProperties().getProperty("webtop.contacts.vcardwriter.caretencodingenabled", "true"));
+		VCARD_CARETENCODINGENABLED = ContactsProps.getVCardWriterCaretEncodingEnabled(WT.getProperties());
 		if (!fastInit) {
 			shareCache.init();
 		}
@@ -2175,6 +2175,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (!masterDataIds.isEmpty()) masterDataMap = coreMgr.lookupMasterData(masterDataIds);
 		
 		for (Contact contact : contacts) {
+			if (logger.isTraceEnabled()) logger.trace("[BatchInsert] Preparing entry [{}, {}]", contact.getDisplayName(true), contact.getEmail1());
 			OContact ocont = ManagerUtils.createOContact(contact);
 			ocont.setIsList(false);
 			ocont.setCategoryId(categoryId);
@@ -2183,10 +2184,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (contact.hasCompany()) {
 				ocont.setCompanyData(lookupRealCompanyData(masterDataMap, contact.getCompany()));
 			}
-			
 			ocontacts.add(ocont);
 		}
-		return contDao.batchInsert(con, ocontacts, BaseDAO.createRevisionTimestamp());
+		
+		if (ocontacts.size() == 1) {
+			return contDao.insert(con, ocontacts.get(0), BaseDAO.createRevisionTimestamp());
+		} else {
+			return contDao.batchInsert(con, ocontacts, BaseDAO.createRevisionTimestamp());
+		}
 	}
 	
 	private OContact.CompanyData lookupRealCompanyData(Map<String, ? extends BaseMasterData> masterDataMap, ContactCompany company) {
@@ -2963,6 +2968,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		public ContactBatchImportBeanHandler(LogEntries log, Connection con, int categoryId) {
 			super(log);
+			this.batchSize = ContactsProps.getBatchSize(WT.getProperties());
 			this.con = con;
 			this.categoryId = categoryId;
 		}
