@@ -44,11 +44,11 @@ public class ListFieldMapping extends ArrayList<FileRowsReader.FieldMapping> {
 	
 	public static ListFieldMapping fromJson(String value) {
 		if(value == null) return null;
-		return JsonResult.gson.fromJson(value, ListFieldMapping.class);
+		return JsonResult.gson().fromJson(value, ListFieldMapping.class);
 	}
 
 	public static String toJson(ListFieldMapping value) {
 		if(value == null) return null;
-		return JsonResult.gson.toJson(value, ListFieldMapping.class);
+		return JsonResult.gson().toJson(value, ListFieldMapping.class);
 	}
 }
