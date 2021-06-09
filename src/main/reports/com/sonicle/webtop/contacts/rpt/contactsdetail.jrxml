@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.2.0.final using JasperReports Library version 6.2.0  -->
-<!-- 2016-03-14T15:33:18 -->
+<!-- Created with Jaspersoft Studio version 6.15.0.final utlizzo versione della libreria JasperReports6.15.0-dd49bfb94918336b8321d5507193f0169ead4e95  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="contactsdetail" pageWidth="595" pageHeight="842" columnWidth="557" leftMargin="19" rightMargin="19" topMargin="19" bottomMargin="19" resourceBundle="contactsdetail" uuid="47fa44bf-1a8e-4a18-a0df-8b26982ff32e">
 	<property name="com.jaspersoft.studio.unit." value="cm"/>
 	<property name="com.jaspersoft.studio.unit.pageHeight" value="cm"/>
@@ -179,7 +178,7 @@
 				<reportElement style="FieldValue" x="90" y="99" width="370" height="14" uuid="26d56707-9c9e-48a1-bd3e-21a84aeda6d2"/>
 				<textFieldExpression><![CDATA[$F{department}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement key="" style="FieldCaption" mode="Opaque" x="0" y="0" width="558" height="17" backcolor="#BFBFBF" uuid="f3af51ae-3754-4c8c-9c8c-33d3a3d6c8a4">
 					<property name="com.jaspersoft.studio.unit.height" value="cm"/>
 				</reportElement>
