@@ -468,6 +468,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('callMobile');
 						me.updateDisabled('sendSms');
 						me.updateDisabled('createEvent');
+						me.updateDisabled('sendContact');
 						me.pnlPreview().setContacts(s.getSelection());
 					},
 					rowdblclick: function(s, rec) {
@@ -1130,6 +1131,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('callMobile');
 		me.updateDisabled('sendSms');
 		me.updateDisabled('createEvent');
+		me.updateDisabled('sendContact');
 	},
 	
 	loadRootNode: function(pid, reloadItemsIf) {
@@ -2221,6 +2223,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						return true;
 					}
 					break;
+				case 'sendContact':
+					sel = me.getSelectedContact();
+					if (sel && (sel.get('isList') === false)) {
+						return false;
+					} else {
+						return true;
+					}
+					break;
 				case 'callTelephone':
 					sel = me.getSelectedContact();
 					if (sel && (WT.getVar('pbxConfigured') === true) && !Ext.isEmpty(sel.get('telephone'))) {
@@ -2289,8 +2299,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 					break;
 				case 'createEvent': 
-					sel = me.getSelectedContacts();
-					if(sel.length === 1) {
+					sel = me.getSelectedContact();
+					if(sel && (sel.get('isList') === false)) {
 						return false;
 					}
 					else {
