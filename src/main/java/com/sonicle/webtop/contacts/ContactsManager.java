@@ -362,6 +362,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
+	public Set<Integer> listIncomingCategoryIds(final UserProfileId owner) throws WTException {
+		if (owner == null) {
+			return listIncomingCategoryIds();
+		} else {
+			String rootId = shareCache.getShareRootIdByOwner(owner);
+			if (rootId == null) return null;
+			return shareCache.getFolderIds().stream()
+				.filter(categoryId -> rootId.equals(shareCache.getShareRootIdByFolderId(categoryId)))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		}
+	}
+	
+	@Override
 	public Set<Integer> listAllCategoryIds() throws WTException {
 		return Stream.concat(listCategoryIds().stream(), listIncomingCategoryIds().stream())
 				.collect(Collectors.toCollection(LinkedHashSet::new));
@@ -370,6 +383,34 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public Map<Integer, Category> listCategories() throws WTException {
 		return listCategories(getTargetProfileId());
+	}
+	
+	@Override
+	public Map<Integer, Category> listIncomingCategories() throws WTException {
+		return listIncomingCategories(null);
+	}
+	
+	@Override
+	public Map<Integer, Category> listIncomingCategories(final UserProfileId owner) throws WTException {
+		Set<Integer> ids = listIncomingCategoryIds(owner);
+		if (ids == null) return null;
+		
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		LinkedHashMap<Integer, Category> items = new LinkedHashMap<>();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			for (OCategory ocat : catDao.selectByDomainIn(con, getTargetProfileId().getDomainId(), ids)) {
+				items.put(ocat.getCategoryId(), ManagerUtils.createCategory(ocat));
+			}
+			return items;
+			
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
 	}
 	
 	private Set<Integer> listCategoryIds(UserProfileId pid) throws WTException {
