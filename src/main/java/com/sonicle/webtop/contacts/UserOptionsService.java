@@ -41,6 +41,7 @@ import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.commons.web.json.Payload;
 import com.sonicle.webtop.contacts.bol.js.JsUserOptions;
+import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.BaseUserOptionsService;
 import java.io.PrintWriter;
@@ -56,6 +57,13 @@ import org.slf4j.Logger;
  */
 public class UserOptionsService extends BaseUserOptionsService {
 	public static final Logger logger = WT.getLogger(UserOptionsService.class);
+	
+	private ContactsManager manager;
+	
+	public UserOptionsService() {
+		super();
+		manager=(ContactsManager)WT.getServiceManager(SERVICE_ID);
+	}
 	
 	@Override
 	public void processUserOptions(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
@@ -75,6 +83,10 @@ public class UserOptionsService extends BaseUserOptionsService {
 				jso.groupBy = EnumUtils.toSerializedName(cus.getGroupBy());
 				jso.anniversaryReminderDelivery = cus.getAnniversaryReminderDelivery();
 				jso.anniversaryReminderTime = hmf.print(cus.getAnniversaryReminderTime());
+				jso.hasMailchimp=manager.isMailchimpEnabled();
+				if (jso.hasMailchimp) {
+					jso.mailchimpApiKey=cus.getUserMailchimpApiKey();
+				}
 				
 				new JsonResult(jso).printTo(out);
 				
@@ -87,6 +99,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 				if (pl.map.has("anniversaryReminderDelivery")) cus.setAnniversaryReminderDelivery(pl.data.anniversaryReminderDelivery);
 				if (pl.map.has("anniversaryReminderTime")) cus.setAnniversaryReminderTime(hmf.parseLocalTime(pl.data.anniversaryReminderTime));
 				if (pl.map.has("groupBy")) cus.setGroupBy(pl.data.groupBy);
+				if (manager.isMailchimpEnabled() && pl.map.has("mailchimpApiKey")) cus.setMailchimpApiKey(pl.data.mailchimpApiKey);
 				
 				new JsonResult().printTo(out);
 			}

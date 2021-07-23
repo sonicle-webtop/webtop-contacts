@@ -44,6 +44,7 @@ import com.sonicle.webtop.core.sdk.BaseUserSettings;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.text.MessageFormat;
 import org.joda.time.LocalTime;
+import org.jooq.tools.StringUtils;
 
 /**
  *
@@ -161,6 +162,84 @@ public class ContactsUserSettings extends BaseUserSettings {
 		} else {
 			return setObject(key, sortInfo, SortMeta.class);
 		}
+	}
+	
+	public String getMailchimpApiKey() {
+		return getString(MAILCHIMP_APIKEY, null);
+	}
+	
+	public String getUserMailchimpApiKey() {
+		return getString(MAILCHIMP_APIKEY, null, false);
+	}
+	
+	public boolean setMailchimpApiKey(String key) {
+		if (StringUtils.isEmpty(key)) {
+			return clear(MAILCHIMP_APIKEY);
+		}
+		else return setString(MAILCHIMP_APIKEY, key);
+	}
+	
+	public String getMailchimpAudienceId(String pidAndCatId) {
+		String key = MessageFormat.format(MAILCHIMP_AUDIENCEID, pidAndCatId);
+		return getString(key, null);
+	}
+	
+	public boolean setMailchimpAudienceId(String pidAndCatId, String audienceId) {
+		String key = MessageFormat.format(MAILCHIMP_AUDIENCEID, pidAndCatId);
+		return setString(key, audienceId);
+	}
+	
+	public boolean getMailchimpSyncTags(String pidAndCatId) {
+		String key = MessageFormat.format(MAILCHIMP_SYNCTAGS, pidAndCatId);
+		return getBoolean(key, true);
+	}
+	
+	public boolean setMailchimpSyncTags(String pidAndCatId, boolean syncTags) {
+		String key = MessageFormat.format(MAILCHIMP_SYNCTAGS, pidAndCatId);
+		return setBoolean(key, syncTags);
+	}
+	
+	public String[] getMailchimpTags(String pidAndCatId) {
+		String key = MessageFormat.format(MAILCHIMP_TAGS, pidAndCatId);
+		String stags = getString(key, null);
+		if (StringUtils.isEmpty(stags)) return null;
+		return stags.split(",");
+	}
+	
+	public boolean setMailchimpTags(String pidAndCatId, String tags[]) {
+		String key = MessageFormat.format(MAILCHIMP_TAGS, pidAndCatId);
+		String value=StringUtils.join(tags,",");
+		return setString(key, value);
+	}
+	
+	public String getMailchimpIncomingAudienceId(String pidAndCatId) {
+		String key = MessageFormat.format(MAILCHIMP_INCOMING_AUDIENCEID, pidAndCatId);
+		String value = getString(key, null);
+		if (StringUtils.isEmpty(value)) {
+			value = getString(MAILCHIMP_LAST_INCOMING_AUDIENCEID, null);
+		}
+		return value;
+	}
+	
+	public boolean setMailchimpIncomingAudienceId(String pidAndCatId, String audienceId) {
+		String key = MessageFormat.format(MAILCHIMP_INCOMING_AUDIENCEID, pidAndCatId);
+		setString(MAILCHIMP_LAST_INCOMING_AUDIENCEID, audienceId);
+		return setString(key, audienceId);
+	}
+	
+	public String getMailchimpIncomingCategoryId(String pidAndCatId) {
+		String key = MessageFormat.format(MAILCHIMP_INCOMING_CATEGORYID, pidAndCatId);
+		String value = getString(key, null);
+		if (StringUtils.isEmpty(value)) {
+			value = getString(MAILCHIMP_LAST_INCOMING_CATEGORYID, null);
+		}
+		return value;
+	}
+	
+	public boolean setMailchimpIncomingCategoryId(String pidAndCatId, String categoryId) {
+		String key = MessageFormat.format(MAILCHIMP_INCOMING_CATEGORYID, pidAndCatId);
+		setString(MAILCHIMP_LAST_INCOMING_CATEGORYID, categoryId);
+		return setString(key, categoryId);
 	}
 	
 	/**

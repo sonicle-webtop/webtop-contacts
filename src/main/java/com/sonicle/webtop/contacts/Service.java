@@ -38,6 +38,7 @@ import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
+import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
@@ -64,6 +65,7 @@ import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsEventContact;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsGridContact;
+import com.sonicle.webtop.contacts.bol.js.JsMailchimpUserSettings;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
@@ -80,6 +82,19 @@ import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactLDIFFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
+import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
+import com.sonicle.webtop.contacts.mailchimp.cli.ApiException;
+import com.sonicle.webtop.contacts.mailchimp.cli.api.ListsApi;
+import com.sonicle.webtop.contacts.mailchimp.cli.auth.Authentication;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.AddListMembers;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.CollectionOfSegments;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.List3;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.List4;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.List6;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.MembersToSubscribeUnsubscribeTofromAListInBatch;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.MergeField;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberList3;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberLists;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
@@ -95,6 +110,7 @@ import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.msg.MailchimpSyncLogSM;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
@@ -122,9 +138,11 @@ import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.model.Recipient;
+import com.sonicle.webtop.core.model.Tag;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
+import com.sonicle.webtop.core.sdk.ServiceMessage;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -149,6 +167,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import jakarta.mail.internet.InternetAddress;
+import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
@@ -220,6 +239,7 @@ public class Service extends BaseService {
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
 		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjCustomFieldDefs.FieldsList.class));
+		co.put("hasMailchimp",manager.isMailchimpEnabled());
 		return co;
 	}
 	
@@ -804,6 +824,68 @@ public class Service extends BaseService {
 			
 		} catch(Throwable t) {
 			logger.error("Error in ManageGridContacts", t);
+			new JsonResult(t).printTo(out);
+		}
+	}
+	
+	public void processMailchimpGetUserSettings(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		String srcPid=request.getParameter("srcPid");
+		String srcCatId=request.getParameter("srcCatId");
+		String pidAndCatId=srcPid;
+		if (!StringUtils.isEmpty(srcCatId)) pidAndCatId+="-"+srcCatId;
+		JsMailchimpUserSettings mus=new JsMailchimpUserSettings();
+		mus.setAudienceId(us.getMailchimpAudienceId(pidAndCatId));
+		mus.setSyncTags(us.getMailchimpSyncTags(pidAndCatId));
+		mus.setTags(us.getMailchimpTags(pidAndCatId));
+		mus.setIncomingAudienceId(us.getMailchimpIncomingAudienceId(pidAndCatId));
+		mus.setIncomingCategoryId(us.getMailchimpIncomingCategoryId(pidAndCatId));
+		new JsonResult(mus).printTo(out);
+	}
+	
+	public void processSyncMailchimp(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		WebTopSession wts = getWts();
+		
+		String oid=request.getParameter("oid");
+		String srcPid=request.getParameter("srcPid");
+		String srcCatId=request.getParameter("srcCatId");
+		String audienceId=request.getParameter("audienceId");
+		String psyncTags=request.getParameter("syncTags");
+		boolean syncTags=(psyncTags!=null && psyncTags.equals("true"));
+		String tags[]=request.getParameterValues("tags");
+		if (tags!=null && tags.length==1 && tags[0].length()==0) tags=null;
+		String incomingAudienceId=request.getParameter("incomingAudienceId");
+		String incomingCategoryId=request.getParameter("incomingCategoryId");
+
+		MailchimpSyncThread t=new MailchimpSyncThread("MailchimpSyncThread", wts, oid,
+				srcPid, srcCatId, audienceId, syncTags, tags,
+				incomingAudienceId, incomingCategoryId);
+		
+		t.start();
+		
+		String pidAndCatId=srcPid;
+		if (!StringUtils.isEmpty(srcCatId)) pidAndCatId+="-"+srcCatId;
+		us.setMailchimpAudienceId(pidAndCatId, audienceId);
+		us.setMailchimpSyncTags(pidAndCatId, syncTags);
+		us.setMailchimpTags(pidAndCatId, tags);
+		us.setMailchimpIncomingAudienceId(pidAndCatId, incomingAudienceId);
+		us.setMailchimpIncomingCategoryId(pidAndCatId, incomingCategoryId);
+		
+		new JsonResult(new JsWizardData(null)).printTo(out);
+	}
+	
+	public void processLookupMailchimpAudience(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			ApiClient cli=manager.getMailchimpApiClient();
+			ListsApi api=new ListsApi(cli);
+			
+			List<JsSimple> items = new ArrayList<>();
+			List<SubscriberList3> lists=api.getLists(null,null,null,null,null,null,null,null,null,null,null,null,null).getLists();
+			for(SubscriberList3 sub: lists) {
+				items.add(new JsSimple(sub.getId(), sub.getName()));
+			}
+			new JsonResult("audience", items, items.size()).printTo(out);
+		} catch(Throwable t) {
+			logger.error("Error in SyncMailChimp", t);
 			new JsonResult(t).printTo(out);
 		}
 	}

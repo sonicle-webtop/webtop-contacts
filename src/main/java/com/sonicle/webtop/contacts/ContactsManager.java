@@ -88,6 +88,7 @@ import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
+import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
 import com.sonicle.webtop.contacts.model.BaseContact;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
@@ -108,6 +109,7 @@ import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.model.ContactType;
+import com.sonicle.webtop.contacts.products.MailchimpProduct;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -208,11 +210,24 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
+	public final MailchimpProduct MAILCHIMP_PRODUCT;
+	private boolean hasMailchimp=false;
+	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
 		VCARD_CARETENCODINGENABLED = ContactsProps.getVCardWriterCaretEncodingEnabled(WT.getProperties());
 		if (!fastInit) {
 			shareCache.init();
+		}
+		
+		// targetProfile can be null in case of public context where 
+		// we have no logged user. So check it!
+		//TODO: evaluate whether to create a dedicated dummy user for this (eg. wt-public@domain, ...)
+		if (!RunContext.isSysAdmin() && targetProfileId != null) {
+			MAILCHIMP_PRODUCT = new MailchimpProduct(targetProfileId.getDomainId());
+			hasMailchimp = WT.isLicensed(MAILCHIMP_PRODUCT) && WT.isLicensed(MAILCHIMP_PRODUCT, targetProfileId.getUserId()) > 0;
+		} else {
+			MAILCHIMP_PRODUCT = null;
 		}
 	}
 	
@@ -222,6 +237,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private ContactsServiceSettings getServiceSettings() {
 		return new ContactsServiceSettings(SERVICE_ID, getTargetProfileId().getDomainId());
+	}
+	
+	private ContactsUserSettings getUserSettings() {
+		return new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
 	}
 	
 	private CardDav getCardDav(String username, String password) {
@@ -3165,6 +3184,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				throw new WTRuntimeException(ex.getMessage());
 			}
 		}
+	}
+	
+	public boolean isMailchimpEnabled() {
+		return hasMailchimp && (RunContext.isImpersonated()||RunContext.isPermitted(true, SERVICE_ID, "MAILCHIMP"));
+	}
+	
+	public ApiClient getMailchimpApiClient() throws WTException {
+		String apikey=getUserSettings().getMailchimpApiKey();
+		if (StringUtils.isEmpty(apikey)) throw new WTException("No Mailchimp ApiKey configured!");
+		ApiClient api=new ApiClient();
+		int ix=apikey.indexOf("-");
+		if (ix<0) throw new WTException("Mailchimp ApiKey "+apikey+" does not contain server name!");
+		String serverName=apikey.substring(ix+1);
+		api.setBasePath("https://"+serverName+".api.mailchimp.com/3.0");
+		api.addDefaultHeader("Authorization", "Bearer "+apikey);
+		return api;
 	}
 	
 	private enum CheckRightsTarget {

@@ -521,6 +521,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}));
 	},
 	
+	hasMailchimp: function() {
+		return this.getVar("hasMailchimp");
+	},
+	
 	notificationCallback: function(type, tag, data) {
 		var me = this;
 		if (Ext.String.startsWith(tag, me.self.NOTAG_REMOTESYNC)) {
@@ -617,6 +621,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.manageHiddenCategoriesUI(node);
 			}
 		});
+		if (me.hasMailchimp()) {
+			me.addAct('syncMailchimp', {
+				tooltip: null,
+				iconCls: 'wtcon-icon-mailchimp',
+				handler: function(s, e) {
+					var node = e.menuData.node;
+					if (node) me.syncMailchimpUI(node);
+				}
+			});
+		}
 		me.addAct('hideCategory', {
 			tooltip: null,
 			handler: function(s, e) {
@@ -974,11 +988,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	initCxm: function() {
-		var me = this;
-		
-		me.addRef('cxmRootFolder', Ext.create({
-			xtype: 'menu',
-			items: [
+		var me = this,
+			rootItems = [
 				me.getAct('addCategory'),
 				me.getAct('addRemoteCategory'),
 				'-',
@@ -996,22 +1007,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('manageHiddenCategories')
 				//TODO: azioni altri servizi?
 			],
-			listeners: {
-				beforeshow: function(s) {
-					var rec = s.menuData.node,
-							mine = rec.isPersonalNode(),
-							rr = WTA.util.FoldersTree.toRightsObj(rec.get('_rrights'));
-					me.getAct('addCategory').setDisabled(!rr.MANAGE);
-					me.getAct('addRemoteCategory').setDisabled(!rr.MANAGE);
-					me.getAct('editSharing').setDisabled(!rr.MANAGE);
-					me.getAct('manageHiddenCategories').setDisabled(mine);
-				}
-			}
-		}));
-		
-		me.addRef('cxmFolder', Ext.create({
-			xtype: 'menu',
-			items: [
+			folderItems = [
 				me.getAct('editCategory'),
 				me.getAct('deleteCategory'),
 				'-',
@@ -1046,7 +1042,33 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('addContactsList'),
 				me.getAct('importContacts')
 				//TODO: azioni altri servizi?
-			],
+			];
+		
+		if (me.hasMailchimp()) {
+			rootItems.push('-');
+			rootItems.push(me.getAct('syncMailchimp'));
+			folderItems.push('-');
+			folderItems.push(me.getAct('syncMailchimp'));
+		}
+		me.addRef('cxmRootFolder', Ext.create({
+			xtype: 'menu',
+			items: rootItems,
+			listeners: {
+				beforeshow: function(s) {
+					var rec = s.menuData.node,
+							mine = rec.isPersonalNode(),
+							rr = WTA.util.FoldersTree.toRightsObj(rec.get('_rrights'));
+					me.getAct('addCategory').setDisabled(!rr.MANAGE);
+					me.getAct('addRemoteCategory').setDisabled(!rr.MANAGE);
+					me.getAct('editSharing').setDisabled(!rr.MANAGE);
+					me.getAct('manageHiddenCategories').setDisabled(mine);
+				}
+			}
+		}));
+		
+		me.addRef('cxmFolder', Ext.create({
+			xtype: 'menu',
+			items: folderItems,
 			listeners: {
 				beforeshow: function(s) {
 					var FT = WTA.util.FoldersTree,
@@ -1433,6 +1455,39 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}, this);
 			}
 		}, me);
+	},
+	
+	syncMailchimpUI: function(node) {
+		var me = this,
+			srcPid=node.get("_pid"),
+			srcCatId=node.get("_catId");
+		
+		WT.ajaxReq(me.ID, 'MailchimpGetUserSettings', {
+			params: {
+				srcPid: srcPid,
+				srcCatId: srcCatId,
+			},
+			callback: function(success, json) {
+				var d=json.data,
+					vw = WT.createView(me.ID, 'view.SyncMailchimp', {
+						swapReturn: true,
+						viewCfg: {
+							data: {
+								srcPid: srcPid,
+								srcCatId: srcCatId,
+								audienceId: d.audienceId,
+								syncTags: d.syncTags,
+								tags: d.tags,
+								incomingAudienceId: d.incomingAudienceId,
+								incomingCategoryId: d.incomingCategoryId
+							},
+							srcDescription: node.get("_type") === "root" ?  node.get("text") : node.parentNode.get("text")+" / "+node.get("text")
+						}
+					});
+
+				vw.showView();
+			}
+		});		
 	},
 	
 	/*
