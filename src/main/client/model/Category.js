@@ -46,7 +46,6 @@ Ext.define('Sonicle.webtop.contacts.model.Category', {
 		WTF.field('description', 'string', true),
 		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
 		WTF.field('sync', 'string', false, {defaultValue: 'O'}),
-		WTF.field('isDefault', 'boolean', false, {defaultValue: false}),
 		WTF.field('remoteUrl', 'string', true, {
 			validators: [{
 				type: 'sopresence',

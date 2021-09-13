@@ -130,6 +130,13 @@ public class ContactsSettings {
 	
 	/**
 	 * [user]
+	 * [int]
+	 * ID of the folder choosen as default.
+	 */
+	public static final String DEFAULT_CATEGORY_FOLDER = "category.folder.default";
+	
+	/**
+	 * [user]
 	 * [object]
 	 * JSON value for sortInfo.
 	 */

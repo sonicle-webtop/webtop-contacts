@@ -39,6 +39,7 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.PathUtils;
+import com.sonicle.commons.concurrent.KeyedReentrantLocks;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
@@ -207,7 +208,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public final boolean VCARD_CARETENCODINGENABLED;
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
-	
+	private final KeyedReentrantLocks locks = new KeyedReentrantLocks<String>();
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
 	public final MailchimpProduct MAILCHIMP_PRODUCT;
@@ -515,6 +516,49 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
+	public Integer getDefaultCategoryId() throws WTException {
+		ContactsUserSettings us = new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
+		
+		Integer categoryId = null;
+		try (KeyedReentrantLocks.KeyedLock lock = locks.tryAcquire("getDefaultCategoryId", 60 * 1000)) {
+			if (lock != null) {
+				categoryId = us.getDefaultCategoryFolder();
+				if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "CREATE")) {
+					try {
+						categoryId = getBuiltInCategoryId();
+						if (categoryId == null) throw new WTException("Built-in category is null");
+						us.setDefaultCategoryFolder(categoryId);
+					} catch (Throwable t) {
+						logger.error("Unable to get built-in category", t);
+					}
+				}
+			}
+		}
+		return categoryId;
+	}
+	
+	@Override
+	public Integer getBuiltInCategoryId() throws WTException {
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			Integer catId = catDao.selectBuiltInIdByProfile(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
+			if (catId == null) return null;
+			
+			checkRightsOnCategory(catId, CheckRightsTarget.FOLDER, "READ");
+			
+			return catId;
+			
+		} catch(SQLException | DAOException | WTException ex) {
+			throw wrapException(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
 	public Category getCategory(int categoryId) throws WTException {
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
@@ -612,7 +656,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			cat.setBuiltIn(true);
 			cat.setName(WT.getPlatformName());
 			cat.setDescription("");
-			cat.setIsDefault(true);
 			cat = doCategoryInsert(con, cat);
 			
 			DbUtils.commitQuietly(con);
@@ -620,6 +663,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, cat.getCategoryId(), null);
 			}
+			
+			// Sets category as default
+			ContactsUserSettings us = new ContactsUserSettings(SERVICE_ID, cat.getProfileId());
+			us.setDefaultCategoryFolder(cat.getCategoryId());
 			
 			return cat;
 			

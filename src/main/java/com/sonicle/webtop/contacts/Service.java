@@ -211,6 +211,9 @@ public class Service extends BaseService {
 		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
+		
+		// Default lookup: if not yet configured this will implicitly set built-in folder as default!
+		manager.getDefaultCategoryId();
 		//previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
 	}
 	
@@ -401,19 +404,22 @@ public class Service extends BaseService {
 					boolean writableOnly = ServletUtils.getBooleanParameter(request, "writableOnly", false);
 					ShareRootCategory root = roots.get(node);
 					
+					Integer defltCategoryId = manager.getDefaultCategoryId();
 					if (root instanceof MyShareRootCategory) {
 						for (Category cal : manager.listCategories().values()) {
 							MyShareFolderCategory folder = new MyShareFolderCategory(node, cal);
 							if (writableOnly && !folder.getElementsPerms().implies("CREATE")) continue;
 							
-							children.add(createFolderNode(chooser, folder, null, root.getPerms()));
+							final boolean isDefault = folder.getCategory().getCategoryId().equals(defltCategoryId);
+							children.add(createFolderNode(chooser, folder, null, root.getPerms(), isDefault));
 						}
 					} else {
 						if (foldersByRoot.containsKey(root.getShareId())) {
 							for (ShareFolderCategory folder : foldersByRoot.get(root.getShareId())) {
 								if (writableOnly && !folder.getElementsPerms().implies("CREATE")) continue;
 								
-								final ExtTreeNode etn = createFolderNode(chooser, folder, folderProps.get(folder.getCategory().getCategoryId()), root.getPerms());
+								final boolean isDefault = folder.getCategory().getCategoryId().equals(defltCategoryId);
+								final ExtTreeNode etn = createFolderNode(chooser, folder, folderProps.get(folder.getCategory().getCategoryId()), root.getPerms(), isDefault);
 								if (etn != null) children.add(etn);
 							}
 						}
@@ -482,11 +488,13 @@ public class Service extends BaseService {
 		List<JsCategoryLkp> items = new ArrayList<>();
 		
 		try {
+			Integer defltCategoryId = manager.getDefaultCategoryId();
 			synchronized(roots) {
 				for (ShareRootCategory root : roots.values()) {
 					if (foldersByRoot.containsKey(root.getShareId())) {
-						for (ShareFolderCategory fold : foldersByRoot.get(root.getShareId())) {
-							items.add(new JsCategoryLkp(root, fold, folderProps.get(fold.getCategory().getCategoryId()), items.size()));
+						for (ShareFolderCategory folder : foldersByRoot.get(root.getShareId())) {
+							final boolean isDefault = folder.getCategory().getCategoryId().equals(defltCategoryId);
+							items.add(new JsCategoryLkp(root, folder, folderProps.get(folder.getCategory().getCategoryId()), isDefault, items.size()));
 						}
 					}
 				}
@@ -695,19 +703,34 @@ public class Service extends BaseService {
 		}
 	}
 	
+	public void processSetDefaultCategory(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			Integer id = ServletUtils.getIntParameter(request, "id", true);
+			
+			us.setDefaultCategoryFolder(id);
+			Integer defltCategoryId = manager.getDefaultCategoryId();
+			new JsonResult(String.valueOf(defltCategoryId)).printTo(out);
+				
+		} catch(Throwable t) {
+			logger.error("Error in SetDefaultCategory", t);
+			new JsonResult(t).printTo(out);
+		}
+	}
+	
 	public void processSetCategoryColor(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
 			Integer id = ServletUtils.getIntParameter(request, "id", true);
 			String color = ServletUtils.getStringParameter(request, "color", null);
-
+			
 			updateCategoryFolderColor(id, color);
 			new JsonResult().printTo(out);
-			
-		} catch(Exception ex) {
-			new JsonResult(ex).printTo(out);
+				
+		} catch(Throwable t) {
+			logger.error("Error in SetCategoryColor", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
-	
+				
 	public void processSetCategorySync(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
 			Integer id = ServletUtils.getIntParameter(request, "id", true);
@@ -715,10 +738,10 @@ public class Service extends BaseService {
 			
 			updateCategoryFolderSync(id, EnumUtils.forSerializedName(sync, Category.Sync.class));
 			new JsonResult().printTo(out);
-			
-		} catch(Exception ex) {
-			logger.error("Error in SetCategorySync", ex);
-			new JsonResult(ex).printTo(out);
+				
+		} catch(Throwable t) {
+			logger.error("Error in SetCategorySync", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
@@ -1697,7 +1720,7 @@ public class Service extends BaseService {
 		return node;
 	}
 	
-	private ExtTreeNode createFolderNode(boolean chooser, ShareFolderCategory folder, CategoryPropSet folderProps, SharePermsRoot rootPerms) {
+	private ExtTreeNode createFolderNode(boolean chooser, ShareFolderCategory folder, CategoryPropSet folderProps, SharePermsRoot rootPerms, boolean isDefault) {
 		Category cat = folder.getCategory();
 		String id = new CompositeId().setTokens(folder.getShareId(), cat.getCategoryId()).toString();
 		String color = cat.getColor();
@@ -1723,7 +1746,7 @@ public class Service extends BaseService {
 		node.put("_provider", EnumUtils.toSerializedName(cat.getProvider()));
 		node.put("_color", Category.getHexColor(color));
 		node.put("_sync", EnumUtils.toSerializedName(sync));
-		node.put("_default", cat.getIsDefault());
+		node.put("_default", isDefault);
 		node.put("_active", active);
 		if (!chooser) node.setChecked(active);
 		

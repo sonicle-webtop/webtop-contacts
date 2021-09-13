@@ -101,8 +101,8 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.calcField('calcDisplayName', 'string', ['firstName', 'lastName'], function(v, rec) {
 			return Sonicle.String.join(' ', rec.get('firstName'), rec.get('lastName'));
 		}),
-		WTF.field('_profileId', 'string', false),
-		WTF.field('_cfdefs', 'string', true)
+		WTF.roField('_profileId', 'string'),
+		WTF.roField('_cfdefs', 'string')
 	],
 	hasMany: [
 		WTF.hasMany('attachments', 'Sonicle.webtop.contacts.model.ContactAttachment'),

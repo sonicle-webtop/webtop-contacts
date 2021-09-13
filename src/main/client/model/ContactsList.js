@@ -52,7 +52,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactsList', {
 		WTF.field('categoryId', 'int', false),
 		WTF.field('name', 'string', false),
 		WTF.field('tags', 'string', true),
-		WTF.field('_profileId', 'string', false)
+		WTF.roField('_profileId', 'string')
 	],
 	hasMany: [
 		WTF.hasMany('recipients', 'Sonicle.webtop.contacts.model.ContactsListRecipient')

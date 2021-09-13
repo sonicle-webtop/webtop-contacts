@@ -136,6 +136,14 @@ public class ContactsUserSettings extends BaseUserSettings {
 		return setObject(INACTIVE_CATEGORY_FOLDERS, value, IntegerSet.class);
 	}
 	
+	public Integer getDefaultCategoryFolder() {
+		return getInteger(DEFAULT_CATEGORY_FOLDER, null);
+	}
+	
+	public boolean setDefaultCategoryFolder(Integer categoryId) {
+		return setInteger(DEFAULT_CATEGORY_FOLDER, categoryId);
+	}
+	
 	public GroupMeta getGridContactsGroupInfo(String view) {
 		String key = MessageFormat.format(GRID_CONTACTS_GROUPINFO_ROOT, view);
 		return getObject(key, null, GroupMeta.class);

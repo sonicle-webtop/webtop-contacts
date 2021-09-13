@@ -53,7 +53,6 @@ public class JsCategory {
 	public String description;
 	public String color;
 	public String sync;
-	public Boolean isDefault;
 	public String remoteUrl;
 	public String remoteUsername;
 	public String remotePassword;
@@ -70,7 +69,6 @@ public class JsCategory {
 		description = cat.getDescription();
 		color = cat.getColor();
 		sync = EnumUtils.toSerializedName(cat.getSync());
-		isDefault = cat.getIsDefault();
 		
 		if (cat.isProviderRemote()) {
 			CategoryRemoteParameters params = cat.getParametersAsObject(new CategoryRemoteParameters(), CategoryRemoteParameters.class);
@@ -95,7 +93,6 @@ public class JsCategory {
 		cat.setDescription(js.description);
 		cat.setColor(js.color);
 		cat.setSync(EnumUtils.forSerializedName(js.sync, Category.Sync.class));
-		cat.setIsDefault(js.isDefault);
 		//cal.setIsPrivate(js.isPrivate);
 		
 		if (cat.isProviderRemote()) {

@@ -59,7 +59,6 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 			//	function(v) { return Sonicle.String.removeStart(v, '#'); },
 			//	function(v) { return Sonicle.String.prepend(v, '#', true); }
 			//),
-			isDefault: WTF.checkboxBind('record', 'isDefault'),
 			foIsRemote: WTF.foGetFn('record', 'provider', function(v) {
 				return Sonicle.webtop.contacts.view.Category.isRemote(v);
 			}),
@@ -117,14 +116,6 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 						],
 						fieldLabel: me.mys.res('category.fld-name.lbl'),
 						anchor: '100%'
-					}, {
-						xtype: 'checkbox',
-						bind: {
-							value: '{isDefault}',
-							disabled: '{foIsRemote}'
-						},
-						hideEmptyLabel: false,
-						boxLabel: me.mys.res('category.fld-default.lbl')
 					}, {
 						xtype: 'textareafield',
 						bind: '{record.description}',

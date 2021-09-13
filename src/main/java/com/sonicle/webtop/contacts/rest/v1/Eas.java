@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts.rest.v1;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
+import com.sonicle.webtop.contacts.ContactsUserSettings;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
@@ -57,6 +58,7 @@ import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsFolder;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
+import com.sonicle.webtop.core.sdk.WTException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -89,13 +91,15 @@ public class Eas extends EasApi {
 		}
 		
 		try {
+			Integer defltCategoryId = manager.getDefaultCategoryId();
 			Map<Integer, Category> cats = manager.listCategories();
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
 			for (Category cat : cats.values()) {
 				if (cat.isProviderRemote()) continue;
 				if (Category.Sync.OFF.equals(cat.getSync())) continue;
 				
-				items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, ShareFolderCategory.realElementsPerms(cat.getSync())));
+				final boolean isDefault = cat.getCategoryId().equals(defltCategoryId);
+				items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, ShareFolderCategory.realElementsPerms(cat.getSync()), isDefault));
 			}
 			
 			List<ShareRootCategory> shareRoots = manager.listIncomingCategoryRoots();
@@ -110,7 +114,8 @@ public class Eas extends EasApi {
 					CategoryPropSet catProps = props.get(cat.getCategoryId());
 					if (Category.Sync.OFF.equals(catProps.getSyncOrDefault(Category.Sync.OFF))) continue;
 					
-					items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getRealElementsPerms(catProps.getSync())));
+					final boolean isDefault = cat.getCategoryId().equals(defltCategoryId);
+					items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getRealElementsPerms(catProps.getSync()), isDefault));
 				}
 			}
 			
@@ -248,7 +253,7 @@ public class Eas extends EasApi {
 		}
 	}
 	
-	private SyncFolder createSyncFolder(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, SharePerms folderPerms, SharePerms elementPerms) {
+	private SyncFolder createSyncFolder(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, SharePerms folderPerms, SharePerms elementPerms, boolean isDefault) {
 		String displayName = cat.getName();
 		if (!currentProfileId.equals(cat.getProfileId())) {
 			UserProfile.Data owud = WT.getUserData(cat.getProfileId());
@@ -261,7 +266,7 @@ public class Eas extends EasApi {
 				.id(cat.getCategoryId())
 				.displayName(displayName)
 				.etag(buildEtag(lastRevisionTimestamp))
-				.deflt(cat.getIsDefault())
+				.deflt(isDefault)
 				.foAcl((folderPerms == null) ? SharePermsFolder.full().toString() : folderPerms.toString())
 				.elAcl((elementPerms == null) ? SharePermsElements.full().toString() : elementPerms.toString())
 				.ownerId(cat.getProfileId().toString());
