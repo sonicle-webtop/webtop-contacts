@@ -1,3 +1,13 @@
+$	5.11.0
+	%	Version 5.11.0
+	*	<h1>Mailchimp integragrion</h1>
+		<p>A new module is available for Mailchimp integration, allowing synchronization of both contacts and tags
+		one way from WebTop to Mailchimp, ready to use in its email marketing platform.<br>
+		The module allows also to receive new contacts from Mailchimp to dedicated WebTop categories.<br>
+		Available for purchase under annual license.</p>
+		<img src="5.11.0_mailchimp_menu.png"/>
+		<img src="5.11.0_mailchimp_page1.png"/>
+		<img src="5.11.0_mailchimp_page2.png"/>
 $	5.9.0
 	%	Version 5.9.0
 	*	<h1>Labels</h1>
