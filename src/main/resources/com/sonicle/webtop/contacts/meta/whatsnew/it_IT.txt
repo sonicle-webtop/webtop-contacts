@@ -1,3 +1,7 @@
+$	5.11.0
+	*	<h1>Categoria predefinita</h1>
+		<p>E' ora possibile impostare una categoria come predefinita scegliendo fra quelle disponibili (condivise e non).</p>
+		<img src="5.11.0_defaultcategory.png"/>
 $	5.9.0
 	%	Versione 5.9.0
 	*	<h1>Etichette</h1>
