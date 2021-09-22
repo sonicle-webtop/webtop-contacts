@@ -1,4 +1,13 @@
 $	5.11.0
+	%	Versione 5.11.0
+	*	<h1>Integrazione con Mailchimp</h1>
+		<p>E' disponibile un nuovo modulo di integrazione con Mailchimp, che ne consente la sincronizzazione sia dei contetti
+		che delle etichette in una sola direzione da WebTop a Mailchimp, rendendoli disponibili nella sua piattaforma di email marketing.<br>
+		Il modulo consente anche la ricezione di nuovi contatti da Mailchimp in categorie WebTop dedicate.<br>
+		Disponibile tramite acquisto di licenza annuale.</p>
+		<img src="5.11.0_mailchimp_menu.png"/>
+		<img src="5.11.0_mailchimp_page1.png"/>
+		<img src="5.11.0_mailchimp_page2.png"/>
 	*	<h1>Categoria predefinita</h1>
 		<p>E' ora possibile impostare una categoria come predefinita scegliendo fra quelle disponibili (condivise e non).</p>
 		<img src="5.11.0_defaultcategory.png"/>
