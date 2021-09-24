@@ -514,7 +514,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 				},
 				width: '60%',
-				minWidth: 600
+				minWidth: 350
 			}]
 		}));
 	},
