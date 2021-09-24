@@ -766,7 +766,7 @@ public class Service extends BaseService {
 				
 				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), page, limit, true);
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
@@ -1447,7 +1447,7 @@ public class Service extends BaseService {
 			
 			Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 			List<Integer> visibleCategoryIds = getActiveFolderIds();
-			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), 1, limit, true);
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
 				final ShareFolderCategory fold = folders.get(item.getCategoryId());

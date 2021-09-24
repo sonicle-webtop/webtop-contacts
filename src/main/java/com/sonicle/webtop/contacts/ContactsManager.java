@@ -1065,12 +1065,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern, int page, int limit, boolean returnFullCount) throws WTException {
 		ContactType type = listOnly ? ContactType.LIST : ContactType.ANY;
-		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.toCondition(pattern), page, limit, returnFullCount);
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.createCondition(pattern), page, limit, returnFullCount);
 	}
 	
 	@Override
 	public ListContactsResult listContacts(Collection<Integer> categoryIds, ContactType type, Grouping groupBy, ShowBy showBy, String pattern) throws WTException {
-		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.toCondition(pattern), 1, Integer.MAX_VALUE, false);
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.createCondition(pattern), 1, Integer.MAX_VALUE, false);
 	}
 	
 	@Override
