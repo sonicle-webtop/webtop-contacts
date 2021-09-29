@@ -189,6 +189,7 @@ public class MailchimpSyncThread extends Thread {
 					String sname=s.getName();
 					for(Tag tag: wtTags) {
 						if (getMailchimpTagName(tag).equals(sname)) {
+							System.out.println("deleting segment "+sid+" - "+sname);
 							lists.deleteListsIdSegmentsId(audienceId, sid);
 							break;
 						}
@@ -208,6 +209,7 @@ public class MailchimpSyncThread extends Thread {
 					icats.add(category.getCategoryId());
 					//for each tag select and create/update contacts, then create tag with members
 					for(Tag tag: wtTags) {
+						System.out.println("workging on tag "+tag.getTagId()+" - "+tag.getName());
 						ContactQuery q = new ContactQuery();
 						Condition<ContactQuery> cp=q.tag().eq(tag.getTagId());
 						ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
@@ -268,15 +270,17 @@ public class MailchimpSyncThread extends Thread {
 				contact.setFirstName((String)mfields.get("FNAME"));
 				contact.setLastName((String)mfields.get("LNAME"));
 				contact.setWorkTelephone1((String)mfields.get("PHONE"));
-				HashMap<String,Object> addressMap=(HashMap)mfields.get("ADDRESS");
-				String address=(String)addressMap.get("addr1");
-				String addr2=(String)addressMap.get("addr2");
-				if (!StringUtils.isEmpty(addr2)) address+=" "+addr2;
-				contact.setWorkAddress(address);
-				contact.setWorkCity((String)addressMap.get("city"));
-				contact.setWorkState((String)addressMap.get("state"));
-				contact.setWorkPostalCode((String)addressMap.get("zip"));
-				contact.setWorkCountry((String)addressMap.get("country"));
+				try {
+					HashMap<String,Object> addressMap=(HashMap)mfields.get("ADDRESS");
+					String address=(String)addressMap.get("addr1");
+					String addr2=(String)addressMap.get("addr2");
+					if (!StringUtils.isEmpty(addr2)) address+=" "+addr2;
+					contact.setWorkAddress(address);
+					contact.setWorkCity((String)addressMap.get("city"));
+					contact.setWorkState((String)addressMap.get("state"));
+					contact.setWorkPostalCode((String)addressMap.get("zip"));
+					contact.setWorkCountry((String)addressMap.get("country"));
+				} catch(Exception exc) {}
 				contact.setCategoryId(Integer.parseInt(incomingCategoryId));
 				manager.addContact(contact);
 				
@@ -323,6 +327,7 @@ public class MailchimpSyncThread extends Thread {
 			member.setMergeFields(merge_fields);			
 			m.addMembersItem(member);
 		}
+		m.setUpdateExisting(true);
 		lists.postListsId(m, audienceId, true, true);
 		return emails;
 	}
