@@ -313,7 +313,12 @@ public class MailchimpSyncThread extends Thread {
 	}
 	
 	private ArrayList<String> updateMailchimpContacts(ListsApi lists, String audienceId, ListContactsResult lcr, ArrayList<String> excludeEmails) throws ApiException {
-		MembersToSubscribeUnsubscribeTofromAListInBatch m=new MembersToSubscribeUnsubscribeTofromAListInBatch();
+		//Mailchimp allows only a maximum of 500 members updates/insert per api call
+		ArrayList<MembersToSubscribeUnsubscribeTofromAListInBatch> bulks=new ArrayList<>();
+		int count=0;
+		MembersToSubscribeUnsubscribeTofromAListInBatch m500=new MembersToSubscribeUnsubscribeTofromAListInBatch();
+		m500.setUpdateExisting(true);
+		bulks.add(m500);
 		ArrayList<String> emails=new ArrayList();
 		for(ContactLookup cl: lcr.items) {
 			AddListMembers member=new AddListMembers();
@@ -328,24 +333,31 @@ public class MailchimpSyncThread extends Thread {
 			merge_fields.put("FNAME", cl.getFirstName());
 			merge_fields.put("LNAME", cl.getLastName());
 			member.setMergeFields(merge_fields);			
-			m.addMembersItem(member);
-		}
-		m.setUpdateExisting(true);
-		BatchUpdateListMembers result=lists.postListsId(m, audienceId, true, true);
-		if (result.getNewMembers().size()>0) {
-			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.newMembers", result.getNewMembers().size())));
-		}
-		if (result.getUpdatedMembers().size()>0) {
-			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.updatedMembers", result.getUpdatedMembers().size())));
-		}
-		if (result.getErrors().size()>0) {
-			StringBuffer errors=new StringBuffer();
-			errors.append('\n');
-			for(BatchUpdateListMembersErrors bulme: result.getErrors()) {
-				errors.append(WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.contactError", bulme.getError()));
-				errors.append('\n');
+			m500.addMembersItem(member);
+			++count;
+			if ((count%500)==0) {
+				m500=new MembersToSubscribeUnsubscribeTofromAListInBatch();
+				m500.setUpdateExisting(true);
+				bulks.add(m500);
 			}
-			wts.notify(new MailchimpSyncLogSM(oid,errors.toString()));
+		}
+		for(MembersToSubscribeUnsubscribeTofromAListInBatch m: bulks) {
+			BatchUpdateListMembers result=lists.postListsId(m, audienceId, true, true);
+			if (result.getNewMembers().size()>0) {
+				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.newMembers", result.getNewMembers().size())));
+			}
+			if (result.getUpdatedMembers().size()>0) {
+				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.updatedMembers", result.getUpdatedMembers().size())));
+			}
+			if (result.getErrors().size()>0) {
+				StringBuffer errors=new StringBuffer();
+				errors.append('\n');
+				for(BatchUpdateListMembersErrors bulme: result.getErrors()) {
+					errors.append(WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.contactError", bulme.getError()));
+					errors.append('\n');
+				}
+				wts.notify(new MailchimpSyncLogSM(oid,errors.toString()));
+			}
 		}
 		return emails;
 	}
