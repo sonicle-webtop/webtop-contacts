@@ -41,6 +41,8 @@ import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiException;
 import com.sonicle.webtop.contacts.mailchimp.cli.api.ListsApi;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.AddListMembers;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.BatchUpdateListMembers;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.BatchUpdateListMembersErrors;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.CollectionOfSegments;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.List3;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.List4;
@@ -48,6 +50,7 @@ import com.sonicle.webtop.contacts.mailchimp.cli.model.List6;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.ListMembers1;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.ListMembers4;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.MembersToSubscribeUnsubscribeTofromAListInBatch;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberList1;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactLookup;
@@ -152,6 +155,7 @@ public class MailchimpSyncThread extends Thread {
 				for(Category cat: categories) {
 					if (cat.getName().equals(sname)) {
 						lists.deleteListsIdSegmentsId(audienceId, sid);
+						wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.deletedTag", sname)));
 						break;
 					}
 				}
@@ -189,7 +193,7 @@ public class MailchimpSyncThread extends Thread {
 					String sname=s.getName();
 					for(Tag tag: wtTags) {
 						if (getMailchimpTagName(tag).equals(sname)) {
-							System.out.println("deleting segment "+sid+" - "+sname);
+							wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.deletedTag", sname)));
 							lists.deleteListsIdSegmentsId(audienceId, sid);
 							break;
 						}
@@ -209,7 +213,6 @@ public class MailchimpSyncThread extends Thread {
 					icats.add(category.getCategoryId());
 					//for each tag select and create/update contacts, then create tag with members
 					for(Tag tag: wtTags) {
-						System.out.println("workging on tag "+tag.getTagId()+" - "+tag.getName());
 						ContactQuery q = new ContactQuery();
 						Condition<ContactQuery> cp=q.tag().eq(tag.getTagId());
 						ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
@@ -328,7 +331,22 @@ public class MailchimpSyncThread extends Thread {
 			m.addMembersItem(member);
 		}
 		m.setUpdateExisting(true);
-		lists.postListsId(m, audienceId, true, true);
+		BatchUpdateListMembers result=lists.postListsId(m, audienceId, true, true);
+		if (result.getNewMembers().size()>0) {
+			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.newMembers", result.getNewMembers().size())));
+		}
+		if (result.getUpdatedMembers().size()>0) {
+			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.updatedMembers", result.getUpdatedMembers().size())));
+		}
+		if (result.getErrors().size()>0) {
+			StringBuffer errors=new StringBuffer();
+			errors.append('\n');
+			for(BatchUpdateListMembersErrors bulme: result.getErrors()) {
+				errors.append(WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.contactError", bulme.getError()));
+				errors.append('\n');
+			}
+			wts.notify(new MailchimpSyncLogSM(oid,errors.toString()));
+		}
 		return emails;
 	}
 	
