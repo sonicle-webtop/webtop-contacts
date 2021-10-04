@@ -148,7 +148,7 @@ public class MailchimpSyncThread extends Thread {
 			
 			//delete tags of selected categories
 			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.removeTagsForCategories")));
-			CollectionOfSegments audienceTags=lists.previewASegment(audienceId, null, null, null, null, null, null, null, null, null, null, null, null);
+			CollectionOfSegments audienceTags=lists.previewASegment(audienceId, null, null, 1000, null, null, null, null, null, null, null, null, null);
 			for(List6 s: audienceTags.getSegments()) {
 				String sid=s.getId().toString();
 				String sname=s.getName();
@@ -216,7 +216,7 @@ public class MailchimpSyncThread extends Thread {
 						ContactQuery q = new ContactQuery();
 						Condition<ContactQuery> cp=q.tag().eq(tag.getTagId());
 						ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
-						ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,null);
+						ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,null,tag.getName());
 						count+=emails.size();
 						//save emails in tag map for this category
 						updateMailchimpTagsMap(tagMap, category.getName(), emails);
@@ -229,7 +229,7 @@ public class MailchimpSyncThread extends Thread {
 					ContactQuery q = new ContactQuery();
 					Condition<ContactQuery> cp=q.trueCondition();
 					ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
-					ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,allEmails);
+					ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,allEmails,category.getName());
 					count+=emails.size();
 					//save emails in tag map for this category
 					updateMailchimpTagsMap(tagMap, category.getName(), emails);
@@ -240,9 +240,14 @@ public class MailchimpSyncThread extends Thread {
 				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.createTags")));
 				for(String tagName: tagMap.keySet()) {
 					ArrayList<String> emails=tagMap.get(tagName);
-					createMailchimpTag(lists, audienceId, tagName, emails);
+					try {
+						createMailchimpTag(lists, audienceId, tagName, emails);
+					} catch(ApiException exc) {
+						wts.notify(new MailchimpSyncLogSM(oid, "Error on tag \""+tagName+"\": "+exc.getMessage()));
+						logger.error("Error in SyncMailChimp", exc);
+						errors=true;
+					}
 				}
-				
 			} else {
 				//for each category add all contacts creating necessary tags
 				int count=0;
@@ -256,10 +261,16 @@ public class MailchimpSyncThread extends Thread {
 					Condition<ContactQuery> cp=q.trueCondition();
 					//select and create contacts
 					ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
-					ArrayList<String> catEmails=updateMailchimpContacts(lists,audienceId,lcr,null);
+					ArrayList<String> catEmails=updateMailchimpContacts(lists,audienceId,lcr,null,category.getName());
 					count+=catEmails.size();
 					//create tag for category, including all cat emails
-					createMailchimpTag(lists, audienceId, category.getName(), catEmails);
+					try {
+						createMailchimpTag(lists, audienceId, category.getName(), catEmails);
+					} catch(ApiException exc) {
+						wts.notify(new MailchimpSyncLogSM(oid, "Error on tag \""+category.getName()+"\": "+exc.getMessage()));
+						logger.error("Error in SyncMailChimp", exc);
+						errors=true;
+					}
 				}
 				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.doneCategories", count)));
 			}
@@ -312,7 +323,7 @@ public class MailchimpSyncThread extends Thread {
 		tagEmails.addAll(emails);
 	}
 	
-	private ArrayList<String> updateMailchimpContacts(ListsApi lists, String audienceId, ListContactsResult lcr, ArrayList<String> excludeEmails) throws ApiException {
+	private ArrayList<String> updateMailchimpContacts(ListsApi lists, String audienceId, ListContactsResult lcr, ArrayList<String> excludeEmails, String tagName) throws ApiException {
 		//Mailchimp allows only a maximum of 500 members updates/insert per api call
 		ArrayList<MembersToSubscribeUnsubscribeTofromAListInBatch> bulks=new ArrayList<>();
 		int count=0;
@@ -344,10 +355,10 @@ public class MailchimpSyncThread extends Thread {
 		for(MembersToSubscribeUnsubscribeTofromAListInBatch m: bulks) {
 			BatchUpdateListMembers result=lists.postListsId(m, audienceId, true, true);
 			if (result.getNewMembers().size()>0) {
-				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.newMembers", result.getNewMembers().size())));
+				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.newMembers", tagName, result.getNewMembers().size())));
 			}
 			if (result.getUpdatedMembers().size()>0) {
-				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.updatedMembers", result.getUpdatedMembers().size())));
+				wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.updatedMembers", tagName, result.getUpdatedMembers().size())));
 			}
 			if (result.getErrors().size()>0) {
 				StringBuffer errors=new StringBuffer();
