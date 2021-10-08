@@ -276,7 +276,7 @@ public class MailchimpSyncThread extends Thread {
 			}
 			
 			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.receiveNew")));
-			List<ListMembers4> members=lists.getListsIdMembers(incomingAudienceId, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null).getMembers();
+			List<ListMembers4> members=lists.getListsIdMembers(incomingAudienceId, null, null, 1000, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null).getMembers();
 			for(ListMembers4 member: members) {
 				Map<String,Object> mfields=member.getMergeFields();
 				Contact contact=new Contact();
