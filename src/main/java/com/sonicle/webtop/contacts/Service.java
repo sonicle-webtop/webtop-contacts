@@ -38,6 +38,7 @@ import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
+import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
@@ -64,6 +65,7 @@ import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsEventContact;
 import com.sonicle.webtop.contacts.bol.js.JsFolderNode;
 import com.sonicle.webtop.contacts.bol.js.JsGridContact;
+import com.sonicle.webtop.contacts.bol.js.JsMailchimpUserSettings;
 import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
@@ -80,6 +82,19 @@ import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactLDIFFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
+import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
+import com.sonicle.webtop.contacts.mailchimp.cli.ApiException;
+import com.sonicle.webtop.contacts.mailchimp.cli.api.ListsApi;
+import com.sonicle.webtop.contacts.mailchimp.cli.auth.Authentication;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.AddListMembers;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.CollectionOfSegments;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.List3;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.List4;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.List6;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.MembersToSubscribeUnsubscribeTofromAListInBatch;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.MergeField;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberList3;
+import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberLists;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
@@ -95,6 +110,7 @@ import com.sonicle.webtop.contacts.model.ContactsListRecipient;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.msg.MailchimpSyncLogSM;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
@@ -122,9 +138,11 @@ import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.model.Recipient;
+import com.sonicle.webtop.core.model.Tag;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
+import com.sonicle.webtop.core.sdk.ServiceMessage;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -149,6 +167,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import jakarta.mail.internet.InternetAddress;
+import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
@@ -192,6 +211,9 @@ public class Service extends BaseService {
 		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
 		us = new ContactsUserSettings(SERVICE_ID, up.getId());
 		initFolders();
+		
+		// Default lookup: if not yet configured this will implicitly set built-in folder as default!
+		manager.getDefaultCategoryId();
 		//previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
 	}
 	
@@ -220,6 +242,7 @@ public class Service extends BaseService {
 		co.put("showBy", EnumUtils.toSerializedName(us.getShowBy()));
 		co.put("groupBy", EnumUtils.toSerializedName(us.getGroupBy()));
 		co.put("cfieldsSearchable", LangUtils.serialize(getSearchableCustomFieldDefs(), ObjCustomFieldDefs.FieldsList.class));
+		co.put("hasMailchimp",manager.isMailchimpEnabled());
 		return co;
 	}
 	
@@ -381,19 +404,22 @@ public class Service extends BaseService {
 					boolean writableOnly = ServletUtils.getBooleanParameter(request, "writableOnly", false);
 					ShareRootCategory root = roots.get(node);
 					
+					Integer defltCategoryId = manager.getDefaultCategoryId();
 					if (root instanceof MyShareRootCategory) {
 						for (Category cal : manager.listCategories().values()) {
 							MyShareFolderCategory folder = new MyShareFolderCategory(node, cal);
 							if (writableOnly && !folder.getElementsPerms().implies("CREATE")) continue;
 							
-							children.add(createFolderNode(chooser, folder, null, root.getPerms()));
+							final boolean isDefault = folder.getCategory().getCategoryId().equals(defltCategoryId);
+							children.add(createFolderNode(chooser, folder, null, root.getPerms(), isDefault));
 						}
 					} else {
 						if (foldersByRoot.containsKey(root.getShareId())) {
 							for (ShareFolderCategory folder : foldersByRoot.get(root.getShareId())) {
 								if (writableOnly && !folder.getElementsPerms().implies("CREATE")) continue;
 								
-								final ExtTreeNode etn = createFolderNode(chooser, folder, folderProps.get(folder.getCategory().getCategoryId()), root.getPerms());
+								final boolean isDefault = folder.getCategory().getCategoryId().equals(defltCategoryId);
+								final ExtTreeNode etn = createFolderNode(chooser, folder, folderProps.get(folder.getCategory().getCategoryId()), root.getPerms(), isDefault);
 								if (etn != null) children.add(etn);
 							}
 						}
@@ -462,11 +488,13 @@ public class Service extends BaseService {
 		List<JsCategoryLkp> items = new ArrayList<>();
 		
 		try {
+			Integer defltCategoryId = manager.getDefaultCategoryId();
 			synchronized(roots) {
 				for (ShareRootCategory root : roots.values()) {
 					if (foldersByRoot.containsKey(root.getShareId())) {
-						for (ShareFolderCategory fold : foldersByRoot.get(root.getShareId())) {
-							items.add(new JsCategoryLkp(root, fold, folderProps.get(fold.getCategory().getCategoryId()), items.size()));
+						for (ShareFolderCategory folder : foldersByRoot.get(root.getShareId())) {
+							final boolean isDefault = folder.getCategory().getCategoryId().equals(defltCategoryId);
+							items.add(new JsCategoryLkp(root, folder, folderProps.get(folder.getCategory().getCategoryId()), isDefault, items.size()));
 						}
 					}
 				}
@@ -675,19 +703,34 @@ public class Service extends BaseService {
 		}
 	}
 	
+	public void processSetDefaultCategory(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			Integer id = ServletUtils.getIntParameter(request, "id", true);
+			
+			us.setDefaultCategoryFolder(id);
+			Integer defltCategoryId = manager.getDefaultCategoryId();
+			new JsonResult(String.valueOf(defltCategoryId)).printTo(out);
+				
+		} catch(Throwable t) {
+			logger.error("Error in SetDefaultCategory", t);
+			new JsonResult(t).printTo(out);
+		}
+	}
+	
 	public void processSetCategoryColor(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
 			Integer id = ServletUtils.getIntParameter(request, "id", true);
 			String color = ServletUtils.getStringParameter(request, "color", null);
-
+			
 			updateCategoryFolderColor(id, color);
 			new JsonResult().printTo(out);
-			
-		} catch(Exception ex) {
-			new JsonResult(ex).printTo(out);
+				
+		} catch(Throwable t) {
+			logger.error("Error in SetCategoryColor", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
-	
+				
 	public void processSetCategorySync(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		try {
 			Integer id = ServletUtils.getIntParameter(request, "id", true);
@@ -695,10 +738,10 @@ public class Service extends BaseService {
 			
 			updateCategoryFolderSync(id, EnumUtils.forSerializedName(sync, Category.Sync.class));
 			new JsonResult().printTo(out);
-			
-		} catch(Exception ex) {
-			logger.error("Error in SetCategorySync", ex);
-			new JsonResult(ex).printTo(out);
+				
+		} catch(Throwable t) {
+			logger.error("Error in SetCategorySync", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
@@ -723,7 +766,7 @@ public class Service extends BaseService {
 				
 				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), page, limit, true);
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
@@ -804,6 +847,68 @@ public class Service extends BaseService {
 			
 		} catch(Throwable t) {
 			logger.error("Error in ManageGridContacts", t);
+			new JsonResult(t).printTo(out);
+		}
+	}
+	
+	public void processMailchimpGetUserSettings(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		String srcPid=request.getParameter("srcPid");
+		String srcCatId=request.getParameter("srcCatId");
+		String pidAndCatId=srcPid;
+		if (!StringUtils.isEmpty(srcCatId)) pidAndCatId+="-"+srcCatId;
+		JsMailchimpUserSettings mus=new JsMailchimpUserSettings();
+		mus.setAudienceId(us.getMailchimpAudienceId(pidAndCatId));
+		mus.setSyncTags(us.getMailchimpSyncTags(pidAndCatId));
+		mus.setTags(us.getMailchimpTags(pidAndCatId));
+		mus.setIncomingAudienceId(us.getMailchimpIncomingAudienceId(pidAndCatId));
+		mus.setIncomingCategoryId(us.getMailchimpIncomingCategoryId(pidAndCatId));
+		new JsonResult(mus).printTo(out);
+	}
+	
+	public void processSyncMailchimp(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		WebTopSession wts = getWts();
+		
+		String oid=request.getParameter("oid");
+		String srcPid=request.getParameter("srcPid");
+		String srcCatId=request.getParameter("srcCatId");
+		String audienceId=request.getParameter("audienceId");
+		String psyncTags=request.getParameter("syncTags");
+		boolean syncTags=(psyncTags!=null && psyncTags.equals("true"));
+		String tags[]=request.getParameterValues("tags");
+		if (tags!=null && tags.length==1 && tags[0].length()==0) tags=null;
+		String incomingAudienceId=request.getParameter("incomingAudienceId");
+		String incomingCategoryId=request.getParameter("incomingCategoryId");
+
+		MailchimpSyncThread t=new MailchimpSyncThread("MailchimpSyncThread", wts, oid,
+				srcPid, srcCatId, audienceId, syncTags, tags,
+				incomingAudienceId, incomingCategoryId);
+		
+		t.start();
+		
+		String pidAndCatId=srcPid;
+		if (!StringUtils.isEmpty(srcCatId)) pidAndCatId+="-"+srcCatId;
+		us.setMailchimpAudienceId(pidAndCatId, audienceId);
+		us.setMailchimpSyncTags(pidAndCatId, syncTags);
+		us.setMailchimpTags(pidAndCatId, tags);
+		us.setMailchimpIncomingAudienceId(pidAndCatId, incomingAudienceId);
+		us.setMailchimpIncomingCategoryId(pidAndCatId, incomingCategoryId);
+		
+		new JsonResult(new JsWizardData(null)).printTo(out);
+	}
+	
+	public void processLookupMailchimpAudience(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		try {
+			ApiClient cli=manager.getMailchimpApiClient();
+			ListsApi api=new ListsApi(cli);
+			
+			List<JsSimple> items = new ArrayList<>();
+			List<SubscriberList3> lists=api.getLists(null,null,null,null,null,null,null,null,null,null,null,null,null).getLists();
+			for(SubscriberList3 sub: lists) {
+				items.add(new JsSimple(sub.getId(), sub.getName()));
+			}
+			new JsonResult("audience", items, items.size()).printTo(out);
+		} catch(Throwable t) {
+			logger.error("Error in SyncMailChimp", t);
 			new JsonResult(t).printTo(out);
 		}
 	}
@@ -1342,7 +1447,7 @@ public class Service extends BaseService {
 			
 			Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 			List<Integer> visibleCategoryIds = getActiveFolderIds();
-			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.toCondition(queryObj, map, utz), 1, limit, true);
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
 				final ShareFolderCategory fold = folders.get(item.getCategoryId());
@@ -1615,7 +1720,7 @@ public class Service extends BaseService {
 		return node;
 	}
 	
-	private ExtTreeNode createFolderNode(boolean chooser, ShareFolderCategory folder, CategoryPropSet folderProps, SharePermsRoot rootPerms) {
+	private ExtTreeNode createFolderNode(boolean chooser, ShareFolderCategory folder, CategoryPropSet folderProps, SharePermsRoot rootPerms, boolean isDefault) {
 		Category cat = folder.getCategory();
 		String id = new CompositeId().setTokens(folder.getShareId(), cat.getCategoryId()).toString();
 		String color = cat.getColor();
@@ -1641,7 +1746,7 @@ public class Service extends BaseService {
 		node.put("_provider", EnumUtils.toSerializedName(cat.getProvider()));
 		node.put("_color", Category.getHexColor(color));
 		node.put("_sync", EnumUtils.toSerializedName(sync));
-		node.put("_default", cat.getIsDefault());
+		node.put("_default", isDefault);
 		node.put("_active", active);
 		if (!chooser) node.setChecked(active);
 		

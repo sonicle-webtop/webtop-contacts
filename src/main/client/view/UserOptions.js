@@ -44,6 +44,14 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 		var me = this;
 		me.callParent(arguments);
 		
+		vm = me.getViewModel();
+		vm.setFormulas(Ext.apply(vm.getFormulas() || {}, {
+			foHasMailchimp: function(get) {
+				var bool = get('record.hasMailchimp');
+				return Ext.isBoolean(bool) ? bool : false;
+			}
+		}));
+		
 		me.add({
 			xtype: 'wtopttabsection',
 			title: WT.res(me.ID, 'opts.main.tit'),
@@ -123,6 +131,29 @@ Ext.define('Sonicle.webtop.contacts.view.UserOptions', {
 					}
 				}
 			}]
+		});
+		
+		me.add({
+			xtype: 'wtopttabsection',
+			reference: 'tabmailchimp',
+			title: WT.res(me.ID, 'opts.mailchimp.tit'),
+			hidden: true,
+			items: [
+				{
+					xtype: 'textfield',
+					bind: {
+						value: '{record.mailchimpApiKey}'
+					},
+					fieldLabel: WT.res(me.ID, 'opts.mailchimp.fld-apikey.lbl'),
+					emptyText: WT.res(me.ID, 'opts.mailchimp.fld-apikey.emptyText'),
+					width: 440,
+					listeners: { blur: { fn: me.onBlurAutoSave, scope: me } }
+				}
+			]
+		});
+		
+		vm.bind('{record.hasMailchimp}', function(nv) {
+			if (nv) me.lref('tabmailchimp').tab.show();
 		});
 	}
 });

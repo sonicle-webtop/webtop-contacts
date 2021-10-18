@@ -29,7 +29,13 @@
 		</restApis>
 		
 		<permissions>
+			<permission group="MAILCHIMP" actions="ACCESS" />
+			
 			<sharePermission group="CATEGORY" />
 		</permissions>
+		
+		<products>
+			<product className=".products.MailchimpProduct" />
+		</products>
 	</service>
 </services>

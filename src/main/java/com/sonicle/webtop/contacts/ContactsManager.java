@@ -39,6 +39,7 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.PathUtils;
+import com.sonicle.commons.concurrent.KeyedReentrantLocks;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
@@ -88,6 +89,7 @@ import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactFileReader;
+import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
 import com.sonicle.webtop.contacts.model.BaseContact;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
@@ -108,6 +110,7 @@ import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.model.ContactType;
+import com.sonicle.webtop.contacts.products.MailchimpProduct;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -205,14 +208,27 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public final boolean VCARD_CARETENCODINGENABLED;
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
-	
+	private final KeyedReentrantLocks locks = new KeyedReentrantLocks<String>();
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
+	
+	public final MailchimpProduct MAILCHIMP_PRODUCT;
+	private boolean hasMailchimp=false;
 	
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
 		VCARD_CARETENCODINGENABLED = ContactsProps.getVCardWriterCaretEncodingEnabled(WT.getProperties());
 		if (!fastInit) {
 			shareCache.init();
+		}
+		
+		// targetProfile can be null in case of public context where 
+		// we have no logged user. So check it!
+		//TODO: evaluate whether to create a dedicated dummy user for this (eg. wt-public@domain, ...)
+		if (!RunContext.isSysAdmin() && targetProfileId != null) {
+			MAILCHIMP_PRODUCT = new MailchimpProduct(targetProfileId.getDomainId());
+			hasMailchimp = WT.isLicensed(MAILCHIMP_PRODUCT) && WT.isLicensed(MAILCHIMP_PRODUCT, targetProfileId.getUserId()) > 0;
+		} else {
+			MAILCHIMP_PRODUCT = null;
 		}
 	}
 	
@@ -222,6 +238,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private ContactsServiceSettings getServiceSettings() {
 		return new ContactsServiceSettings(SERVICE_ID, getTargetProfileId().getDomainId());
+	}
+	
+	private ContactsUserSettings getUserSettings() {
+		return new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
 	}
 	
 	private CardDav getCardDav(String username, String password) {
@@ -362,6 +382,19 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
+	public Set<Integer> listIncomingCategoryIds(final UserProfileId owner) throws WTException {
+		if (owner == null) {
+			return listIncomingCategoryIds();
+		} else {
+			String rootId = shareCache.getShareRootIdByOwner(owner);
+			if (rootId == null) return null;
+			return shareCache.getFolderIds().stream()
+				.filter(categoryId -> rootId.equals(shareCache.getShareRootIdByFolderId(categoryId)))
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		}
+	}
+	
+	@Override
 	public Set<Integer> listAllCategoryIds() throws WTException {
 		return Stream.concat(listCategoryIds().stream(), listIncomingCategoryIds().stream())
 				.collect(Collectors.toCollection(LinkedHashSet::new));
@@ -370,6 +403,34 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public Map<Integer, Category> listCategories() throws WTException {
 		return listCategories(getTargetProfileId());
+	}
+	
+	@Override
+	public Map<Integer, Category> listIncomingCategories() throws WTException {
+		return listIncomingCategories(null);
+	}
+	
+	@Override
+	public Map<Integer, Category> listIncomingCategories(final UserProfileId owner) throws WTException {
+		Set<Integer> ids = listIncomingCategoryIds(owner);
+		if (ids == null) return null;
+		
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		LinkedHashMap<Integer, Category> items = new LinkedHashMap<>();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			for (OCategory ocat : catDao.selectByDomainIn(con, getTargetProfileId().getDomainId(), ids)) {
+				items.put(ocat.getCategoryId(), ManagerUtils.createCategory(ocat));
+			}
+			return items;
+			
+		} catch(Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
 	}
 	
 	private Set<Integer> listCategoryIds(UserProfileId pid) throws WTException {
@@ -449,6 +510,49 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 		} catch(Throwable t) {
 			throw ExceptionUtils.wrapThrowable(t);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public Integer getDefaultCategoryId() throws WTException {
+		ContactsUserSettings us = new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
+		
+		Integer categoryId = null;
+		try (KeyedReentrantLocks.KeyedLock lock = locks.tryAcquire("getDefaultCategoryId", 60 * 1000)) {
+			if (lock != null) {
+				categoryId = us.getDefaultCategoryFolder();
+				if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "CREATE")) {
+					try {
+						categoryId = getBuiltInCategoryId();
+						if (categoryId == null) throw new WTException("Built-in category is null");
+						us.setDefaultCategoryFolder(categoryId);
+					} catch (Throwable t) {
+						logger.error("Unable to get built-in category", t);
+					}
+				}
+			}
+		}
+		return categoryId;
+	}
+	
+	@Override
+	public Integer getBuiltInCategoryId() throws WTException {
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			Integer catId = catDao.selectBuiltInIdByProfile(con, getTargetProfileId().getDomainId(), getTargetProfileId().getUserId());
+			if (catId == null) return null;
+			
+			checkRightsOnCategory(catId, CheckRightsTarget.FOLDER, "READ");
+			
+			return catId;
+			
+		} catch(SQLException | DAOException | WTException ex) {
+			throw wrapException(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
 		}
@@ -552,7 +656,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			cat.setBuiltIn(true);
 			cat.setName(WT.getPlatformName());
 			cat.setDescription("");
-			cat.setIsDefault(true);
 			cat = doCategoryInsert(con, cat);
 			
 			DbUtils.commitQuietly(con);
@@ -560,6 +663,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (isAuditEnabled()) {
 				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, cat.getCategoryId(), null);
 			}
+			
+			// Sets category as default
+			ContactsUserSettings us = new ContactsUserSettings(SERVICE_ID, cat.getProfileId());
+			us.setDefaultCategoryFolder(cat.getCategoryId());
 			
 			return cat;
 			
@@ -958,12 +1065,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	@Override
 	public ListContactsResult listContacts(Collection<Integer> categoryIds, boolean listOnly, Grouping groupBy, ShowBy showBy, String pattern, int page, int limit, boolean returnFullCount) throws WTException {
 		ContactType type = listOnly ? ContactType.LIST : ContactType.ANY;
-		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.toCondition(pattern), page, limit, returnFullCount);
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.createCondition(pattern), page, limit, returnFullCount);
 	}
 	
 	@Override
 	public ListContactsResult listContacts(Collection<Integer> categoryIds, ContactType type, Grouping groupBy, ShowBy showBy, String pattern) throws WTException {
-		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.toCondition(pattern), 1, Integer.MAX_VALUE, false);
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.createCondition(pattern), 1, Integer.MAX_VALUE, false);
 	}
 	
 	@Override
@@ -3124,6 +3231,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				throw new WTRuntimeException(ex.getMessage());
 			}
 		}
+	}
+	
+	public boolean isMailchimpEnabled() {
+		return hasMailchimp && (RunContext.isImpersonated()||RunContext.isPermitted(true, SERVICE_ID, "MAILCHIMP"));
+	}
+	
+	public ApiClient getMailchimpApiClient() throws WTException {
+		String apikey=getUserSettings().getMailchimpApiKey();
+		if (StringUtils.isEmpty(apikey)) throw new WTException("No Mailchimp ApiKey configured!");
+		ApiClient api=new ApiClient();
+		int ix=apikey.indexOf("-");
+		if (ix<0) throw new WTException("Mailchimp ApiKey "+apikey+" does not contain server name!");
+		String serverName=apikey.substring(ix+1);
+		api.setBasePath("https://"+serverName+".api.mailchimp.com/3.0");
+		api.addDefaultHeader("Authorization", "Bearer "+apikey);
+		return api;
 	}
 	
 	private enum CheckRightsTarget {

@@ -94,7 +94,6 @@ public class ManagerUtils {
 			tgt.setDescription(src.getDescription());
 			tgt.setColor(src.getColor());
 			tgt.setSync(EnumUtils.forSerializedName(src.getSync(), Category.Sync.class));
-			tgt.setIsDefault(src.getIsDefault());
 			// TODO: aggiungere supporto campo is_private
 			//cat.setIsPrivate(ocat.getIsPrivate());
 			tgt.setParameters(src.getParameters());
@@ -121,7 +120,6 @@ public class ManagerUtils {
 			tgt.setDescription(src.getDescription());
 			tgt.setColor(src.getColor());
 			tgt.setSync(EnumUtils.toSerializedName(src.getSync()));
-			tgt.setIsDefault(src.getIsDefault());
 			// TODO: aggiungere supporto campo is_private
 			//ocat.setIsPrivate(cat.getIsPrivate());
 			tgt.setParameters(src.getParameters());

@@ -130,6 +130,13 @@ public class ContactsSettings {
 	
 	/**
 	 * [user]
+	 * [int]
+	 * ID of the folder choosen as default.
+	 */
+	public static final String DEFAULT_CATEGORY_FOLDER = "category.folder.default";
+	
+	/**
+	 * [user]
 	 * [object]
 	 * JSON value for sortInfo.
 	 */
@@ -141,4 +148,61 @@ public class ContactsSettings {
 	 * JSON value for sortInfo.
 	 */
 	public static final String GRID_CONTACTS_GROUPINFO_ROOT = "grid.contacts.{0}.groupinfo";
+
+	/**
+	 * [system+domain+user]
+	 * [string]
+	 * Mailchimp Api Key.
+	 */
+	public static final String MAILCHIMP_APIKEY = "mailchimp.apikey";
+	
+	/**
+	 * [user]
+	 * [string]
+	 * Mailchimp audience id for contacts selection
+	 */
+	public static final String MAILCHIMP_AUDIENCEID = "mailchimp.{0}.audienceid";
+
+	/**
+	 * [user]
+	 * [boolean]
+	 * Mailchimp sync tags flag for contacts selection
+	 */
+	public static final String MAILCHIMP_SYNCTAGS = "mailchimp.{0}.synctags";
+	
+	/**
+	 * [user]
+	 * [string[]]
+	 * Mailchimp tags list for contacts selection
+	 */
+	public static final String MAILCHIMP_TAGS = "mailchimp.{0}.tags";
+	
+	/**
+	 * [user]
+	 * [string[]]
+	 * Mailchimp incoming audience id for contacts selection
+	 */
+	public static final String MAILCHIMP_INCOMING_AUDIENCEID = "mailchimp.{0}.incoming.audienceid";
+
+	/**
+	 * [user]
+	 * [string[]]
+	 * Mailchimp last incoming audience id used
+	 */
+	public static final String MAILCHIMP_LAST_INCOMING_AUDIENCEID = "mailchimp.last.incoming.audienceid";
+	
+	/**
+	 * [user]
+	 * [string[]]
+	 * Mailchimp incoming category id for contacts selection
+	 */
+	public static final String MAILCHIMP_INCOMING_CATEGORYID = "mailchimp.{0}.incoming.categoryid";
+
+	/**
+	 * [user]
+	 * [string[]]
+	 * Mailchimp last incoming category id used
+	 */
+	public static final String MAILCHIMP_LAST_INCOMING_CATEGORYID = "mailchimp.last.incoming.categoryid";
+	
 }

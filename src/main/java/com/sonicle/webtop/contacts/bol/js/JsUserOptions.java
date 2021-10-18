@@ -46,6 +46,9 @@ public class JsUserOptions extends JsUserOptionsBase {
 	public String anniversaryReminderDelivery;
 	public String anniversaryReminderTime;
 	
+	public boolean hasMailchimp;
+	public String mailchimpApiKey;
+	
 	public JsUserOptions() {}
 	
 	public JsUserOptions(String id) {

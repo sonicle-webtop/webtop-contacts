@@ -79,4 +79,8 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 	public String getDefaultAnniversaryReminderDelivery() {
 		return getString(DEFAULT_PREFIX + ANNIVERSARY_REMINDER_DELIVERY, ANNIVERSARY_REMINDER_DELIVERY_APP);
 	}
+	
+	public String getMailchimpApiKey() {
+		return getString(MAILCHIMP_APIKEY,null);
+	}
 }
