@@ -76,6 +76,10 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 				.or(CONTACTS.DEPARTMENT.likeIgnoreCase(singleAsString))
 				.or(CONTACTS.FUNCTION.likeIgnoreCase(singleAsString));
 			
+		} else if ("companyId".equals(fieldName)) {
+			String singleAsString = valueToLikePattern(singleAsString(values));
+			return CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString);
+			
 		} else if ("email".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
 			return CONTACTS.WORK_EMAIL.likeIgnoreCase(singleAsString)
