@@ -1870,7 +1870,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	public void importContacts2(final int categoryId, final ContactFileReader reader, final File file, final ImportMode mode, final LogHandler logHandler) throws WTException {
+	public void importContacts(final int categoryId, final ContactFileReader reader, final File file, final ImportMode mode, final LogHandler logHandler) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		Connection con = null;
 		

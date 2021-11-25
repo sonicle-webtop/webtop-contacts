@@ -1307,7 +1307,7 @@ public class Service extends BaseService {
 				ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
 				
 				rea.setMappings(mappings);
-				manager.importContacts2(categoryId, rea, file, mode, logHandler);
+				manager.importContacts(categoryId, rea, file, mode, logHandler);
 				removeUploadedFile(uploadId);
 				new JsonResult(new JsWizardData(null)).printTo(out);
 			}
@@ -1376,7 +1376,7 @@ public class Service extends BaseService {
 					ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
 					
 					rea.setMappings(mappings);
-					manager.importContacts2(categoryId, rea, file, mode, logHandler);
+					manager.importContacts(categoryId, rea, file, mode, logHandler);
 					removeUploadedFile(uploadId);
 					new JsonResult(new JsWizardData(null)).printTo(out);
 				}
@@ -1413,7 +1413,7 @@ public class Service extends BaseService {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 				IContactsManager.ImportMode mode = ServletUtils.getEnumParameter(request, "importMode", IContactsManager.ImportMode.COPY, IContactsManager.ImportMode.class);
 				
-				manager.importContacts2(categoryId, rea, file, mode, logHandler);
+				manager.importContacts(categoryId, rea, file, mode, logHandler);
 				removeUploadedFile(uploadId);
 				new JsonResult(new JsWizardData(null)).printTo(out);
 			}
@@ -1449,7 +1449,7 @@ public class Service extends BaseService {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
 				IContactsManager.ImportMode mode = ServletUtils.getEnumParameter(request, "importMode", IContactsManager.ImportMode.COPY, IContactsManager.ImportMode.class);
 				
-				manager.importContacts2(categoryId, rea, file, mode, logHandler);
+				manager.importContacts(categoryId, rea, file, mode, logHandler);
 				removeUploadedFile(uploadId);
 				new JsonResult(new JsWizardData(null)).printTo(out);
 			}
