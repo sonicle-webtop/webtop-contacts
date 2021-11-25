@@ -2558,7 +2558,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		boolean ret = contDao.insert(con, ocont, revisionTimestamp) == 1;
 		if (!ret) return null;
 		
-		if (!isList && processOpts.has(ContactProcessOpts.RAW_VCARD)) {
+		if (!isList && processOpts.has(ContactProcessOpts.RAW_VCARD) && !StringUtils.isBlank(rawVCard)) {
 			vcaDao.upsert(con, newContactId, rawVCard);
 		}
 		
