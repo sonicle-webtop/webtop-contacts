@@ -1025,9 +1025,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			input.contact.setHref(href);
 			
 			Map<String, List<String>> tagIdsByNameMap = coreMgr.listTagIdsByName();
-			BitFlag<ContactProcessOpts> processOpts = BitFlag.of(ContactProcessOpts.PICTURE);
 			
 			con = WT.getConnection(SERVICE_ID, false);
+			BitFlag<ContactProcessOpts> processOpts = BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD);
 			ContactInsertResult result = doContactInputInsert(coreMgr, con, tagIdsByNameMap, input, processOpts);
 			Integer newContactId = result.ocontact.getContactId();
 			
@@ -1076,10 +1076,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			input.contact.setHref(href);
 			
 			Map<String, List<String>> tagIdsByNameMap = coreMgr.listTagIdsByName();
-			BitFlag<ContactProcessOpts> processOpts = BitFlag.of(ContactProcessOpts.PICTURE);
 			
 			con = WT.getConnection(SERVICE_ID, false);
 			Integer contactId = doGetContactIdByCategoryHref(con, categoryId, href, true);
+			BitFlag<ContactProcessOpts> processOpts = BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD);
 			boolean ret = doContactInputUpdate(coreMgr, con, tagIdsByNameMap, contactId, input, processOpts);
 			if (!ret) throw new WTNotFoundException("Contact not found [{}]", contactId);
 			
@@ -1372,6 +1372,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
 			BitFlag<ContactProcessOpts> processOpts = BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.ATTACHMENTS, ContactProcessOpts.TAGS, ContactProcessOpts.CUSTOM_VALUES);
+			if (!StringUtils.isBlank(vCardRawData)) processOpts.set(ContactProcessOpts.RAW_VCARD);
 			ContactInsertResult result = doContactInsert(coreMgr, con, false, contact, vCardRawData, processOpts);
 			Integer newContactId = result.ocontact.getContactId();
 			
@@ -1412,7 +1413,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			String provider = catDao.selectProviderById(con, catId);
 			if (Category.isProviderRemote(provider)) throw new WTException("Category is remote and therefore read-only [{}]", contact.getCategoryId());
 			
-			OContact ret = doContactUpdate(coreMgr, con, false, contactId, contact, null, ContactProcessOpts.parseContactUpdateOptions(opts));
+			OContact ret = doContactUpdate(coreMgr, con, false, contactId, contact, null, ContactProcessOpts.parseContactUpdateOptions(opts).unset(ContactProcessOpts.RAW_VCARD));
 			if (ret == null) throw new WTNotFoundException("Contact not found [{}]", contactId);
 			
 			DbUtils.commitQuietly(con);
@@ -1887,7 +1888,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				logHandler.handleMessage(0, LogMessage.Level.INFO, "{} contact/s deleted!", del);
 			}
 			
-			logHandler.handleMessage(0, LogMessage.Level.INFO, "Reading source file...");
+			logHandler.handleMessage(0, LogMessage.Level.INFO, "Importing...");
 			ContactBatchImportBeanHandler handler = new ContactBatchImportBeanHandler(categoryId, con, coreMgr);
 			try {
 				reader.read(file, handler);
@@ -1910,7 +1911,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			logHandler.handle(
-				new LogMessage(0, LogMessage.Level.INFO, "{} contact/s read!", handler.getHandledCount()),
+				new LogMessage(0, LogMessage.Level.INFO, "{} contact/s found!", handler.getHandledCount()),
 				new LogMessage(0, LogMessage.Level.INFO, "{} contact/s imported!", handler.getInsertedCount())
 			);
 			
@@ -2186,7 +2187,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									ci.contact.setCategoryId(categoryId);
 									ci.contact.setHref(href);
 									ci.contact.setEtag(dcard.geteTag());
-									doContactInputInsert(coreMgr, con, new HashMap<>(), ci, BitFlag.of(ContactProcessOpts.PICTURE));
+									doContactInputInsert(coreMgr, con, new HashMap<>(), ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
 								}
 							}
 							
@@ -2265,9 +2266,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									ci.contact.setEtag(etag);
 									
 									if (matchingContactId == null) {
-										doContactInputInsert(coreMgr, con, new HashMap<>(), ci, BitFlag.of(ContactProcessOpts.PICTURE));
+										doContactInputInsert(coreMgr, con, new HashMap<>(), ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
 									} else {
-										boolean updated = doContactInputUpdate(coreMgr, con, new HashMap<>(), matchingContactId, ci, BitFlag.of(ContactProcessOpts.PICTURE));
+										boolean updated = doContactInputUpdate(coreMgr, con, new HashMap<>(), matchingContactId, ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
 										if (!updated) throw new WTException("Contact not found [{}]", matchingContactId);
 									}
 								}
@@ -2377,7 +2378,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private enum ContactProcessOpts implements BitFlagEnum {
-		PICTURE(1), ATTACHMENTS(2), TAGS(4), CUSTOM_VALUES(8), LIST_RECIPIENTS(16);
+		PICTURE(1), ATTACHMENTS(2), TAGS(4), CUSTOM_VALUES(8), LIST_RECIPIENTS(16), RAW_VCARD(32);
 		
 		private int value = 0;
 		private ContactProcessOpts(int value) { this.value = value; }
@@ -2557,8 +2558,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		boolean ret = contDao.insert(con, ocont, revisionTimestamp) == 1;
 		if (!ret) return null;
 		
-		if (!isList && !StringUtils.isBlank(rawVCard)) {
-			vcaDao.insert(con, newContactId, rawVCard);
+		if (!isList && processOpts.has(ContactProcessOpts.RAW_VCARD)) {
+			vcaDao.upsert(con, newContactId, rawVCard);
 		}
 		
 		OContactPicture ocpic = null;
@@ -2596,8 +2597,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		return new ContactInsertResult(ocont, ocpic, otags, oatts, ocvals);
 	}
-	
-	
 	
 	private ContactsListInsertResult doContactListInsert(CoreManager coreMgr, Connection con, ContactListEx contact, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
 		BitFlag<ContactProcessOpts> processOpts2 = processOpts.has(ContactProcessOpts.TAGS) ? BitFlag.of(ContactProcessOpts.TAGS) : BitFlag.none();
@@ -2642,46 +2641,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ret;
 	}
 	
-	private boolean doContactInputUpdate(CoreManager coreMgr, Connection con, Map<String, List<String>> tagIdsByNameMap, int contactId, ContactInput input, BitFlag<ContactProcessOpts> processOpts) throws IOException, WTException {
-		ContactEx contact = new ContactEx(input.contact);
-		
-		if (input.contactCompany != null) {
-			// Due that in vcard we do not have separate information for company ID 
-			// and description, in order to not lose data during the update, we have
-			// to apply some checks and then restore the original company in  
-			// particular cases:
-			// - value as ID matches the company raw id
-			// - value as DESCRIPTION matched the company linked description
-			ContactCompany origCompany = getContactCompany(contactId);
-			if (origCompany != null) {
-				if (StringUtils.equals(input.contactCompany.getValueId(), origCompany.getCompanyId()) || StringUtils.equals(input.contactCompany.getCompanyDescription(), origCompany.getValue())) {
-					contact.setCompany(origCompany);
-				} else {
-					contact.setCompany(input.contactCompany);
-				}
-			}
-		}
-		if (input.contactPicture != null) {
-			contact.setPicture(input.contactPicture);
-		}
-		if (input.tagNames != null) {
-			Set<String> tagIds = new HashSet<>();
-			for (String tagName : input.tagNames) {
-				if (tagIdsByNameMap.containsKey(tagName)) {
-					tagIds.addAll(tagIdsByNameMap.get(tagName));
-				}
-			}
-			contact.setTags(tagIds);
-		}
-		
-		String rawVCard = null;
-		if (input.sourceObject != null && !input.sourceObject.getProperties().isEmpty()) {
-			rawVCard = VCardUtils.write(input.sourceObject);
-		}
-		
-		return doContactUpdate(coreMgr, con, false, contactId, contact, rawVCard, processOpts) != null;
-	}
-	
 	private OContact doContactUpdate(CoreManager coreMgr, Connection con, boolean isList, int contactId, ContactEx contact, String rawVCard, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactVCardDAO vcaDao = ContactVCardDAO.getInstance();
@@ -2708,7 +2667,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 		if (!ret) return null;
 		
-		if (!isList && !StringUtils.isBlank(rawVCard)) {
+		if (!isList && processOpts.has(ContactProcessOpts.RAW_VCARD)) {
 			vcaDao.upsert(con, contactId, rawVCard);
 		}
 		
@@ -2778,6 +2737,46 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ocont;
 	}
 	
+	private boolean doContactInputUpdate(CoreManager coreMgr, Connection con, Map<String, List<String>> tagIdsByNameMap, int contactId, ContactInput input, BitFlag<ContactProcessOpts> processOpts) throws IOException, WTException {
+		ContactEx contact = new ContactEx(input.contact);
+		
+		if (input.contactCompany != null) {
+			// Due that in vcard we do not have separate information for company ID 
+			// and description, in order to not lose data during the update, we have
+			// to apply some checks and then restore the original company in  
+			// particular cases:
+			// - value as ID matches the company raw id
+			// - value as DESCRIPTION matched the company linked description
+			ContactCompany origCompany = getContactCompany(contactId);
+			if (origCompany != null) {
+				if (StringUtils.equals(input.contactCompany.getValueId(), origCompany.getCompanyId()) || StringUtils.equals(input.contactCompany.getCompanyDescription(), origCompany.getValue())) {
+					contact.setCompany(origCompany);
+				} else {
+					contact.setCompany(input.contactCompany);
+				}
+			}
+		}
+		if (input.contactPicture != null) {
+			contact.setPicture(input.contactPicture);
+		}
+		if (input.tagNames != null) {
+			Set<String> tagIds = new HashSet<>();
+			for (String tagName : input.tagNames) {
+				if (tagIdsByNameMap.containsKey(tagName)) {
+					tagIds.addAll(tagIdsByNameMap.get(tagName));
+				}
+			}
+			contact.setTags(tagIds);
+		}
+		
+		String rawVCard = null;
+		if (input.sourceObject != null && !input.sourceObject.getProperties().isEmpty()) {
+			rawVCard = VCardUtils.write(input.sourceObject);
+		}
+		
+		return doContactUpdate(coreMgr, con, false, contactId, contact, rawVCard, processOpts) != null;
+	}
+	
 	private boolean doContactDelete(Connection con, int contactId, boolean logicDelete) throws DAOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		if (logicDelete) {
@@ -2821,7 +2820,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 		//TODO: maybe support attachments copy
 		
-		return doContactInsert(coreMgr, con, isList, contact, rawVCard, processOpts);
+		return doContactInsert(coreMgr, con, isList, contact, rawVCard, processOpts.copy().set(ContactProcessOpts.RAW_VCARD));
 	}
 	
 	private ContactsListInsertResult doContactListCopy(CoreManager coreMgr, Connection con, int sourceContactId, ContactListEx contact, int targetCategoryId, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
