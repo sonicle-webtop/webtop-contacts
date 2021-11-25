@@ -32,14 +32,13 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.BitFlag;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
-import com.sonicle.commons.qbuilders.conditions.Condition;
-import com.sonicle.webtop.contacts.io.input.MemoryContactTextFileReader;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
@@ -56,6 +55,8 @@ import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
+import com.sonicle.webtop.contacts.IContactsManager.ContactGetOptions;
+import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
@@ -70,8 +71,6 @@ import com.sonicle.webtop.contacts.bol.js.JsSharing;
 import com.sonicle.webtop.contacts.bol.js.ListFieldMapping;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
-import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactsList;
 import com.sonicle.webtop.contacts.bol.model.MyShareFolderCategory;
 import com.sonicle.webtop.contacts.bol.model.MyShareRootCategory;
 import com.sonicle.webtop.contacts.bol.model.RBAddressbook;
@@ -83,34 +82,28 @@ import com.sonicle.webtop.contacts.io.input.ContactLDIFFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactTextFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactVCardFileReader;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
-import com.sonicle.webtop.contacts.mailchimp.cli.ApiException;
 import com.sonicle.webtop.contacts.mailchimp.cli.api.ListsApi;
-import com.sonicle.webtop.contacts.mailchimp.cli.auth.Authentication;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.AddListMembers;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.CollectionOfSegments;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.List3;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.List4;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.List6;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.MembersToSubscribeUnsubscribeTofromAListInBatch;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.MergeField;
 import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberList3;
-import com.sonicle.webtop.contacts.mailchimp.cli.model.SubscriberLists;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
+import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.ContactList;
+import com.sonicle.webtop.contacts.model.ContactListEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactType;
-import com.sonicle.webtop.contacts.model.ContactsListRecipient;
+import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
-import com.sonicle.webtop.contacts.msg.MailchimpSyncLogSM;
+import com.sonicle.webtop.contacts.msg.ContactImportLogSM;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
@@ -120,25 +113,23 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.WebTopSession;
 import com.sonicle.webtop.core.app.WebTopSession.UploadedFile;
+import com.sonicle.webtop.core.app.io.input.FileRowsReader;
+import com.sonicle.webtop.core.app.util.log.LogEntry;
+import com.sonicle.webtop.core.app.util.log.LogHandler;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
 import com.sonicle.webtop.core.bol.js.JsCustomFieldDefsData;
 import com.sonicle.webtop.core.bol.js.JsSimple;
 import com.sonicle.webtop.core.bol.js.JsValue;
 import com.sonicle.webtop.core.bol.js.JsWizardData;
-import com.sonicle.webtop.core.bol.js.ObjSearchableCustomField;
 import com.sonicle.webtop.core.model.SharePermsRoot;
 import com.sonicle.webtop.core.bol.model.Sharing;
 import com.sonicle.webtop.core.io.output.AbstractReport;
-import com.sonicle.webtop.core.io.input.ExcelFileReader;
-import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.io.output.ReportConfig;
-import com.sonicle.webtop.core.io.input.TextFileReader;
 import com.sonicle.webtop.core.model.CustomField;
 import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.model.Recipient;
-import com.sonicle.webtop.core.model.Tag;
 import com.sonicle.webtop.core.sdk.AsyncActionCollection;
 import com.sonicle.webtop.core.sdk.BaseService;
 import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
@@ -160,7 +151,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -168,6 +158,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import jakarta.mail.internet.InternetAddress;
 import java.util.Collection;
+import java.util.StringJoiner;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
@@ -798,13 +789,14 @@ public class Service extends BaseService {
 					int contactId = JsGridContact.Id.contactId(cid);
 					boolean isList = JsGridContact.Id.isList(cid);
 					if (isList) {
-						contactsListIds.add(contactId);
+						contactIds.add(contactId);
+						//contactsListIds.add(contactId);
 					} else {
 						contactIds.add(contactId);
 					}
 				}
 				manager.deleteContact(contactIds);
-				manager.deleteContactsList(contactsListIds);
+				//manager.deleteContactsList(contactsListIds);
 				
 				new JsonResult().printTo(out);
 				
@@ -820,13 +812,14 @@ public class Service extends BaseService {
 					int contactId = JsGridContact.Id.contactId(cid);
 					boolean isList = JsGridContact.Id.isList(cid);
 					if (isList) {
-						contactsListIds.add(contactId);
+						//contactsListIds.add(contactId);
+						contactIds.add(contactId);
 					} else {
 						contactIds.add(contactId);
 					}
 				}
 				manager.moveContact(copy, contactIds, categoryId);
-				manager.moveContactsList(copy, contactsListIds, categoryId);
+				//manager.moveContactsList(copy, contactsListIds, categoryId);
 				
 				new JsonResult().printTo(out);
 				
@@ -926,7 +919,7 @@ public class Service extends BaseService {
 				boolean isList = JsGridContact.Id.isList(cid);
 				
 				if (isList) {
-					ContactsList contactsList = manager.getContactsList(contactId);
+					ContactList contactsList = manager.getContactList(contactId);
 					
 					ShareFolderCategory fold = folders.get(contactsList.getCategoryId());
 					if (fold == null) throw new WTException("Folder not found [{}]", contactsList.getCategoryId());
@@ -936,7 +929,7 @@ public class Service extends BaseService {
 					
 				} else {
 					UserProfile up = getEnv().getProfile();
-					Contact contact = manager.getContact(contactId, true, false, true, true);
+					Contact contact = manager.getContact(contactId, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.TAGS, ContactGetOptions.CUSTOM_VALUES));
 					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
 					ContactCompany company = contact.hasCompany() ? manager.getContactCompany(contactId) : null;
 					
@@ -1013,7 +1006,7 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				Contact contact = pl.data.toContact(up.getTimeZone());
+				ContactEx contact = pl.data.createContactForInsert(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
@@ -1036,18 +1029,18 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				boolean processPicture = false;
-				Contact contact = pl.data.toContact(up.getTimeZone());
+				BitFlag<ContactUpdateOptions> processOpts = BitFlag.of(ContactUpdateOptions.TAGS, ContactUpdateOptions.ATTACHMENTS, ContactUpdateOptions.CUSTOM_VALUES);
+				Contact contact = pl.data.createContactForUpdate(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
 				if (hasUploadedFile(pl.data.picture)) {
 					// If found, new picture has been uploaded!
-					processPicture = true;
+					processOpts.set(ContactUpdateOptions.PICTURE);
 					contact.setPicture(getUploadedContactPicture(pl.data.picture));
 				} else {
 					// If blank, picture has been deleted!
-					if (StringUtils.isBlank(pl.data.picture)) processPicture = true;
+					if (StringUtils.isBlank(pl.data.picture)) processOpts.set(ContactUpdateOptions.PICTURE);
 				}
 				for (JsContact.Attachment jsatt : pl.data.attachments) {
 					if (!StringUtils.isBlank(jsatt._uplId)) {
@@ -1066,7 +1059,7 @@ public class Service extends BaseService {
 						contact.getAttachments().add(att);
 					}
 				}
-				manager.updateContact(contact, processPicture);
+				manager.updateContact(contact.getContactId(), contact, processOpts);
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.DELETE)) {
@@ -1093,7 +1086,7 @@ public class Service extends BaseService {
 			String type = ServletUtils.getStringParameter(request, "type", true);
 			int contactId = Integer.parseInt(id);
 			
-			Contact contact = manager.getContact(contactId, false, false, true, false);
+			Contact contact = manager.getContact(contactId, BitFlag.of(ContactGetOptions.TAGS));
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);
@@ -1198,7 +1191,7 @@ public class Service extends BaseService {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
 				int contactId = Integer.parseInt(id);
-				ContactsList list = manager.getContactsList(contactId);
+				ContactList list = manager.getContactList(contactId);
 				UserProfileId ownerId = manager.getCategoryOwner(list.getCategoryId());
 				item = new JsContactsList(ownerId, list);
 				
@@ -1207,16 +1200,16 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContactsList> pl = ServletUtils.getPayload(request, JsContactsList.class);
 				
-				ContactsList contact = JsContactsList.buildContactsList(pl.data);
-				manager.addContactsList(contact);
+				ContactListEx contact = pl.data.createContactListForInsert();
+				manager.addContactList(contact);
 				
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContactsList> pl = ServletUtils.getPayload(request, JsContactsList.class);
 				
-				ContactsList contact = JsContactsList.buildContactsList(pl.data);
-				manager.updateContactsList(contact);
+				ContactList contact = pl.data.createContactListForUpdate();
+				manager.updateContactList(contact.getContactId(), contact);
 				
 				new JsonResult().printTo(out);
 				
@@ -1224,9 +1217,9 @@ public class Service extends BaseService {
 				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 				
 				if (ids.size() == 1) {
-					manager.deleteContactsList(ids.get(0));
+					manager.deleteContactList(ids.get(0));
 				} else {
-					manager.deleteContactsList(ids);
+					manager.deleteContactList(ids);
 				}
 				
 				new JsonResult().printTo(out);
@@ -1249,9 +1242,9 @@ public class Service extends BaseService {
 			Integer listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
 			if (listId == null) throw new WTException("Recipient address is not a list [{}]", iaVirtualRecipient.getAddress());
 			
-			ArrayList<ContactsListRecipient> recipients = new ArrayList<>();
+			ArrayList<ContactListRecipient> recipients = new ArrayList<>();
 			for (String email: emails) {
-				ContactsListRecipient rcpt = new ContactsListRecipient();
+				ContactListRecipient rcpt = new ContactListRecipient();
 				rcpt.setRecipient(email);
 				rcpt.setRecipientType(recipientType);
 				recipients.add(rcpt);
@@ -1268,8 +1261,9 @@ public class Service extends BaseService {
 	public void processImportContactsFromText(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		
 		try {
+			String oid = ServletUtils.getStringParameter(request, "oid", true);
+			String op = ServletUtils.getStringParameter(request, "op", true);
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
-			String crud = ServletUtils.getStringParameter(request, "op", true);
 			String encoding = ServletUtils.getStringParameter(request, "encoding", true);
 			String delimiter = ServletUtils.getStringParameter(request, "delimiter", true);
 			String lineSeparator = ServletUtils.getStringParameter(request, "lineSeparator", true);
@@ -1278,58 +1272,67 @@ public class Service extends BaseService {
 			Integer fdr = ServletUtils.getIntParameter(request, "firstDataRow", true);
 			Integer ldr = ServletUtils.getIntParameter(request, "lastDataRow", -1);
 			
+			WebTopSession wts = getWts();
+			LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
+				@Override
+				public void handle(Collection<LogEntry> entries) {
+					if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+				}
+			};
+			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
 			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
-			CsvPreference pref = TextFileReader.buildCsvPreference(delimiter, lineSeparator, textQualifier);
+			CsvPreference pref = ContactTextFileReader.buildCsvPreference(delimiter, lineSeparator, textQualifier);
 			ContactTextFileReader rea = new ContactTextFileReader(pref, encoding);
 			rea.setHeadersRow(hr);
 			rea.setFirstDataRow(fdr);
 			if(ldr != -1) rea.setLastDataRow(ldr);
 			
-			if(crud.equals("columns")) {
+			if(op.equals("columns")) {
 				ArrayList<JsValue> items = new ArrayList<>();
 				for(String sheet : rea.listColumnNames(file).values()) {
 					items.add(new JsValue(sheet));
 				}
 				new JsonResult("columns", items).printTo(out);
 				
-			} else if(crud.equals("mappings")) {
-				List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, MemoryContactTextFileReader.MAPPING_TARGETS);
+			} else if(op.equals("mappings")) {
+				List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, ContactTextFileReader.MAPPING_TARGETS);
 				new JsonResult("mappings", items).printTo(out);
 				
-			} else if(crud.equals("do")) {
+			} else if(op.equals("do")) {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
-				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				IContactsManager.ImportMode mode = ServletUtils.getEnumParameter(request, "importMode", IContactsManager.ImportMode.COPY, IContactsManager.ImportMode.class);
 				ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
 				
 				rea.setMappings(mappings);
-				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
+				manager.importContacts2(categoryId, rea, file, mode, logHandler);
 				removeUploadedFile(uploadId);
-				new JsonResult(new JsWizardData(log.print())).printTo(out);
+				new JsonResult(new JsWizardData(null)).printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in action ImportContactsFromText", ex);
-			new JsonResult(false, ex.getMessage()).printTo(out);
+		} catch (Throwable t) {
+			logger.error("Error in action ImportContactsFromText", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
 	public void processImportContactsFromExcel(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		
 		try {
+			String oid = ServletUtils.getStringParameter(request, "oid", true);
+			String op = ServletUtils.getStringParameter(request, "op", true);
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
 			Boolean binary = ServletUtils.getBooleanParameter(request, "binary", false);
-			String crud = ServletUtils.getStringParameter(request, "op", true);
 			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
 			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
-			if(crud.equals("sheets")) {
+			if(op.equals("sheets")) {
 				ArrayList<JsValue> items = new ArrayList<>();
-				ExcelFileReader rea = new ExcelFileReader(binary);
+				ContactExcelFileReader rea = new ContactExcelFileReader(binary);
 				List<String> sheets = rea.listSheets(file);
 				for(String sheet : sheets) {
 					items.add(new JsValue(sheet));
@@ -1342,91 +1345,118 @@ public class Service extends BaseService {
 				Integer fdr = ServletUtils.getIntParameter(request, "firstDataRow", true);
 				Integer ldr = ServletUtils.getIntParameter(request, "lastDataRow", -1);
 				
-				ContactExcelFileReader rea = new ContactExcelFileReader(binary);
+				WebTopSession wts = getWts();
+				LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
+					@Override
+					public void handle(Collection<LogEntry> entries) {
+						if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+					}
+				};
+				
+				ContactExcelFileReader rea = new ContactExcelFileReader(binary, logHandler);
 				rea.setHeadersRow(hr);
 				rea.setFirstDataRow(fdr);
 				if(ldr != -1) rea.setLastDataRow(ldr);
 				rea.setSheet(sheet);
 				
-				if(crud.equals("columns")) {
+				if(op.equals("columns")) {
 					ArrayList<JsValue> items = new ArrayList<>();
 					for(String col : rea.listColumnNames(file).values()) {
 						items.add(new JsValue(col));
 					}
 					new JsonResult("columns", items).printTo(out);
 					
-				} else if(crud.equals("mappings")) {
-					List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, MemoryContactTextFileReader.MAPPING_TARGETS);
+				} else if(op.equals("mappings")) {
+					List<FileRowsReader.FieldMapping> items = rea.listFieldMappings(file, ContactExcelFileReader.MAPPING_TARGETS);
 					new JsonResult("mappings", items).printTo(out);
 					
-				} else if(crud.equals("do")) {
+				} else if(op.equals("do")) {
 					Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
-					String mode = ServletUtils.getStringParameter(request, "importMode", true);
+					IContactsManager.ImportMode mode = ServletUtils.getEnumParameter(request, "importMode", IContactsManager.ImportMode.COPY, IContactsManager.ImportMode.class);
 					ListFieldMapping mappings = ServletUtils.getObjectParameter(request, "mappings", ListFieldMapping.class, true);
-				
+					
 					rea.setMappings(mappings);
-					LogEntries log = manager.importContacts(categoryId, rea, file, mode);
+					manager.importContacts2(categoryId, rea, file, mode, logHandler);
 					removeUploadedFile(uploadId);
-					new JsonResult(new JsWizardData(log.print())).printTo(out);
+					new JsonResult(new JsWizardData(null)).printTo(out);
 				}
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in action ImportContactsFromExcel", ex);
-			new JsonResult(false, ex.getMessage()).printTo(out);
+		} catch (Throwable t) {
+			logger.error("Error in action ImportContactsFromExcel", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 	
 	public void processImportContactsFromVCard(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		
 		try {
+			String oid = ServletUtils.getStringParameter(request, "oid", true);
+			String op = ServletUtils.getStringParameter(request, "op", true);
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
-			String crud = ServletUtils.getStringParameter(request, "op", true);
+			
+			WebTopSession wts = getWts();
+			LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
+				@Override
+				public void handle(Collection<LogEntry> entries) {
+					if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+				}
+			};
 			
 			UploadedFile upl = getUploadedFile(uploadId);
 			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
 			File file = new File(WT.getTempFolder(), upl.getUploadId());
 			
-			ContactVCardFileReader rea = new ContactVCardFileReader();
+			ContactVCardFileReader rea = new ContactVCardFileReader(logHandler);
 			
-			if(crud.equals("do")) {
+			if(op.equals("do")) {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
-				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				IContactsManager.ImportMode mode = ServletUtils.getEnumParameter(request, "importMode", IContactsManager.ImportMode.COPY, IContactsManager.ImportMode.class);
 				
-				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
+				manager.importContacts2(categoryId, rea, file, mode, logHandler);
 				removeUploadedFile(uploadId);
-				new JsonResult(new JsWizardData(log.print())).printTo(out);
+				new JsonResult(new JsWizardData(null)).printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in action ImportContactsFromVCard", ex);
-			new JsonResult(false, ex.getMessage()).printTo(out);
+		} catch (Throwable t) {
+			logger.error("Error in action ImportContactsFromVCard", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
-		public void processImportContactsFromLDIF(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+	
+	public void processImportContactsFromLDIF(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		
 		try {
+			String oid = ServletUtils.getStringParameter(request, "oid", true);
+			String op = ServletUtils.getStringParameter(request, "op", true);
 			String uploadId = ServletUtils.getStringParameter(request, "uploadId", true);
-			String crud = ServletUtils.getStringParameter(request, "op", true);
+			
+			WebTopSession wts = getWts();
+			LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
+				@Override
+				public void handle(Collection<LogEntry> entries) {
+					if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+				}
+			};
 			
 			UploadedFile upl = getUploadedFile(uploadId);
-			if(upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
+			if (upl == null) throw new WTException("Uploaded file not found [{0}]", uploadId);
 			File file = new File(WT.getTempFolder(), upl.getUploadId());
 
 			ContactLDIFFileReader  rea = new ContactLDIFFileReader();
 			
-			if(crud.equals("do")) {
+			if(op.equals("do")) {
 				Integer categoryId = ServletUtils.getIntParameter(request, "categoryId", true);
-				String mode = ServletUtils.getStringParameter(request, "importMode", true);
+				IContactsManager.ImportMode mode = ServletUtils.getEnumParameter(request, "importMode", IContactsManager.ImportMode.COPY, IContactsManager.ImportMode.class);
 				
-				LogEntries log = manager.importContacts(categoryId, rea, file, mode);
+				manager.importContacts2(categoryId, rea, file, mode, logHandler);
 				removeUploadedFile(uploadId);
-				new JsonResult(new JsWizardData(log.print())).printTo(out);
+				new JsonResult(new JsWizardData(null)).printTo(out);
 			}
 			
-		} catch(Exception ex) {
-			logger.error("Error in action ImportContactsFromVCard", ex);
-			new JsonResult(false, ex.getMessage()).printTo(out);
+		} catch (Throwable t) {
+			logger.error("Error in action ImportContactsFromVCard", t);
+			new JsonResult(t).printTo(out);
 		}
 	}
 		
@@ -1510,12 +1540,12 @@ public class Service extends BaseService {
 			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
 			
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
-			VCardOutput vcout = new VCardOutput(prodId)
+			VCardOutput vout = new VCardOutput(prodId)
 					.withEnableCaretEncoding(manager.VCARD_CARETENCODINGENABLED);
 			for (Integer id : ids) {
 				ContactObjectWithBean contactObj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
-				final String filename = buildContactFilename(contactObj.getContact()) + ".vcf";
-				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vcout.write(vcout.toVCard(contactObj.getContact()))));
+				final String filename = buildContactFilename(contactObj) + ".vcf";
+				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vout.writeVCard(contactObj.getContact(), null)));
 				
 				items.add(new MapItem()
 					.add("uploadId", upfile.getUploadId())
@@ -1588,9 +1618,18 @@ public class Service extends BaseService {
 		return sb.toString();
 	}
 	
-	private String buildContactFilename(Contact contact) {
-		final String full = contact.getFullName();
-		return (StringUtils.isBlank(full)) ? String.valueOf(contact.getContactId()) : PathUtils.sanitizeFileName(full);
+	private ServiceMessage toContactImportLogSMs(String operationId, boolean pushDown, Collection<LogEntry> entries) {
+		StringJoiner sj = new StringJoiner("\n");
+		for (LogEntry entry : entries) {
+			if (pushDown) entry.pushDown();
+			sj.add(entry.toString());
+		}
+		return new ContactImportLogSM(SERVICE_ID, operationId, sj.toString());
+	}
+	
+	private String buildContactFilename(ContactObjectWithBean cobj) {
+		final String full = cobj.getContact().getFullName();
+		return (StringUtils.isBlank(full)) ? String.valueOf(cobj.getContactId()) : PathUtils.sanitizeFileName(full);
 	}
 	
 	private ArrayList<Integer> getActiveFolderIds() {

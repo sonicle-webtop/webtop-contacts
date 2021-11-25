@@ -41,8 +41,8 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.LIST_RECIPIENTS;
 import com.sonicle.webtop.contacts.jooq.tables.Contacts;
 import com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord;
-import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactsListRecipient;
+import com.sonicle.webtop.contacts.model.ContactBase;
+import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
@@ -135,8 +135,8 @@ public class ListRecipientDAO extends BaseDAO {
 				.and(CATEGORIES.USER_ID.equal(userId))
 				.and(LIST_RECIPIENTS.CONTACT_ID.equal(contactId))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -154,7 +154,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int[] batchInsert(Connection con, int contactId, Collection<ContactsListRecipient> recipients) throws DAOException {
+	public int[] batchInsert(Connection con, int contactId, Collection<ContactListRecipient> recipients) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
 			dsl.insertInto(LIST_RECIPIENTS, 
@@ -165,7 +165,7 @@ public class ListRecipientDAO extends BaseDAO {
 			)
 			.values((Integer)null, null, null, null)
 		);
-		for (ContactsListRecipient recipient : recipients) {
+		for (ContactListRecipient recipient : recipients) {
 			batch.bind(
 				contactId,
 				recipient.getRecipient(),

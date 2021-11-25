@@ -38,19 +38,17 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
-import com.sonicle.webtop.contacts.model.ContactsList;
+import com.sonicle.webtop.contacts.model.ContactList;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
 import com.sonicle.webtop.core.model.CustomField;
-import com.sonicle.webtop.core.model.CustomFieldEx;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.model.CustomPanel;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import org.joda.time.DateTimeZone;
 import org.jooq.tools.StringUtils;
 
@@ -137,13 +135,13 @@ public class JsContactPreview {
 		_cfdefs = LangUtils.serialize(new ObjCustomFieldDefs(panels, fields), ObjCustomFieldDefs.class);
 	}
 
-	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, ContactsList item) {
+	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, ContactList item) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), true).toString();
 		this.id = item.getContactId();
 		this.isList = true;
-		this.displayName = item.getName();
+		this.displayName = item.getDisplayName();
 		this.data1 = new ArrayList<>();
 		addValueItem(this.data1, "rcp1", item.getEmail(), "email");
 		this.data2 = new ArrayList<>();

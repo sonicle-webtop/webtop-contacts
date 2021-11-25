@@ -33,6 +33,7 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
+import static com.sonicle.webtop.contacts.IContactsManager.RCPT_ORIGIN_LIST;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.OCategoryPropSet;
 import com.sonicle.webtop.contacts.bol.OContact;
@@ -50,19 +51,26 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
+import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactCompanyJoined;
+import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.ContactList;
+import com.sonicle.webtop.contacts.model.ContactListBase;
+import com.sonicle.webtop.contacts.model.ContactListEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
-import com.sonicle.webtop.contacts.model.ContactsList;
-import com.sonicle.webtop.contacts.model.ContactsListRecipient;
+import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.model.CustomFieldValue;
+import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 
 /**
  *
@@ -158,23 +166,11 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static Contact createContact(ContactsList src) {
-		if (src == null) return null;
-		Contact tgt = new Contact();
-		tgt.setContactId(src.getContactId());
-		tgt.setCategoryId(src.getCategoryId());
-		tgt.setDisplayName(src.getName());
-		tgt.setFirstName(src.getName());
-		tgt.setLastName(src.getName());
-		tgt.setTags(src.getTags());
-		return tgt;
-	}
-	
-	static <T extends ContactObject> T fillContactCard(T tgt, VContactObject src) {
+	static <T extends ContactObject> T fillContactObject(T tgt, VContactObject src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setContactId(src.getContactId());
 			tgt.setCategoryId(src.getCategoryId());
-			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), Contact.RevisionStatus.class));
+			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), ContactBase.RevisionStatus.class));
 			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
 			tgt.setPublicUid(src.getPublicUid());
 			tgt.setHref(src.getHref());
@@ -182,23 +178,7 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	
-	
-	
-	static ContactsList createContactsList(OContact ocontlst, List<VListRecipient> olrecs) {
-		if (ocontlst == null) return null;
-		ContactsList item = new ContactsList();
-		item.setContactId(ocontlst.getContactId());
-		item.setCategoryId(ocontlst.getCategoryId());
-		item.setName(ocontlst.getLastname());
-		item.setEmail(ocontlst.getWorkEmail());
-		for (OListRecipient olrec : olrecs) {
-			item.addRecipient(fillContactsListRecipient(new ContactsListRecipient(), olrec));
-		}
-		return item;
-	}
-	
-	static <T extends ContactsListRecipient> T fillContactsListRecipient(T tgt, OListRecipient src) {
+	static <T extends ContactListRecipient> T fillContactsListRecipient(T tgt, OListRecipient src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setListRecipientId(src.getListRecipientId());
 			tgt.setRecipient(src.getRecipient());
@@ -230,6 +210,7 @@ public class ManagerUtils {
 	}
 	
 	static <T extends BaseContact, S extends OContact> T fillBaseContact(T tgt, S src) {
+		//TODO: candidate for remove!!
 		if ((tgt != null) && (src != null)) {
 			tgt.setContactId(src.getContactId());
 			tgt.setCategoryId(src.getCategoryId());
@@ -244,23 +225,68 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static Contact createContact(OContact src) {
+	static ContactEx createContactEx(ContactListEx src) {
 		if (src == null) return null;
-		return fillContact(new Contact(), src);
+		ContactEx tgt = new ContactEx();
+		tgt.setCategoryId(src.getCategoryId());
+		tgt.setDisplayName(src.getDisplayName());
+		tgt.setFirstName(src.getDisplayName());
+		tgt.setLastName(src.getDisplayName());
+		tgt.setTags(src.getTags());
+		return tgt;
+	}
+	
+	static <T extends ContactList> T fillContactList(T tgt, OContact src) {
+		fillContactList((ContactListBase)tgt, src);
+		if ((tgt != null) && (src != null)) {
+			tgt.setContactId(src.getContactId());
+		}
+		return tgt;
+	}
+	
+	static <T extends ContactListBase> T fillContactList(T tgt, OContact src) {
+		if ((tgt != null) && (src != null)) {
+			tgt.setCategoryId(src.getCategoryId());
+			tgt.setPublicUid(src.getPublicUid());
+			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), ContactBase.RevisionStatus.class));
+			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
+			tgt.setRevisionSequence(src.getRevisionSequence());
+			tgt.setDisplayName(src.getDisplayName());
+			tgt.setEmail(src.getWorkEmail());
+		}
+		return tgt;
+	}
+	
+	static List<ContactListRecipient> createContactListRecipientList(List<VListRecipient> items) {
+		ArrayList<ContactListRecipient> list = new ArrayList<>(items.size());
+		for (VListRecipient item : items) {
+			list.add(fillContactsListRecipient(new ContactListRecipient(), item));
+		}
+		return list;
 	}
 	
 	static <T extends Contact> T fillContact(T tgt, OContact src) {
+		fillContact((ContactBase)tgt, src);
 		if ((tgt != null) && (src != null)) {
 			tgt.setContactId(src.getContactId());
+		}
+		return tgt;
+	}
+	
+	static <T extends ContactBase> T fillContact(T tgt, OContact src) {
+		if ((tgt != null) && (src != null)) {
 			tgt.setCategoryId(src.getCategoryId());
-			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), Contact.RevisionStatus.class));
 			tgt.setPublicUid(src.getPublicUid());
+			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), ContactBase.RevisionStatus.class));
+			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
+			tgt.setRevisionSequence(src.getRevisionSequence());
+			tgt.setCreationTimestamp(src.getCreationTimestamp());
 			tgt.setTitle(src.getTitle());
 			tgt.setFirstName(src.getFirstname());
 			tgt.setLastName(src.getLastname());
 			tgt.setDisplayName(src.getDisplayName());
 			tgt.setNickname(src.getNickname());
-			tgt.setGender(EnumUtils.forSerializedName(src.getGender(), Contact.Gender.class));
+			tgt.setGender(EnumUtils.forSerializedName(src.getGender(), ContactBase.Gender.class));
 			tgt.setMobile(src.getWorkMobile());
 			tgt.setPager1(src.getWorkPager());
 			tgt.setPager2(src.getHomePager());
@@ -303,15 +329,6 @@ public class ManagerUtils {
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
-			tgt.setCompany(ManagerUtils.createContactCompany(src));
-		}
-		return tgt;
-	}
-	
-	static <T extends Contact> T fillContact(T tgt, VContactObject src) {
-		if ((tgt != null) && (src != null)) {
-			fillContact(tgt, (OContact)src);
-			tgt.setCompany(createContactCompany(src));
 		}
 		return tgt;
 	}
@@ -343,11 +360,6 @@ public class ManagerUtils {
 		}
 	}
 	
-	static ContactPicture createContactPicture(OContactPicture src) {
-		if (src == null) return null;
-		return fillContactPicture(new ContactPicture(), src);
-	}
-	
 	static <T extends ContactPicture> T fillContactPicture(T tgt, OContactPicture src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setWidth(src.getWidth());
@@ -357,17 +369,45 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static OContact createOContact(Contact src) {
-		if (src == null) return null;
-		return fillOContact(new OContact(), src);
+	static OContact fillOContactWithDefaultsForInsert(OContact tgt, UserProfileId targetProfile, DateTime defaultTimestamp) {
+		if (tgt != null) {
+			if (StringUtils.isBlank(tgt.getPublicUid())) {
+				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(targetProfile.getDomainId())));
+			}
+			if (tgt.getRevisionTimestamp()== null) tgt.setRevisionTimestamp(defaultTimestamp);
+			if (tgt.getRevisionSequence() == null) tgt.setRevisionSequence(0);
+			if (tgt.getCreationTimestamp() == null) tgt.setCreationTimestamp(defaultTimestamp);
+			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ContactsUtils.buildHref(tgt.getPublicUid()));
+			if (!tgt.getIsList()) {
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+			} else {
+				// Compose list workEmail as: "list-{contactId}@{serviceId}"
+				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@com.sonicle.webtop.contacts");
+			}
+		}
+		return tgt;
 	}
 	
-	static <T extends OContact> T fillOContact(T tgt, Contact src) {
+	static OContact fillOContactWithDefaultsForUpdate(OContact tgt, DateTime defaultTimestamp) {
+		if (tgt != null) {
+			if (!tgt.getIsList()) {
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+			} else {
+				// Compose list workEmail as: "list-{contactId}@{serviceId}"
+				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@com.sonicle.webtop.contacts");
+			}
+		}
+		return tgt;
+	}
+	
+	static OContact fillOContact(OContact tgt, ContactBase src) {
 		if ((tgt != null) && (src != null)) {
-			tgt.setContactId(src.getContactId());
 			tgt.setCategoryId(src.getCategoryId());
 			tgt.setPublicUid(src.getPublicUid());
 			tgt.setRevisionStatus(EnumUtils.toSerializedName(src.getRevisionStatus()));
+			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
+			tgt.setRevisionSequence(src.getRevisionSequence());
+			tgt.setCreationTimestamp(src.getCreationTimestamp());
 			tgt.setIsList(false);
 			tgt.setTitle(src.getTitle());
 			tgt.setFirstname(src.getFirstName());
@@ -417,7 +457,6 @@ public class ManagerUtils {
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
-			// Company needs to be prepared outside
 		}
 		return tgt;
 	}
@@ -472,11 +511,6 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static OContactCustomValue createOContactCustomValue(CustomFieldValue src) {
-		if (src == null) return null;
-		return fillOContactCustomValue(new OContactCustomValue(), src);
-	}
-	
 	static <T extends OContactCustomValue> T fillOContactCustomValue(T tgt, CustomFieldValue src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setCustomFieldId(src.getFieldId());
@@ -489,12 +523,7 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static OListRecipient createOListRecipient(ContactsListRecipient src) {
-		if (src == null) return null;
-		return fillOListRecipient(new OListRecipient(), src);
-	}
-	
-	static <T extends OListRecipient> T fillOListRecipient(T tgt, ContactsListRecipient src) {
+	static <T extends OListRecipient> T fillOListRecipient(T tgt, ContactListRecipient src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setListRecipientId(src.getListRecipientId());
 			tgt.setRecipient(src.getRecipient());
@@ -502,11 +531,6 @@ public class ManagerUtils {
 			tgt.setRecipientContactId(src.getRecipientContactId());
 		}
 		return tgt;
-	}
-	
-	static OContactAttachment createOTaskAttachment(ContactAttachment src) {
-		if (src == null) return null;
-		return fillOContactAttachment(new OContactAttachment(), src);
 	}
 	
 	static <T extends OContactAttachment> T fillOContactAttachment(T tgt, ContactAttachment src) {

@@ -32,8 +32,6 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.model.Contact;
-
 /**
  *
  * @author Inis

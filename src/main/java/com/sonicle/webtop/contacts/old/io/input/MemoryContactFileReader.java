@@ -30,25 +30,18 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bol.js;
+package com.sonicle.webtop.contacts.old.io.input;
 
-import com.sonicle.commons.web.json.JsonResult;
-import com.sonicle.webtop.core.app.io.input.FileRowsReader;
+import com.sonicle.webtop.contacts.io.ContactInput;
+import com.sonicle.webtop.core.util.LogEntries;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
  *
  * @author malbinola
  */
-public class ListFieldMapping extends ArrayList<FileRowsReader.FieldMapping> {
-	
-	public static ListFieldMapping fromJson(String value) {
-		if(value == null) return null;
-		return JsonResult.gson().fromJson(value, ListFieldMapping.class);
-	}
-
-	public static String toJson(ListFieldMapping value) {
-		if(value == null) return null;
-		return JsonResult.gson().toJson(value, ListFieldMapping.class);
-	}
+public interface MemoryContactFileReader {
+	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
 }

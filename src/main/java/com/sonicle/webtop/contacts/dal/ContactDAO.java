@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts.dal;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.contacts.bol.OContact;
+import com.sonicle.webtop.contacts.bol.OContactInfo;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactObject;
 import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
@@ -48,9 +49,7 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
-import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.Grouping;
-import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
@@ -107,8 +106,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.BIRTHDAY.equal(date)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -137,8 +136,8 @@ public class ContactDAO extends BaseDAO {
 			.where(
 				CONTACTS.ANNIVERSARY.equal(date)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -172,6 +171,14 @@ AND (ccnts.href IS NULL)
 	public VContactObject viewContactObjectById(Connection con, int categoryId, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_TAGS.CONTACT_ID)
+			).asField("tags");
+		
 		return dsl
 			.select(
 				CONTACTS.fields()
@@ -179,6 +186,7 @@ AND (ccnts.href IS NULL)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
 				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
 				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
 			)
@@ -192,8 +200,8 @@ AND (ccnts.href IS NULL)
 				.and(CONTACTS.CATEGORY_ID.equal(categoryId))
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.fetchOneInto(VContactObject.class);
@@ -202,6 +210,14 @@ AND (ccnts.href IS NULL)
 	public VContactObject viewContactObjectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_TAGS.CONTACT_ID)
+			).asField("tags");
+		
 		return dsl
 			.select(
 				CONTACTS.fields()
@@ -209,6 +225,7 @@ AND (ccnts.href IS NULL)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
 				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
 				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
 			)
@@ -221,18 +238,34 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CONTACT_ID.equal(contactId)
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.fetchOneInto(VContactObject.class);
 	}
 	
-	public Map<String, List<VContactObject>> viewContactObjectByCategory(Connection con, int categoryId) throws DAOException {
-		return viewContactObjectByCategoryHrefs(con, categoryId, null);
+	private Field[] getVContactObjectFields(boolean stat) {
+		if (stat) {
+			return new Field[]{
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.REVISION_STATUS,
+				CONTACTS.REVISION_TIMESTAMP,
+				CONTACTS.CREATION_TIMESTAMP,
+				CONTACTS.PUBLIC_UID,
+				CONTACTS.HREF
+			};
+		} else {
+			return CONTACTS.fields();
+		}
 	}
 	
-	public Map<String, List<VContactObject>> viewContactObjectByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
+	public Map<String, List<VContactObject>> viewOnlineContactObjectsByCategory(Connection con, boolean stat, int categoryId) throws DAOException {
+		return viewOnlineContactObjectsByCategoryHrefs(con, stat, categoryId, null);
+	}
+	
+	public Map<String, List<VContactObject>> viewOnlineContactObjectsByCategoryHrefs(Connection con, boolean stat, int categoryId, Collection<String> hrefs) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		Condition inHrefsCndt = DSL.trueCondition();
@@ -240,15 +273,30 @@ AND (ccnts.href IS NULL)
 			inHrefsCndt = CONTACTS.HREF.in(hrefs);
 		}
 		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_TAGS.CONTACT_ID)
+			).asField("tags");
+		
+		// New field: has picture
+		Field<Boolean> hasPicture = DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture");
+		
+		// New field: has vcard
+		Field<Boolean> hasVCard = DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard");
+		
 		return dsl
 			.select(
-				CONTACTS.fields()
+				getVContactObjectFields(stat)
 			)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
-				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
-				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
+				tags,
+				hasPicture,
+				hasVCard
 			)
 			.from(CONTACTS)
 			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
@@ -259,8 +307,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(inHrefsCndt)
 			)
@@ -270,7 +318,7 @@ AND (ccnts.href IS NULL)
 			.fetchGroups(CONTACTS.HREF, VContactObject.class);
 	}
 	
-	public List<VContactObjectChanged> viewLiveContactObjectsChangedByCategory(Connection con, int categoryId, int limit) throws DAOException {
+	public List<VContactObjectChanged> viewOnlineContactObjectsChangedByCategory(Connection con, int categoryId, int limit) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
@@ -286,8 +334,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -297,7 +345,7 @@ AND (ccnts.href IS NULL)
 			.fetchInto(VContactObjectChanged.class);
 	}
 	
-	public List<VContactObjectChanged> viewChangedByCategorySince(Connection con, int categoryId, DateTime since, int limit) throws DAOException {
+	public List<VContactObjectChanged> viewContactObjectsChangedByCategorySince(Connection con, int categoryId, DateTime since, int limit) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
@@ -334,8 +382,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(typeCndt)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(filterCndt)
 			)
@@ -355,8 +403,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(typeCndt)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(filterCndt)
 			)
@@ -432,8 +480,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(typeCndt)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(filterCndt)
 			)
@@ -528,8 +576,8 @@ AND (ccnts.href IS NULL)
 			.where(
 				CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(
 					targetField.isNotNull()
@@ -556,13 +604,14 @@ AND (ccnts.href IS NULL)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.fetchMap(CONTACTS.HREF, VContactHrefSync.class);
 	}
 	
+	@Deprecated
 	public OContact selectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -570,6 +619,58 @@ AND (ccnts.href IS NULL)
 			.from(CONTACTS)
 			.where(CONTACTS.CONTACT_ID.equal(contactId))
 			.fetchOneInto(OContact.class);
+	}
+	
+	public OContact selectOnlineById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select()
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchOneInto(OContact.class);
+	}
+	
+	public OContactInfo selectOnlineContactInfoById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.IS_LIST
+			)
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CONTACT_ID.equal(contactId)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchOneInto(OContactInfo.class);
+	}
+	
+	public Map<Integer, OContactInfo> selectOnlineContactInfoByIds(Connection con, Collection<Integer> contactIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID,
+				CONTACTS.IS_LIST
+			)
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CONTACT_ID.in(contactIds)
+				.and(
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchMap(CONTACTS.CONTACT_ID, OContactInfo.class);
 	}
 	
 	public Integer selectCategoryId(Connection con, int contactId) throws DAOException {
@@ -595,8 +696,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(CONTACTS.HREF.equal(href))
 			)
@@ -635,8 +736,8 @@ AND (ccnts.href IS NULL)
 			.where(
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -657,8 +758,8 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CATEGORY_ID.equal(categoryId)
 				.and(CONTACTS.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(CONTACTS.HREF.in(hrefs))
 			)
@@ -666,6 +767,20 @@ AND (ccnts.href IS NULL)
 				CONTACTS.CONTACT_ID.asc()
 			)
 			.fetchMap(CONTACTS.CONTACT_ID, OContact.class);
+	}
+	
+	public Map<Integer, Integer> selectCategoriesByIds(Connection con, Collection<Integer> contactIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS.CONTACT_ID,
+				CONTACTS.CATEGORY_ID
+			)
+			.from(CONTACTS)
+			.where(
+				CONTACTS.CONTACT_ID.in(contactIds)
+			)
+			.fetchMap(CONTACTS.CONTACT_ID, CONTACTS.CATEGORY_ID);
 	}
 	
 	public Map<Integer, Integer> selectCategoriesByIdsType(Connection con, Collection<Integer> contactIds, boolean isList) throws DAOException {
@@ -685,7 +800,7 @@ AND (ccnts.href IS NULL)
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW));
+		item.setRevisionStatus(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		item.setCreationTimestamp(revisionTimestamp);
@@ -697,7 +812,7 @@ AND (ccnts.href IS NULL)
 	}
 	
 	public int batchInsert(Connection con, ArrayList<OContact> items, DateTime revisionTimestamp) throws DAOException {
-		final String NEW = EnumUtils.toSerializedName(Contact.RevisionStatus.NEW);
+		final String NEW = EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW);
 		DSLContext dsl = getDSL(con);
 		ArrayList<ContactsRecord> records = new ArrayList<>();
 		for (OContact item : items) {
@@ -713,7 +828,7 @@ AND (ccnts.href IS NULL)
 	
 	public int update(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
+		item.setRevisionStatus(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		return dsl
@@ -779,7 +894,7 @@ AND (ccnts.href IS NULL)
 	
 	public int updateList(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
+		item.setRevisionStatus(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		return dsl
@@ -801,7 +916,7 @@ AND (ccnts.href IS NULL)
 		return dsl
 			.update(CONTACTS)
 			.set(CONTACTS.CATEGORY_ID, categoryId)
-			.set(CONTACTS.REVISION_STATUS, EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED))
+			.set(CONTACTS.REVISION_STATUS, EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED))
 			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
 				CONTACTS.CONTACT_ID.equal(contactId)
@@ -820,7 +935,7 @@ AND (ccnts.href IS NULL)
 			.execute();
 	}
 	
-	public int updateRevisionStatus(Connection con, int contactId, Contact.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
+	public int updateRevisionStatus(Connection con, int contactId, ContactBase.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
@@ -853,7 +968,7 @@ AND (ccnts.href IS NULL)
 	}
 	
 	public int logicDeleteById(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
-		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
+		final String DELETED = EnumUtils.toSerializedName(ContactBase.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)
@@ -867,7 +982,7 @@ AND (ccnts.href IS NULL)
 	}
 	
 	public int logicDeleteByCategory(Connection con, int categoryId, DateTime revisionTimestamp) throws DAOException {
-		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
+		final String DELETED = EnumUtils.toSerializedName(ContactBase.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS)

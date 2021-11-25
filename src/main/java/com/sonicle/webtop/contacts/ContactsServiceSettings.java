@@ -60,6 +60,10 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 		return getBoolean(DAV_ADDRESSBOOK_DELETE_ENABLED, false);
 	}
 	
+	public boolean getEasContactPhotoUpdateEnabled() {
+		return getBoolean(EAS_CONTACT_PHOTO_UPDATE_ENABLED, true);
+	}
+	
 	public Category.Sync getDefaultCategorySync() {
 		return getEnum(DEFAULT_PREFIX + CATEGORY_SYNC, Category.Sync.OFF, Category.Sync.class);
 	}

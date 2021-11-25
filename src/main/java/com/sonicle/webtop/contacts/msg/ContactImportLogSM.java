@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2021 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,19 +28,21 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2021 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.io.input;
+package com.sonicle.webtop.contacts.msg;
 
-import com.sonicle.webtop.core.io.BeanHandler;
-import com.sonicle.webtop.core.io.input.FileReaderException;
-import java.io.File;
-import java.io.IOException;
+import com.sonicle.webtop.core.sdk.ServiceMessage;
 
 /**
  *
  * @author malbinola
  */
-public interface ContactFileReader {
-	public void readContacts(File file, BeanHandler handler) throws IOException, FileReaderException;
+public class ContactImportLogSM extends ServiceMessage {
+	
+	public ContactImportLogSM(String serviceId, String operationId, String log) {
+		super(serviceId, "contactImportLog");
+		this.setMappedPayload("oid", operationId);
+		this.setMappedPayload("log", log);
+	}
 }

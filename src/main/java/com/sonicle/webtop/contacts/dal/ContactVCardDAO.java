@@ -52,6 +52,43 @@ public class ContactVCardDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
+	public String selectRawDataById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS_VCARDS.RAW_DATA
+			)
+			.from(CONTACTS_VCARDS)
+			.where(
+				CONTACTS_VCARDS.CONTACT_ID.equal(contactId)
+			)
+			.fetchOneInto(String.class);
+	}
+	
+	public int insert(Connection con, int contactId, String rawData) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.insertInto(CONTACTS_VCARDS)
+			.set(CONTACTS_VCARDS.CONTACT_ID, contactId)
+			.set(CONTACTS_VCARDS.RAW_DATA, rawData)
+			.execute();
+	}
+	
+	public int update(Connection con, int contactId, String rawData) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.update(CONTACTS_VCARDS)
+			.set(CONTACTS_VCARDS.RAW_DATA, rawData)
+			.where(CONTACTS_VCARDS.CONTACT_ID.equal(contactId))
+			.execute();
+	}
+	
+	public int upsert(Connection con, int contactId, String rawData) throws DAOException {
+		int ret = update(con, contactId, rawData);
+		if (ret == 0) ret = insert(con, contactId, rawData);
+		return ret;
+	}
+	
 	public boolean hasVCardById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl

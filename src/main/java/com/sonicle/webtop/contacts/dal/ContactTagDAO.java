@@ -40,6 +40,7 @@ import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.Collection;
 import java.util.Set;
+import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
 import static org.jooq.impl.DSL.*;
 
@@ -76,6 +77,24 @@ public class ContactTagDAO extends BaseDAO {
 			.set(CONTACTS_TAGS.CONTACT_ID, contactId)
 			.set(CONTACTS_TAGS.TAG_ID, tagId)
 			.execute();
+	}
+	
+	public int[] batchInsert(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		BatchBindStep batch = dsl.batch(
+			dsl.insertInto(CONTACTS_TAGS, 
+				CONTACTS_TAGS.CONTACT_ID, 
+				CONTACTS_TAGS.TAG_ID
+			)
+			.values((Integer)null, (String)null)
+		);
+		for (String tagId : tagIds) {
+			batch.bind(
+				contactId,
+				tagId
+			);
+		}
+		return batch.execute();
 	}
 	
 	public int insertByCategory(Connection con, int categoryId, String tagId) throws DAOException {
@@ -204,6 +223,17 @@ public class ContactTagDAO extends BaseDAO {
 			.where(
 				CONTACTS_TAGS.CONTACT_ID.equal(contactId)
 				.and(CONTACTS_TAGS.TAG_ID.equal(tagId))
+			)
+			.execute();
+	}
+	
+	public int deleteByIdTags(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.delete(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(contactId)
+				.and(CONTACTS_TAGS.TAG_ID.in(tagIds))
 			)
 			.execute();
 	}

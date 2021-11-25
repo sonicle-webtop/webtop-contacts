@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2021 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,20 +28,31 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2021 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.io.input;
-
-import com.sonicle.webtop.contacts.io.ContactInput;
-import com.sonicle.webtop.core.util.LogEntries;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+package com.sonicle.webtop.contacts.bol;
 
 /**
  *
  * @author malbinola
  */
-public interface MemoryContactFileReader {
-	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException;
+public class OContactInfo {
+	protected Integer categoryId;
+	protected Boolean isList;
+
+	public Integer getCategoryId() {
+		return categoryId;
+	}
+
+	public void setCategoryId(Integer categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public Boolean getIsList() {
+		return isList;
+	}
+
+	public void setIsList(Boolean isList) {
+		this.isList = isList;
+	}
 }

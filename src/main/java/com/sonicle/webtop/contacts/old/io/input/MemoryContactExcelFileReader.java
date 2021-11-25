@@ -30,11 +30,11 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.io.input;
+package com.sonicle.webtop.contacts.old.io.input;
 
 import com.sonicle.webtop.contacts.io.ContactInput;
-import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.core.io.input.MemoryExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
 import com.sonicle.webtop.core.util.LogEntries;
@@ -116,16 +116,16 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 	}
 	
 	private ContactInput readRow(LogEntries log, HashMap<String, Integer> headersIndexes, Row row) throws Exception {
-		Contact contact = new Contact();
+		ContactEx contact = new ContactEx();
 		for(FileRowsReader.FieldMapping mapping : mappings) {
 			if(StringUtils.isBlank(mapping.source)) continue;
 			Integer index = headersIndexes.get(mapping.source);
 			fillContactByMapping(contact, mapping.target, row.getCell(index));
 		}
-		return new ContactInput(contact);
+		return new ContactInput(contact, contact.getCompany(), null, null, null);
 	}
 	
-	private void fillContactByMapping(Contact contact, String target, Cell cell) {
+	private void fillContactByMapping(ContactEx contact, String target, Cell cell) {
 		String value = fmt.formatCellValue(cell);
 		
 		if (target.equals("Title")) {

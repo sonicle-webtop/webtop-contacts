@@ -37,7 +37,17 @@ package com.sonicle.webtop.contacts.bol;
  * @author malbinola
  */
 public class VContactObject extends VContactBase {
+	// We extend OTask (transitively) for convenience, not all fields are needed!
+	protected String tags;
 	protected Boolean hasVcard;
+	
+	public String getTags() {
+		return tags;
+	}
+
+	public void setTags(String tags) {
+		this.tags = tags;
+	}
 	
 	public Boolean getHasVcard() {
 		return hasVcard;

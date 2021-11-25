@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2021 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,76 +28,64 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2021 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.io.input;
+package com.sonicle.webtop.contacts.old.io.input;
 
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
-import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
+import com.sonicle.webtop.core.app.io.input.AbstractReader;
+import com.sonicle.webtop.core.io.BeanHandler;
+import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
-import ezvcard.parameter.AddressType;
-import ezvcard.parameter.EmailType;
-import ezvcard.parameter.ImppType;
-import ezvcard.parameter.TelephoneType;
-import ezvcard.property.Address;
-import ezvcard.property.Email;
-import ezvcard.property.Gender;
-import ezvcard.property.Impp;
-import ezvcard.property.Nickname;
-import ezvcard.property.Note;
-import ezvcard.property.Photo;
-import ezvcard.property.Role;
-import ezvcard.property.StructuredName;
-import ezvcard.property.Telephone;
-import ezvcard.property.TextListProperty;
-import ezvcard.property.Title;
-import ezvcard.property.Url;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalDate;
 
 /**
  *
  * @author malbinola
  */
-public class MemoryContactVCardFileReader implements MemoryContactFileReader {
-
+public class ContactVCardFileReader extends AbstractReader implements ContactFileReader {
+	
 	@Override
-	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+	public void readContacts(File file, BeanHandler handler) throws IOException, FileReaderException {
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(file);
-			return listContacts(log, fis);
+			readContacts(fis, handler);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
 	}
 	
-	public ArrayList<ContactInput> listContacts(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
-		// See https://tools.ietf.org/html/rfc6350
-		// See http://www.w3.org/TR/vcard-rdf/
+	private void readContacts(InputStream is, BeanHandler handler) throws IOException, FileReaderException {
+		try {
+			final List<VCard> vCards = Ezvcard.parse(is).all();
+			readContacts(vCards, handler);
+		} catch(IOException ex) {
+			throw new FileReaderException(ex, "Unable to read stream");
+		}
+	}
+	
+	private void readContacts(Collection<VCard> vCards, BeanHandler handler) throws IOException, FileReaderException {
 		final VCardInput input = new VCardInput();
-		ArrayList<ContactInput> results = new ArrayList<>();
+		//TODO: move BeanHandler code into VCardInput in order to avoid duplicated code here
 		
-		List<VCard> vcs = Ezvcard.parse(is).all();
-		for(VCard vc : vcs) {
+		for (VCard vc : vCards) {
+			LogEntries log = new LogEntries();
 			ContactInput result = null;
 			try {
 				final LogEntries ilog = new LogEntries();
-				result = input.fromVCard(vc, ilog);
+				result = input.parseCardObject(vc);
 				if (result.contact.trimFieldLengths()) {
 					ilog.add(new MessageLogEntry(LogEntry.Level.WARN, "Some fields were truncated due to max-length"));
 				}
@@ -105,12 +93,15 @@ public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 					log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "VCARD [{0}]", vc.getUid()));
 					log.addAll(ilog);
 				}
-				results.add(result);
-				
 			} catch(Throwable t) {
 				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
+			} finally {
+				try {
+					handler.handle(result, log);
+				} catch(Exception ex) {
+					throw new FileReaderException(ex);
+				}
 			}
 		}
-		return results;
 	}
 }

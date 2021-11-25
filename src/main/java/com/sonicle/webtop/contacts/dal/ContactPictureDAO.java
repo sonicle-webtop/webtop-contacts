@@ -41,6 +41,7 @@ import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 /**
@@ -53,6 +54,10 @@ public class ContactPictureDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
+	private static Field<Long> length(Field<byte[]> field) {
+		return DSL.field("length({0})", Long.class, field);
+	}
+	
 	public OContactPictureMetaOnly selectMeta(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -60,7 +65,8 @@ public class ContactPictureDAO extends BaseDAO {
 				CONTACTS_PICTURES.CONTACT_ID,
 				CONTACTS_PICTURES.WIDTH,
 				CONTACTS_PICTURES.HEIGHT,
-				CONTACTS_PICTURES.MEDIA_TYPE
+				CONTACTS_PICTURES.MEDIA_TYPE,
+				length(CONTACTS_PICTURES.BYTES).as("size")
 			)
 			.from(CONTACTS_PICTURES)
 			.where(

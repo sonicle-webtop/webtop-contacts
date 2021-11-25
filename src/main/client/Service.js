@@ -2443,6 +2443,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 	},
 	
+	buildPushMessageEventName: function(msg) {
+		var name = this.callParent(arguments);
+		if ('contactImportLog' === msg.action && msg.payload && msg.payload.oid) {
+			name += '-' + msg.payload.oid;
+		}
+		return name;
+	},
+	
 	statics: {
 		NOTAG_REMOTESYNC: 'remsync-',
 
