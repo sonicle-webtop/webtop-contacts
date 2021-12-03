@@ -115,7 +115,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 				xtype: 'sotreecolumn',
 				dataIndex: 'text',
 				renderer: WTA.util.FoldersTree.coloredBoxTreeRenderer({
-					defaultText: me.mys.res('category.fld-default.lbl').toLowerCase()
+					defaultText: me.res('trfolders.default')
 				}),
 				flex: 1
 			}],
