@@ -33,6 +33,9 @@
  */
 Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	extend: 'WTA.sdk.ImportWizardView',
+	requires: [
+		'Sonicle.String'
+	],
 	
 	dockableConfig: {
 		title: '{importContacts.tit}',
@@ -43,16 +46,22 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	initComponent: function() {
 		var me = this,
-				ic = me.getInitialConfig();
+			ic = me.getInitialConfig();
 		
-		if(!Ext.isEmpty(ic.categoryId)) me.getVM().set('categoryId', ic.categoryId);
+		if (!Ext.isEmpty(ic.categoryId)) me.getVM().set('categoryId', ic.categoryId);
 		me.callParent(arguments);
+	},
+	
+	onDestroy: function() {
+		var me = this;
+		//me.mys.unPushMessage('contactImportLog-' + me.getUId(), me.onContactImportLogMessage, me);
+		me.callParent();
 	},
 	
 	initPages: function() {
 		return Ext.apply(this.callParent(), {
 			vcf: ['upload','mode','end'],
-			ldif:['upload','mode','end']
+			ldif: ['upload','mode','end']
 		});
 	},
 	
@@ -61,14 +70,15 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 			txt: 'ImportContactsFromText',
 			xls: 'ImportContactsFromExcel',
 			vcf: 'ImportContactsFromVCard',
-			ldif:'ImportContactsFromLDIF'
+			ldif: 'ImportContactsFromLDIF'
 		};
 	},
 	
 	initFiles: function() {
-		return Ext.apply(this.callParent(), {
-			vcf:  {label: this.mys.res('importContacts.path.fld-path.vcf'), extensions: 'vcf,vcard'},
-			ldif: {label: this.mys.res('importContacts.path.fld-path.ldif'), extensions: 'ldif'}
+		var me = this;
+		return Ext.apply(me.callParent(), {
+			vcf: {label: me.mys.res('importContacts.path.fld-path.vcf'), extensions: 'vcf,vcard'},
+			ldif: {label: me.mys.res('importContacts.path.fld-path.ldif'), extensions: 'ldif'}
 		});
 	},
 	
@@ -79,7 +89,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	createPages: function(path) {
 		var me = this;
-		if(path === 'vcf' || path === 'ldif') {
+		if (Sonicle.String.isIn(path, ['vcf', 'ldif'])) {
 			me.getVM().set('importmode', 'append');
 			
 			return [
@@ -96,29 +106,29 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	},
 	
 	onBeforeNavigate: function(s, dir, np, pp) {
-		if(dir === -1) return;
+		if (dir === -1) return;
 		var me = this,
 				ret = true,
 				vm = me.getVM(),
 				path = vm.get('path'),
 				ppcmp = me.getPageCmp(pp);
 		
-		if(me.callParent(arguments) === false) return false;
+		if (me.callParent(arguments) === false) return false;
 		
-		if(path === 'vcf' || path === 'ldif') {
-			if(pp === 'upload') {
+		if (Sonicle.String.isIn(path, ['txt', 'xls', 'vcf', 'ldif'])) {
+			if (pp === 'upload') {
 				ret = ppcmp.down('wtform').isValid();
+				//if (ret) me.mys.onPushMessage('contactImportLog-' + me.getUId(), me.onContactImportLogMessage, me);
 			}
-			if(!ret) return false;
+			if (!ret) return false;
 		}
 		return;
 	},
 	
 	buildDoParams: function(path) {
 		var vm = this.getVM();
-		if(path === 'vcf' || path=== 'ldif') {
+		if (Sonicle.String.isIn(path, ['vcf', 'ldif'])) {
 			return {
-				path: path,
 				uploadId: vm.get('file'),
 				importMode: vm.get('importmode'),
 				categoryId: vm.get('categoryId')
@@ -129,4 +139,11 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 			});
 		}
 	}
+	
+	/*
+	onContactImportLogMessage: function(msg) {
+		var cmp = this.getPageCmp('end').lookupReference('log');
+		cmp.setValue(Sonicle.String.join('\n', cmp.getValue(), msg.payload.log));
+	}
+	*/
 });

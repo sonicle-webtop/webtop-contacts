@@ -63,7 +63,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	referenceHolder: true,
 	bodyPadding: 10,
 	
-	viewModel: {},
+	viewModel: true,
 	modelName: 'Sonicle.webtop.contacts.model.ContactPreview',
 	mys: null,
 	
