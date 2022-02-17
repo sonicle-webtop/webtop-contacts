@@ -148,12 +148,12 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			items: [{
 				xtype: 'label',
 				text: me.mys.res('contactPreview.no.tit'),
-				cls: 'wt-theme-text-tit',
+				cls: 'wt-theme-text-header1',
 				style: 'font-size:1.2em'
 			}, {
 				xtype: 'label',
 				text: me.mys.res('contactPreview.no.txt'),
-				cls: 'wt-theme-text-sub',
+				cls: 'wt-theme-text-subtitle',
 				style: 'font-size:0.9em'
 			}]
 		};
@@ -194,7 +194,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								}, {
 									xtype: 'label',
 									text: me.mys.res('contactsList.tit'),
-									cls: 'wt-theme-text-sub',
+									cls: 'wt-theme-text-subtitle',
 									// Display as inline to keep height dimension
 									style: 'display:inline-block;font-size:0.9em'
 								}, {
@@ -315,7 +315,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 										text: '{record.businessInfo}'
 										//hidden: '{!foHasBusinessInfo}'
 									},
-									cls: 'wt-theme-text-sub',
+									cls: 'wt-theme-text-subtitle',
 									// Display as inline to keep height dimension
 									style: 'display:inline-block;font-size:0.9em'
 								}, {
@@ -526,7 +526,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 										items: [{
 											xtype: 'label',
 											text: me.mys.res('contactPreview.single.contact.emp'),
-											cls: 'wt-theme-text-sub',
+											cls: 'wt-theme-text-subtitle',
 											style: 'font-size:0.9em'
 										}]
 										//margin: '10 0 10 0'
@@ -595,7 +595,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 				bind: {
 					text: '{foMultiSelTitle}'
 				},
-				cls: 'wt-theme-text-tit',
+				cls: 'wt-theme-text-header1',
 				style: 'font-size:1.2em'
 			}, {
 				xtype: 'toolbar',
