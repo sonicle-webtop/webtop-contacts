@@ -103,7 +103,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 							bind: '{record.categoryId}',
 							listConfig: {
 								displayField: 'name',
-								groupCls: 'wt-theme-text-greyed'
+								groupCls: 'wt-theme-text-lighter2'
 							},
 							autoLoadOnValue: true,
 							store: {

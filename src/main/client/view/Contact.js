@@ -129,7 +129,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 							bind: '{record.categoryId}',
 							listConfig: {
 								displayField: 'name',
-								groupCls: 'wt-theme-text-greyed'
+								groupCls: 'wt-theme-text-lighter2'
 							},
 							autoLoadOnValue: true,
 							store: {
@@ -225,29 +225,14 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						forceSelection: false,
 						autoLoadOnValue: true,
 						store: {
+							autoLoad: true,
 							model: 'WTA.ux.data.SimpleModel',
 							proxy: WTF.proxy(WT.ID, 'LookupCustomersSuppliers')
 						},
 						triggers: {
 							clear: WTF.clearTrigger()
 						},
-						fieldLabel: me.mys.res('contact.fld-company.lbl'),
-						onBlur: function(e) {
-							var mo=me.getModel();
-							var me = this;
-							
-							//trick to fix bug in Ext:
-							// combo with binding, valueField, displayField
-							// and forceSelection=false, will not update record
-							// when blurring quickly (tab) before loading the combo list
-							mo.set("company",me.getValue());
-							
-							me.removeCls(me.fieldFocusCls);
-							me.triggerWrap.removeCls(me.triggerWrapFocusCls);
-							me.inputWrap.removeCls(me.inputWrapFocusCls);
-							me.invokeTriggers('onFieldBlur', [e]);
-						}
-
+						fieldLabel: me.mys.res('contact.fld-company.lbl')
 					})
 				), {
 					xtype: 'wtsuggestcombo',
@@ -295,8 +280,11 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					geometry: 'circle',
 					baseImageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
 					placeholderImageUrl: me.mys.resourceUrl('contact-placeholder.png'),
-					clearTriggerCls: WT.plTags.touchtheme ? 'wtcon-trash-trigger-touch' : 'wtcon-trash-trigger',
-					uploadTriggerCls: WT.plTags.touchtheme ? 'wtcon-add-trigger-touch' : 'wtcon-add-trigger',
+					clearTriggerCls: 'far fa-trash-alt wt-theme-glyph-lighter',
+					uploadTriggerCls: 'far fa-plus-square wt-theme-glyph-lighter',
+					triggersOverCls: 'wt-theme-glyph',
+					clearTriggerTooltip: me.res('contact.fld-picture.clear.tip'),
+					uploadTriggerTooltip: me.res('contact.fld-picture.upload.tip'),
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
 						extraParams: { tag: me.uploadTag },
 						maxFileSize: 1048576, // 1MB

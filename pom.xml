@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.sonicle.webtop</groupId>
 	<artifactId>webtop-contacts</artifactId>
-	<version>5.11.5</version>
+	<version>5.12.0</version>
 	<packaging>jar</packaging>
 	<name>webtop-contacts</name>
 	
@@ -21,6 +21,8 @@
 		<webtop.service.i18n.tx.push.languages>it</webtop.service.i18n.tx.push.languages>
 		<webtop.service.i18n.tx.pull.languages>es,fr,de,hr,hu</webtop.service.i18n.tx.pull.languages>
 		<webtop.service.restApi.oas>openapi-v1.json</webtop.service.restApi.oas>
+		<!-- SENCHA -->
+		<sencha.properties.target>sencha75</sencha.properties.target>
 	</properties>
 	
 	<dependencies>

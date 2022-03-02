@@ -96,7 +96,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.initCxm();
 		
 		me.on('activate', me.onActivate, me);
-		me.onMessage('remoteSyncResult', function(msg) {
+		me.onPushMessage('remoteSyncResult', function(msg) {
 			var pl = msg.payload,
 					ok = (pl.success === true),
 					tag = me.self.noTagRemoteSync(pl.categoryId),
@@ -377,11 +377,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				features: [{
 					id: 'grouping',
 					ftype: 'grouping',
+					hdNotCollapsibleCls: Ext.baseCSSPrefix + 'grid-group-hd-not-collapsible' + ' wt-theme-bg-alt',
 					groupHeaderTpl: [
 						'<span class="{[this.getSpanCls(values)]}">{name}</span>',
 						{
 							getSpanCls: function(values) {
-								return 'wt-theme-text-tit' + ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
+								return 'wt-theme-text-header1' + ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
 							}
 						}
 					]

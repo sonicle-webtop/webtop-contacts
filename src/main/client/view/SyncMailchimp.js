@@ -140,16 +140,14 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 							allowBlank: false,
 							fieldLabel: me.res('syncMailchimp.fld-audience.lbl'),
 							width: 80+170
-						}),
-						{
+						}), {
 							xtype: 'checkbox',
 							reference: 'fldsynctags', // Publishes field into viewmodel...
 							bind: '{foSyncTags}',
 							margin: '0 20 0 0',
 							hideEmptyLabel: true,
-							boxLabel: me.res('syncMailchimp.fld-synctags.lbl'),
-						},						
-						{
+							boxLabel: me.res('syncMailchimp.fld-synctags.lbl')
+						}, {
 							xtype: 'sotagfield',
 							bind: {
 								value: '{data.tags}',
@@ -167,12 +165,11 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 							emptyText: me.res('syncMailchimp.field-tags.emptyText'),
 							margin: '0 5 0 0',
 							anchor: '100%'
-						}						
+						}	
 					]
 				}
 			]
-		  },
-		  {
+		  }, {
 			itemId: 's2',
 			xtype: 'wtwizardpage',
 			items: [
@@ -215,7 +212,7 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 							bind: '{data.incomingCategoryId}',
 							listConfig: {
 								displayField: 'name',
-								groupCls: 'wt-theme-text-greyed'
+								groupCls: 'wt-theme-text-lighter2'
 							},
 							autoLoadOnValue: true,
 							store: {
@@ -258,8 +255,8 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 		if (pp === 's1') {
 			ret = ppcmp.down('wtform').isValid();
 			if (!ret) return false;
-		}
-		else if (pp === 's2') {
+			
+		} else if (pp === 's2') {
 			ret = ppcmp.down('wtform').isValid();
 			if (!ret) return false;
 			me.mys.onPushMessage('mailchimpSyncLog-' + me.getUId(), me.onMailchimpSyncMessage, me);
@@ -287,7 +284,7 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 	},
 	
 	onMailchimpSyncEnd: function(msg) {
-		var me=this,
+		var me = this,
 			btnCancel = me.lookupReference('btncancel');
 		btnCancel.setDisabled(false);
 	}	
