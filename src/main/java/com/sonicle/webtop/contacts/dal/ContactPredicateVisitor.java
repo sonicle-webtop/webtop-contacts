@@ -37,7 +37,7 @@ import com.sonicle.commons.qbuilders.operators.ComparisonOperator;
 import com.sonicle.commons.web.json.CId;
 import java.util.Collection;
 import org.jooq.Condition;
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_CUSTOM_VALUES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import com.sonicle.webtop.contacts.jooq.tables.ContactsCustomValues;
@@ -65,90 +65,90 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	protected Condition toCondition(String fieldName, ComparisonOperator operator, Collection<?> values, ComparisonNode node) {
 		if ("name".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.DISPLAY_NAME.likeIgnoreCase(singleAsString)
-				.or(CONTACTS.FIRSTNAME.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.LASTNAME.likeIgnoreCase(singleAsString));
+			return CONTACTS_.DISPLAY_NAME.likeIgnoreCase(singleAsString)
+				.or(CONTACTS_.FIRSTNAME.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.LASTNAME.likeIgnoreCase(singleAsString));
 			
 		} else if ("company".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.COMPANY.likeIgnoreCase(singleAsString)
-				.or(CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.DEPARTMENT.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.FUNCTION.likeIgnoreCase(singleAsString));
+			return CONTACTS_.COMPANY.likeIgnoreCase(singleAsString)
+				.or(CONTACTS_.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.DEPARTMENT.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.FUNCTION.likeIgnoreCase(singleAsString));
 			
 		} else if ("companyId".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString);
+			return CONTACTS_.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString);
 			
 		} else if ("email".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.WORK_EMAIL.likeIgnoreCase(singleAsString)
-				.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(singleAsString));
+			return CONTACTS_.WORK_EMAIL.likeIgnoreCase(singleAsString)
+				.or(CONTACTS_.HOME_EMAIL.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_EMAIL.likeIgnoreCase(singleAsString));
 			
 		} else if ("phone".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.WORK_MOBILE.likeIgnoreCase(singleAsString)
-				.or(CONTACTS.WORK_TELEPHONE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_TELEPHONE2.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_PAGER.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_FAX.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_TELEPHONE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_TELEPHONE2.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_PAGER.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_FAX.likeIgnoreCase(singleAsString));
+			return CONTACTS_.WORK_MOBILE.likeIgnoreCase(singleAsString)
+				.or(CONTACTS_.WORK_TELEPHONE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_TELEPHONE2.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_PAGER.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_FAX.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_TELEPHONE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_TELEPHONE2.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_PAGER.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_FAX.likeIgnoreCase(singleAsString));
 			
 		} else if ("address".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.WORK_ADDRESS.likeIgnoreCase(singleAsString)
-				.or(CONTACTS.WORK_POSTALCODE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_CITY.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_STATE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_COUNTRY.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_ADDRESS.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_POSTALCODE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_CITY.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_STATE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_COUNTRY.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_ADDRESS.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_POSTALCODE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_CITY.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_STATE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_COUNTRY.likeIgnoreCase(singleAsString));
+			return CONTACTS_.WORK_ADDRESS.likeIgnoreCase(singleAsString)
+				.or(CONTACTS_.WORK_POSTALCODE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_CITY.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_STATE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_COUNTRY.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_ADDRESS.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_POSTALCODE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_CITY.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_STATE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_COUNTRY.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_ADDRESS.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_POSTALCODE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_CITY.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_STATE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_COUNTRY.likeIgnoreCase(singleAsString));
 			
 		} else if ("notes".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.NOTES.likeIgnoreCase(singleAsString);
+			return CONTACTS_.NOTES.likeIgnoreCase(singleAsString);
 			
 		} else if ("tag".equals(fieldName)) {
 			return exists(
 					selectOne()
 					.from(CONTACTS_TAGS)
 					.where(
-						CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+						CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
 						.and(CONTACTS_TAGS.TAG_ID.equal(singleAsString(values)))
 					)
 				);
 			
 		} else if ("any".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS.DISPLAY_NAME.likeIgnoreCase(singleAsString)
-				.or(CONTACTS.FIRSTNAME.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.LASTNAME.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.COMPANY.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_EMAIL.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_MOBILE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_TELEPHONE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_TELEPHONE2.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_PAGER.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.WORK_FAX.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_TELEPHONE.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_TELEPHONE2.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_PAGER.likeIgnoreCase(singleAsString))
-				.or(CONTACTS.HOME_FAX.likeIgnoreCase(singleAsString));
+			return CONTACTS_.DISPLAY_NAME.likeIgnoreCase(singleAsString)
+				.or(CONTACTS_.FIRSTNAME.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.LASTNAME.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.COMPANY.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.COMPANY_MASTER_DATA_ID.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_EMAIL.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_EMAIL.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.OTHER_EMAIL.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_MOBILE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_TELEPHONE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_TELEPHONE2.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_PAGER.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.WORK_FAX.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_TELEPHONE.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_TELEPHONE2.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_PAGER.likeIgnoreCase(singleAsString))
+				.or(CONTACTS_.HOME_FAX.likeIgnoreCase(singleAsString));
 			
 		} else if (StringUtils.startsWith(fieldName, "CV")) {
 			CId fn = new CId(fieldName, 2);
@@ -169,7 +169,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 				.join(PV_CONTACTS_TAGS).on(PV_CUSTOM_PANELS_TAGS.TAG_ID.eq(PV_CONTACTS_TAGS.TAG_ID))
 				.where(
 					PV_CUSTOM_FIELDS.CUSTOM_FIELD_ID.eq(fn.getToken(1))
-					.and(PV_CONTACTS_TAGS.CONTACT_ID.eq(CONTACTS.CONTACT_ID))
+					.and(PV_CONTACTS_TAGS.CONTACT_ID.eq(CONTACTS_.CONTACT_ID))
 				)
 			);
 			
@@ -180,7 +180,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 							selectOne()
 							.from(PV_CONTACTS_CUSTOM_VALUES)
 							.where(
-								PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+								PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
 								.and(PV_CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.equal(fn.getToken(1)))
 								.and(valueCond.condition)
 							)
@@ -192,7 +192,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 							selectOne()
 							.from(PV_CONTACTS_CUSTOM_VALUES)
 							.where(
-								PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.eq(CONTACTS.CONTACT_ID)
+								PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.eq(CONTACTS_.CONTACT_ID)
 								.and(PV_CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.eq(fn.getToken(1)))
 								.and(valueCond.condition)
 							)
@@ -207,7 +207,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	
 	@Override
 	protected Field<?> getFieldEntityIdOfEntityTable() {
-		return CONTACTS.CONTACT_ID;
+		return CONTACTS_.CONTACT_ID;
 	}
 	
 	@Override
@@ -222,7 +222,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	
 	@Override
 	protected Condition getConditionTagsForCurrentEntity() {
-		return PV_CONTACTS_TAGS.CONTACT_ID.eq(CONTACTS.CONTACT_ID);
+		return PV_CONTACTS_TAGS.CONTACT_ID.eq(CONTACTS_.CONTACT_ID);
 	}
 	
 	@Override
@@ -232,7 +232,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	
 	@Override
 	protected Condition getConditionCustomValuesForCurrentEntityAndField(String fieldId) {
-		return PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.eq(CONTACTS.CONTACT_ID)
+		return PV_CONTACTS_CUSTOM_VALUES.CONTACT_ID.eq(CONTACTS_.CONTACT_ID)
 				.and(PV_CONTACTS_CUSTOM_VALUES.CUSTOM_FIELD_ID.eq(fieldId));
 	}
 	

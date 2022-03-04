@@ -37,7 +37,7 @@ import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_LIST_RECIPIENTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_;
 import static com.sonicle.webtop.contacts.jooq.Tables.LIST_RECIPIENTS;
 import com.sonicle.webtop.contacts.jooq.tables.Contacts;
 import com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord;
@@ -74,14 +74,14 @@ public class ListRecipientDAO extends BaseDAO {
 					LIST_RECIPIENTS.fields()
 			)
 			.select(
-					CONTACTS.FIRSTNAME,
-					CONTACTS.LASTNAME,
-					CONTACTS.WORK_EMAIL,
-					CONTACTS.HOME_EMAIL,
-					CONTACTS.OTHER_EMAIL
+					CONTACTS_.FIRSTNAME,
+					CONTACTS_.LASTNAME,
+					CONTACTS_.WORK_EMAIL,
+					CONTACTS_.HOME_EMAIL,
+					CONTACTS_.OTHER_EMAIL
 			)
 			.from(LIST_RECIPIENTS)
-			.leftOuterJoin(CONTACTS).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
 			.where(
 				LIST_RECIPIENTS.LIST_RECIPIENT_ID.equal(listRecipientId)
 			)
@@ -95,14 +95,14 @@ public class ListRecipientDAO extends BaseDAO {
 					LIST_RECIPIENTS.fields()
 			)
 			.select(
-					CONTACTS.FIRSTNAME,
-					CONTACTS.LASTNAME,
-					CONTACTS.WORK_EMAIL,
-					CONTACTS.HOME_EMAIL,
-					CONTACTS.OTHER_EMAIL
+					CONTACTS_.FIRSTNAME,
+					CONTACTS_.LASTNAME,
+					CONTACTS_.WORK_EMAIL,
+					CONTACTS_.HOME_EMAIL,
+					CONTACTS_.OTHER_EMAIL
 			)
 			.from(LIST_RECIPIENTS)
-			.leftOuterJoin(CONTACTS).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
 			.where(
 				LIST_RECIPIENTS.CONTACT_ID.equal(contactId)
 			)
@@ -114,7 +114,7 @@ public class ListRecipientDAO extends BaseDAO {
 	
 	public List<VListRecipient> selectByProfileContact(Connection con, String domainId, String userId, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		Contacts contacts1=CONTACTS.as("CONTACTS1");
+		Contacts contacts1=CONTACTS_.as("CONTACTS1");
 		return dsl
 			.select(
 					LIST_RECIPIENTS.fields()
@@ -127,16 +127,16 @@ public class ListRecipientDAO extends BaseDAO {
 					contacts1.OTHER_EMAIL
 			)
 			.from(LIST_RECIPIENTS)
-			.join(CONTACTS).on(LIST_RECIPIENTS.CONTACT_ID.equal(CONTACTS.CONTACT_ID))
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.join(CONTACTS_).on(LIST_RECIPIENTS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.leftOuterJoin(contacts1).on(LIST_RECIPIENTS.RECIPIENT_CONTACT_ID.equal(contacts1.CONTACT_ID))
 			.where(
 				CATEGORIES.DOMAIN_ID.equal(domainId)
 				.and(CATEGORIES.USER_ID.equal(userId))
 				.and(LIST_RECIPIENTS.CONTACT_ID.equal(contactId))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
@@ -214,11 +214,11 @@ public class ListRecipientDAO extends BaseDAO {
 			.where(
 				LIST_RECIPIENTS.CONTACT_ID.in(
 					DSL.select(
-						CONTACTS.CONTACT_ID
+						CONTACTS_.CONTACT_ID
 					)
-					.from(CONTACTS)
+					.from(CONTACTS_)
 					.where(
-						CONTACTS.CATEGORY_ID.equal(categoryId)
+						CONTACTS_.CATEGORY_ID.equal(categoryId)
 					)
 				)				
 			)

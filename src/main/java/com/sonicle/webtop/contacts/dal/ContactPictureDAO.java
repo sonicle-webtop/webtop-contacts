@@ -34,7 +34,6 @@ package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OContactPictureMetaOnly;
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsPicturesRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
@@ -113,11 +112,11 @@ public class ContactPictureDAO extends BaseDAO {
 			.where(
 				CONTACTS_PICTURES.CONTACT_ID.in(
 					DSL.select(
-						CONTACTS.CONTACT_ID
+						CONTACTS_.CONTACT_ID
 					)
 					.from(CONTACTS)
 					.where(
-						CONTACTS.CATEGORY_ID.equal(categoryId)
+						CONTACTS_.CATEGORY_ID.equal(categoryId)
 					)
 				)				
 			)

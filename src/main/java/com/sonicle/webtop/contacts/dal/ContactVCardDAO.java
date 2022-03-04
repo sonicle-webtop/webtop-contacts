@@ -33,14 +33,12 @@
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.webtop.contacts.bol.OContactVCard;
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsVcardsRecord;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 
 /**
  *
@@ -140,7 +138,7 @@ public class ContactVCardDAO extends BaseDAO {
 					DSL.select(
 						CONTACTS.CONTACT_ID
 					)
-					.from(CONTACTS)
+					.from(CONTACTS_)
 					.where(
 						CONTACTS.CATEGORY_ID.equal(categoryId)
 					)
