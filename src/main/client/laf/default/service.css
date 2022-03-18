@@ -11,11 +11,12 @@
 .wtcon-icon-editCategory { background-image: url('category-edit_16.svg') !important; background-size: contain; }
 .wtcon-icon-deleteCategory { background-image: url('category-delete_16.svg') !important; background-size: contain; }
 .wtcon-icon-contact { background-image: url('contact_16.svg') !important; background-size: contain; }
-.wtcon-icon-contactsList { background-image: url('contacts-list_16.svg') !important; background-size: contain; }
+.wtcon-icon-contactsList { background-image: url('contactslist_16.svg') !important; background-size: contain; }
 .wtcon-icon-newContact { background-image: url('contact-new_16.svg') !important; background-size: contain; }
-.wtcon-icon-newContactsList { background-image: url('contacts-list-new_16.svg') !important; background-size: contain; }
+.wtcon-icon-newContactsList { background-image: url('contactslist-new_16.svg') !important; background-size: contain; }
 .wtcon-icon-addContact { background-image: url('contact-add_16.svg') !important; background-size: contain; }
-.wtcon-icon-addContactsList { background-image: url('contacts-list-add_16.svg') !important; background-size: contain; }
+.wtcon-icon-addContactsList { background-image: url('contactslist-add_16.svg') !important; background-size: contain; }
+.wtcon-icon-addListRecipient { background-image: url('listrecipient-add_16.svg') !important; background-size: contain; }
 .wtcon-icon-import { background-image: url('import_16.svg') !important; background-size: contain; }
 .wtcon-icon-writeMessage { background-image: url('message-new_16.svg') !important; background-size: contain; }
 .wtcon-icon-reminder-birthday { background-image: url('birthday_16.png') !important; background-size: contain; }

@@ -60,6 +60,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	confirm: 'yn',
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.Contact',
+	actionsResPrefix: 'contact',
 	
 	uploadTag: null,
 	
@@ -98,7 +99,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						'-',
 						me.addAct('delete', {
 							text: null,
-							tooltip: WT.res('act-delete.lbl'),
 							iconCls: 'wt-icon-delete',
 							handler: function() {
 								me.deleteContact();
@@ -645,7 +645,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		var me = this,
 				rec = me.getModel();
 		
-		WT.confirm(WT.res('confirm.delete'), function(bid) {
+		WT.confirm(me.res('contact.confirm.delete', Ext.String.ellipsis(rec.get('displayName'), 40)), function(bid) {
 			if (bid === 'yes') {
 				me.wait();
 				WT.ajaxReq(me.mys.ID, 'ManageContacts', {

@@ -1566,10 +1566,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	deleteContactItemsUI: function(recs) {
 		var me = this,
 			ids = Sonicle.Data.collectValues(recs),
+			r = recs[0],
+			contactType = r.get('isList') ? 'contactsList' : 'contact',
+			displayName = r.get('isList') ? r.get('displayName') : r.get('fullName'),
 			msg;
 		
 		if (recs.length === 1) {
-			msg = me.res('contact.confirm.delete', Ext.String.ellipsis(recs[0].get('fullName'), 40));
+			msg = me.res(contactType + '.confirm.delete', Ext.String.ellipsis(displayName, 40));
 		} else {
 			msg = me.res('gpcontacts.confirm.delete.selection');
 		}
