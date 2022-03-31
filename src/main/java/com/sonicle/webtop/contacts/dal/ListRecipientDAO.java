@@ -155,6 +155,7 @@ public class ListRecipientDAO extends BaseDAO {
 	}
 	
 	public int[] batchInsert(Connection con, int contactId, Collection<ContactListRecipient> recipients) throws DAOException {
+		if (recipients.isEmpty()) return new int[0];
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
 			dsl.insertInto(LIST_RECIPIENTS, 

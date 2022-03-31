@@ -80,6 +80,7 @@ public class ContactTagDAO extends BaseDAO {
 	}
 	
 	public int[] batchInsert(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+		if (tagIds.isEmpty()) return new int[0];
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
 			dsl.insertInto(CONTACTS_TAGS, 
