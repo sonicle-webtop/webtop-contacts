@@ -88,7 +88,6 @@ import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
-import com.sonicle.webtop.contacts.model.BaseContact;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
@@ -3088,7 +3087,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ContactsUtils.buildHref(tgt.getPublicUid()));
 			if (!tgt.getIsList()) {
-				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(ContactBase.buildFullName(tgt.getFirstname(), tgt.getLastname()));
 			} else {
 				// Compose list workEmail as: "list-{contactId}@{serviceId}"
 				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@" + SERVICE_ID);
@@ -3100,7 +3099,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private OContact fillDefaultsForUpdate(OContact tgt) {
 		if (tgt != null) {
 			if (!tgt.getIsList()) {
-				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(ContactBase.buildFullName(tgt.getFirstname(), tgt.getLastname()));
 			} else {
 				// Compose list workEmail as: "list-{contactId}@{serviceId}"
 				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@" + SERVICE_ID);
@@ -3138,7 +3137,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private ReminderInApp createAnniversaryInAppReminder(Locale locale, boolean birthday, VContact contact, DateTime date) {
 		String type = (birthday) ? "birthday" : "anniversary";
 		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
-		String title = MessageFormat.format(lookupResource(locale, resKey), BaseContact.buildFullName(contact.getFirstname(), contact.getLastname()));
+		String title = MessageFormat.format(lookupResource(locale, resKey), ContactBase.buildFullName(contact.getFirstname(), contact.getLastname()));
 		
 		ReminderInApp alert = new ReminderInApp(SERVICE_ID, contact.getCategoryProfileId(), type, contact.getContactId().toString());
 		alert.setTitle(title);
@@ -3150,7 +3149,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private ReminderEmail createAnniversaryEmailReminder(Locale locale, InternetAddress recipient, boolean birthday, VContact contact, DateTime date) {
 		String type = (birthday) ? "birthday" : "anniversary";
 		String resKey = (birthday) ? ContactsLocale.REMINDER_TITLE_BIRTHDAY : ContactsLocale.REMINDER_TITLE_ANNIVERSARY;
-		String fullName = BaseContact.buildFullName(contact.getFirstname(), contact.getLastname());
+		String fullName = ContactBase.buildFullName(contact.getFirstname(), contact.getLastname());
 		String title = MessageFormat.format(lookupResource(locale, resKey), StringUtils.trim(fullName));
 		String subject = NotificationHelper.buildSubject(locale, SERVICE_ID, title);
 		String body = null;

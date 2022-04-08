@@ -46,7 +46,6 @@ import com.sonicle.webtop.contacts.bol.VContactObject;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
-import com.sonicle.webtop.contacts.model.BaseContact;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
@@ -188,39 +187,17 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static <T extends ContactLookup, S extends VContactLookup> T fillContactLookup(T tgt, S src) {
+	static <T extends ContactLookup> T fillContactLookup(T tgt, VContactLookup src) {
+		fillContact((ContactBase)tgt, src);
 		if ((tgt != null) && (src != null)) {
-			fillBaseContact(tgt, src);
+			tgt.setContactId(src.getContactId());
 			tgt.setIsList(src.getIsList());
 			tgt.setCompany(createContactCompany(src));
-			tgt.setFunction(src.getFunction());
-			tgt.setMobile(src.getWorkMobile());
-			tgt.setEmail1(src.getWorkEmail());
-			tgt.setEmail2(src.getHomeEmail());
-			tgt.setWorkCity(src.getWorkCity());
-			tgt.setWorkTelephone1(src.getWorkTelephone());
-			tgt.setHomeTelephone1(src.getHomeTelephone());
 			tgt.setCategoryName(src.getCategoryName());
 			tgt.setCategoryDomainId(src.getCategoryDomainId());
 			tgt.setCategoryUserId(src.getCategoryUserId());
 			tgt.setTags(src.getTags());
 			tgt.setHasPicture(src.getHasPicture());
-		}
-		return tgt;
-	}
-	
-	static <T extends BaseContact, S extends OContact> T fillBaseContact(T tgt, S src) {
-		//TODO: candidate for remove!!
-		if ((tgt != null) && (src != null)) {
-			tgt.setContactId(src.getContactId());
-			tgt.setCategoryId(src.getCategoryId());
-			tgt.setRevisionStatus(EnumUtils.forSerializedName(src.getRevisionStatus(), BaseContact.RevisionStatus.class));
-			tgt.setPublicUid(src.getPublicUid());
-			tgt.setTitle(src.getTitle());
-			tgt.setFirstName(src.getFirstname());
-			tgt.setLastName(src.getLastname());
-			tgt.setDisplayName(src.getDisplayName());
-			tgt.setNickname(src.getNickname());
 		}
 		return tgt;
 	}
@@ -379,7 +356,7 @@ public class ManagerUtils {
 			if (tgt.getCreationTimestamp() == null) tgt.setCreationTimestamp(defaultTimestamp);
 			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ContactsUtils.buildHref(tgt.getPublicUid()));
 			if (!tgt.getIsList()) {
-				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(ContactBase.buildFullName(tgt.getFirstname(), tgt.getLastname()));
 			} else {
 				// Compose list workEmail as: "list-{contactId}@{serviceId}"
 				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@com.sonicle.webtop.contacts");
@@ -391,7 +368,7 @@ public class ManagerUtils {
 	static OContact fillOContactWithDefaultsForUpdate(OContact tgt, DateTime defaultTimestamp) {
 		if (tgt != null) {
 			if (!tgt.getIsList()) {
-				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(BaseContact.buildFullName(tgt.getFirstname(), tgt.getLastname()));
+				if (StringUtils.isBlank(tgt.getDisplayName())) tgt.setDisplayName(ContactBase.buildFullName(tgt.getFirstname(), tgt.getLastname()));
 			} else {
 				// Compose list workEmail as: "list-{contactId}@{serviceId}"
 				tgt.setWorkEmail(RCPT_ORIGIN_LIST + "-" + tgt.getContactId() + "@com.sonicle.webtop.contacts");
