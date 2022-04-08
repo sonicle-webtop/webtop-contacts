@@ -35,6 +35,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
 		'Sonicle.String',
+		'Sonicle.Utils',
 		'Sonicle.form.field.ComboBox',
 		'Sonicle.form.field.Image',
 		'Sonicle.form.field.TagDisplay',
@@ -571,7 +572,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						size: file.size,
 						_uplId: uploadId
 					}));
-					me.lref('tpnlmain').getLayout().setActiveItem(s);
+					me.lref('tpnlmain').setActiveItem(s);
 				}
 			}
 		};
@@ -584,7 +585,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				store: '{record.cvalues}',
 				fieldsDefs: '{record._cfdefs}'
 			},
-			defaultLabelWidth: 120
+			serviceId: me.mys.ID,
+			defaultLabelWidth: 120,
+			listeners: {
+				prioritize: function(s) {
+					me.lref('tpnlmain').setActiveItem(s);
+				}
+			}
 		};
 		
 		me.add({
@@ -651,7 +658,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				WT.ajaxReq(me.mys.ID, 'ManageContacts', {
 					params: {
 						crud: 'delete',
-						ids: WTU.arrayAsParam([rec.get('id')])
+						ids: Sonicle.Utils.toJSONArray([rec.get('id')])
 					},
 					callback: function(success) {
 						me.unwait();
@@ -748,7 +755,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			var me = this;
 			WT.ajaxReq(me.mys.ID, 'GetCustomFieldsDefsData', {
 				params: {
-					tags: WTU.arrayAsParam(tags),
+					tags: Sonicle.Utils.toJSONArray(tags),
 					contactId: (contactId !== null && contactId > 0) ? contactId : null
 				},
 				callback: function(success, json) {
