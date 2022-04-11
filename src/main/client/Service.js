@@ -1952,6 +1952,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		});
+		return vw;
 	},
 	
 	addContact2: function(data, opts) {
@@ -1974,10 +1975,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				dirty: opts.dirty
 			});
 		});
+		return vw;
 	},
 	
 	editContact: function(contactId, opts) {
-		this.openContact(true, contactId, opts);
+		return this.openContact(true, contactId, opts);
 	},
 	
 	openContact: function(edit, contactId, opts) {
@@ -1996,6 +1998,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		});
+		return vw;
 	},
 	
 	addContactsList: function(categoryId, recipients, opts) {
@@ -2014,6 +2017,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		});
+		return vw;
 	},
 	
 	addContactsList2: function(data, opts) {
@@ -2031,10 +2035,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				dirty: opts.dirty
 			});
 		});
+		return vw;
 	},
 	
 	editContactsList: function(contactsListId, opts) {
-		this.openContactsList(true, contactsListId, opts);
+		return this.openContactsList(true, contactsListId, opts);
 	},
 	
 	openContactsList: function(edit, contactsListId, opts) {
@@ -2053,6 +2058,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				}
 			});
 		});
+		return vw;
 	},
 	
 	/* No more used but working...
@@ -2178,20 +2184,50 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	privates: {
 		parseContactsListApiData: function(data) {
 			data = data || {};
-			var obj = {};
+			var me = this,
+				WTFT = WTA.util.FoldersTree,
+				tree = me.trFolders(),
+				folder = WTFT.getFolderForAdd(tree, data.categoryId),
+				obj = {};
 			
-			obj.categoryId = WTA.util.FoldersTree.getFolderForAdd(this.trFolders(), data.categoryId).getFolderId();
+			obj.categoryId = folder ? folder.getFolderId() : WTFT.getDefaultOrBuiltInFolder(tree);
 			if (Ext.isDefined(data.name)) obj.firstName = data.name;
-			if (Ext.isDefined(data.recipients)) obj.recipients = data.recipients;
+			if (Ext.isDefined(data.recipients)) {
+				obj.recipients = me.parseContactsListRecipientsApiData(data.recipients);
+			}
 			
 			return obj;
 		},
 		
+		parseContactsListRecipientsApiData: function(data) {
+			var ret = [];
+			Ext.iterate(data, function(obj) {
+				var item;
+				if (Ext.isString(obj)) {
+					item = {};
+					item['recipientType'] = 'to';
+					item['recipient'] = obj;
+				} else if (Ext.isObject(obj)) {
+					item = Sonicle.Object.pluck(obj, ['rcptType', 'address', 'refContactId'], false, {
+						'rcptType': 'recipientType',
+						'address': 'recipient',
+						'refContactId': 'recipientContactId'
+					});
+				}
+				if (item) ret.push(item);
+			});
+			return ret;
+		},
+		
 		parseContactApiData: function(data) {
 			data = data || {};
-			var obj = {};
+			var me = this,
+				WTFT = WTA.util.FoldersTree,
+				tree = me.trFolders(),
+				folder = WTFT.getFolderForAdd(tree, data.categoryId),
+				obj = {};
 			
-			obj.categoryId = WTA.util.FoldersTree.getFolderForAdd(this.trFolders(), data.categoryId).getFolderId();
+			obj.categoryId = folder ? folder.getFolderId() : WTFT.getDefaultOrBuiltInFolder(tree);
 			if (Ext.isDefined(data.displayName)) obj.displayName = data.displayName;
 			if (Ext.isDefined(data.title)) obj.title = data.title;
 			if (Ext.isDefined(data.firstName)) obj.firstName = data.firstName;
