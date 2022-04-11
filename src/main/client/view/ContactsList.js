@@ -233,8 +233,12 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 							iconCls: 'wtcon-icon-addListRecipient',
 							handler: function() {
 								var gp = me.lref('gprecipients'),
-									sto = gp.getStore();
-								if (sto.getCount() === 0 || sto.getAt(sto.getCount()-1).get('recipient')) gp.addRecipient(null);
+									sto = gp.getStore(),
+									rec;
+								if (sto.getCount() === 0 || sto.getAt(sto.getCount()-1).get('recipient')) {
+									rec = gp.addRecipient(null);
+									if (rec) gp.startEdit(rec);
+								}
 							}
 						},
 						'->',
@@ -321,8 +325,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	privates: {
 		onViewLoad: function(s, success) {
 			if (!success) return;
-			var me = this,
-				stoRcpt = me.getModel().recipients();
+			var me = this;
 
 			if (me.isMode(me.MODE_NEW)) {
 				me.getAct('saveClose').setDisabled(false);
@@ -339,13 +342,6 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				me.getAct('delete').setDisabled(false);
 				//me.getAct('addListRecipient').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
-			}
-			// Add dummy recipient (if necessary)
-			if (stoRcpt.getCount() === 0) {
-				stoRcpt.add(stoRcpt.createModel({
-					recipientType: 'to',
-					recipient: ''
-				}));
 			}
 			me.lref('fldname').focus(true);
 		}
