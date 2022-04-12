@@ -199,6 +199,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.slf4j.Logger;
 import com.sonicle.webtop.contacts.io.ContactFileReader;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -211,7 +212,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public final boolean VCARD_CARETENCODINGENABLED;
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
-	private final KeyedReentrantLocks locks = new KeyedReentrantLocks<String>();
+	private final KeyedReentrantLocks<String> locks = new KeyedReentrantLocks<>();
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
 	public final MailchimpProduct MAILCHIMP_PRODUCT;
@@ -523,19 +524,22 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		ContactsUserSettings us = new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
 		
 		Integer categoryId = null;
-		try (KeyedReentrantLocks.KeyedLock lock = locks.tryAcquire("getDefaultCategoryId", 60 * 1000)) {
-			if (lock != null) {
-				categoryId = us.getDefaultCategoryFolder();
-				if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "CREATE")) {
-					try {
-						categoryId = getBuiltInCategoryId();
-						if (categoryId == null) throw new WTException("Built-in category is null");
-						us.setDefaultCategoryFolder(categoryId);
-					} catch (Throwable t) {
-						logger.error("Unable to get built-in category", t);
-					}
+		try {
+			locks.tryLock("getDefaultCategoryId", 60, TimeUnit.SECONDS);
+			categoryId = us.getDefaultCategoryFolder();
+			if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "CREATE")) {
+				try {
+					categoryId = getBuiltInCategoryId();
+					if (categoryId == null) throw new WTException("Built-in category is null");
+					us.setDefaultCategoryFolder(categoryId);
+				} catch (Throwable t) {
+					logger.error("Unable to get built-in category", t);
 				}
 			}
+		} catch (InterruptedException ex) {
+			// Do nothing...
+		} finally {
+			locks.unlock("getDefaultCategoryId");
 		}
 		return categoryId;
 	}
