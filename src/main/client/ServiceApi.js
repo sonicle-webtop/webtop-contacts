@@ -52,7 +52,7 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {Boolean} [opts.uploadTag] A custom upload tag.
 	 * @returns {WTA.sdk.ModelView}
 	 */
-	openContact(id, opts) {
+	openContact: function(id, opts) {
 		opts = opts || {};
 		return this.service.openContact(opts.mode === 'view' ? false : true, id, {
 			callback: opts.callback,
@@ -138,7 +138,7 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {Boolean} [opts.uploadTag] A custom upload tag.
 	 * @returns {WTA.sdk.ModelView}
 	 */
-	openContactsList(id, opts) {
+	openContactsList: function(id, opts) {
 		opts = opts || {};
 		return this.service.openContactsList(opts.mode === 'view' ? false : true, id, {
 			callback: opts.callback,
