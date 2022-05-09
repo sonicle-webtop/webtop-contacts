@@ -2213,7 +2213,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		return me.getVar('hasAudit');
 	},
 	
-	openAuditUI: function(referenceId, context, isList = null) {
+	openAuditUI: function(referenceId, context, isList) {
 		var me = this,
 				contactType = isList ? 'CONTACTSLIST' : null,
 				tagsStore = WT.getTagsStore();
