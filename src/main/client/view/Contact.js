@@ -179,15 +179,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					margin: '0 0 5 0'
 				},
 				me.mys.hasAudit() ? {
-					xtype: 'toolbar',
+					xtype: 'statusbar',
 					dock: 'bottom',
-					padding: '5 5 5 5',
 					items: [
-						'->',
 						me.addAct('contactAuditLog', {
 							text: null,
 							tooltip: WT.res('act-auditLog.lbl'),
-							iconCls: 'fas fa-history',
+							iconCls: 'fas fa-history wt-theme-glyph',
 							handler: function() {
 								me.mys.openAuditUI(me.getModel().getId(), 'CONTACT');
 							},
