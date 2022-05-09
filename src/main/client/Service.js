@@ -467,6 +467,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('callMobile');
 						me.updateDisabled('sendSms');
 						me.updateDisabled('createEvent');
+						if (me.hasAudit()) me.updateDisabled('contactAuditLog');
 						me.updateDisabled('sendContact');
 						me.pnlPreview().setContacts(s.getSelection());
 					},
@@ -512,6 +513,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					},
 					editcontact: function(s, isList, id) {
 						me.openContactItemUI(true, isList, id);
+					},
+					opencontactaudit: function(s, isList, id) {
+						me.openAuditUI(id, 'CONTACT', isList);
 					}
 				},
 				width: '60%',
@@ -682,6 +686,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.syncRemoteCategoryUI(node.getFolderId());
 			}
 		});
+		if (me.hasAudit()) {
+			me.addAct('categoryAuditLog', {
+				text: WT.res('act-auditLog.lbl'),
+				tooltip: null,
+				handler: function(s, e) {
+					var node = e.menuData.node;
+					if (node) me.openAuditUI(node.get('_catId'), 'CATEGORY');
+				}
+			});
+		}
 		me.addAct('importContacts', {
 			tooltip: null,
 			handler: function(s, e) {
@@ -987,6 +1001,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (rec) me.createEventUI(rec);
 			}
 		});
+		if (me.hasAudit()) {
+			me.addAct('contactAuditLog', {
+				text: WT.res('act-auditLog.lbl'),
+				tooltip: null,
+				handler: function() {
+					var rec = me.getSelectedContact();
+					if (rec) me.openAuditUI(rec.get('id'), 'CONTACT', rec.get('isList'));
+				}
+			});
+		}
 	},
 	
 	initCxm: function() {
@@ -1051,6 +1075,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('syncRemoteCategory'),
 				'-',
 				me.getAct('applyTags'),
+				me.hasAudit() ? me.getAct('categoryAuditLog') : null,
 				'-',
 				me.getAct('addContact'),
 				me.getAct('addContactsList'),
@@ -1128,6 +1153,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('printContact'),
 				'-',
 				me.getAct('tags'),
+				me.hasAudit() ? me.getAct('contactAuditLog') : null,
 				'-',
 				me.getAct('deleteContact'),
 				'-',
@@ -1171,6 +1197,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('callMobile');
 		me.updateDisabled('sendSms');
 		me.updateDisabled('createEvent');
+		if (me.hasAudit()) me.updateDisabled('contactAuditLog');
 		me.updateDisabled('sendContact');
 	},
 	
@@ -2180,7 +2207,47 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		return ids;
 	},
+	
+	hasAudit: function() {
+		var me = this;
+		return me.getVar('hasAudit');
+	},
+	
+	openAuditUI: function(referenceId, context, isList = null) {
+		var me = this,
+				contactType = isList ? 'CONTACTSLIST' : null,
+				tagsStore = WT.getTagsStore();
+		
+		WT.getServiceApi(WT.ID).showAuditLog(me.ID, context, null, referenceId, function(data) {
+			var str = '', logDate, actionString, eldata;
 			
+			Ext.each(data,function(el) {
+				logDate = Ext.Date.parseDate(el.timestamp, 'Y-m-d H:i:s');
+				actionString = Ext.String.format('auditLog.{0}.{1}', (contactType || context), el.action);
+				str += Ext.String.format('{0} - {1} - {2} ({3})\n', Ext.Date.format(logDate, WT.getShortDateTimeFmt()), me.res(actionString), el.userName, el.userId);
+				eldata = Ext.JSON.decode(el.data);
+				
+				if (el.action === 'TAG' && eldata) {
+					if (eldata.set) {
+						Ext.each(eldata.set, function(tag) {
+							var r = tagsStore.findRecord('id', tag);
+							var desc = r ? r.get('name') : tag;
+							str += Ext.String.format('\t+ {0}\n', desc);
+						});
+					}
+					if (eldata.unset) {
+						Ext.each(eldata.unset, function(tag) {
+							var r = tagsStore.findRecord('id', tag);
+							var desc = r ? r.get('name') : tag;
+							str += Ext.String.format('\t- {0}\n', desc);
+						});
+					}
+				}
+			});
+			return str;
+		});
+	},
+	
 	privates: {
 		parseContactsListApiData: function(data) {
 			data = data || {};
@@ -2397,12 +2464,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						return firstIsList || emailMiss;
 					}
 					break;
-				case 'createEvent': 
+				case 'createEvent':
+				case 'contactAuditLog':
 					sel = me.getSelectedContact();
-					if(sel && (sel.get('isList') === false)) {
+					if (sel) {
 						return false;
-					}
-					else {
+					} else {
 						return true;
 					}
 			}

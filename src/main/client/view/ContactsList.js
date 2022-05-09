@@ -153,7 +153,24 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					hidden: true,
 					hideLabel: true,
 					margin: '0 0 5 0'
-				}
+				},
+				me.mys.hasAudit() ? {
+					xtype: 'toolbar',
+					dock: 'bottom',
+					padding: '5 5 5 5',
+					items: [
+						'->',
+						me.addAct('contactsListAuditLog', {
+							text: null,
+							tooltip: WT.res('act-auditLog.lbl'),
+							iconCls: 'fas fa-history',
+							handler: function() {
+								me.mys.openAuditUI(me.getModel().getId(), 'CONTACT', true);
+							},
+							scope: me
+						})
+					]
+				} : null
 			]
 		});
 		me.callParent(arguments);
@@ -332,16 +349,19 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				me.getAct('delete').setDisabled(true);
 				//me.getAct('addListRecipient').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
+				if (me.mys.hasAudit()) me.getAct('contactsListAuditLog').setDisabled(true);
 			} else if (me.isMode(me.MODE_VIEW)) {
 				me.getAct('saveClose').setDisabled(true);
 				me.getAct('delete').setDisabled(true);
 				//me.getAct('addListRecipient').setDisabled(true);
 				me.lref('fldcategory').setReadOnly(true);
+				if (me.mys.hasAudit()) me.getAct('contactsListAuditLog').setDisabled(false);
 			} else if (me.isMode(me.MODE_EDIT)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(false);
 				//me.getAct('addListRecipient').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
+				if (me.mys.hasAudit()) me.getAct('contactsListAuditLog').setDisabled(false);
 			}
 			me.lref('fldname').focus(true);
 		}

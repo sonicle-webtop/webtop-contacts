@@ -558,7 +558,18 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 						items: [
 							{
 								xtype: 'tbfill'
-							}, {
+							}, me.mys.hasAudit() ? {
+								xtype: 'button',
+								margin: '0 5 0 5',
+								ui: 'default-toolbar',
+								text: null,
+								tooltip: WT.res('act-auditLog.lbl'),
+								iconCls: 'fas fa-history',
+								handler: function() {
+									var vm = me.getVM();
+									me.fireEvent('opencontactaudit', me, vm.get('record.isList'), vm.get('record.id'));
+								}
+							} : null, {
 								xtype: 'button',
 								ui: 'default-toolbar',
 								bind: {
