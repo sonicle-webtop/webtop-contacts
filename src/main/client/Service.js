@@ -1982,16 +1982,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		return vw;
 	},
 	
-	addContact2: function(data, opts) {
+	addContactWithData: function(data, opts) {
 		opts = opts || {};
 		var me = this,
-				data2 = me.parseContactApiData(data),
-				vw = WT.createView(me.ID, 'view.Contact', {
-					swapReturn: true,
-					viewCfg: {
-						uploadTag: opts.uploadTag
-					}
-				});	
+			data2 = me.parseContactApiData(data),
+			vw = WT.createView(me.ID, 'view.Contact', {
+				swapReturn: true,
+				viewCfg: {
+					uploadTag: opts.uploadTag
+				}
+			});	
 		
 		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
@@ -2339,6 +2339,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if (Ext.isDefined(data.url)) obj.url = data.url;
 			if (Ext.isDefined(data.notes)) obj.notes = data.notes;
 			if (Ext.isDefined(data.picture)) obj.picture = data.picture;
+			if (Ext.isDefined(data.tags)) obj.tags = data.tags;
 
 			// OLD compatibility mappings...
 			if (Ext.isDefined(data.workTelephone)) obj.workTelephone1 = data.workTelephone;

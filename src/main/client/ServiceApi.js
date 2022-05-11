@@ -109,7 +109,7 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {Date} [data.anniversary] The anniversary date.
 	 * @param {String} [data.url] The Website URL.
 	 * @param {String} [data.notes] Arbitrary text notes.
-	 * @param {String} [data.tags] Comma-separated list of tag IDs.
+	 * @param {String} [data.tags] Pipe-separated list of WebTop's tag IDs.
 	 * @param {Object} opts An object containing configuration.
 	 * @param {Function} [opts.callback] Callback method for 'viewsave' event.
 	 * @param {Object} [opts.scope] The callback method scope.
@@ -119,7 +119,7 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 */
 	addContact: function(data, opts) {
 		opts = opts || {};
-		return this.service.addContact2(data, {
+		return this.service.addContactWithData(data, {
 			callback: opts.callback,
 			scope: opts.scope,
 			dirty: opts.dirty,
