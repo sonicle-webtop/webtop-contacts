@@ -632,7 +632,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			onAfterCategoryAction(category.getCategoryId(), category.getProfileId());
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, category.getCategoryId(), null);
+				auditLogWrite(AuditContext.CATEGORY, AuditAction.CREATE, category.getCategoryId(), null);
 			}
 			
 			return category;
@@ -669,7 +669,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			onAfterCategoryAction(cat.getCategoryId(), cat.getProfileId());
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CATEGORY, AuditAction.CREATE, cat.getCategoryId(), null);
+				auditLogWrite(AuditContext.CATEGORY, AuditAction.CREATE, cat.getCategoryId(), null);
 			}
 			
 			// Sets category as default
@@ -701,7 +701,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			onAfterCategoryAction(categoryId, category.getProfileId());
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CATEGORY, AuditAction.UPDATE, categoryId, null);
+				auditLogWrite(AuditContext.CATEGORY, AuditAction.UPDATE, categoryId, null);
 			}
 			
 		} catch (Throwable t) {
@@ -743,9 +743,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			onAfterCategoryAction(categoryId, cat.getProfileId());
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CATEGORY, AuditAction.DELETE, categoryId, null);
+				auditLogWrite(AuditContext.CATEGORY, AuditAction.DELETE, categoryId, null);
 				// removed due to new audit implementation
-				// writeAuditLog(AuditContext.CATEGORY, AuditAction.DELETE, "*", categoryId);
+				// auditLogWrite(AuditContext.CATEGORY, AuditAction.DELETE, "*", categoryId);
 			}
 			
 			return ret == 1;
@@ -1038,7 +1038,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, newContactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.CREATE, newContactId, null);
 			}
 			
 		} catch(Throwable t) {
@@ -1090,7 +1090,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
 			}
 			
 		} catch(Throwable t) {
@@ -1383,7 +1383,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, newContactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.CREATE, newContactId, null);
 			}
 			
 			return doContactGet(con, newContactId, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.ATTACHMENTS, ContactProcessOpts.TAGS, ContactProcessOpts.CUSTOM_VALUES));
@@ -1423,7 +1423,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
 			}
 			
 		} catch (Throwable t) {
@@ -1452,7 +1452,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
 			}
 			
 		} catch (Throwable t) {
@@ -1488,7 +1488,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				
 				DbUtils.commitQuietly(con);
 				if (isAuditEnabled()) {
-					writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, contactId, null);
+					auditLogWrite(AuditContext.CONTACT, AuditAction.DELETE, contactId, null);
 				}
 			
 			} else {
@@ -1514,7 +1514,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 
 				DbUtils.commitQuietly(con);
 				if (isAuditEnabled()) {
-					writeAuditLog(AuditContext.CONTACT, AuditAction.DELETE, deleted);
+					auditLogWrite(AuditContext.CONTACT, AuditAction.DELETE, deleted);
 				}
 			}
 			
@@ -1599,9 +1599,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
 				if (copy) {
-					writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, copied);
+					auditLogWrite(AuditContext.CONTACT, AuditAction.CREATE, copied);
 				} else {
-					writeAuditLog(AuditContext.CONTACT, AuditAction.MOVE, moved);
+					auditLogWrite(AuditContext.CONTACT, AuditAction.MOVE, moved);
 				}
 			}
 			
@@ -1657,7 +1657,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.CREATE, newContactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.CREATE, newContactId, null);
 			}
 			
 			return doContactListGet(con, newContactId, BitFlag.of(ContactProcessOpts.TAGS));
@@ -1697,7 +1697,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
 			}
 			
 		} catch (Throwable t) {
@@ -1726,7 +1726,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
-				writeAuditLog(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
+				auditLogWrite(AuditContext.CONTACT, AuditAction.UPDATE, contactId, null);
 			}
 			
 		} catch (Throwable t) {
@@ -1782,7 +1782,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			audit.put(tagAction, auditTag);
 			
 			if (isAuditEnabled() && !auditTag.isEmpty()) {
-				writeAuditLog(
+				auditLogWrite(
 					AuditContext.CATEGORY,
 					AuditAction.TAG,
 					categoryId,
@@ -1831,7 +1831,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							
 							HashMap<String,List<String>> audit = coreMgr.compareTags(oldTagIds, newTagIds);
 							
-							writeAuditLog(
+							auditLogWrite(
 								AuditContext.CONTACT,
 								AuditAction.TAG,
 								cId,
@@ -1860,7 +1860,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					audit.put(tagAction, auditTag);
 					
 					if (isAuditEnabled() && !auditTag.isEmpty()) {
-						writeAuditLog(
+						auditLogWrite(
 							AuditContext.CONTACT,
 							AuditAction.TAG,
 							cId,
@@ -3519,14 +3519,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private enum AuditAction {
 		CREATE, UPDATE, DELETE, MOVE, TAG
-	}
-	
-	private void writeAuditLog(AuditContext context, AuditAction action, Object reference, Object data) {
-		writeAuditLog(EnumUtils.getName(context), EnumUtils.getName(action), (reference != null) ? String.valueOf(reference) : null, (data != null) ? String.valueOf(data) : null);
-	}
-	
-	private void writeAuditLog(AuditContext context, AuditAction action, Collection<AuditReferenceDataEntry> entries) {
-		writeAuditLog(EnumUtils.getName(context), EnumUtils.getName(action), entries);
 	}
 	
 	private class AuditContactObj implements AuditReferenceDataEntry {
