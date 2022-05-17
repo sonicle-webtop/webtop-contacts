@@ -200,6 +200,7 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
 import org.slf4j.Logger;
 import com.sonicle.webtop.contacts.io.ContactFileReader;
+import com.sonicle.webtop.core.app.AuditLogManager;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -1821,22 +1822,24 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				
 				if (isAuditEnabled()) {
 					if (UpdateTagsOperation.RESET.equals(operation)) {
-						for (int cId : contactIds) {
-							List<String> oldTagIds = new ArrayList<>();
-							List<String> newTagIds = new ArrayList<>();
-							
-							Contact c = getContact(cId);
-							oldTagIds.addAll(c != null ? c.getTags() : getContactList(cId).getTags());
-							newTagIds.addAll(okTagIds);
-							
-							HashMap<String,List<String>> audit = coreMgr.compareTags(oldTagIds, newTagIds);
-							
-							auditLogWrite(
-								AuditContext.CONTACT,
-								AuditAction.TAG,
-								cId,
-								JsonResult.gson().toJson(audit)
-							);
+						AuditLogManager.Batch auditBatch = auditLogGetBatch(AuditContext.CONTACT, AuditAction.TAG);
+						if (auditBatch != null) {
+							for (int cId : contactIds) {
+								List<String> oldTagIds = new ArrayList<>();
+								List<String> newTagIds = new ArrayList<>();
+
+								Contact c = getContact(cId);
+								oldTagIds.addAll(c != null ? c.getTags() : getContactList(cId).getTags());
+								newTagIds.addAll(okTagIds);
+
+								HashMap<String,List<String>> audit = coreMgr.compareTags(oldTagIds, newTagIds);
+
+								auditBatch.write(
+									cId,
+									JsonResult.gson().toJson(audit)
+								);
+							}
+							auditBatch.flush();
 						}
 					} else {
 						auditTag.addAll(okTagIds);
@@ -1855,18 +1858,20 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled() && !UpdateTagsOperation.RESET.equals(operation)) {
-				for (int cId : contactIds) {
-					HashMap<String,List<String>> audit = new HashMap<>();
-					audit.put(tagAction, auditTag);
-					
-					if (isAuditEnabled() && !auditTag.isEmpty()) {
-						auditLogWrite(
-							AuditContext.CONTACT,
-							AuditAction.TAG,
-							cId,
-							JsonResult.gson().toJson(audit)
-						);
+				AuditLogManager.Batch auditBatch = auditLogGetBatch(AuditContext.CONTACT, AuditAction.TAG);
+				if (auditBatch != null) {
+					for (int cId : contactIds) {
+						HashMap<String,List<String>> audit = new HashMap<>();
+						audit.put(tagAction, auditTag);
+
+						if (isAuditEnabled() && !auditTag.isEmpty()) {
+							auditBatch.write(
+								cId,
+								JsonResult.gson().toJson(audit)
+							);
+						}
 					}
+					auditBatch.flush();
 				}
 			}
 			
