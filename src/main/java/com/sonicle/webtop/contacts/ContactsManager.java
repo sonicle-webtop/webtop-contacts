@@ -1756,33 +1756,34 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			checkRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "UPDATE");
-			List<String> auditTag = new ArrayList<>();
-			String tagAction = UpdateTagsOperation.SET.equals(operation) ? "set" : "unset";
-			
+			List<String> auditTags = new ArrayList<>();
 			if (UpdateTagsOperation.SET.equals(operation) || UpdateTagsOperation.RESET.equals(operation)) {
 				Set<String> validTags = coreMgr.listTagIds();
 				List<String> okTagIds = tagIds.stream()
-						.filter(tagId -> validTags.contains(tagId))
-						.collect(Collectors.toList());
+					.filter(tagId -> validTags.contains(tagId))
+					.collect(Collectors.toList());
 				
 				con = WT.getConnection(SERVICE_ID, false);
 				if (UpdateTagsOperation.RESET.equals(operation)) ctagDao.deleteByCategory(con, categoryId);
 				for (String tagId : okTagIds) {
 					ctagDao.insertByCategory(con, categoryId, tagId);
 				}
-				if (UpdateTagsOperation.SET.equals(operation)) auditTag.addAll(okTagIds);
+				if (UpdateTagsOperation.SET.equals(operation)) auditTags.addAll(okTagIds);
 				
 			} else if (UpdateTagsOperation.UNSET.equals(operation)) {
 				con = WT.getConnection(SERVICE_ID, false);
 				ctagDao.deleteByCategoryTags(con, categoryId, tagIds);
-				auditTag.addAll(tagIds);
+				auditTags.addAll(tagIds);
 			}
 			
 			DbUtils.commitQuietly(con);
-			HashMap<String,List<String>> audit = new HashMap<>();
-			audit.put(tagAction, auditTag);
+				
 			
-			if (isAuditEnabled() && !auditTag.isEmpty()) {
+			if (isAuditEnabled() && !auditTags.isEmpty()) {
+				String tagAction = UpdateTagsOperation.SET.equals(operation) ? "set" : "unset";
+				HashMap<String,List<String>> audit = new HashMap<>();
+				audit.put(tagAction, auditTags);
+				
 				auditLogWrite(
 					AuditContext.CATEGORY,
 					AuditAction.TAG,
@@ -1804,49 +1805,29 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		ContactTagDAO ctagDao = ContactTagDAO.getInstance();
 		Connection con = null;
-		List<String> auditTag = new ArrayList<>();
-		String tagAction = UpdateTagsOperation.SET.equals(operation) ? "set" : "unset";
 		
 		try {
 			List<Integer> okCategoryIds = listAllCategoryIds().stream()
-					.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "UPDATE"))
-					.collect(Collectors.toList());
+				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "UPDATE"))
+				.collect(Collectors.toList());
 			
+			List<String> auditTags = new ArrayList<>();
+			Map<Integer, List<String>> auditOldTags = null;
 			if (UpdateTagsOperation.SET.equals(operation) || UpdateTagsOperation.RESET.equals(operation)) {
 				Set<String> validTags = coreMgr.listTagIds();
 				List<String> okTagIds = tagIds.stream()
-						.filter(tagId -> validTags.contains(tagId))
-						.collect(Collectors.toList());
+					.filter(tagId -> validTags.contains(tagId))
+					.collect(Collectors.toList());
 				
-				con = WT.getConnection(SERVICE_ID, false);
-				
-				if (isAuditEnabled()) {
-					if (UpdateTagsOperation.RESET.equals(operation)) {
-						AuditLogManager.Batch auditBatch = auditLogGetBatch(AuditContext.CONTACT, AuditAction.TAG);
-						if (auditBatch != null) {
-							for (int cId : contactIds) {
-								List<String> oldTagIds = new ArrayList<>();
-								List<String> newTagIds = new ArrayList<>();
-
-								Contact c = getContact(cId);
-								oldTagIds.addAll(c != null ? c.getTags() : getContactList(cId).getTags());
-								newTagIds.addAll(okTagIds);
-
-								HashMap<String,List<String>> audit = coreMgr.compareTags(oldTagIds, newTagIds);
-
-								auditBatch.write(
-									cId,
-									JsonResult.gson().toJson(audit)
-								);
-							}
-							auditBatch.flush();
-						}
-					} else {
-						auditTag.addAll(okTagIds);
+				con = WT.getConnection(SERVICE_ID, false);				
+				if (UpdateTagsOperation.RESET.equals(operation)) {
+					if (isAuditEnabled()) {
+						auditOldTags = ctagDao.selectTagsByContact(con, contactIds);
 					}
+					ctagDao.deleteByCategoriesContacts(con, okCategoryIds, contactIds);
+				} else {
+					if (isAuditEnabled()) auditTags.addAll(tagIds);
 				}
-								
-				if (UpdateTagsOperation.RESET.equals(operation)) ctagDao.deleteByCategoriesContacts(con, okCategoryIds, contactIds);
 				for (String tagId : okTagIds) {
 					ctagDao.insertByCategoriesContacts(con, okCategoryIds, contactIds, tagId);
 				}
@@ -1854,24 +1835,38 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			} else if (UpdateTagsOperation.UNSET.equals(operation)) {
 				con = WT.getConnection(SERVICE_ID, false);
 				ctagDao.deleteByCategoriesContactsTags(con, okCategoryIds, contactIds, tagIds);
+				if (isAuditEnabled()) auditTags.addAll(tagIds);
 			}
 			
 			DbUtils.commitQuietly(con);
-			if (isAuditEnabled() && !UpdateTagsOperation.RESET.equals(operation)) {
+			
+			if (isAuditEnabled()) {
+				String tagAction = UpdateTagsOperation.SET.equals(operation) ? "set" : "unset";
 				AuditLogManager.Batch auditBatch = auditLogGetBatch(AuditContext.CONTACT, AuditAction.TAG);
 				if (auditBatch != null) {
-					for (int cId : contactIds) {
-						HashMap<String,List<String>> audit = new HashMap<>();
-						audit.put(tagAction, auditTag);
-
-						if (isAuditEnabled() && !auditTag.isEmpty()) {
+					if (UpdateTagsOperation.RESET.equals(operation)) {
+						for (int contactId : contactIds) {
+							HashMap<String, List<String>> data = coreMgr.compareTags(new ArrayList<>(auditOldTags.get(contactId)), new ArrayList<>(tagIds));
 							auditBatch.write(
-								cId,
-								JsonResult.gson().toJson(audit)
+								contactId,
+								JsonResult.gson().toJson(data)
 							);
 						}
+						auditBatch.flush();
+						
+					} else {
+						if (!auditTags.isEmpty()) {
+							for (int contactId : contactIds) {
+								HashMap<String, List<String>> data = new HashMap<>();
+								data.put(tagAction, auditTags);
+								auditBatch.write(
+									contactId,
+									JsonResult.gson().toJson(data)
+								);
+							}
+							auditBatch.flush();
+						}
 					}
-					auditBatch.flush();
 				}
 			}
 			
