@@ -1672,7 +1672,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public void updateContactList(final int contactId, final ContactListEx contact) throws WTException {
-		updateContactList(contactId, contact, BitFlag.of(ContactUpdateOptions.TAGS, ContactProcessOpts.LIST_RECIPIENTS));
+		updateContactList(contactId, contact, BitFlag.of(ContactUpdateOptions.TAGS, ContactUpdateOptions.LIST_RECIPIENTS));
 	}
 	
 	@Override
