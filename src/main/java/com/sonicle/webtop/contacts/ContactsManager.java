@@ -1811,14 +1811,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, CheckRightsTarget.ELEMENTS, "UPDATE"))
 				.collect(Collectors.toList());
 			
+			Set<String> validTags = coreMgr.listTagIds();
+			List<String> okTagIds = tagIds.stream()
+				.filter(tagId -> validTags.contains(tagId))
+				.collect(Collectors.toList());
+
 			List<String> auditTags = new ArrayList<>();
 			Map<Integer, List<String>> auditOldTags = null;
 			if (UpdateTagsOperation.SET.equals(operation) || UpdateTagsOperation.RESET.equals(operation)) {
-				Set<String> validTags = coreMgr.listTagIds();
-				List<String> okTagIds = tagIds.stream()
-					.filter(tagId -> validTags.contains(tagId))
-					.collect(Collectors.toList());
-				
 				con = WT.getConnection(SERVICE_ID, false);				
 				if (UpdateTagsOperation.RESET.equals(operation)) {
 					if (isAuditEnabled()) {
@@ -1826,7 +1826,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					}
 					ctagDao.deleteByCategoriesContacts(con, okCategoryIds, contactIds);
 				} else {
-					if (isAuditEnabled()) auditTags.addAll(tagIds);
+					if (isAuditEnabled()) auditTags.addAll(okTagIds);
 				}
 				for (String tagId : okTagIds) {
 					ctagDao.insertByCategoriesContacts(con, okCategoryIds, contactIds, tagId);
@@ -1834,8 +1834,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				
 			} else if (UpdateTagsOperation.UNSET.equals(operation)) {
 				con = WT.getConnection(SERVICE_ID, false);
-				ctagDao.deleteByCategoriesContactsTags(con, okCategoryIds, contactIds, tagIds);
-				if (isAuditEnabled()) auditTags.addAll(tagIds);
+				ctagDao.deleteByCategoriesContactsTags(con, okCategoryIds, contactIds, okTagIds);
+				if (isAuditEnabled()) auditTags.addAll(okTagIds);
 			}
 			
 			DbUtils.commitQuietly(con);
@@ -1846,7 +1846,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				if (auditBatch != null) {
 					if (UpdateTagsOperation.RESET.equals(operation)) {
 						for (int contactId : contactIds) {
-							HashMap<String, List<String>> data = coreMgr.compareTags(new ArrayList<>(auditOldTags.get(contactId)), new ArrayList<>(tagIds));
+							HashMap<String, List<String>> data = coreMgr.compareTags(new ArrayList<>(auditOldTags.get(contactId)), new ArrayList<>(okTagIds));
 							auditBatch.write(
 								contactId,
 								JsonResult.gson().toJson(data)
