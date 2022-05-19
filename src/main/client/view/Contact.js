@@ -185,7 +185,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						me.addAct('contactAuditLog', {
 							text: null,
 							tooltip: WT.res('act-auditLog.lbl'),
-							iconCls: 'fas fa-history wt-theme-glyph',
+							iconCls: 'fas fa-history',
 							handler: function() {
 								me.mys.openAuditUI(me.getModel().getId(), 'CONTACT');
 							},
@@ -296,9 +296,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					geometry: 'circle',
 					baseImageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
 					placeholderImageUrl: me.mys.resourceUrl('contact-placeholder.png'),
-					clearTriggerCls: 'far fa-trash-alt wt-theme-glyph-lighter',
-					uploadTriggerCls: 'far fa-plus-square wt-theme-glyph-lighter',
-					triggersOverCls: 'wt-theme-glyph',
+					clearTriggerCls: 'far fa-trash-alt',
+					uploadTriggerCls: 'far fa-plus-square',
+					triggersOverCls: 'wt-opacity-70',
 					clearTriggerTooltip: me.res('contact.fld-picture.clear.tip'),
 					uploadTriggerTooltip: me.res('contact.fld-picture.upload.tip'),
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {

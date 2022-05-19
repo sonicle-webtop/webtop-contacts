@@ -161,7 +161,7 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 						me.addAct('contactsListAuditLog', {
 							text: null,
 							tooltip: WT.res('act-auditLog.lbl'),
-							iconCls: 'fas fa-history wt-theme-glyph',
+							iconCls: 'fas fa-history',
 							handler: function() {
 								me.mys.openAuditUI(me.getModel().getId(), 'CONTACT', true);
 							},
