@@ -467,7 +467,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						me.updateDisabled('callMobile');
 						me.updateDisabled('sendSms');
 						me.updateDisabled('createEvent');
-						if (me.hasAudit()) me.updateDisabled('contactAuditLog');
+						if (me.hasAuditUI()) me.updateDisabled('contactAuditLog');
 						me.updateDisabled('sendContact');
 						me.pnlPreview().setContacts(s.getSelection());
 					},
@@ -686,7 +686,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.syncRemoteCategoryUI(node.getFolderId());
 			}
 		});
-		if (me.hasAudit()) {
+		if (me.hasAuditUI()) {
 			me.addAct('categoryAuditLog', {
 				text: WT.res('act-auditLog.lbl'),
 				tooltip: null,
@@ -1001,7 +1001,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (rec) me.createEventUI(rec);
 			}
 		});
-		if (me.hasAudit()) {
+		if (me.hasAuditUI()) {
 			me.addAct('contactAuditLog', {
 				text: WT.res('act-auditLog.lbl'),
 				tooltip: null,
@@ -1075,7 +1075,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('syncRemoteCategory'),
 				'-',
 				me.getAct('applyTags'),
-				me.hasAudit() ? me.getAct('categoryAuditLog') : null,
+				me.hasAuditUI() ? me.getAct('categoryAuditLog') : null,
 				'-',
 				me.getAct('addContact'),
 				me.getAct('addContactsList'),
@@ -1153,7 +1153,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('printContact'),
 				'-',
 				me.getAct('tags'),
-				me.hasAudit() ? me.getAct('contactAuditLog') : null,
+				me.hasAuditUI() ? me.getAct('contactAuditLog') : null,
 				'-',
 				me.getAct('deleteContact'),
 				'-',
@@ -1197,7 +1197,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('callMobile');
 		me.updateDisabled('sendSms');
 		me.updateDisabled('createEvent');
-		if (me.hasAudit()) me.updateDisabled('contactAuditLog');
+		if (me.hasAuditUI()) me.updateDisabled('contactAuditLog');
 		me.updateDisabled('sendContact');
 	},
 	
@@ -2206,11 +2206,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			ids.push(rec.getId());
 		});
 		return ids;
-	},
-	
-	hasAudit: function() {
-		var me = this;
-		return me.getVar('hasAudit');
 	},
 	
 	openAuditUI: function(referenceId, context, isList) {

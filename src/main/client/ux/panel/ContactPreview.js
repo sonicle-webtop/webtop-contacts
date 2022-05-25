@@ -558,7 +558,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 						items: [
 							{
 								xtype: 'tbfill'
-							}, me.mys.hasAudit() ? {
+							}, me.mys.hasAuditUI() ? {
 								xtype: 'button',
 								margin: '0 5 0 5',
 								ui: 'default-toolbar',

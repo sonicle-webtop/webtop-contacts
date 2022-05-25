@@ -178,7 +178,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					hideLabel: true,
 					margin: '0 0 5 0'
 				},
-				me.mys.hasAudit() ? {
+				me.mys.hasAuditUI() ? {
 					xtype: 'statusbar',
 					dock: 'bottom',
 					items: [
@@ -707,7 +707,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
-				if (me.mys.hasAudit()) me.getAct('contactAuditLog').setDisabled(true);
+				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(true);
 				me.reloadCustomFields([]);
 			} else if (me.isMode(me.MODE_VIEW)) {
 				me.getAct('saveClose').setDisabled(true);
@@ -715,14 +715,14 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				me.getAct('tags').setDisabled(true);
 				me.lref('fldcategory').setReadOnly(true);
 				me.lref('fldpic').setDisabled(true);
-				if (me.mys.hasAudit()) me.getAct('contactAuditLog').setDisabled(false);
+				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(false);
 			} else if (me.isMode(me.MODE_EDIT)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(false);
 				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
-				if (me.mys.hasAudit()) me.getAct('contactAuditLog').setDisabled(false);
+				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(false);
 			}
 			me.lref('fldfirstname').focus(true);
 		},
