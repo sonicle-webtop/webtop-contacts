@@ -449,7 +449,9 @@ public class Eas extends EasApi {
 	}
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
-		return (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+		ContactsManager manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+		manager.setSoftwareName("rest-eas");
+		return manager;
 	}
 	
 	@Override
