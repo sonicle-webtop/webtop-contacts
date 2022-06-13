@@ -30,35 +30,49 @@
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
  * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.io.input;
+package com.sonicle.webtop.contacts.old.io.input;
 
 import com.sonicle.webtop.contacts.io.ContactInput;
-import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.core.io.BeanHandler;
+import com.sonicle.webtop.core.io.input.ExcelFileReader;
 import com.sonicle.webtop.core.io.input.FileReaderException;
 import com.sonicle.webtop.core.io.input.FileRowsReader;
-import com.sonicle.webtop.core.io.input.TextFileReader;
+import com.sonicle.webtop.core.io.input.RowHandler;
+import com.sonicle.webtop.core.io.input.RowValues;
+import com.sonicle.webtop.core.io.input.XlsRowsProcessor;
+import com.sonicle.webtop.core.io.input.XlsxRowsHandler;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
+import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.supercsv.io.CsvListReader;
-import org.supercsv.prefs.CsvPreference;
+import org.apache.poi.openxml4j.exceptions.OpenXML4JException;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackageAccess;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.util.SAXHelper;
+import org.apache.poi.xssf.eventusermodel.ReadOnlySharedStringsTable;
+import org.apache.poi.xssf.eventusermodel.XSSFReader;
+import org.apache.poi.xssf.eventusermodel.XSSFSheetXMLHandler;
+import org.apache.poi.xssf.model.StylesTable;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 /**
  *
  * @author malbinola
  */
-public class ContactTextFileReader extends TextFileReader implements ContactFileReader {
-	
+public class ContactExcelFileReader extends ExcelFileReader implements ContactFileReader {
 	public static final String[] MAPPING_TARGETS = new String[]{
 		"Title","FirstName","LastName","DisplayName","Nickname",/*"Gender",*/
 		"WorkAddress","WorkPostalCode","WorkCity","WorkState","WorkCountry",
@@ -74,8 +88,8 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 	
 	protected List<FileRowsReader.FieldMapping> mappings = null;
 	
-	public ContactTextFileReader(CsvPreference pref, String charsetName) {
-		super(pref, charsetName);
+	public ContactExcelFileReader(boolean binary) {
+		super(binary);
 	}
 	
 	public void setMappings(List<FileRowsReader.FieldMapping> mappings) {
@@ -84,39 +98,83 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 	
 	@Override
 	public void readContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
-		HashMap<String, Integer> columnsIndexes = listColumnIndexes(file);
-		
-		FileInputStream fis = null;
-		try {
-			fis = new FileInputStream(file);
-			CsvListReader lr = new CsvListReader(new InputStreamReader(fis, charset), pref);
-			
-			List<String> line = null;
-			while ((line = lr.read()) != null) {
-				if (lr.getLineNumber() < firstDataRow) continue;
-				if ((lastDataRow != -1) && (lr.getLineNumber() > lastDataRow)) break;
-				try {
-					readRow(columnsIndexes, beanHandler, lr.getLineNumber(), line);
-				} catch(Exception ex) {
-					break;
-				}
-			}
-		} finally {
-			IOUtils.closeQuietly(fis);
+		if (binary) {
+			readXlsContacts(file, beanHandler);
+		} else {
+			readXlsxContacts(file, beanHandler);
 		}
 	}
 	
-	protected void readRow(HashMap<String, Integer> columnIndexes, BeanHandler beanHandler, int row, List<String> rowValues) throws Exception {
-		final LogEntries log = new LogEntries();
-		Contact contact = null;
+	private void readXlsxContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
+		OPCPackage opc = null;
+		HashMap<String, Integer> columnIndexes = listXlsxColumnIndexes(file);
+		XlsRowHandler rowHandler = new XlsRowHandler(this, columnIndexes, beanHandler);
+		
 		try {
-			final LogEntries ilog = new LogEntries();
-			contact = new Contact();
+			opc = OPCPackage.open(file, PackageAccess.READ);
+			XSSFReader reader = new XSSFReader(opc);
+			ReadOnlySharedStringsTable strings = new ReadOnlySharedStringsTable(opc);
+			StylesTable styles = reader.getStylesTable();
+			
+			XlsxRowsHandler rowsHandler = null;
+			XSSFReader.SheetIterator sit = (XSSFReader.SheetIterator) reader.getSheetsData();
+			while (sit.hasNext()) {
+				InputStream is = null;
+				try {
+					is = sit.next();
+					if (StringUtils.equals(sit.getSheetName(), sheet)) {
+						XMLReader xmlReader = SAXHelper.newXMLReader();
+						rowsHandler = new XlsxRowsHandler(is, headersRow, firstDataRow, lastDataRow, rowHandler);
+						ContentHandler xhandler = new XSSFSheetXMLHandler(styles, null, strings, rowsHandler, fmt, false);
+						xmlReader.setContentHandler(xhandler);
+						xmlReader.parse(new InputSource(is));
+					}
+				} catch(SAXException | ParserConfigurationException ex) {
+					throw new FileReaderException(ex, "Error processing file content");
+				} catch(NullPointerException ex) {
+					// Thrown when stream is forcibly closed. Simply ignore this!
+				} finally {
+					IOUtils.closeQuietly(is);
+				}
+				if(rowsHandler != null) break;
+			}
+			
+		} catch(OpenXML4JException | SAXException ex) {
+			throw new FileReaderException(ex, "Error opening file");
+		} finally {
+			IOUtils.closeQuietly(opc);
+		}
+	}
+	
+	private void readXlsContacts(File file, BeanHandler beanHandler) throws IOException, FileReaderException {
+		POIFSFileSystem pfs = null;
+		InputStream is = null;
+		HashMap<String, Integer> columnIndexes = listXlsColumnIndexes(file);
+		
+		try {
+			pfs = new POIFSFileSystem(file);
+			is = pfs.createDocumentInputStream("Workbook");
+			XlsRowHandler rowHandler = new XlsRowHandler(this, columnIndexes, beanHandler);
+			XlsRowsProcessor rows = new XlsRowsProcessor(is, headersRow, firstDataRow, lastDataRow, sheet, rowHandler);
+			rows.process();
+			
+		} finally {
+			IOUtils.closeQuietly(is);
+			IOUtils.closeQuietly(pfs);
+		}
+	}
+	
+	protected void readRow(HashMap<String, Integer> columnIndexes, BeanHandler beanHandler, int row, RowValues rowBean) throws Exception {
+		LogEntries log = new LogEntries();
+		ContactEx contact = null;
+		try {
+			LogEntries ilog = new LogEntries();
+			contact = new ContactEx();
 			for (FileRowsReader.FieldMapping mapping : mappings) {
 				if (StringUtils.isBlank(mapping.source)) continue;
 				if (!columnIndexes.containsKey(mapping.source)) throw new Exception("Index not found");
 				Integer index = columnIndexes.get(mapping.source);
-				fillContactByMapping(contact, mapping.target, rowValues.get(index));
+				fillContactByMapping(contact, mapping.target, rowBean.get(index));
 			}
 			if (contact.trimFieldLengths()) {
 				ilog.add(new MessageLogEntry(LogEntry.Level.WARN, "Some fields were truncated due to max-length"));
@@ -125,14 +183,16 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 				log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "ROW [{0}]", row+1));
 				log.addAll(ilog);
 			}
+			
 		} catch(Throwable t) {
 			log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "ROW [{0}]. Reason: {1}", row+1, t.getMessage()));
 		} finally {
-			beanHandler.handle(new ContactInput(contact), log);
+			boolean ret = beanHandler.handle(new ContactInput(contact, contact != null ? contact.getCompany() : null, null, null, null), log);
+			if (!ret) throw new Exception("Handle not succesful");
 		}
 	}
 	
-	private void fillContactByMapping(Contact contact, String target, String value) {
+	private void fillContactByMapping(ContactEx contact, String target, String value) {
 		if (target.equals("Title")) {
 			contact.setTitle(value);
 		} else if (target.equals("FirstName")) {
@@ -205,7 +265,7 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 		} else if (target.equals("OtherState")) {
 			contact.setOtherState(value);
 		} else if (target.equals("OtherCountry")) {
-			contact.setOtherCountry(value);
+			contact.setOtherCountry(value);		
 		} else if (target.equals("Company")) {
 			if (!StringUtils.isBlank(value)) {
 				contact.setCompany(new ContactCompany(null, value));
@@ -230,6 +290,23 @@ public class ContactTextFileReader extends TextFileReader implements ContactFile
 			contact.setUrl(value);
 		} else if (target.equals("Notes")) {
 			contact.setNotes(value);
+		}
+	}
+	
+	private class XlsRowHandler implements RowHandler<RowValues> {
+		private final ContactExcelFileReader excelReader;
+		private final HashMap<String, Integer> columnIndexes;
+		private final BeanHandler beanHandler;
+		
+		public XlsRowHandler(ContactExcelFileReader excelReader, HashMap<String, Integer> columnIndexes, BeanHandler beanHandler) {
+			this.excelReader = excelReader;
+			this.columnIndexes = columnIndexes;
+			this.beanHandler = beanHandler;
+		}
+		
+		@Override
+		public void handle(int row, RowValues rowBean) throws Exception {
+			excelReader.readRow(columnIndexes, beanHandler, row, rowBean);
 		}
 	}
 }

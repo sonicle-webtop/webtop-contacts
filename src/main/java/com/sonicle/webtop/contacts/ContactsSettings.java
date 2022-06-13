@@ -70,6 +70,13 @@ public class ContactsSettings {
 	public static final String DAV_ADDRESSBOOK_DELETE_ENABLED = "dav.addressbook.delete.enabled";
 	
 	/**
+	 * [system+domain]
+	 * [boolean](true)
+	 * Enable/Disable addressbooks deletions through EAS rest-api interface. Defaults to ``true``.
+	 */
+	public static final String EAS_CONTACT_PHOTO_UPDATE_ENABLED = "eas.contact.photo.update.enabled";
+	
+	/**
 	 * [][default]
 	 * [enum {O:OFF, R:READ, W:WRITE}] (O)
 	 * The default value of the sync field for new categories.

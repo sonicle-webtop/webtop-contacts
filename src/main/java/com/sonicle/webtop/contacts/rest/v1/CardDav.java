@@ -41,6 +41,7 @@ import com.sonicle.webtop.contacts.ContactsUtils;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactObjectChanged;
+import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
@@ -223,8 +224,7 @@ public class CardDav extends CarddavApi {
 		
 		try {
 			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
-			ContactsServiceSettings css = new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
-			if (css.getDavAddressbookDeleteEnabled()) {
+			if (getServiceSettings().getDavAddressbookDeleteEnabled()) {
 				manager.deleteCategory(categoryId);
 				return respOkNoContent();
 			} else {
@@ -257,14 +257,14 @@ public class CardDav extends CarddavApi {
 			if ((hrefs == null) || hrefs.isEmpty()) {
 				List<ContactObject> cards = manager.listContactObjects(categoryId, ContactObjectOutputType.VCARD);
 				for (ContactObject card : cards) {
-					items.add(createCardWithData((ContactObjectWithVCard)card));
+					items.add(createDavObject((ContactObjectWithVCard)card));
 				}
 				return respOk(items);
 				
 			} else {
-				List<ContactObjectWithVCard> cards = manager.getContactObjectsWithVCard(categoryId, hrefs);
-				for (ContactObjectWithVCard card : cards) {
-					items.add(createCardWithData((ContactObjectWithVCard)card));
+				List<ContactObject> objs = manager.getContactObjects(categoryId, hrefs, ContactObjectOutputType.VCARD);
+				for (ContactObject obj : objs) {
+					items.add(createDavObject(obj));
 				}
 				return respOk(items);
 			}
@@ -320,9 +320,9 @@ public class CardDav extends CarddavApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactObjectWithVCard card = manager.getContactObjectWithVCard(categoryId, href);
+			ContactObject card = manager.getContactObject(categoryId, href, ContactObjectOutputType.VCARD);
 			if (card != null) {
-				return respOk(createCardWithData(card));
+				return respOk(createDavObject(card));
 			} else {
 				return respErrorNotFound();
 			}
@@ -421,19 +421,23 @@ public class CardDav extends CarddavApi {
 				.ownerUsername(ownerUsername);
 	}
 	
-	private Card createCard(ContactObjectWithVCard card) {
-		return new Card()
-				.id(card.getContactId())
-				.uid(card.getPublicUid())
-				.href(card.getHref())
-				.lastModified(card.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
-				.etag(buildEtag(card.getRevisionTimestamp()))
-				.size(card.getSize());
-	}
-	
-	private Card createCardWithData(ContactObjectWithVCard card) {
-		return createCard(card)
-				.vcard(card.getVcard());
+	private Card createDavObject(ContactObject obj) {
+		Card ret = new Card()
+				.id(obj.getContactId())
+				.uid(obj.getPublicUid())
+				.href(obj.getHref())
+				.lastModified(obj.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
+				.etag(buildEtag(obj.getRevisionTimestamp()));
+		
+		if (obj instanceof ContactObjectWithVCard) {
+			ContactObjectWithVCard objwv = (ContactObjectWithVCard)obj;
+			return ret.size(objwv.getSize())
+					.vcard(objwv.getVcard());
+		} else if (obj instanceof ContactObjectWithBean) {
+			return ret;
+		} else {
+			return ret;
+		}
 	}
 	
 	private CardChanged createCardChanged(ContactObjectChanged card) {
@@ -476,10 +480,14 @@ public class CardDav extends CarddavApi {
 	
 	private VCard parseVCard(String s) throws WTException {
 		try {
-			return VCardUtils.parse(s, true).get(0);
+			return VCardUtils.parseFirst(s);
 		} catch(IOException ex) {
 			throw new WTException(ex, "Unable to parse vcard data");
 		}
+	}
+	
+	private ContactsServiceSettings getServiceSettings() {
+		return new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
 	}
 	
 	private ContactsManager getManager() {
@@ -487,7 +495,9 @@ public class CardDav extends CarddavApi {
 	}
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
-		return (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+		ContactsManager manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+		manager.setSoftwareName("rest-carddav");
+		return manager;
 	}
 	
 	@Override

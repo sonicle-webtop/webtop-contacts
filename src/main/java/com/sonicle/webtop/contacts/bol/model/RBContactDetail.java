@@ -33,8 +33,8 @@
 package com.sonicle.webtop.contacts.bol.model;
 
 import com.sonicle.commons.EnumUtils;
-import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.core.CoreManager;

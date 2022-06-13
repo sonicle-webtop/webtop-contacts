@@ -37,5 +37,13 @@ package com.sonicle.webtop.contacts.bol;
  * @author malbinola
  */
 public class OContactPictureMetaOnly extends OContactPicture {
-	
+	public Long size;
+
+	public Long getSize() {
+		return size;
+	}
+
+	public void setSize(Long size) {
+		this.size = size;
+	}
 }

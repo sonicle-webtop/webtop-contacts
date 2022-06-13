@@ -38,7 +38,9 @@ import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
+import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
 import com.sonicle.webtop.core.model.CustomField;
@@ -201,7 +203,11 @@ public class JsContact {
 		_cfdefs = LangUtils.serialize(new ObjCustomFieldDefs(panels, fields), ObjCustomFieldDefs.class);
 	}
 	
-	public Contact toContact(DateTimeZone profileTz) {
+	public ContactEx createContactForInsert(DateTimeZone profileTz) {
+		return createContactForUpdate(profileTz);
+	}
+	
+	public Contact createContactForUpdate(DateTimeZone profileTz) {
 		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
 		
 		Contact item = new Contact();
@@ -212,7 +218,7 @@ public class JsContact {
 		item.setFirstName(firstName);
 		item.setLastName(lastName);
 		item.setNickname(nickname);
-		item.setGender(EnumUtils.forSerializedName(gender, Contact.Gender.class));
+		item.setGender(EnumUtils.forSerializedName(gender, ContactBase.Gender.class));
 		item.setMobile(mobile);
 		item.setPager1(pager1);
 		item.setPager2(pager2);

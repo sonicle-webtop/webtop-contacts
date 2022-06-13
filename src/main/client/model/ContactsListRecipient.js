@@ -37,9 +37,8 @@ Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipient', {
 	identifier: 'negative',
 	idProperty: 'listRecipientId',
 	fields: [
-		WTF.fkField('string'),
 		WTF.field('listRecipientId', 'int', false),
-		WTF.field('recipientType', 'string', false),
+		WTF.field('recipientType', 'string', false, {defaultValue: 'to'}),
 		WTF.field('recipient', 'string', false),
 		WTF.field('recipientContactId', 'int', true)
 	]

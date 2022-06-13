@@ -40,6 +40,7 @@ import com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
+import java.util.Collection;
 import java.util.List;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
@@ -105,15 +106,29 @@ public class ContactAttachmentDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int delete(Connection con, String attachmentId) throws DAOException {
+	public int deleteByIdContact(Connection con, String attachmentId, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_ATTACHMENTS)
-			.where(CONTACTS_ATTACHMENTS.CONTACT_ATTACHMENT_ID.equal(attachmentId))
+			.where(
+				CONTACTS_ATTACHMENTS.CONTACT_ATTACHMENT_ID.equal(attachmentId)
+				.and(CONTACTS_ATTACHMENTS.CONTACT_ID.equal(contactId))
+			)
 			.execute();
 	}
 	
-	public OContactAttachmentData selectBytes(Connection con, String attachmentId) throws DAOException {
+	public int deleteByIdsContact(Connection con, Collection<String> attachmentIds, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.delete(CONTACTS_ATTACHMENTS)
+			.where(
+				CONTACTS_ATTACHMENTS.CONTACT_ATTACHMENT_ID.in(attachmentIds)
+				.and(CONTACTS_ATTACHMENTS.CONTACT_ID.equal(contactId))
+			)
+			.execute();
+	}
+	
+	public OContactAttachmentData selectBytesById(Connection con, String attachmentId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(

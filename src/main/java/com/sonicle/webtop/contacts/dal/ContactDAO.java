@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts.dal;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.contacts.bol.OContact;
+import com.sonicle.webtop.contacts.bol.OContactInfo;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactObject;
 import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
@@ -43,14 +44,12 @@ import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
-import com.sonicle.webtop.contacts.model.Contact;
-import com.sonicle.webtop.contacts.model.Grouping;
-import com.sonicle.webtop.contacts.model.ShowBy;
+import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
@@ -92,27 +91,27 @@ public class ContactDAO extends BaseDAO {
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.CATEGORY_ID,
-				CONTACTS.DISPLAY_NAME,
-				CONTACTS.FIRSTNAME,
-				CONTACTS.LASTNAME
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.DISPLAY_NAME,
+				CONTACTS_.FIRSTNAME,
+				CONTACTS_.LASTNAME
 			)
 			.select(
 				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
 				CATEGORIES.USER_ID.as("category_user_id")
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.BIRTHDAY.equal(date)
+				CONTACTS_.BIRTHDAY.equal(date)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
-				CONTACTS.DISPLAY_NAME.asc()
+				CONTACTS_.DISPLAY_NAME.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -122,27 +121,27 @@ public class ContactDAO extends BaseDAO {
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.CATEGORY_ID,
-				CONTACTS.DISPLAY_NAME,
-				CONTACTS.FIRSTNAME,
-				CONTACTS.LASTNAME
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.DISPLAY_NAME,
+				CONTACTS_.FIRSTNAME,
+				CONTACTS_.LASTNAME
 			)
 			.select(
 				CATEGORIES.DOMAIN_ID.as("category_domain_id"),
 				CATEGORIES.USER_ID.as("category_user_id")
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.ANNIVERSARY.equal(date)
+				CONTACTS_.ANNIVERSARY.equal(date)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
-				CONTACTS.DISPLAY_NAME.asc()
+				CONTACTS_.DISPLAY_NAME.asc()
 			)
 			.fetchInto(VContact.class);
 	}
@@ -172,28 +171,37 @@ AND (ccnts.href IS NULL)
 	public VContactObject viewContactObjectById(Connection con, int categoryId, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_TAGS.CONTACT_ID)
+			).asField("tags");
+		
 		return dsl
 			.select(
-				CONTACTS.fields()
+				CONTACTS_.fields()
 			)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
 				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
 				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
-			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
-			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
-				.and(CONTACTS.CATEGORY_ID.equal(categoryId))
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CONTACT_ID.equal(contactId)
+				.and(CONTACTS_.CATEGORY_ID.equal(categoryId))
+				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.fetchOneInto(VContactObject.class);
@@ -202,120 +210,160 @@ AND (ccnts.href IS NULL)
 	public VContactObject viewContactObjectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_TAGS.CONTACT_ID)
+			).asField("tags");
+		
 		return dsl
 			.select(
-				CONTACTS.fields()
+				CONTACTS_.fields()
 			)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
 				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
 				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
-			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
-			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CONTACT_ID.equal(contactId)
+				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.fetchOneInto(VContactObject.class);
 	}
 	
-	public Map<String, List<VContactObject>> viewContactObjectByCategory(Connection con, int categoryId) throws DAOException {
-		return viewContactObjectByCategoryHrefs(con, categoryId, null);
+	private Field[] getVContactObjectFields(boolean stat) {
+		if (stat) {
+			return new Field[]{
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.REVISION_STATUS,
+				CONTACTS_.REVISION_TIMESTAMP,
+				CONTACTS_.CREATION_TIMESTAMP,
+				CONTACTS_.PUBLIC_UID,
+				CONTACTS_.HREF
+			};
+		} else {
+			return CONTACTS_.fields();
+		}
 	}
 	
-	public Map<String, List<VContactObject>> viewContactObjectByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
+	public Map<String, List<VContactObject>> viewOnlineContactObjectsByCategory(Connection con, boolean stat, int categoryId) throws DAOException {
+		return viewOnlineContactObjectsByCategoryHrefs(con, stat, categoryId, null);
+	}
+	
+	public Map<String, List<VContactObject>> viewOnlineContactObjectsByCategoryHrefs(Connection con, boolean stat, int categoryId, Collection<String> hrefs) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		Condition inHrefsCndt = DSL.trueCondition();
 		if (hrefs != null) {
-			inHrefsCndt = CONTACTS.HREF.in(hrefs);
+			inHrefsCndt = CONTACTS_.HREF.in(hrefs);
 		}
+		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_TAGS.CONTACT_ID)
+			).asField("tags");
+		
+		// New field: has picture
+		Field<Boolean> hasPicture = DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture");
+		
+		// New field: has vcard
+		Field<Boolean> hasVCard = DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard");
 		
 		return dsl
 			.select(
-				CONTACTS.fields()
+				getVContactObjectFields(stat)
 			)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description"),
-				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
-				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
+				tags,
+				hasPicture,
+				hasVCard
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
-			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
-			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(inHrefsCndt)
 			)
 			.orderBy(
-				CONTACTS.CONTACT_ID.asc()
+				CONTACTS_.CONTACT_ID.asc()
 			)
-			.fetchGroups(CONTACTS.HREF, VContactObject.class);
+			.fetchGroups(CONTACTS_.HREF, VContactObject.class);
 	}
 	
-	public List<VContactObjectChanged> viewLiveContactObjectsChangedByCategory(Connection con, int categoryId, int limit) throws DAOException {
+	public List<VContactObjectChanged> viewOnlineContactObjectsChangedByCategory(Connection con, int categoryId, int limit) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.REVISION_STATUS,
-				CONTACTS.REVISION_TIMESTAMP,
-				CONTACTS.CREATION_TIMESTAMP,
-				CONTACTS.HREF
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.REVISION_STATUS,
+				CONTACTS_.REVISION_TIMESTAMP,
+				CONTACTS_.CREATION_TIMESTAMP,
+				CONTACTS_.HREF
 			)
-			.from(CONTACTS)
+			.from(CONTACTS_)
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
-				CONTACTS.CONTACT_ID
+				CONTACTS_.CONTACT_ID
 			)
 			.limit(limit)
 			.fetchInto(VContactObjectChanged.class);
 	}
 	
-	public List<VContactObjectChanged> viewChangedByCategorySince(Connection con, int categoryId, DateTime since, int limit) throws DAOException {
+	public List<VContactObjectChanged> viewContactObjectsChangedByCategorySince(Connection con, int categoryId, DateTime since, int limit) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.REVISION_STATUS,
-				CONTACTS.REVISION_TIMESTAMP,
-				CONTACTS.CREATION_TIMESTAMP,
-				CONTACTS.HREF
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.REVISION_STATUS,
+				CONTACTS_.REVISION_TIMESTAMP,
+				CONTACTS_.CREATION_TIMESTAMP,
+				CONTACTS_.HREF
 			)
-			.from(CONTACTS)
+			.from(CONTACTS_)
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(false))
-				.and(CONTACTS.REVISION_TIMESTAMP.greaterThan(since))
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS_.IS_LIST.equal(false))
+				.and(CONTACTS_.REVISION_TIMESTAMP.greaterThan(since))
 			)
 			.orderBy(
-				CONTACTS.CREATION_TIMESTAMP
+				CONTACTS_.CREATION_TIMESTAMP
 			)
 			.limit(limit)
 			.fetchInto(VContactObjectChanged.class);
@@ -328,14 +376,14 @@ AND (ccnts.href IS NULL)
 		
 		return dsl.fetchExists(
 			dsl.selectOne()
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.in(categoryIds)
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
 				.and(typeCndt)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(filterCndt)
 			)
@@ -349,14 +397,14 @@ AND (ccnts.href IS NULL)
 		
 		return dsl
 			.selectCount()
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.in(categoryIds)
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
 				.and(typeCndt)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(filterCndt)
 			)
@@ -375,11 +423,11 @@ AND (ccnts.href IS NULL)
 		// TODO: maybe sort on joined field otherwise order could be inaccurate (company can be an ID)
 		for (OrderField of : orderFields) {
 			if (OrderField.FIRSTNAME.equals(of)) {
-				sortFlds.add(CONTACTS.FIRSTNAME.asc());
+				sortFlds.add(CONTACTS_.FIRSTNAME.asc());
 			} else if (OrderField.LASTNAME.equals(of)) {
-				sortFlds.add(CONTACTS.LASTNAME.asc());
+				sortFlds.add(CONTACTS_.LASTNAME.asc());
 			} else if (OrderField.COMPANY.equals(of)) {
-				sortFlds.add(CONTACTS.COMPANY.asc());
+				sortFlds.add(CONTACTS_.COMPANY.asc());
 			}
 		}
 		*/
@@ -388,30 +436,32 @@ AND (ccnts.href IS NULL)
 			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
 			.from(CONTACTS_TAGS)
 			.where(
-				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
 			).asField("tags");
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.CATEGORY_ID,
-				CONTACTS.IS_LIST,
-				CONTACTS.DISPLAY_NAME,
-				CONTACTS.TITLE,
-				CONTACTS.FIRSTNAME,
-				CONTACTS.LASTNAME,
-				CONTACTS.DISPLAY_NAME,
-				CONTACTS.NICKNAME,
-				CONTACTS.COMPANY,
-				CONTACTS.COMPANY_MASTER_DATA_ID,
-				CONTACTS.FUNCTION,
-				CONTACTS.WORK_ADDRESS,
-				CONTACTS.WORK_CITY,
-				CONTACTS.WORK_TELEPHONE,
-				CONTACTS.WORK_MOBILE,
-				CONTACTS.WORK_EMAIL,
-				CONTACTS.HOME_TELEPHONE,
-				CONTACTS.HOME_EMAIL
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.IS_LIST,
+				CONTACTS_.DISPLAY_NAME,
+				CONTACTS_.TITLE,
+				CONTACTS_.FIRSTNAME,
+				CONTACTS_.LASTNAME,
+				CONTACTS_.DISPLAY_NAME,
+				CONTACTS_.NICKNAME,
+				CONTACTS_.COMPANY,
+				CONTACTS_.COMPANY_MASTER_DATA_ID,
+				CONTACTS_.FUNCTION,
+				CONTACTS_.WORK_ADDRESS,
+				CONTACTS_.WORK_CITY,
+				CONTACTS_.WORK_STATE,
+				CONTACTS_.WORK_COUNTRY,
+				CONTACTS_.WORK_TELEPHONE,
+				CONTACTS_.WORK_MOBILE,
+				CONTACTS_.WORK_EMAIL,
+				CONTACTS_.HOME_TELEPHONE,
+				CONTACTS_.HOME_EMAIL
 			)
 			.select(
 				tags,
@@ -424,16 +474,16 @@ AND (ccnts.href IS NULL)
 			.select(
 				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture")
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
-			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.in(categoryIds)
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
 				.and(typeCndt)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(filterCndt)
 			)
@@ -448,20 +498,20 @@ AND (ccnts.href IS NULL)
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.CATEGORY_ID,
-				CONTACTS.COMPANY,
-				CONTACTS.COMPANY_MASTER_DATA_ID
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.COMPANY,
+				CONTACTS_.COMPANY_MASTER_DATA_ID
 			)
 			.select(
 				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
 				MASTER_DATA.DESCRIPTION.as("master_data_description")
 			)
-			.from(CONTACTS)
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.from(CONTACTS_)
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.where(
-				CONTACTS.CONTACT_ID.in(contactId)
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CONTACT_ID.in(contactId)
+				.and(CONTACTS_.IS_LIST.equal(false))
 			)
 			.fetchOneInto(VContactCompany.class);
 	}
@@ -482,54 +532,54 @@ AND (ccnts.href IS NULL)
 				patt2 = "%" + queryText + "%";
 			}
 			
-			searchCndt = CONTACTS.DISPLAY_NAME.likeIgnoreCase(patt1)
-				.or(CONTACTS.FIRSTNAME.likeIgnoreCase(patt1)
-				.or(CONTACTS.LASTNAME.likeIgnoreCase(patt1)
+			searchCndt = CONTACTS_.DISPLAY_NAME.likeIgnoreCase(patt1)
+				.or(CONTACTS_.FIRSTNAME.likeIgnoreCase(patt1)
+				.or(CONTACTS_.LASTNAME.likeIgnoreCase(patt1)
 				.or(targetField.likeIgnoreCase(patt1)
-				.or(CONTACTS.COMPANY.likeIgnoreCase(patt2)
+				.or(CONTACTS_.COMPANY.likeIgnoreCase(patt2)
 				.or(MASTER_DATA.DESCRIPTION.likeIgnoreCase(patt2)
 			)))));
 			
 			if (!fieldType.equals(RecipientFieldType.EMAIL)) {
 				searchCndt = searchCndt.or(
-					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt1)
+					CONTACTS_.WORK_EMAIL.likeIgnoreCase(patt1)
 				);
 				searchCndt = searchCndt.or(
-					CONTACTS.HOME_EMAIL.likeIgnoreCase(patt1)
+					CONTACTS_.HOME_EMAIL.likeIgnoreCase(patt1)
 				);
 				searchCndt = searchCndt.or(
-					CONTACTS.OTHER_EMAIL.likeIgnoreCase(patt1)
+					CONTACTS_.OTHER_EMAIL.likeIgnoreCase(patt1)
 				);
 			}
 			
 			if (StringUtils.contains(queryText, "@")) {
 				patt3 = "%" + queryText + "%";
 				searchCndt = searchCndt.or(
-					CONTACTS.WORK_EMAIL.likeIgnoreCase(patt3)
+					CONTACTS_.WORK_EMAIL.likeIgnoreCase(patt3)
 				);
 			}			
 		}
 		
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.IS_LIST,
-				CONTACTS.DISPLAY_NAME,
-				CONTACTS.FIRSTNAME,
-				CONTACTS.LASTNAME,
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.IS_LIST,
+				CONTACTS_.DISPLAY_NAME,
+				CONTACTS_.FIRSTNAME,
+				CONTACTS_.LASTNAME,
 				targetField
 			)
 			.select(
 				MASTER_DATA.DESCRIPTION.as("company_as_master_data_id")
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.in(categoryIds)
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 				.and(
 					targetField.isNotNull()
@@ -548,38 +598,91 @@ AND (ccnts.href IS NULL)
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.HREF,
-				CONTACTS.ETAG
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.HREF,
+				CONTACTS_.ETAG
 			)
-			.from(CONTACTS)
+			.from(CONTACTS_)
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
-			.fetchMap(CONTACTS.HREF, VContactHrefSync.class);
+			.fetchMap(CONTACTS_.HREF, VContactHrefSync.class);
 	}
 	
+	@Deprecated
 	public OContact selectById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
-			.from(CONTACTS)
-			.where(CONTACTS.CONTACT_ID.equal(contactId))
+			.from(CONTACTS_)
+			.where(CONTACTS_.CONTACT_ID.equal(contactId))
 			.fetchOneInto(OContact.class);
+	}
+	
+	public OContact selectOnlineById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select()
+			.from(CONTACTS_)
+			.where(
+				CONTACTS_.CONTACT_ID.equal(contactId)
+				.and(
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchOneInto(OContact.class);
+	}
+	
+	public OContactInfo selectOnlineContactInfoById(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.IS_LIST
+			)
+			.from(CONTACTS_)
+			.where(
+				CONTACTS_.CONTACT_ID.equal(contactId)
+				.and(
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchOneInto(OContactInfo.class);
+	}
+	
+	public Map<Integer, OContactInfo> selectOnlineContactInfoByIds(Connection con, Collection<Integer> contactIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.IS_LIST
+			)
+			.from(CONTACTS_)
+			.where(
+				CONTACTS_.CONTACT_ID.in(contactIds)
+				.and(
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchMap(CONTACTS_.CONTACT_ID, OContactInfo.class);
 	}
 	
 	public Integer selectCategoryId(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.CATEGORY_ID
+				CONTACTS_.CATEGORY_ID
 			)
-			.from(CONTACTS)
-			.where(CONTACTS.CONTACT_ID.equal(contactId))
+			.from(CONTACTS_)
+			.where(CONTACTS_.CONTACT_ID.equal(contactId))
 			.fetchOneInto(Integer.class);
 	}
 	
@@ -587,21 +690,21 @@ AND (ccnts.href IS NULL)
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID
+				CONTACTS_.CONTACT_ID
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
-				.and(CONTACTS.HREF.equal(href))
+				.and(CONTACTS_.HREF.equal(href))
 			)
 			.orderBy(
-				CONTACTS.CONTACT_ID.asc()
+				CONTACTS_.CONTACT_ID.asc()
 			)
 			.fetchInto(Integer.class);
 	}
@@ -610,94 +713,108 @@ AND (ccnts.href IS NULL)
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.CATEGORY_ID,
-				DSL.max(CONTACTS.REVISION_TIMESTAMP)
+				CONTACTS_.CATEGORY_ID,
+				DSL.max(CONTACTS_.REVISION_TIMESTAMP)
 			)
-			.from(CONTACTS)
+			.from(CONTACTS_)
 			.where(
-				CONTACTS.CATEGORY_ID.in(categoryIds)
-				.and(CONTACTS.IS_LIST.equal(isList))
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
+				.and(CONTACTS_.IS_LIST.equal(isList))
 			)
 			.groupBy(
-				CONTACTS.CATEGORY_ID
+				CONTACTS_.CATEGORY_ID
 			)
-			.fetchMap(CONTACTS.CATEGORY_ID, DSL.max(CONTACTS.REVISION_TIMESTAMP));
+			.fetchMap(CONTACTS_.CATEGORY_ID, DSL.max(CONTACTS_.REVISION_TIMESTAMP));
 	}
 	
 	public Map<String, List<Integer>> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.HREF
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.HREF
 			)
-			.from(CONTACTS)
+			.from(CONTACTS_)
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
 			)
 			.orderBy(
-				CONTACTS.CONTACT_ID.asc()
+				CONTACTS_.CONTACT_ID.asc()
 			)
-			.fetchGroups(CONTACTS.HREF, CONTACTS.CONTACT_ID);
+			.fetchGroups(CONTACTS_.HREF, CONTACTS_.CONTACT_ID);
 	}
 	
 	public Map<Integer, OContact> selectByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.fields()
+				CONTACTS_.fields()
 			)
-			.from(CONTACTS)
-			.join(CATEGORIES).on(CONTACTS.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.IS_LIST.equal(false))
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(
-					CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-					.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
 				)
-				.and(CONTACTS.HREF.in(hrefs))
+				.and(CONTACTS_.HREF.in(hrefs))
 			)
 			.orderBy(
-				CONTACTS.CONTACT_ID.asc()
+				CONTACTS_.CONTACT_ID.asc()
 			)
-			.fetchMap(CONTACTS.CONTACT_ID, OContact.class);
+			.fetchMap(CONTACTS_.CONTACT_ID, OContact.class);
+	}
+	
+	public Map<Integer, Integer> selectCategoriesByIds(Connection con, Collection<Integer> contactIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID
+			)
+			.from(CONTACTS_)
+			.where(
+				CONTACTS_.CONTACT_ID.in(contactIds)
+			)
+			.fetchMap(CONTACTS_.CONTACT_ID, CONTACTS_.CATEGORY_ID);
 	}
 	
 	public Map<Integer, Integer> selectCategoriesByIdsType(Connection con, Collection<Integer> contactIds, boolean isList) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS.CONTACT_ID,
-				CONTACTS.CATEGORY_ID
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID
 			)
-			.from(CONTACTS)
+			.from(CONTACTS_)
 			.where(
-				CONTACTS.CONTACT_ID.in(contactIds)
-				.and(CONTACTS.IS_LIST.equal(isList))
+				CONTACTS_.CONTACT_ID.in(contactIds)
+				.and(CONTACTS_.IS_LIST.equal(isList))
 			)
-			.fetchMap(CONTACTS.CONTACT_ID, CONTACTS.CATEGORY_ID);
+			.fetchMap(CONTACTS_.CONTACT_ID, CONTACTS_.CATEGORY_ID);
 	}
 	
 	public int insert(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW));
+		item.setRevisionStatus(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		item.setCreationTimestamp(revisionTimestamp);
-		ContactsRecord record = dsl.newRecord(CONTACTS, item);
+		ContactsRecord record = dsl.newRecord(CONTACTS_, item);
 		return dsl
-			.insertInto(CONTACTS)
+			.insertInto(CONTACTS_)
 			.set(record)
 			.execute();
 	}
 	
 	public int batchInsert(Connection con, ArrayList<OContact> items, DateTime revisionTimestamp) throws DAOException {
-		final String NEW = EnumUtils.toSerializedName(Contact.RevisionStatus.NEW);
+		final String NEW = EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW);
 		DSLContext dsl = getDSL(con);
 		ArrayList<ContactsRecord> records = new ArrayList<>();
 		for (OContact item : items) {
@@ -705,7 +822,7 @@ AND (ccnts.href IS NULL)
 			item.setRevisionTimestamp(revisionTimestamp);
 			item.setRevisionSequence(0);
 			item.setCreationTimestamp(revisionTimestamp);
-			records.add(dsl.newRecord(CONTACTS, item));
+			records.add(dsl.newRecord(CONTACTS_, item));
 		}
 		dsl.batchInsert(records).execute();
 		return items.size();
@@ -713,85 +830,85 @@ AND (ccnts.href IS NULL)
 	
 	public int update(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
+		item.setRevisionStatus(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
-			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
-			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
-			.set(CONTACTS.TITLE, item.getTitle())
-			.set(CONTACTS.FIRSTNAME, item.getFirstname())
-			.set(CONTACTS.LASTNAME, item.getLastname())
-			.set(CONTACTS.DISPLAY_NAME, item.getDisplayName())
-			.set(CONTACTS.NICKNAME, item.getNickname())
-			.set(CONTACTS.GENDER, item.getGender())
-			.set(CONTACTS.COMPANY, item.getCompany())
-			.set(CONTACTS.COMPANY_MASTER_DATA_ID, item.getCompanyMasterDataId())
-			.set(CONTACTS.FUNCTION, item.getFunction())
-			.set(CONTACTS.WORK_ADDRESS, item.getWorkAddress())
-			.set(CONTACTS.WORK_CITY, item.getWorkCity())
-			.set(CONTACTS.WORK_STATE, item.getWorkState())
-			.set(CONTACTS.WORK_POSTALCODE, item.getWorkPostalcode())
-			.set(CONTACTS.WORK_COUNTRY, item.getWorkCountry())
-			.set(CONTACTS.WORK_TELEPHONE, item.getWorkTelephone())
-			.set(CONTACTS.WORK_TELEPHONE2, item.getWorkTelephone2())
-			.set(CONTACTS.WORK_FAX, item.getWorkFax())
-			.set(CONTACTS.WORK_MOBILE, item.getWorkMobile())
-			.set(CONTACTS.WORK_PAGER, item.getWorkPager())
-			.set(CONTACTS.WORK_EMAIL, item.getWorkEmail())
-			.set(CONTACTS.WORK_IM, item.getWorkIm())
-			.set(CONTACTS.ASSISTANT, item.getAssistant())
-			.set(CONTACTS.ASSISTANT_TELEPHONE, item.getAssistantTelephone())
-			.set(CONTACTS.DEPARTMENT, item.getDepartment())
-			.set(CONTACTS.MANAGER, item.getManager())
-			.set(CONTACTS.HOME_ADDRESS, item.getHomeAddress())
-			.set(CONTACTS.HOME_CITY, item.getHomeCity())
-			.set(CONTACTS.HOME_STATE, item.getHomeState())
-			.set(CONTACTS.HOME_POSTALCODE, item.getHomePostalcode())
-			.set(CONTACTS.HOME_COUNTRY, item.getHomeCountry())
-			.set(CONTACTS.HOME_TELEPHONE, item.getHomeTelephone())
-			.set(CONTACTS.HOME_TELEPHONE2, item.getHomeTelephone2())
-			.set(CONTACTS.HOME_FAX, item.getHomeFax())
-			.set(CONTACTS.HOME_MOBILE, item.getHomeMobile())
-			.set(CONTACTS.HOME_PAGER, item.getHomePager())
-			.set(CONTACTS.HOME_EMAIL, item.getHomeEmail())
-			.set(CONTACTS.HOME_IM, item.getHomeIm())
-			.set(CONTACTS.PARTNER, item.getPartner())
-			.set(CONTACTS.BIRTHDAY, item.getBirthday())
-			.set(CONTACTS.ANNIVERSARY, item.getAnniversary())
-			.set(CONTACTS.OTHER_ADDRESS, item.getOtherAddress())
-			.set(CONTACTS.OTHER_CITY, item.getOtherCity())
-			.set(CONTACTS.OTHER_STATE, item.getOtherState())
-			.set(CONTACTS.OTHER_POSTALCODE, item.getOtherPostalcode())
-			.set(CONTACTS.OTHER_COUNTRY, item.getOtherCountry())
-			.set(CONTACTS.OTHER_EMAIL, item.getOtherEmail())
-			.set(CONTACTS.OTHER_IM, item.getOtherIm())
-			.set(CONTACTS.URL, item.getUrl())
-			.set(CONTACTS.NOTES, item.getNotes())
-			.set(CONTACTS.ETAG, item.getEtag())
+			.update(CONTACTS_)
+			.set(CONTACTS_.CATEGORY_ID, item.getCategoryId())
+			.set(CONTACTS_.REVISION_STATUS, item.getRevisionStatus())
+			.set(CONTACTS_.REVISION_TIMESTAMP, item.getRevisionTimestamp())
+			.set(CONTACTS_.TITLE, item.getTitle())
+			.set(CONTACTS_.FIRSTNAME, item.getFirstname())
+			.set(CONTACTS_.LASTNAME, item.getLastname())
+			.set(CONTACTS_.DISPLAY_NAME, item.getDisplayName())
+			.set(CONTACTS_.NICKNAME, item.getNickname())
+			.set(CONTACTS_.GENDER, item.getGender())
+			.set(CONTACTS_.COMPANY, item.getCompany())
+			.set(CONTACTS_.COMPANY_MASTER_DATA_ID, item.getCompanyMasterDataId())
+			.set(CONTACTS_.FUNCTION, item.getFunction())
+			.set(CONTACTS_.WORK_ADDRESS, item.getWorkAddress())
+			.set(CONTACTS_.WORK_CITY, item.getWorkCity())
+			.set(CONTACTS_.WORK_STATE, item.getWorkState())
+			.set(CONTACTS_.WORK_POSTALCODE, item.getWorkPostalcode())
+			.set(CONTACTS_.WORK_COUNTRY, item.getWorkCountry())
+			.set(CONTACTS_.WORK_TELEPHONE, item.getWorkTelephone())
+			.set(CONTACTS_.WORK_TELEPHONE2, item.getWorkTelephone2())
+			.set(CONTACTS_.WORK_FAX, item.getWorkFax())
+			.set(CONTACTS_.WORK_MOBILE, item.getWorkMobile())
+			.set(CONTACTS_.WORK_PAGER, item.getWorkPager())
+			.set(CONTACTS_.WORK_EMAIL, item.getWorkEmail())
+			.set(CONTACTS_.WORK_IM, item.getWorkIm())
+			.set(CONTACTS_.ASSISTANT, item.getAssistant())
+			.set(CONTACTS_.ASSISTANT_TELEPHONE, item.getAssistantTelephone())
+			.set(CONTACTS_.DEPARTMENT, item.getDepartment())
+			.set(CONTACTS_.MANAGER, item.getManager())
+			.set(CONTACTS_.HOME_ADDRESS, item.getHomeAddress())
+			.set(CONTACTS_.HOME_CITY, item.getHomeCity())
+			.set(CONTACTS_.HOME_STATE, item.getHomeState())
+			.set(CONTACTS_.HOME_POSTALCODE, item.getHomePostalcode())
+			.set(CONTACTS_.HOME_COUNTRY, item.getHomeCountry())
+			.set(CONTACTS_.HOME_TELEPHONE, item.getHomeTelephone())
+			.set(CONTACTS_.HOME_TELEPHONE2, item.getHomeTelephone2())
+			.set(CONTACTS_.HOME_FAX, item.getHomeFax())
+			.set(CONTACTS_.HOME_MOBILE, item.getHomeMobile())
+			.set(CONTACTS_.HOME_PAGER, item.getHomePager())
+			.set(CONTACTS_.HOME_EMAIL, item.getHomeEmail())
+			.set(CONTACTS_.HOME_IM, item.getHomeIm())
+			.set(CONTACTS_.PARTNER, item.getPartner())
+			.set(CONTACTS_.BIRTHDAY, item.getBirthday())
+			.set(CONTACTS_.ANNIVERSARY, item.getAnniversary())
+			.set(CONTACTS_.OTHER_ADDRESS, item.getOtherAddress())
+			.set(CONTACTS_.OTHER_CITY, item.getOtherCity())
+			.set(CONTACTS_.OTHER_STATE, item.getOtherState())
+			.set(CONTACTS_.OTHER_POSTALCODE, item.getOtherPostalcode())
+			.set(CONTACTS_.OTHER_COUNTRY, item.getOtherCountry())
+			.set(CONTACTS_.OTHER_EMAIL, item.getOtherEmail())
+			.set(CONTACTS_.OTHER_IM, item.getOtherIm())
+			.set(CONTACTS_.URL, item.getUrl())
+			.set(CONTACTS_.NOTES, item.getNotes())
+			.set(CONTACTS_.ETAG, item.getEtag())
 			.where(
-				CONTACTS.CONTACT_ID.equal(item.getContactId())
+				CONTACTS_.CONTACT_ID.equal(item.getContactId())
 			)
 			.execute();
 	}
 	
 	public int updateList(Connection con, OContact item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionStatus(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED));
+		item.setRevisionStatus(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED));
 		item.setRevisionTimestamp(revisionTimestamp);
 		item.setRevisionSequence(0);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.CATEGORY_ID, item.getCategoryId())
-			.set(CONTACTS.REVISION_STATUS, item.getRevisionStatus())
-			.set(CONTACTS.REVISION_TIMESTAMP, item.getRevisionTimestamp())
-			.set(CONTACTS.DISPLAY_NAME, item.getDisplayName())
-			.set(CONTACTS.FIRSTNAME, item.getDisplayName())
-			.set(CONTACTS.LASTNAME, item.getDisplayName())
+			.update(CONTACTS_)
+			.set(CONTACTS_.CATEGORY_ID, item.getCategoryId())
+			.set(CONTACTS_.REVISION_STATUS, item.getRevisionStatus())
+			.set(CONTACTS_.REVISION_TIMESTAMP, item.getRevisionTimestamp())
+			.set(CONTACTS_.DISPLAY_NAME, item.getDisplayName())
+			.set(CONTACTS_.FIRSTNAME, item.getDisplayName())
+			.set(CONTACTS_.LASTNAME, item.getDisplayName())
 			.where(
-					CONTACTS.CONTACT_ID.equal(item.getContactId())
+					CONTACTS_.CONTACT_ID.equal(item.getContactId())
 			)
 			.execute();
 	}
@@ -799,12 +916,12 @@ AND (ccnts.href IS NULL)
 	public int updateCategory(Connection con, int contactId, int categoryId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.CATEGORY_ID, categoryId)
-			.set(CONTACTS.REVISION_STATUS, EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED))
-			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
+			.update(CONTACTS_)
+			.set(CONTACTS_.CATEGORY_ID, categoryId)
+			.set(CONTACTS_.REVISION_STATUS, EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED))
+			.set(CONTACTS_.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
+				CONTACTS_.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
@@ -812,22 +929,22 @@ AND (ccnts.href IS NULL)
 	public int updateRevision(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
+			.update(CONTACTS_)
+			.set(CONTACTS_.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
+				CONTACTS_.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
 	
-	public int updateRevisionStatus(Connection con, int contactId, Contact.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
+	public int updateRevisionStatus(Connection con, int contactId, ContactBase.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.REVISION_STATUS, EnumUtils.toSerializedName(revisionStatus))
-			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
+			.update(CONTACTS_)
+			.set(CONTACTS_.REVISION_STATUS, EnumUtils.toSerializedName(revisionStatus))
+			.set(CONTACTS_.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
+				CONTACTS_.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
@@ -835,9 +952,9 @@ AND (ccnts.href IS NULL)
 	public int deleteById(Connection con, int contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.delete(CONTACTS)
+			.delete(CONTACTS_)
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
+				CONTACTS_.CONTACT_ID.equal(contactId)
 			)
 			.execute();
 	}
@@ -845,37 +962,37 @@ AND (ccnts.href IS NULL)
 	public int deleteByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.delete(CONTACTS)
+			.delete(CONTACTS_)
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
 			)
 			.execute();
 	}
 	
 	public int logicDeleteById(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
-		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
+		final String DELETED = EnumUtils.toSerializedName(ContactBase.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.REVISION_STATUS, DELETED)
-			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
+			.update(CONTACTS_)
+			.set(CONTACTS_.REVISION_STATUS, DELETED)
+			.set(CONTACTS_.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
-				CONTACTS.CONTACT_ID.equal(contactId)
-				.and(CONTACTS.REVISION_STATUS.notEqual(DELETED))
+				CONTACTS_.CONTACT_ID.equal(contactId)
+				.and(CONTACTS_.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();
 	}
 	
 	public int logicDeleteByCategory(Connection con, int categoryId, DateTime revisionTimestamp) throws DAOException {
-		final String DELETED = EnumUtils.toSerializedName(Contact.RevisionStatus.DELETED);
+		final String DELETED = EnumUtils.toSerializedName(ContactBase.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl
-			.update(CONTACTS)
-			.set(CONTACTS.REVISION_STATUS, DELETED)
-			.set(CONTACTS.REVISION_TIMESTAMP, revisionTimestamp)
+			.update(CONTACTS_)
+			.set(CONTACTS_.REVISION_STATUS, DELETED)
+			.set(CONTACTS_.REVISION_TIMESTAMP, revisionTimestamp)
 			.where(
-				CONTACTS.CATEGORY_ID.equal(categoryId)
-				.and(CONTACTS.REVISION_STATUS.notEqual(DELETED))
+				CONTACTS_.CATEGORY_ID.equal(categoryId)
+				.and(CONTACTS_.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();
 	}
@@ -887,49 +1004,49 @@ AND (ccnts.href IS NULL)
 	private Field<?> getTableFieldBy(RecipientFieldType fieldType, RecipientFieldCategory fieldCategory) {
 		if (fieldType.equals(RecipientFieldType.TELEPHONE)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_TELEPHONE;
+				return CONTACTS_.WORK_TELEPHONE;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_TELEPHONE;
+				return CONTACTS_.HOME_TELEPHONE;
 			}
 		} else if (fieldType.equals(RecipientFieldType.TELEPHONE_2)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_TELEPHONE2;
+				return CONTACTS_.WORK_TELEPHONE2;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_TELEPHONE2;
+				return CONTACTS_.HOME_TELEPHONE2;
 			}
 		} else if (fieldType.equals(RecipientFieldType.FAX)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_FAX;
+				return CONTACTS_.WORK_FAX;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_FAX;
+				return CONTACTS_.HOME_FAX;
 			}
 		} else if (fieldType.equals(RecipientFieldType.MOBILE)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_MOBILE;
+				return CONTACTS_.WORK_MOBILE;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_MOBILE;
+				return CONTACTS_.HOME_MOBILE;
 			}
 		} else if (fieldType.equals(RecipientFieldType.PAGER)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_PAGER;
+				return CONTACTS_.WORK_PAGER;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_PAGER;
+				return CONTACTS_.HOME_PAGER;
 			}
 		} else if (fieldType.equals(RecipientFieldType.EMAIL)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_EMAIL;
+				return CONTACTS_.WORK_EMAIL;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_EMAIL;
+				return CONTACTS_.HOME_EMAIL;
 			} else if (fieldCategory.equals(RecipientFieldCategory.OTHER)) {
-				return CONTACTS.OTHER_EMAIL;
+				return CONTACTS_.OTHER_EMAIL;
 			}
 		} else if (fieldType.equals(RecipientFieldType.IM)) {
 			if (fieldCategory.equals(RecipientFieldCategory.WORK)) {
-				return CONTACTS.WORK_EMAIL;
+				return CONTACTS_.WORK_EMAIL;
 			} else if (fieldCategory.equals(RecipientFieldCategory.HOME)) {
-				return CONTACTS.HOME_EMAIL;
+				return CONTACTS_.HOME_EMAIL;
 			} else if (fieldCategory.equals(RecipientFieldCategory.OTHER)) {
-				return CONTACTS.OTHER_EMAIL;
+				return CONTACTS_.OTHER_EMAIL;
 			}
 		}
 		return null;
@@ -944,11 +1061,11 @@ AND (ccnts.href IS NULL)
 			DSLContext dsl = getDSL(con);
 			String sql = dsl
 				.select(
-					CONTACTS.PHOTO
+					CONTACTS_.PHOTO
 				)
-				.from(CONTACTS)
+				.from(CONTACTS_)
 				.where(
-						CONTACTS.CONTACT_ID.equal(contactId)
+						CONTACTS_.CONTACT_ID.equal(contactId)
 				)
 				.getSQL();
 			
@@ -1004,13 +1121,13 @@ AND (ccnts.href IS NULL)
 		ArrayList<SortField<?>> fields = new ArrayList<>();
 		for (OrderField of : orderFields) {
 			if (OrderField.DISPLAYNAME.equals(of)) {
-				fields.add(CONTACTS.DISPLAY_NAME.asc());
+				fields.add(CONTACTS_.DISPLAY_NAME.asc());
 			} else if (OrderField.FIRSTNAME.equals(of)) {
-				fields.add(CONTACTS.FIRSTNAME.asc());
+				fields.add(CONTACTS_.FIRSTNAME.asc());
 			} else if (OrderField.LASTNAME.equals(of)) {
-				fields.add(CONTACTS.LASTNAME.asc());
+				fields.add(CONTACTS_.LASTNAME.asc());
 			} else if (OrderField.COMPANY.equals(of)) {
-				fields.add(CONTACTS.COMPANY.asc());
+				fields.add(CONTACTS_.COMPANY.asc());
 			}
 		}
 		return fields;
@@ -1018,25 +1135,25 @@ AND (ccnts.href IS NULL)
 	
 	private Condition toContactTypeCondition(ContactType type) {
 		if (ContactType.CONTACT.equals(type)) {
-			return CONTACTS.IS_LIST.isFalse();
+			return CONTACTS_.IS_LIST.isFalse();
 		} else if (ContactType.LIST.equals(type)) {
-			return CONTACTS.IS_LIST.isTrue();
+			return CONTACTS_.IS_LIST.isTrue();
 		} else {
 			return DSL.trueCondition();
 		}
 	}
 	
 	private Condition toListOnlyCondition(boolean listOnly) {
-		return listOnly ? CONTACTS.IS_LIST.isTrue() : DSL.trueCondition();
+		return listOnly ? CONTACTS_.IS_LIST.isTrue() : DSL.trueCondition();
 	}
 	
 	private Condition toSearchPatternCondition(String pattern) {
 		Condition cndt = DSL.trueCondition();
 		if (!StringUtils.isBlank(pattern)) {
-			return CONTACTS.WORK_EMAIL.likeIgnoreCase(pattern)
-					.or(CONTACTS.HOME_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.OTHER_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS.COMPANY.likeIgnoreCase(pattern));
+			return CONTACTS_.WORK_EMAIL.likeIgnoreCase(pattern)
+					.or(CONTACTS_.HOME_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS_.OTHER_EMAIL.likeIgnoreCase(pattern))
+					.or(CONTACTS_.COMPANY.likeIgnoreCase(pattern));
 		}
 		return cndt;
 	}

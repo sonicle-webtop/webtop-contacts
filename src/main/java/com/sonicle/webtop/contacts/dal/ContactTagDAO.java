@@ -32,14 +32,17 @@
  */
 package com.sonicle.webtop.contacts.dal;
 
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import com.sonicle.webtop.contacts.jooq.tables.ContactsTags;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
 import static org.jooq.impl.DSL.*;
 
@@ -69,6 +72,23 @@ public class ContactTagDAO extends BaseDAO {
 			.fetchSet(CONTACTS_TAGS.TAG_ID);
 	}
 	
+	public Map<Integer, List<String>> selectTagsByContact(Connection con, Collection<Integer> contactIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+				CONTACTS_TAGS.CONTACT_ID,
+				CONTACTS_TAGS.TAG_ID
+			)
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.in(contactIds)
+			)
+			.orderBy(
+				CONTACTS_TAGS.TAG_ID.asc()
+			)
+			.fetchGroups(CONTACTS_TAGS.CONTACT_ID, CONTACTS_TAGS.TAG_ID);
+	}
+	
 	public int insert(Connection con, int contactId, String tagId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -78,6 +98,25 @@ public class ContactTagDAO extends BaseDAO {
 			.execute();
 	}
 	
+	public int[] batchInsert(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+		if (tagIds.isEmpty()) return new int[0];
+		DSLContext dsl = getDSL(con);
+		BatchBindStep batch = dsl.batch(
+			dsl.insertInto(CONTACTS_TAGS, 
+				CONTACTS_TAGS.CONTACT_ID, 
+				CONTACTS_TAGS.TAG_ID
+			)
+			.values((Integer)null, (String)null)
+		);
+		for (String tagId : tagIds) {
+			batch.bind(
+				contactId,
+				tagId
+			);
+		}
+		return batch.execute();
+	}
+	
 	public int insertByCategory(Connection con, int categoryId, String tagId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		ContactsTags cnttgs1 = CONTACTS_TAGS.as("cnttgs1");
@@ -85,19 +124,19 @@ public class ContactTagDAO extends BaseDAO {
 			.insertInto(CONTACTS_TAGS)
 			.select(
 				select(
-					CONTACTS.CONTACT_ID,
+					CONTACTS_.CONTACT_ID,
 					val(tagId, String.class).as("tag_id")
 				)
-				.from(CONTACTS)
+				.from(CONTACTS_)
 				.where(
-					CONTACTS.CATEGORY_ID.equal(categoryId)
-					.and(CONTACTS.CONTACT_ID.notIn(
+					CONTACTS_.CATEGORY_ID.equal(categoryId)
+					.and(CONTACTS_.CONTACT_ID.notIn(
 						select(
 							cnttgs1.CONTACT_ID
 						)
 						.from(cnttgs1)
 						.where(
-							cnttgs1.CONTACT_ID.equal(CONTACTS.CONTACT_ID)
+							cnttgs1.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
 							.and(cnttgs1.TAG_ID.equal(tagId))
 						)
 					))
@@ -120,7 +159,7 @@ public class ContactTagDAO extends BaseDAO {
 			.insertInto(CONTACTS_TAGS)
 			.select(
 				select(
-					CONTACTS.CONTACT_ID,
+					CONTACTS_.CONTACT_ID,
 					field("un1.*", String.class)
 				)
 				.from(
@@ -128,10 +167,10 @@ public class ContactTagDAO extends BaseDAO {
 					unnest(tagIds.toArray(new String[tagIds.size()])).as("un1")
 				)
 				.where(
-					CONTACTS.CATEGORY_ID.equal(categoryId)
+					CONTACTS_.CATEGORY_ID.equal(categoryId)
 					.and(
-						CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-						.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+						CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+						.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 					)
 				)
 			)
@@ -148,14 +187,14 @@ public class ContactTagDAO extends BaseDAO {
 			.insertInto(CONTACTS_TAGS)
 			.select(
 				select(
-					CONTACTS.CONTACT_ID,
+					CONTACTS_.CONTACT_ID,
 					val(tagId, String.class).as("tag_id")
 				)
-				.from(CONTACTS)
+				.from(CONTACTS_)
 				.where(
-					CONTACTS.CATEGORY_ID.in(categoryIds)
-					.and(CONTACTS.CONTACT_ID.in(contactIds))
-					.and(CONTACTS.CONTACT_ID.notIn(
+					CONTACTS_.CATEGORY_ID.in(categoryIds)
+					.and(CONTACTS_.CONTACT_ID.in(contactIds))
+					.and(CONTACTS_.CONTACT_ID.notIn(
 						select(
 							cnttgs1.CONTACT_ID
 						)
@@ -175,7 +214,7 @@ public class ContactTagDAO extends BaseDAO {
 			.insertInto(CONTACTS_TAGS)
 			.select(
 				select(
-					CONTACTS.CONTACT_ID,
+					CONTACTS_.CONTACT_ID,
 					field("un1.*", String.class)
 				)
 				.from(
@@ -183,11 +222,11 @@ public class ContactTagDAO extends BaseDAO {
 					unnest(tagIds.toArray(new String[tagIds.size()])).as("un1")
 				)
 				.where(
-					CONTACTS.CATEGORY_ID.in(categoryIds)
-					.and(CONTACTS.CONTACT_ID.in(contactIds))
+					CONTACTS_.CATEGORY_ID.in(categoryIds)
+					.and(CONTACTS_.CONTACT_ID.in(contactIds))
 					.and(
-						CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
-						.or(CONTACTS.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
+						CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.NEW))
+						.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(Contact.RevisionStatus.MODIFIED)))
 					)
 				)
 			)
@@ -204,6 +243,17 @@ public class ContactTagDAO extends BaseDAO {
 			.where(
 				CONTACTS_TAGS.CONTACT_ID.equal(contactId)
 				.and(CONTACTS_TAGS.TAG_ID.equal(tagId))
+			)
+			.execute();
+	}
+	
+	public int deleteByIdTags(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.delete(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(contactId)
+				.and(CONTACTS_TAGS.TAG_ID.in(tagIds))
 			)
 			.execute();
 	}
@@ -225,11 +275,11 @@ public class ContactTagDAO extends BaseDAO {
 			.where(
 				CONTACTS_TAGS.CONTACT_ID.in(
 					select(
-						CONTACTS.CONTACT_ID
+						CONTACTS_.CONTACT_ID
 					)
-					.from(CONTACTS)
+					.from(CONTACTS_)
 					.where(
-						CONTACTS.CATEGORY_ID.equal(categoryId)
+						CONTACTS_.CATEGORY_ID.equal(categoryId)
 					)
 				)
 			)
@@ -243,11 +293,11 @@ public class ContactTagDAO extends BaseDAO {
 			.where(
 				CONTACTS_TAGS.CONTACT_ID.in(
 					select(
-						CONTACTS.CONTACT_ID
+						CONTACTS_.CONTACT_ID
 					)
-					.from(CONTACTS)
+					.from(CONTACTS_)
 					.where(
-						CONTACTS.CATEGORY_ID.equal(categoryId)
+						CONTACTS_.CATEGORY_ID.equal(categoryId)
 					)
 				)
 				.and(CONTACTS_TAGS.TAG_ID.in(tagIds))
@@ -262,12 +312,12 @@ public class ContactTagDAO extends BaseDAO {
 			.where(
 				CONTACTS_TAGS.CONTACT_ID.in(
 					select(
-						CONTACTS.CONTACT_ID
+						CONTACTS_.CONTACT_ID
 					)
-					.from(CONTACTS)
+					.from(CONTACTS_)
 					.where(
-						CONTACTS.CONTACT_ID.in(contactIds)
-						.and(CONTACTS.CATEGORY_ID.in(categoryIds))
+						CONTACTS_.CONTACT_ID.in(contactIds)
+						.and(CONTACTS_.CATEGORY_ID.in(categoryIds))
 					)
 				)
 			)
@@ -281,12 +331,12 @@ public class ContactTagDAO extends BaseDAO {
 			.where(
 				CONTACTS_TAGS.CONTACT_ID.in(
 					select(
-						CONTACTS.CONTACT_ID
+						CONTACTS_.CONTACT_ID
 					)
-					.from(CONTACTS)
+					.from(CONTACTS_)
 					.where(
-						CONTACTS.CONTACT_ID.in(contactIds)
-						.and(CONTACTS.CATEGORY_ID.in(categoryIds))
+						CONTACTS_.CONTACT_ID.in(contactIds)
+						.and(CONTACTS_.CATEGORY_ID.in(categoryIds))
 					)
 				)
 				.and(CONTACTS_TAGS.TAG_ID.in(tagIds))

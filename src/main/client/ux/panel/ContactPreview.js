@@ -53,12 +53,6 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	 */
 	tagsStore: null,
 	
-	/**
-	 * @cfg {Number} loadContactBuffer
-	 * This is the time in milliseconds to buffer load requests when updating selection.
-	 */
-	loadContactBuffer: 200,
-	
 	layout: 'card',
 	referenceHolder: true,
 	bodyPadding: 10,
@@ -113,6 +107,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			}),
 			foHasTags: WTF.foIsEmpty('record', 'tags', true)
 		});
+		me.loadContactBuffered = Ext.Function.createBuffered(me.loadContact, 200);
 	},
 	
 	initComponent: function() {
@@ -555,14 +550,26 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								// Do not use this binding here, it will cause internal exception
 								// in Ext.app.bind.Stub during model load with new ID. (see explicit vm.bind in initComponent)
 								//fieldsDefs: '{record._cfdefs}'
-							}
+							},
+							serviceId: me.mys.ID
 						}
 					],
 					tabBar:	{
 						items: [
 							{
 								xtype: 'tbfill'
-							}, {
+							}, me.mys.hasAuditUI() ? {
+								xtype: 'button',
+								margin: '0 5 0 5',
+								ui: 'default-toolbar',
+								text: null,
+								tooltip: WT.res('act-auditLog.lbl'),
+								iconCls: 'fas fa-history',
+								handler: function() {
+									var vm = me.getVM();
+									me.fireEvent('opencontactaudit', me, vm.get('record.isList'), vm.get('record.id'));
+								}
+							} : null, {
 								xtype: 'button',
 								ui: 'default-toolbar',
 								bind: {
@@ -635,13 +642,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 				card = me;
 		me.getViewModel().set('contacts', contacts);
 		if (contacts && contacts.length === 1) {
-			me.loadContact(contacts[0].getId());
-			card.setActiveItem((contacts[0].get('isList') === true) ? 'list' : 'contact');
+			me.loadContactBuffered(contacts[0].getId(), (contacts[0].get('isList') === true) ? 'list' : 'contact');
 		} else if (contacts && contacts.length > 1) {
 			card.setActiveItem('multi');
 		} else {
-			me.loadContact(null);
-			card.setActiveItem('empty');
+			me.loadContactBuffered(null, 'empty');
 		}
 	},
 	
@@ -655,18 +660,18 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		}
 	},
 	
-	loadContact: function(contactUid) {
+	loadContact: function(contactUid, /*private*/ activateCard) {
 		var me = this;
-		if (me.timLC) clearTimeout(me.timLC);
-		me.timLC = setTimeout(function() {
-			me.clearModel();
-			if (contactUid) {
-				me.loadModel({
-					data: {uid: contactUid},
-					dirty: false
-				});
-			}
-		}, me.loadContactBuffer || 200);
+		me.clearModel();
+		if (contactUid) {
+			me.loadModel({
+				data: {uid: contactUid},
+				dirty: false
+			});
+		}
+		if (!Ext.isEmpty(activateCard)) {
+			me.setActiveItem(activateCard);
+		}
 	},
 	
 	privates: {

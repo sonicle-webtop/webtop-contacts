@@ -35,6 +35,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	extend: 'WTA.sdk.ModelView',
 	requires: [
 		'Sonicle.String',
+		'Sonicle.Utils',
 		'Sonicle.form.field.ComboBox',
 		'Sonicle.form.field.Image',
 		'Sonicle.form.field.TagDisplay',
@@ -60,6 +61,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	confirm: 'yn',
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.Contact',
+	actionsResPrefix: 'contact',
 	
 	uploadTag: null,
 	
@@ -98,7 +100,6 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						'-',
 						me.addAct('delete', {
 							text: null,
-							tooltip: WT.res('act-delete.lbl'),
 							iconCls: 'wt-icon-delete',
 							handler: function() {
 								me.deleteContact();
@@ -176,7 +177,22 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					hidden: true,
 					hideLabel: true,
 					margin: '0 0 5 0'
-				}
+				},
+				me.mys.hasAuditUI() ? {
+					xtype: 'statusbar',
+					dock: 'bottom',
+					items: [
+						me.addAct('contactAuditLog', {
+							text: null,
+							tooltip: WT.res('act-auditLog.lbl'),
+							iconCls: 'fas fa-history',
+							handler: function() {
+								me.mys.openAuditUI(me.getModel().getId(), 'CONTACT');
+							},
+							scope: me
+						})
+					]
+				} : null
 			]
 		});
 		me.callParent(arguments);
@@ -280,9 +296,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					geometry: 'circle',
 					baseImageUrl: WTF.processBinUrl(me.mys.ID, 'GetContactPicture'),
 					placeholderImageUrl: me.mys.resourceUrl('contact-placeholder.png'),
-					clearTriggerCls: 'far fa-trash-alt wt-theme-glyph-lighter',
-					uploadTriggerCls: 'far fa-plus-square wt-theme-glyph-lighter',
-					triggersOverCls: 'wt-theme-glyph',
+					clearTriggerCls: 'far fa-trash-alt',
+					uploadTriggerCls: 'far fa-plus-square',
+					triggersOverCls: 'wt-opacity-70',
 					clearTriggerTooltip: me.res('contact.fld-picture.clear.tip'),
 					uploadTriggerTooltip: me.res('contact.fld-picture.upload.tip'),
 					uploaderConfig: WTF.uploader(me.mys.ID, 'ContactPicture', {
@@ -571,7 +587,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						size: file.size,
 						_uplId: uploadId
 					}));
-					me.lref('tpnlmain').getLayout().setActiveItem(s);
+					me.lref('tpnlmain').setActiveItem(s);
 				}
 			}
 		};
@@ -584,7 +600,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				store: '{record.cvalues}',
 				fieldsDefs: '{record._cfdefs}'
 			},
-			defaultLabelWidth: 120
+			serviceId: me.mys.ID,
+			defaultLabelWidth: 120,
+			listeners: {
+				prioritize: function(s) {
+					me.lref('tpnlmain').setActiveItem(s);
+				}
+			}
 		};
 		
 		me.add({
@@ -645,13 +667,13 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		var me = this,
 				rec = me.getModel();
 		
-		WT.confirm(WT.res('confirm.delete'), function(bid) {
+		WT.confirm(me.res('contact.confirm.delete', Ext.String.ellipsis(rec.get('displayName'), 40)), function(bid) {
 			if (bid === 'yes') {
 				me.wait();
 				WT.ajaxReq(me.mys.ID, 'ManageContacts', {
 					params: {
 						crud: 'delete',
-						ids: WTU.arrayAsParam([rec.get('id')])
+						ids: Sonicle.Utils.toJSONArray([rec.get('id')])
 					},
 					callback: function(success) {
 						me.unwait();
@@ -685,6 +707,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
+				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(true);
 				me.reloadCustomFields([]);
 			} else if (me.isMode(me.MODE_VIEW)) {
 				me.getAct('saveClose').setDisabled(true);
@@ -692,12 +715,14 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				me.getAct('tags').setDisabled(true);
 				me.lref('fldcategory').setReadOnly(true);
 				me.lref('fldpic').setDisabled(true);
+				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(false);
 			} else if (me.isMode(me.MODE_EDIT)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(false);
 				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
+				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(false);
 			}
 			me.lref('fldfirstname').focus(true);
 		},
@@ -748,7 +773,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 			var me = this;
 			WT.ajaxReq(me.mys.ID, 'GetCustomFieldsDefsData', {
 				params: {
-					tags: WTU.arrayAsParam(tags),
+					tags: Sonicle.Utils.toJSONArray(tags),
 					contactId: (contactId !== null && contactId > 0) ? contactId : null
 				},
 				callback: function(success, json) {

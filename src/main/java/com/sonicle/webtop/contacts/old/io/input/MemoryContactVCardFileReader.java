@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2018 Sonicle S.r.l.
+/* 
+ * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,81 +28,67 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2018 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2014 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.io.input;
+package com.sonicle.webtop.contacts.old.io.input;
 
 import com.sonicle.webtop.contacts.io.ContactInput;
-import com.sonicle.webtop.contacts.io.LDIFInput;
-import com.sonicle.webtop.core.io.BeanHandler;
-import com.sonicle.webtop.core.io.input.FileReaderException;
+import com.sonicle.webtop.contacts.io.VCardInput;
 import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.LogEntry;
 import com.sonicle.webtop.core.util.MessageLogEntry;
+import ezvcard.Ezvcard;
+import ezvcard.VCard;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Collection;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.io.IOUtils;
-import org.ldaptive.LdapEntry;
-import org.ldaptive.SearchResult;
-import org.ldaptive.io.LdifReader;
 
 /**
  *
- * @author Dorian Haxhiaj
+ * @author malbinola
  */
-public class ContactLDIFFileReader implements ContactFileReader {
+public class MemoryContactVCardFileReader implements MemoryContactFileReader {
 
 	@Override
-	public void readContacts(File file, BeanHandler handler) throws IOException, FileReaderException {
-		FileReader fis = null;
+	public ArrayList<ContactInput> listContacts(LogEntries log, File file) throws IOException, UnsupportedOperationException {
+		FileInputStream fis = null;
 		try {
-			 fis=new FileReader(file);
-			readContacts(fis, handler);
+			fis = new FileInputStream(file);
+			return listContacts(log, fis);
 		} finally {
 			IOUtils.closeQuietly(fis);
 		}
 	}
 	
-	private void readContacts(FileReader is, BeanHandler handler) throws IOException, FileReaderException {
-		try {
-			final LdifReader  ldifReader  = new LdifReader(is);
-			SearchResult resLDIF = ldifReader.read();
-			Collection<LdapEntry> ldapEntries =resLDIF.getEntries();
-			readContacts(ldapEntries, handler);
-		} catch(Exception ex) {
-			throw new FileReaderException(ex, "Unable to read stream");
-		}
-	}
-	
-	private void readContacts(Collection<LdapEntry>  ldapEntries, BeanHandler handler) throws IOException, FileReaderException {
-		 LDIFInput input = new LDIFInput();
-		//TODO: move BeanHandler code into VCardInput in order to avoid duplicated code here
-		for (LdapEntry ldapEntry : ldapEntries) {
-			LogEntries log = new LogEntries();
+	public ArrayList<ContactInput> listContacts(LogEntries log, InputStream is) throws IOException, UnsupportedOperationException {
+		// See https://tools.ietf.org/html/rfc6350
+		// See http://www.w3.org/TR/vcard-rdf/
+		final VCardInput input = new VCardInput();
+		ArrayList<ContactInput> results = new ArrayList<>();
+		
+		List<VCard> vcs = Ezvcard.parse(is).all();
+		for(VCard vc : vcs) {
 			ContactInput result = null;
 			try {
 				final LogEntries ilog = new LogEntries();
-				result = input.fromLDIF(ldapEntry, ilog);
+				result = input.parseCardObject(vc);
 				if (result.contact.trimFieldLengths()) {
 					ilog.add(new MessageLogEntry(LogEntry.Level.WARN, "Some fields were truncated due to max-length"));
 				}
 				if (!ilog.isEmpty()) {
-					log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "LDIF [{0}]"));
+					log.addMaster(new MessageLogEntry(LogEntry.Level.WARN, "VCARD [{0}]", vc.getUid()));
 					log.addAll(ilog);
 				}
+				results.add(result);
+				
 			} catch(Throwable t) {
-				t.printStackTrace();
-				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "LDIF [{0}]. Reason: {1}", t.getMessage()));
-			} finally {
-				try {
-					handler.handle(result, log);
-				} catch(Exception ex) {
-					throw new FileReaderException(ex);
-				}
+				log.addMaster(new MessageLogEntry(LogEntry.Level.ERROR, "VCARD [{0}]. Reason: {1}", vc.getUid(), t.getMessage()));
 			}
 		}
+		return results;
 	}
-	
 }

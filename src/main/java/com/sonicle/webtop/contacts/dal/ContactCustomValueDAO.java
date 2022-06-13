@@ -75,6 +75,7 @@ public class ContactCustomValueDAO extends BaseDAO {
 	}
 	
 	public int[] batchInsert(Connection con, Collection<OContactCustomValue> values) throws DAOException {
+		if (values.isEmpty()) return new int[0];
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
 			dsl.insertInto(CONTACTS_CUSTOM_VALUES, 

@@ -36,10 +36,11 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	requires: [
 		'Sonicle.form.field.ComboBox',
 		'Sonicle.form.field.TagDisplay',
-		'Sonicle.webtop.core.ux.RecipientsGrid',
+		'Sonicle.webtop.core.ux.grid.Recipients',
 		'Sonicle.webtop.contacts.model.CategoryLkp',
 		'Sonicle.webtop.contacts.model.ContactsList',
-		'Sonicle.webtop.core.store.RcptType'
+		'Sonicle.webtop.core.store.RcptType',
+		'Sonicle.plugin.FieldTabOut'
 	],
 	uses: [
 		'Sonicle.webtop.core.view.Tags'
@@ -54,13 +55,15 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	confirm: 'yn',
 	autoToolbar: false,
 	modelName: 'Sonicle.webtop.contacts.model.ContactsList',
+	actionsResPrefix: 'contactsList',
 	
 	constructor: function(cfg) {
 		var me = this;
 		me.callParent([cfg]);
 		
 		WTU.applyFormulas(me.getVM(), {
-			foHasTags: WTF.foIsEmpty('record', 'tags', true)
+			foHasTags: WTF.foIsEmpty('record', 'tags', true),
+			isView: WTF.foIsEqual(null, '_mode', 'view')
 		});
 	},
 	
@@ -82,7 +85,6 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 						'-',
 						me.addAct('delete', {
 							text: null,
-							tooltip: WT.res('act-delete.lbl'),
 							iconCls: 'wt-icon-delete',
 							handler: function() {
 								me.delectContactsList();
@@ -151,7 +153,22 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 					hidden: true,
 					hideLabel: true,
 					margin: '0 0 5 0'
-				}
+				},
+				me.mys.hasAuditUI() ? {
+					xtype: 'statusbar',
+					dock: 'bottom',
+					items: [
+						me.addAct('contactsListAuditLog', {
+							text: null,
+							tooltip: WT.res('act-auditLog.lbl'),
+							iconCls: 'fas fa-history',
+							handler: function() {
+								me.mys.openAuditUI(me.getModel().getId(), 'CONTACT', true);
+							},
+							scope: me
+						})
+					]
+				} : null
 			]
 		});
 		me.callParent(arguments);
@@ -167,44 +184,94 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 				bind: '{record.name}',
 				fieldLabel: me.mys.res('contactsList.fld-name.lbl'),
 				anchor: '100%',
+				enableKeyEvents: true,
+				plugins: [
+					{
+						ptype: 'sofieldtabout',
+						rootHierarchyContainer: me,
+						nextReference: 'gprecipients',
+						focusSelectText: true
+					}
+				],
 				listeners: {
-					blur: function(s) {
-						if (s.validate()) {
-							var gp = me.lref('gprecipients'),
-								sm = gp.getSelectionModel(),
-								rec = (sm.getCount() === 0 ? 0 : gp.getStore().indexOf(sm.getSelection()[0]));
-							Ext.defer(function() {
-								gp.startEditAt(rec);
-							}, 100);
-						}						
+					beforetaboutfocus: function() {
+						var gp = me.lref('gprecipients'),
+								sto = gp.getStore();
+						
+						if (sto.getCount() === 0) gp.addRecipient(null);
 					}
 				}
 			}]
 		});
 		
 		me.add({
-			xtype: 'wtrecipientsgrid',
-			reference: 'gprecipients',
 			region: 'center',
-			border: false,
-			bind: {
-				store: '{record.recipients}'
-			},
-			fields: { recipientType: 'recipientType', email: 'recipient' },
-			autoLast: true,
-			showContactLink: true,
-			contactLinkField: 'recipientContactId',
-			tbar: [
-				'->',
-				me.addAct('pasteList', {
-					text: null,
-					iconCls: 'wt-icon-clipboard-paste',
-					handler: function() {
-						//Ext.defer(function() {
-							me.pasteList();
-						//},100);
-					}
-				})
+			xtype: 'wtfieldspanel',
+			layout: 'fit',
+			items: [
+				{
+					xtype: 'wtrecipientsgridnew',
+					reference: 'gprecipients',
+					sid: me.mys.ID,
+					border: true,
+					hideHeaders: false,
+					bind: {
+						store: '{record.recipients}'
+						// TODO: uncomment when setReadOnly is supported in WTA.ux.grid.Recipients
+						//readOnly: '{isView}'
+					},
+					fields: { recipientType: 'recipientType', email: 'recipient' },
+					automaticRecipientAtEnd: true,
+					showRecipientLink: true,
+					recipientLinkField: 'recipientContactId',
+					recipientValueHdText: me.res('contactsList.gp-recipients.recipient.lbl'),
+					actionItems: [
+						{
+							iconCls: 'far fa-trash-alt',
+							tooltip: WT.res('act-remove.lbl'),
+							isActionDisabled: function() {
+								return !!me.getVM().get('isView');
+							},
+							handler: function(g, ridx) {
+								var sto = g.getStore();
+								sto.removeAt(ridx);
+							}	
+						}
+					],
+					tbar: [
+						{
+							xtype: 'button',
+							bind: {
+								disabled: '{isView}'
+							},
+							text: WT.res('act-add.lbl'),
+							iconCls: 'wtcon-icon-addListRecipient',
+							handler: function() {
+								var gp = me.lref('gprecipients'),
+									sto = gp.getStore(),
+									rec;
+								if (sto.getCount() === 0 || sto.getAt(sto.getCount()-1).get('recipient')) {
+									rec = gp.addRecipient(null);
+									if (rec) gp.startEdit(rec);
+								}
+							}
+						},
+						'->',
+						{
+							xtype: 'button',
+							bind: {
+								disabled: '{isView}'
+							},
+							tooltip: me.res('contactsList.act-pasteList.tip'),
+							iconCls: 'wt-icon-clipboard-paste',
+							handler: function() {
+								//Ext.defer(function() {
+									me.pasteList();
+								//}, 100);
+							}
+						}
+					]
+				}
 			]
 		});
 		
@@ -215,8 +282,8 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 		var me = this,
 				rec = me.getModel();
 		
-		WT.confirm(WT.res('confirm.delete'), function(bid) {
-			if(bid === 'yes') {
+		WT.confirm(me.res('contactsList.confirm.delete', Ext.String.ellipsis(rec.get('name'), 40)), function(bid) {
+			if (bid === 'yes') {
 				me.wait();
 				WT.ajaxReq(me.mys.ID, 'ManageContactsLists', {
 					params: {
@@ -236,13 +303,15 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	},
 	
 	pasteList: function() {
-		var me=this;
+		var me = this;
 		
 		WT.prompt('',{
 			title: me.mys.res("act-pasteList.tit"),
-			fn: function(btn,text) {
-				if (btn=='ok') {
-					me.lref('gprecipients').loadValues(text);
+			fn: function(btn, text) {
+				if (btn === 'ok') {
+					var gp = me.lref('gprecipients'),
+						sel = gp.getSelectionModel().getSelectionStart();
+					me.lref('gprecipients').pasteRecipients(text, sel);
 				}
 			},
 			scope: me,
@@ -254,14 +323,14 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	
 	manageTagsUI: function(selTagIds) {
 		var me = this,
-				vw = WT.createView(WT.ID, 'view.Tags', {
-					swapReturn: true,
-					viewCfg: {
-						data: {
-							selection: selTagIds
-						}
+			vw = WT.createView(WT.ID, 'view.Tags', {
+				swapReturn: true,
+				viewCfg: {
+					data: {
+						selection: selTagIds
 					}
-				});
+				}
+			});
 		vw.on('viewok', function(s, data) {
 			me.getModel().set('tags', Sonicle.String.join('|', data.selection));
 		});
@@ -271,49 +340,28 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	privates: {
 		onViewLoad: function(s, success) {
 			if (!success) return;
-			var me = this,
-				stoRcpt = me.getModel().recipients();
+			var me = this;
 
 			if (me.isMode(me.MODE_NEW)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(true);
+				//me.getAct('addListRecipient').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
+				if (me.mys.hasAuditUI()) me.getAct('contactsListAuditLog').setDisabled(true);
 			} else if (me.isMode(me.MODE_VIEW)) {
 				me.getAct('saveClose').setDisabled(true);
 				me.getAct('delete').setDisabled(true);
+				//me.getAct('addListRecipient').setDisabled(true);
 				me.lref('fldcategory').setReadOnly(true);
+				if (me.mys.hasAuditUI()) me.getAct('contactsListAuditLog').setDisabled(false);
 			} else if (me.isMode(me.MODE_EDIT)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(false);
+				//me.getAct('addListRecipient').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
-			}
-			// Add dummy recipient (if necessary)
-			if (stoRcpt.getCount() === 0) {
-				stoRcpt.add(stoRcpt.createModel({
-					recipientType: 'to',
-					recipient: ''
-				}));
+				if (me.mys.hasAuditUI()) me.getAct('contactsListAuditLog').setDisabled(false);
 			}
 			me.lref('fldname').focus(true);
 		}
 	}
-	
-	/*addRecipient: function() {
-		var me = this,
-				gp = me.lref('gprecipients'),
-				sto = gp.getStore(),
-				re = gp.getPlugin('rowediting'),
-				rec;
-		
-		re.cancelEdit();
-		rec = sto.add(Ext.create('Sonicle.webtop.contacts.model.ContactsListRecipient', {}))[0];
-		re.startEdit(rec);
-		return rec;
-	},
-	
-	deleteRecipient: function(rec) {
-		var me = this,
-				gp = me.lref('gprecipients');
-		gp.getStore().remove(rec);
-	}*/
 });

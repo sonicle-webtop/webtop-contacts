@@ -32,16 +32,22 @@
  */
 package com.sonicle.webtop.contacts.rest.v1;
 
+import com.sonicle.commons.BitFlag;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
-import com.sonicle.webtop.contacts.ContactsUserSettings;
+import com.sonicle.webtop.contacts.ContactsServiceSettings;
+import com.sonicle.webtop.contacts.IContactsManager;
+import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactCompany;
+import com.sonicle.webtop.contacts.model.ContactEx;
+import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
+import com.sonicle.webtop.contacts.model.ContactPictureWithSize;
 import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.swagger.v1.api.EasApi;
@@ -58,7 +64,8 @@ import com.sonicle.webtop.core.model.SharePermsElements;
 import com.sonicle.webtop.core.model.SharePermsFolder;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
-import com.sonicle.webtop.core.sdk.WTException;
+import ezvcard.util.DataUri;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -166,9 +173,9 @@ public class Eas extends EasApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactObjectWithBean card = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
-			if (card != null) {
-				return respOk(createSyncContact(card));
+			ContactObjectWithBean cobj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
+			if (cobj != null) {
+				return respOk(createSyncContact(cobj));
 			} else {
 				return respErrorNotFound();
 			}
@@ -189,14 +196,16 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			Contact newContact = mergeContact(new Contact(), null, body);
+			boolean photoUpdateEnabled = getServiceSettings().getEasContactPhotoUpdateEnabled();
+			ContactEx newContact = mergeContact(new ContactEx(), body);
 			newContact.setCategoryId(folderId);
+			if (photoUpdateEnabled) mergeContactPicture(newContact, body);
 			
 			Contact contact = manager.addContact(newContact);
-			ContactObject card = manager.getContactObject(contact.getContactId(), ContactObjectOutputType.STAT);
-			if (card == null) return respErrorNotFound();
+			ContactObject cobj = manager.getContactObject(contact.getContactId(), ContactObjectOutputType.STAT);
+			if (cobj == null) return respErrorNotFound();
 			
-			return respOkCreated(createSyncContactStat(card));
+			return respOkCreated(createSyncContactStat(cobj));
 			
 		} catch(Throwable t) {
 			logger.error("[{}] addMessage({}, ...)", RunContext.getRunProfileId(), folderId, t);
@@ -214,13 +223,16 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			Contact contact = manager.getContact(id, false, false, false, false);
+			boolean photoUpdateEnabled = getServiceSettings().getEasContactPhotoUpdateEnabled();
+			Contact contact = manager.getContact(id, BitFlag.of(IContactsManager.ContactGetOptions.PICTURE));
 			if (contact == null) return respErrorNotFound();
-			ContactCompany contactCompany = null;
-			if (contact.hasCompany()) contactCompany = manager.getContactCompany(id);
 			
-			mergeContact(contact, contactCompany, body);
-			manager.updateContact(contact, false, false, false, false);
+			BitFlag<ContactUpdateOptions> options = BitFlag.none();
+			mergeContact(contact, body);
+			if (photoUpdateEnabled && mergeContactPicture(contact, body) == true) {
+				options.set(ContactUpdateOptions.PICTURE);
+			}
+			manager.updateContact(id, contact, options);
 			
 			ContactObject card = manager.getContactObject(id, ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();
@@ -279,7 +291,14 @@ public class Eas extends EasApi {
 	}
 	
 	private SyncContact createSyncContact(ContactObjectWithBean card) {
-		Contact cont = card.getContact();
+		ContactEx cont = card.getContact();
+		
+		String picture = null;
+		if (cont.hasPicture()) {
+			ContactPictureWithBytes pic = (ContactPictureWithBytes)cont.getPicture();
+			picture = new DataUri(pic.getMediaType(), pic.getBytes()).toString(StandardCharsets.UTF_8.name());
+		}
+		
 		return new SyncContact()
 				.id(card.getContactId())
 				.etag(buildEtag(card.getRevisionTimestamp()))
@@ -328,10 +347,27 @@ public class Eas extends EasApi {
 				.birthday(DateTimeUtils.print(ISO_DATE_FMT, cont.getBirthday()))
 				.anniversary(DateTimeUtils.print(ISO_DATE_FMT, cont.getAnniversary()))
 				.url(cont.getUrl())
-				.notes(cont.getNotes());
+				.notes(cont.getNotes())
+				.picture(picture);
 	}
 	
-	private Contact mergeContact(Contact orig, ContactCompany origCompany, SyncContactUpdate src) {
+	private boolean mergeContactPicture(ContactEx orig, SyncContactUpdate src) {
+		if (!StringUtils.isBlank(src.getPicture())) {
+			DataUri dataUri = parseQuietly(src.getPicture());
+			if (dataUri == null) return false;
+			if (!StringUtils.startsWith(dataUri.getContentType(), "image/")) return false;
+			if (orig.hasPicture() && (((ContactPictureWithSize)orig.getPicture()).getSize() == dataUri.getData().length)) return false;
+			
+			ContactPictureWithBytes newPicture = new ContactPictureWithBytes(dataUri.getData());
+			newPicture.setMediaType(dataUri.getContentType());
+			orig.setPicture(newPicture);
+		} else {
+			orig.setPicture(null);
+		}
+		return true;
+	}
+	
+	private ContactEx mergeContact(ContactEx orig, SyncContactUpdate src) {
 		orig.setTitle(src.getTitle());
 		orig.setFirstName(src.getFirstName());
 		orig.setLastName(src.getLastName());
@@ -378,17 +414,9 @@ public class Eas extends EasApi {
 		orig.setUrl(src.getUrl());
 		orig.setNotes(src.getNotes());
 		
-		if (origCompany == null) {
+		if (!orig.hasCompany() || (!StringUtils.equals(src.getCompanyId(), orig.getCompany().getCompanyId()) && !StringUtils.equals(src.getCompanyName(), orig.getCompany().getValue()))) {
 			if (!StringUtils.isBlank(src.getCompanyId()) || !StringUtils.isBlank(src.getCompanyName())) {
 				orig.setCompany(new ContactCompany(src.getCompanyName(), src.getCompanyId()));
-			}
-		} else {
-			if (StringUtils.equals(src.getCompanyId(), origCompany.getCompanyId()) || StringUtils.equals(src.getCompanyName(), origCompany.getValue())) {
-				orig.setCompany(origCompany);
-			} else {
-				if (!StringUtils.isBlank(src.getCompanyId()) || !StringUtils.isBlank(src.getCompanyName())) {
-					orig.setCompany(new ContactCompany(src.getCompanyName(), src.getCompanyId()));
-				}
 			}
 		}
 		
@@ -403,12 +431,27 @@ public class Eas extends EasApi {
 		}
 	}
 	
+	private DataUri parseQuietly(String uri) {
+		try {
+			return DataUri.parse(uri);
+		} catch (IllegalArgumentException ex) {
+			if (logger.isTraceEnabled()) logger.trace("Unable to parse data-uri: \"{}\"", uri);
+			return null;
+		}
+	}
+	
+	private ContactsServiceSettings getServiceSettings() {
+		return new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
+	}
+	
 	private ContactsManager getManager() {
 		return getManager(RunContext.getRunProfileId());
 	}
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
-		return (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+		ContactsManager manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
+		manager.setSoftwareName("rest-eas");
+		return manager;
 	}
 	
 	@Override

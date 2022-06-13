@@ -54,7 +54,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 	
 	onDestroy: function() {
 		var me = this;
-		//me.mys.unPushMessage('contactImportLog-' + me.getUId(), me.onContactImportLogMessage, me);
+		me.mys.unPushMessage('contactImportLog-' + me.getUId(), me.onContactImportLogMessage, me);
 		me.callParent();
 	},
 	
@@ -118,7 +118,7 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 		if (Sonicle.String.isIn(path, ['txt', 'xls', 'vcf', 'ldif'])) {
 			if (pp === 'upload') {
 				ret = ppcmp.down('wtform').isValid();
-				//if (ret) me.mys.onPushMessage('contactImportLog-' + me.getUId(), me.onContactImportLogMessage, me);
+				if (ret) me.mys.onPushMessage('contactImportLog-' + me.getUId(), me.onContactImportLogMessage, me);
 			}
 			if (!ret) return false;
 		}
@@ -138,12 +138,10 @@ Ext.define('Sonicle.webtop.contacts.view.ImportContacts', {
 				categoryId: vm.get('categoryId')
 			});
 		}
-	}
+	},
 	
-	/*
 	onContactImportLogMessage: function(msg) {
 		var cmp = this.getPageCmp('end').lookupReference('log');
 		cmp.setValue(Sonicle.String.join('\n', cmp.getValue(), msg.payload.log));
 	}
-	*/
 });
