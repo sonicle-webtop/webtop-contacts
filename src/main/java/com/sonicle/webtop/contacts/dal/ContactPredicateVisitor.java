@@ -63,7 +63,11 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	
 	@Override
 	protected Condition toCondition(String fieldName, ComparisonOperator operator, Collection<?> values, ComparisonNode node) {
-		if ("name".equals(fieldName)) {
+		if ("id".equals(fieldName)) {
+			String singleAsString = valueToLikePattern(singleAsString(values));
+			return CONTACTS_.CONTACT_ID.equal(Integer.valueOf(singleAsString));
+			
+		} else if ("name".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
 			return CONTACTS_.DISPLAY_NAME.likeIgnoreCase(singleAsString)
 				.or(CONTACTS_.FIRSTNAME.likeIgnoreCase(singleAsString))
@@ -240,6 +244,9 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	protected Condition getConditionCustomValuesForFieldValue(QueryBuilderWithCValues.Type cvalueType, ComparisonOperator operator, Collection<?> values) {
 		if (QueryBuilderWithCValues.Type.CVSTRING.equals(cvalueType)) {
 			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.STRING_VALUE, operator, values);
+			
+		} else if (QueryBuilderWithCValues.Type.CVSTRINGARRAY.equals(cvalueType)) {
+			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.STRING_VALUE, true, operator, values);
 			
 		} else if (QueryBuilderWithCValues.Type.CVNUMBER.equals(cvalueType)) {
 			return defaultCondition(PV_CONTACTS_CUSTOM_VALUES.NUMBER_VALUE, operator, values);

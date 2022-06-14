@@ -59,6 +59,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.picker.Color',
 		'WTA.util.FoldersTree',
 		'WTA.ux.SelectTagsBox',
+		'Sonicle.webtop.contacts.model.ContactLkp',
 		'Sonicle.webtop.contacts.view.Map',
 		'Sonicle.webtop.contacts.view.Sharing',
 		'Sonicle.webtop.contacts.view.Category',
@@ -87,7 +88,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	init: function() {
 		var me = this,
 				tagsStore = WT.getTagsStore(),
-				scfields = WTA.ux.field.Search.customFieldDefs2Fields(me.getVar('cfieldsSearchable'));
+				scfields = WTA.ux.field.Search.customFieldDefs2Fields(me.ID, me.getVar('cfieldsSearchable'));
 		
 		me.activeView = me.getVar('view');
 		me.activeGroupBy = me.getVar('groupBy');
@@ -1985,20 +1986,21 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	addContactWithData: function(data, opts) {
 		opts = opts || {};
 		var me = this,
-			data2 = me.parseContactApiData(data),
+			ret = me.parseContactApiData(data),
 			vw = WT.createView(me.ID, 'view.Contact', {
 				swapReturn: true,
 				viewCfg: {
 					uploadTag: opts.uploadTag
 				}
-			});	
+			});
 		
 		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
 		});
 		vw.showView(function(s) {
 			vw.begin('new', {
-				data: data2,
+				data: ret[0],
+				cfData: ret[1],
 				dirty: opts.dirty
 			});
 		});
@@ -2270,7 +2272,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					item['recipientType'] = 'to';
 					item['recipient'] = obj;
 				} else if (Ext.isObject(obj)) {
-					item = Sonicle.Object.pluck(obj, ['rcptType', 'address', 'refContactId'], false, {
+					item = Sonicle.Object.remap(obj, ['rcptType', 'address', 'refContactId'], false, {
 						'rcptType': 'recipientType',
 						'address': 'recipient',
 						'refContactId': 'recipientContactId'
@@ -2287,7 +2289,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				WTFT = WTA.util.FoldersTree,
 				tree = me.trFolders(),
 				folder = WTFT.getFolderForAdd(tree, data.categoryId),
-				obj = {};
+				obj = {}, cfobj;
 			
 			obj.categoryId = folder ? folder.getFolderId() : WTFT.getDefaultOrBuiltInFolder(tree);
 			if (Ext.isDefined(data.displayName)) obj.displayName = data.displayName;
@@ -2334,7 +2336,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if (Ext.isDefined(data.url)) obj.url = data.url;
 			if (Ext.isDefined(data.notes)) obj.notes = data.notes;
 			if (Ext.isDefined(data.picture)) obj.picture = data.picture;
-			if (Ext.isDefined(data.tags)) obj.tags = data.tags;
+			if (Ext.isDefined(data.tags)) {
+				if (Ext.isArray(data.tags)) {
+					obj.tags = Sonicle.String.join('|', data.tags);
+				} else if (Ext.isString(data.tags)) {
+					obj.tags = data.tags;
+				}
+			}
+			if (Ext.isDefined(data.customFields) && Ext.isObject(data.customFields)) {
+				cfobj = data.customFields;
+			}
 
 			// OLD compatibility mappings...
 			if (Ext.isDefined(data.workTelephone)) obj.workTelephone1 = data.workTelephone;
@@ -2346,8 +2357,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if (Ext.isDefined(data.homeEmail)) obj.email2 = data.homeEmail;
 			if (Ext.isDefined(data.workInstantMsg)) obj.instantMsg1 = data.workInstantMsg;
 			if (Ext.isDefined(data.homeInstantMsg)) obj.instantMsg2 = data.homeInstantMsg;
-
-			return obj;
+			
+			return [obj, cfobj];
 		},
 		
 		updateDisabled: function(action) {

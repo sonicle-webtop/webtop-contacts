@@ -32,6 +32,9 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.sonicle.commons.AlgoUtils.MD5HashBuilder;
 import com.sonicle.commons.BitFlag;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.InternetAddressUtils;
@@ -39,6 +42,7 @@ import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
+import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
@@ -61,6 +65,7 @@ import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLkp;
+import com.sonicle.webtop.contacts.bol.js.JsContactLkp;
 import com.sonicle.webtop.contacts.bol.js.JsContactPreview;
 import com.sonicle.webtop.contacts.bol.js.JsContactsList;
 import com.sonicle.webtop.contacts.bol.js.JsEventContact;
@@ -138,7 +143,6 @@ import com.sonicle.webtop.core.sdk.ServiceMessage;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
-import com.sonicle.webtop.core.util.LogEntries;
 import com.sonicle.webtop.core.util.VCardUtils;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -206,7 +210,7 @@ public class Service extends BaseService {
 		
 		// Default lookup: if not yet configured this will implicitly set built-in folder as default!
 		manager.getDefaultCategoryId();
-		//previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, null, true);
+		//previewableCustomFields = WT.getCoreManager().listCustomFields(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.SEARCHABLE));
 	}
 	
 	@Override
@@ -245,7 +249,7 @@ public class Service extends BaseService {
 		
 		try {
 			ObjCustomFieldDefs.FieldsList scfields = new ObjCustomFieldDefs.FieldsList();
-			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, true, null).values()) {
+			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.SEARCHABLE)).values()) {
 				scfields.add(new ObjCustomFieldDefs.Field(cfield, up.getLanguageTag()));
 			}
 			return scfields;
@@ -738,6 +742,11 @@ public class Service extends BaseService {
 		}
 	}
 	
+	private final Cache<String, Integer> cacheManageGridContactsTotalCount = Caffeine.newBuilder()
+		.expireAfterWrite(500, TimeUnit.MILLISECONDS)
+		.maximumSize(10)
+		.build();
+	
 	public void processManageGridContacts(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
 		ArrayList<JsGridContact> items = new ArrayList<>();
 		
@@ -754,12 +763,28 @@ public class Service extends BaseService {
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
-				//TODO: optimize call to skip fullCount for subsequent calls
 				ContactType type = queryObj.removeCondition("only", "lists") ? ContactType.LIST : ContactType.ANY;
-				
 				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 				List<Integer> visibleCategoryIds = getActiveFolderIds();
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, true);
+				
+				String reqId = new MD5HashBuilder()
+					.append(visibleCategoryIds)
+					.append(ServletUtils.getStringParameter(request, "query", null))
+					.append(ServletUtils.getStringParameter(request, "groupBy", null))
+					.append(ServletUtils.getStringParameter(request, "showBy", null))
+					.build();
+				
+				Integer cachedTotalCount = cacheManageGridContactsTotalCount.getIfPresent(reqId);
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, cachedTotalCount == null);
+				int totalCount;
+				if (cachedTotalCount != null) {
+					totalCount = cachedTotalCount;
+				} else {
+					cacheManageGridContactsTotalCount.put(reqId, result.fullCount);
+					totalCount = result.fullCount;
+				}
+				
+				//ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, true);
 				for (ContactLookup item : result.items) {
 					final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
 					if (root == null) continue;
@@ -776,10 +801,10 @@ public class Service extends BaseService {
 				} else {
 					meta.setGroupInfo(new GroupMeta("letter", "ASC"));
 				}
-				new JsonResult(items, result.fullCount)
-						.setPage(page)
-						.setMetaData(meta)
-						.printTo(out);
+				new JsonResult(items, totalCount)
+					.setPage(page)
+					.setMetaData(meta)
+					.printTo(out);
 				
 			} else if (crud.equals(Crud.DELETE)) {
 				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
@@ -842,6 +867,60 @@ public class Service extends BaseService {
 			
 		} catch(Throwable t) {
 			logger.error("Error in ManageGridContacts", t);
+			new JsonResult(t).printTo(out);
+		}
+	}
+	
+	public void processCustomFieldContactPicker(HttpServletRequest request, HttpServletResponse response, PrintWriter out) {
+		UserProfile up = getEnv().getProfile();
+		DateTimeZone utz = up.getTimeZone();
+		
+		try {
+			StringArray filterCategoryIds = ServletUtils.getObjectParameter(request, "categoryIds", StringArray.class, false);
+			String id = ServletUtils.getStringParameter(request, "id", false);
+			int page = ServletUtils.getIntParameter(request, "page", true);
+			int limit = ServletUtils.getIntParameter(request, "limit", 50);
+			String query = ServletUtils.getStringParameter(request, "query", false);
+			QueryObj queryObj = ServletUtils.getObjectParameter(request, "queryObj", null, QueryObj.class);
+			
+			Set<Integer> categoryIds = null;
+			if (filterCategoryIds != null) {
+				categoryIds = filterCategoryIds.stream().map(catId -> Integer.valueOf(catId)).collect(Collectors.toSet());
+			} else {
+				categoryIds = manager.listAllCategoryIds();
+			}
+			
+			Condition<ContactQuery> conditionPredicate = null;
+			if (!StringUtils.isBlank(id)) { // ID is set, force precise match (eg. custom-fields preview)
+				conditionPredicate = new ContactQuery()
+					.id().eq(id);
+			} else if (!StringUtils.isBlank(query)) { // Query (from type-ahead) is set, try a match on name/email
+				conditionPredicate = new ContactQuery()
+					.name().eq(query)
+					.or().email().eq(query);
+			} else if (queryObj != null) { // Full query object is set, try match from that
+				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
+				conditionPredicate = ContactQuery.createCondition(queryObj, map, utz);
+			}
+			
+			ListContactsResult result = manager.listContacts(categoryIds, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, conditionPredicate, page, limit, true);
+			
+			ArrayList<JsContactLkp> items = new ArrayList<>(result.items.size());
+			for (ContactLookup item : result.items) {
+				final ShareRootCategory root = rootByFolder.get(item.getCategoryId());
+				if (root == null) continue;
+				final ShareFolderCategory fold = folders.get(item.getCategoryId());
+				if (fold == null) continue;
+				CategoryPropSet pset = folderProps.get(item.getCategoryId());
+
+				items.add(new JsContactLkp(root, fold, pset, item));
+			}
+			new JsonResult(items, result.fullCount)
+				.setPage(page)
+				.printTo(out);
+			
+		} catch (Throwable t) {
+			logger.error("Error in CustomFieldContactPicker", t);
 			new JsonResult(t).printTo(out);
 		}
 	}
@@ -939,7 +1018,7 @@ public class Service extends BaseService {
 					if (fold == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					CategoryPropSet pset = folderProps.get(contact.getCategoryId());
 					
-					Set<String> pvwfields = coreMgr.listCustomFieldIds(SERVICE_ID, null, true);
+					Set<String> pvwfields = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.PREVIEWABLE));
 					Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
 					Map<String, CustomField> cfields = new HashMap<>();
 					for (CustomPanel cpanel : cpanels.values()) {
@@ -1165,7 +1244,7 @@ public class Service extends BaseService {
 		
 		try {
 			ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
-			Integer contactId = ServletUtils.getIntParameter(request, "contactId", false);
+			Integer contactId = ServletUtils.getIntParameter(request, "id", false);
 			
 			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, tags);
 			Map<String, CustomFieldValue> cvalues = (contactId != null) ? manager.getContactCustomValues(contactId) : null;
@@ -1804,7 +1883,7 @@ public class Service extends BaseService {
 		protected Map<String, CustomField.Type> internalGetMap() {
 			try {
 				CoreManager coreMgr = WT.getCoreManager();
-				return coreMgr.listCustomFieldTypesById(SERVICE_ID, true);
+				return coreMgr.listCustomFieldTypesById(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.SEARCHABLE));
 				
 			} catch(Throwable t) {
 				logger.error("[SearchableCustomFieldTypeCache] Unable to build cache", t);
