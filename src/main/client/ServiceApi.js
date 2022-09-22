@@ -109,7 +109,8 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 * @param {Date} [data.anniversary] The anniversary date.
 	 * @param {String} [data.url] The Website URL.
 	 * @param {String} [data.notes] Arbitrary text notes.
-	 * @param {String} [data.tags] Pipe-separated list of WebTop's tag IDs.
+	 * @param {String[]|String} [data.tags] Array or pipe-separated list of WebTop's tag IDs.
+	 * @param {Object} [data.customFields] Map of values, with CustomField name as key.
 	 * @param {Object} opts An object containing configuration.
 	 * @param {Function} [opts.callback] Callback method for 'viewsave' event.
 	 * @param {Object} [opts.scope] The callback method scope.

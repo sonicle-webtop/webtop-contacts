@@ -40,6 +40,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		'Sonicle.form.field.Image',
 		'Sonicle.form.field.TagDisplay',
 		'Sonicle.plugin.FileDrop',
+		'WTA.util.CustomFields',
 		'WTA.ux.UploadBar',
 		'WTA.ux.field.SuggestCombo',
 		'WTA.ux.grid.Attachments',
@@ -601,6 +602,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fieldsDefs: '{record._cfdefs}'
 			},
 			serviceId: me.mys.ID,
+			mainView: me,
 			defaultLabelWidth: 120,
 			listeners: {
 				prioritize: function(s) {
@@ -700,30 +702,33 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		onViewLoad: function(s, success) {
 			if (!success) return;
 			var me = this;
-
+			
 			if (me.isMode(me.MODE_NEW)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(true);
 				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
-				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(true);
-				me.reloadCustomFields([]);
+				WTA.util.CustomFields.reloadCustomFields((me.opts.data || {}).tags, me.opts.cfData, {
+					serviceId: me.mys.ID,
+					model: me.getModel(),
+					cfPanel: me.lref('tabcfields')
+				});
 			} else if (me.isMode(me.MODE_VIEW)) {
 				me.getAct('saveClose').setDisabled(true);
 				me.getAct('delete').setDisabled(true);
 				me.getAct('tags').setDisabled(true);
 				me.lref('fldcategory').setReadOnly(true);
 				me.lref('fldpic').setDisabled(true);
-				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(false);
 			} else if (me.isMode(me.MODE_EDIT)) {
 				me.getAct('saveClose').setDisabled(false);
 				me.getAct('delete').setDisabled(false);
 				me.getAct('tags').setDisabled(false);
 				me.lref('fldcategory').setReadOnly(false);
 				me.lref('fldpic').setDisabled(false);
-				if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(false);
 			}
+			if (me.mys.hasAuditUI()) me.getAct('contactAuditLog').setDisabled(me.isMode(me.MODE_NEW));
+			
 			me.lref('fldfirstname').focus(true);
 		},
 		
@@ -732,54 +737,23 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		},
 		
 		onBeforeModelSave: function(s) {
-			var cp = this.lref('tabcfields');
+			var me = this,
+				cp = me.lref('tabcfields');
 			if (!cp.isValid()) {
-				this.lref('tpnlmain').getLayout().setActiveItem(cp);
+				me.lref('tpnlmain').getLayout().setActiveItem(cp);
 				return false;
 			}
 		},
 		
 		onTagsChanged: function(nv, ov) {
-			if (ov && Sonicle.String.difference(nv, ov).length > 0) { // Make sure that there are really differences!
-				this.reloadCustomFields(nv);
-			}
-		},
-		
-		reloadCustomFields: function(tags) {
-			var me = this,
-					mo = me.getModel(),
-					cftab = me.lref('tabcfields');
-			me.getCustomFieldsDefsData(tags, mo.getId(), {
-				callback: function(success, json) {
-					if (success) {
-						Ext.iterate(json.data.cvalues, function(cval) {
-							var rec = mo.cvalues().getById(cval.id);
-							if (!rec) {
-								mo.cvalues().add(cval);
-							} else {
-								rec.set(cval);
-							}
-						});
-						mo.set('_cfdefs', json.data.cfdefs);
-						me.lref('tabcfields').setStore(mo.cvalues());
-					}
-					cftab.unwait();
-				}
-			});
-		},
-		
-		getCustomFieldsDefsData: function(tags, contactId, opts) {
-			opts = opts || {};
 			var me = this;
-			WT.ajaxReq(me.mys.ID, 'GetCustomFieldsDefsData', {
-				params: {
-					tags: Sonicle.Utils.toJSONArray(tags),
-					contactId: (contactId !== null && contactId > 0) ? contactId : null
-				},
-				callback: function(success, json) {
-					Ext.callback(opts.callback, opts.scope || me, [success, json]);
-				}
-			});
+			if (ov && Sonicle.String.difference(nv, ov).length > 0) { // Make sure that there are really differences!
+				WTA.util.CustomFields.reloadCustomFields(nv, false, {
+					serviceId: me.mys.ID,
+					model: me.getModel(),
+					cfPanel: me.lref('tabcfields')
+				});
+			}
 		}
 	}
 });

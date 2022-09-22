@@ -202,7 +202,7 @@ public class MailchimpSyncThread extends Thread {
 				//for each category run entire loop
 				int count=0;
 				for(Category category: categories) {
-					wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.syncCategory", srcPidUserProfileId.getName(), category.getName())));
+					wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.syncCategory", srcPidUserProfileId.toString(), category.getName())));
 					ArrayList<Integer> icats=new ArrayList<>();
 					icats.add(category.getCategoryId());
 					//for each tag select and create/update contacts, then create tag with members
@@ -246,7 +246,7 @@ public class MailchimpSyncThread extends Thread {
 				//for each category add all contacts creating necessary tags
 				int count=0;
 				for(Category category: categories) {
-					wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.syncCategory", srcPidUserProfileId.getName(), category.getName())));
+					wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.syncCategory", srcPidUserProfileId.toString(), category.getName())));
 					
 					ArrayList<Integer> icats=new ArrayList<>();
 					icats.add(category.getCategoryId());
