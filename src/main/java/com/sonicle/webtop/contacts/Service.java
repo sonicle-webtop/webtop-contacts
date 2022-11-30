@@ -1102,7 +1102,7 @@ public class Service extends BaseService {
 					att.setFilename(upFile.getFilename());
 					att.setSize(upFile.getSize());
 					att.setMediaType(upFile.getMediaType());
-					contact.getAttachments().add(att);
+					contact.addAttachment(att);
 				}
 				manager.addContact(contact);
 				new JsonResult().printTo(out);
@@ -1131,13 +1131,13 @@ public class Service extends BaseService {
 						att.setFilename(upFile.getFilename());
 						att.setSize(upFile.getSize());
 						att.setMediaType(upFile.getMediaType());
-						contact.getAttachments().add(att);
+						contact.addAttachment(att);
 					} else {
 						ContactAttachment att = new ContactAttachment();
 						att.setAttachmentId(jsatt.id);
 						att.setFilename(jsatt.name);
 						att.setSize(jsatt.size);
-						contact.getAttachments().add(att);
+						contact.addAttachment(att);
 					}
 				}
 				manager.updateContact(contact.getContactId(), contact, processOpts);
