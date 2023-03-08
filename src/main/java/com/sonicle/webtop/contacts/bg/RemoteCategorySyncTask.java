@@ -63,7 +63,7 @@ public class RemoteCategorySyncTask extends BaseBackgroundServiceTask {
 	}
 	
 	@Override
-	public void executeWork(JobExecutionContext jec, DateTime now) throws Exception {
+	public void executeWork(JobExecutionContext jec, TaskContext context) throws Exception {
 		BackgroundService bs = ((BackgroundService)getBackgroundService(jec));
 		SessionManager sesMgr = WebTopApp.getInstance().getSessionManager();
 		ContactsManager jobManager = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID);
@@ -77,7 +77,7 @@ public class RemoteCategorySyncTask extends BaseBackgroundServiceTask {
 			if (isRemoteSyncOnlyWhenOnline(bs.SERVICE_ID, rsowoCache, cat.getDomainId()) && !sesMgr.isOnline(cat.getProfileId())) continue; // Skip offline profiles!
 
 			LOGGER.debug("Checking category [{}, {}]", cat.getCategoryId(), cat.getName());
-			if (isSyncNeeded(cat, now)) {
+			if (isSyncNeeded(cat, context.getExecuteInstant())) {
 				LOGGER.debug("Sync required. Last sync at: {}", cat.getRemoteSyncTimestamp());
 				try {
 					ContactsManager manager = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID, true, cat.getProfileId());
