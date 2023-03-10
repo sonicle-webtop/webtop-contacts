@@ -3137,7 +3137,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private OContact fillDefaultsForInsert(OContact tgt) {
 		if (tgt != null) {
 			if (StringUtils.isBlank(tgt.getPublicUid())) {
-				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(getTargetProfileId().getDomainId())));
+				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getPrimaryDomainName(getTargetProfileId().getDomainId())));
 			}
 			if (StringUtils.isBlank(tgt.getHref())) tgt.setHref(ContactsUtils.buildHref(tgt.getPublicUid()));
 			if (!tgt.getIsList()) {

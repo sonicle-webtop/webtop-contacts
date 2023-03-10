@@ -349,7 +349,7 @@ public class ManagerUtils {
 	static OContact fillOContactWithDefaultsForInsert(OContact tgt, UserProfileId targetProfile, DateTime defaultTimestamp) {
 		if (tgt != null) {
 			if (StringUtils.isBlank(tgt.getPublicUid())) {
-				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getDomainInternetName(targetProfile.getDomainId())));
+				tgt.setPublicUid(ContactsUtils.buildContactUid(tgt.getContactId(), WT.getPrimaryDomainName(targetProfile.getDomainId())));
 			}
 			if (tgt.getRevisionTimestamp()== null) tgt.setRevisionTimestamp(defaultTimestamp);
 			if (tgt.getRevisionSequence() == null) tgt.setRevisionSequence(0);
