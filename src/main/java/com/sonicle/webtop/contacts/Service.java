@@ -180,6 +180,7 @@ public class Service extends BaseService {
 	public static final Logger logger = WT.getLogger(Service.class);
 	public static final String WORK_VIEW = "w";
 	public static final String HOME_VIEW = "h";
+	public static final String META_CONTEXT_SEARCH = "mainsearch";
 	
 	private ContactsManager manager;
 	private ContactsUserSettings us;
@@ -761,6 +762,11 @@ public class Service extends BaseService {
 				ShowBy showBy = ServletUtils.getEnumParameter(request, "showBy", ShowBy.DISPLAY, ShowBy.class);
 				int page = ServletUtils.getIntParameter(request, "page", true);
 				int limit = ServletUtils.getIntParameter(request, "limit", 50);
+				String queryText = ServletUtils.getStringParameter(request, "queryText", null);
+				if (!StringUtils.isBlank(queryText)) {
+					CoreManager core = WT.getCoreManager();
+					core.saveMetaEntry(SERVICE_ID, META_CONTEXT_SEARCH, queryText, queryText, false);
+				}
 				QueryObj queryObj = ServletUtils.getObjectParameter(request, "query", new QueryObj(), QueryObj.class);
 				
 				ContactType type = queryObj.removeCondition("only", "lists") ? ContactType.LIST : ContactType.ANY;

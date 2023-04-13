@@ -133,6 +133,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				{
 					xtype: 'wtsearchfield',
 					reference: 'fldsearch',
+					suggestionServiceId: me.ID,
+					suggestionContext: 'mainsearch',
+					enableQuerySaving: true,
 					highlightKeywords: ['name', 'company', 'email', 'phone'],
 					fields: Ext.Array.push([
 						{
@@ -1307,7 +1310,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			if (!sto.getGroupField()) {
 				sto.setGroupField(me.calcGroupField(me.activeGroupBy));
 			} else {
-				if (opts.query !== undefined) Ext.apply(pars, {query: opts.query});
+				if (opts.query !== undefined) Ext.apply(pars, {query: opts.query, queryText: opts.queryText});
 				WTU.loadWithExtraParams(sto, pars);
 			}
 		} else {
@@ -1317,11 +1320,12 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	queryContacts: function(query) {
 		var isString = Ext.isString(query),
+			queryText = isString ? query : query.value,
 			obj = {
 				allText: isString ? query : query.anyText,
 				conditions: isString ? [] : query.conditionArray
 			};
-		this.reloadContacts({query: Ext.JSON.encode(obj)});
+		this.reloadContacts({query: Ext.JSON.encode(obj), queryText: queryText});
 	},
 	
 	getSelectedContacts: function(forceVisible) {
