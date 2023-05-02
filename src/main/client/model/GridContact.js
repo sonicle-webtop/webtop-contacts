@@ -33,6 +33,9 @@
  */
 Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 	extend: 'WTA.ux.data.EmptyModel',
+	mixins: [
+		'WTA.sdk.mixin.ItemWithinFolder'	
+	],
 	
 	idProperty: 'uid',
 	fields: [
@@ -53,9 +56,9 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
 		WTF.roField('tags', 'string'),
-		WTF.roField('_pid', 'string'),
-		WTF.roField('_frights', 'string'),
-		WTF.roField('_erights', 'string'),
+		WTF.roField('_owPid', 'string'),
+		WTF.roField('_foPerms', 'string'),
+		WTF.roField('_itPerms', 'string'),
 		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec) {
 			return Sonicle.String.join(' ', rec.get('title'), rec.get('firstName'), rec.get('lastName'));
 		}),

@@ -1,5 +1,5 @@
-/* 
- * Copyright (C) 2014 Sonicle S.r.l.
+/*
+ * Copyright (C) 2023 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,22 +28,21 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2014 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2023 Sonicle S.r.l.".
  */
 package com.sonicle.webtop.contacts.bol.model;
 
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.contacts.model.Category;
-import com.sonicle.webtop.core.model.SharePermsFolder;
-import com.sonicle.webtop.core.model.SharePermsElements;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.core.app.model.FolderShare;
 
 /**
  *
  * @author malbinola
  */
-public class MyShareFolderCategory extends ShareFolderCategory {
-
-	public MyShareFolderCategory(String shareId, Category category) {
-		super(shareId, SharePermsFolder.full(), SharePermsElements.full(), category);
+public class MyCategoryFSFolder extends CategoryFSFolder {
+	
+	public MyCategoryFSFolder(int categoryId, Category category) {
+		super(categoryId, FolderShare.Permissions.full(), category);
 	}
 }

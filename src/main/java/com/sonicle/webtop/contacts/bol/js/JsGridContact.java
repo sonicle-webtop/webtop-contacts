@@ -35,10 +35,10 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.GridView;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactLookup;
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 
@@ -63,13 +63,13 @@ public class JsGridContact {
 	public Integer catId;
 	public String catName;
 	public String catColor;
-	public String _pid;
-	public String _frights;
-	public String _erights;
+	public String _owPid;
+	public String _foPerms;
+	public String _itPerms;
 	
 	public JsGridContact() {}
 	
-	public JsGridContact(GridView view, ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, ContactLookup item) {
+	public JsGridContact(GridView view, CategoryFSOrigin origin, CategoryFSFolder folder, CategoryPropSet folderProps, ContactLookup item) {
 		Category category = folder.getCategory();
 		
 		this.uid = Id.build(item.getContactId(), item.getIsList()).toString();
@@ -106,9 +106,9 @@ public class JsGridContact {
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
-		this._pid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
-		this._frights = folder.getPerms().toString();
-		this._erights = folder.getElementsPerms().toString();
+		this._owPid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
+		this._foPerms = folder.getPermissions().getFolderPermissions().toString();
+		this._itPerms = folder.getPermissions().getItemsPermissions().toString();
 	}
 	
 	public static class JsGridContactList extends ArrayList<JsGridContact> {

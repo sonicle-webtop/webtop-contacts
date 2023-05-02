@@ -40,6 +40,8 @@ import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.IContactsManager;
 import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactObject;
@@ -48,8 +50,6 @@ import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactPictureWithSize;
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.swagger.v1.api.EasApi;
 import com.sonicle.webtop.contacts.swagger.v1.model.ApiError;
 import com.sonicle.webtop.contacts.swagger.v1.model.SyncContact;
@@ -58,10 +58,8 @@ import com.sonicle.webtop.contacts.swagger.v1.model.SyncContactUpdate;
 import com.sonicle.webtop.contacts.swagger.v1.model.SyncFolder;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.model.FolderShare;
 import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
-import com.sonicle.webtop.core.model.SharePerms;
-import com.sonicle.webtop.core.model.SharePermsElements;
-import com.sonicle.webtop.core.model.SharePermsFolder;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import ezvcard.util.DataUri;
@@ -101,28 +99,28 @@ public class Eas extends EasApi {
 			Integer defltCategoryId = manager.getDefaultCategoryId();
 			Map<Integer, Category> cats = manager.listCategories();
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
-			for (Category cat : cats.values()) {
-				if (cat.isProviderRemote()) continue;
-				if (Category.Sync.OFF.equals(cat.getSync())) continue;
+			for (Category category : cats.values()) {
+				if (category.isProviderRemote()) continue;
+				if (Category.Sync.OFF.equals(category.getSync())) continue;
 				
-				final boolean isDefault = cat.getCategoryId().equals(defltCategoryId);
-				items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, ShareFolderCategory.realElementsPerms(cat.getSync()), isDefault));
+				final boolean isDefault = category.getCategoryId().equals(defltCategoryId);
+				final FolderShare.Permissions permissions = Category.Sync.READ.equals(category.getSync()) ? FolderShare.Permissions.fullFolderOnly() : FolderShare.Permissions.full();
+				items.add(createSyncFolder(currentProfileId, category, revisions.get(category.getCategoryId()), permissions, isDefault));
 			}
 			
-			List<ShareRootCategory> shareRoots = manager.listIncomingCategoryRoots();
-			for (ShareRootCategory shareRoot : shareRoots) {
-				Map<Integer, ShareFolderCategory> folders = manager.listIncomingCategoryFolders(shareRoot.getShareId());
+			for (CategoryFSOrigin origin : manager.listIncomingCategoryOrigins().values()) {
+				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
+				Map<Integer, CategoryPropSet> folderProps = manager.getCategoriesCustomProps(folders.keySet());
 				revisions = manager.getCategoriesLastRevision(folders.keySet());
-				Map<Integer, CategoryPropSet> props = manager.getCategoryCustomProps(folders.keySet());
-				
-				for (ShareFolderCategory folder : folders.values()) {
-					Category cat = folder.getCategory();
-					if (cat.isProviderRemote()) continue;
-					CategoryPropSet catProps = props.get(cat.getCategoryId());
-					if (Category.Sync.OFF.equals(catProps.getSyncOrDefault(Category.Sync.OFF))) continue;
+				for (CategoryFSFolder folder : folders.values()) {
+					Category category = folder.getCategory();
+					if (category.isProviderRemote()) continue;
+					CategoryPropSet props = folderProps.get(category.getCategoryId());
+					if (Category.Sync.OFF.equals(props.getSyncOrDefault(Category.Sync.OFF))) continue;
 					
-					final boolean isDefault = cat.getCategoryId().equals(defltCategoryId);
-					items.add(createSyncFolder(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getRealElementsPerms(catProps.getSync()), isDefault));
+					final boolean isDefault = category.getCategoryId().equals(defltCategoryId);
+					final FolderShare.Permissions permissions = Category.Sync.READ.equals(props.getSync()) ? FolderShare.Permissions.withFolderPermissionsOnly(folder.getPermissions()) : folder.getPermissions();
+					items.add(createSyncFolder(currentProfileId, category, revisions.get(category.getCategoryId()), permissions, isDefault));
 				}
 			}
 			
@@ -257,15 +255,15 @@ public class Eas extends EasApi {
 			manager.deleteContact(id);
 			return respOkNoContent();
 			
-		} catch(WTNotFoundException ex) {
+		} catch (WTNotFoundException ex) {
 			return respErrorNotFound();
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] deleteMessage({}, {})", RunContext.getRunProfileId(), folderId, id, t);
 			return respError(t);
 		}
 	}
 	
-	private SyncFolder createSyncFolder(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, SharePerms folderPerms, SharePerms elementPerms, boolean isDefault) {
+	private SyncFolder createSyncFolder(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions, boolean isDefault) {
 		String displayName = cat.getName();
 		if (!currentProfileId.equals(cat.getProfileId())) {
 			UserProfile.Data owud = WT.getUserData(cat.getProfileId());
@@ -275,19 +273,19 @@ public class Eas extends EasApi {
 		//String ownerUsername = owud.getProfileEmailAddress();
 		
 		return new SyncFolder()
-				.id(cat.getCategoryId())
-				.displayName(displayName)
-				.etag(buildEtag(lastRevisionTimestamp))
-				.deflt(isDefault)
-				.foAcl((folderPerms == null) ? SharePermsFolder.full().toString() : folderPerms.toString())
-				.elAcl((elementPerms == null) ? SharePermsElements.full().toString() : elementPerms.toString())
-				.ownerId(cat.getProfileId().toString());
+			.id(cat.getCategoryId())
+			.displayName(displayName)
+			.etag(buildEtag(lastRevisionTimestamp))
+			.deflt(isDefault)
+			.foAcl(permissions.getFolderPermissions().toString())
+			.elAcl(permissions.getItemsPermissions().toString())
+			.ownerId(cat.getProfileId().toString());
 	}
 	
 	private SyncContactStat createSyncContactStat(ContactObject card) {
 		return new SyncContactStat()
-				.id(card.getContactId())
-				.etag(buildEtag(card.getRevisionTimestamp()));
+			.id(card.getContactId())
+			.etag(buildEtag(card.getRevisionTimestamp()));
 	}
 	
 	private SyncContact createSyncContact(ContactObjectWithBean card) {
@@ -300,55 +298,55 @@ public class Eas extends EasApi {
 		}
 		
 		return new SyncContact()
-				.id(card.getContactId())
-				.etag(buildEtag(card.getRevisionTimestamp()))
-				.title(cont.getTitle())
-				.firstName(cont.getFirstName())
-				.lastName(cont.getLastName())
-				.nickname(cont.getNickname())
-				.mobile(cont.getMobile())
-				.pager1(cont.getPager1())
-				.pager2(cont.getPager2())
-				.email1(cont.getEmail1())
-				.email2(cont.getEmail2())
-				.email3(cont.getEmail3())
-				.im1(cont.getInstantMsg1())
-				.im2(cont.getInstantMsg2())
-				.im3(cont.getInstantMsg3())
-				.workAddress(cont.getWorkAddress())
-				.workPostalCode(cont.getWorkPostalCode())
-				.workCity(cont.getWorkCity())
-				.workState(cont.getWorkState())
-				.workCountry(cont.getWorkCountry())
-				.workTelephone1(cont.getWorkTelephone1())
-				.workTelephone2(cont.getWorkTelephone2())
-				.workFax(cont.getWorkFax())
-				.homeAddress(cont.getHomeAddress())
-				.homePostalCode(cont.getHomePostalCode())
-				.homeCity(cont.getHomeCity())
-				.homeState(cont.getHomeState())
-				.homeCountry(cont.getHomeCountry())
-				.homeTelephone1(cont.getHomeTelephone1())
-				.homeTelephone2(cont.getHomeTelephone2())
-				.homeFax(cont.getHomeFax())
-				.otherAddress(cont.getOtherAddress())
-				.otherPostalCode(cont.getOtherPostalCode())
-				.otherCity(cont.getOtherCity())
-				.otherState(cont.getOtherState())
-				.otherCountry(cont.getOtherCountry())
-				.companyId(cont.hasCompany() ? cont.getCompany().getCompanyId(): null)
-				.companyName(cont.hasCompany() ? cont.getCompany().getCompanyDescription() : null)
-				.function(cont.getFunction())
-				.department(cont.getDepartment())
-				.assistant(cont.getAssistant())
-				.assistantTelephone(cont.getAssistantTelephone())
-				.manager(cont.getManager())
-				.partner(cont.getPartner())
-				.birthday(DateTimeUtils.print(ISO_DATE_FMT, cont.getBirthday()))
-				.anniversary(DateTimeUtils.print(ISO_DATE_FMT, cont.getAnniversary()))
-				.url(cont.getUrl())
-				.notes(cont.getNotes())
-				.picture(picture);
+			.id(card.getContactId())
+			.etag(buildEtag(card.getRevisionTimestamp()))
+			.title(cont.getTitle())
+			.firstName(cont.getFirstName())
+			.lastName(cont.getLastName())
+			.nickname(cont.getNickname())
+			.mobile(cont.getMobile())
+			.pager1(cont.getPager1())
+			.pager2(cont.getPager2())
+			.email1(cont.getEmail1())
+			.email2(cont.getEmail2())
+			.email3(cont.getEmail3())
+			.im1(cont.getInstantMsg1())
+			.im2(cont.getInstantMsg2())
+			.im3(cont.getInstantMsg3())
+			.workAddress(cont.getWorkAddress())
+			.workPostalCode(cont.getWorkPostalCode())
+			.workCity(cont.getWorkCity())
+			.workState(cont.getWorkState())
+			.workCountry(cont.getWorkCountry())
+			.workTelephone1(cont.getWorkTelephone1())
+			.workTelephone2(cont.getWorkTelephone2())
+			.workFax(cont.getWorkFax())
+			.homeAddress(cont.getHomeAddress())
+			.homePostalCode(cont.getHomePostalCode())
+			.homeCity(cont.getHomeCity())
+			.homeState(cont.getHomeState())
+			.homeCountry(cont.getHomeCountry())
+			.homeTelephone1(cont.getHomeTelephone1())
+			.homeTelephone2(cont.getHomeTelephone2())
+			.homeFax(cont.getHomeFax())
+			.otherAddress(cont.getOtherAddress())
+			.otherPostalCode(cont.getOtherPostalCode())
+			.otherCity(cont.getOtherCity())
+			.otherState(cont.getOtherState())
+			.otherCountry(cont.getOtherCountry())
+			.companyId(cont.hasCompany() ? cont.getCompany().getCompanyId(): null)
+			.companyName(cont.hasCompany() ? cont.getCompany().getCompanyDescription() : null)
+			.function(cont.getFunction())
+			.department(cont.getDepartment())
+			.assistant(cont.getAssistant())
+			.assistantTelephone(cont.getAssistantTelephone())
+			.manager(cont.getManager())
+			.partner(cont.getPartner())
+			.birthday(DateTimeUtils.print(ISO_DATE_FMT, cont.getBirthday()))
+			.anniversary(DateTimeUtils.print(ISO_DATE_FMT, cont.getAnniversary()))
+			.url(cont.getUrl())
+			.notes(cont.getNotes())
+			.picture(picture);
 	}
 	
 	private boolean mergeContactPicture(ContactEx orig, SyncContactUpdate src) {
@@ -457,7 +455,7 @@ public class Eas extends EasApi {
 	@Override
 	protected Object createErrorEntity(Response.Status status, String message) {
 		return new ApiError()
-				.code(status.getStatusCode())
-				.description(message);
+			.code(status.getStatusCode())
+			.description(message);
 	}
 }

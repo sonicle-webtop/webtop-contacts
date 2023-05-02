@@ -38,16 +38,6 @@ package com.sonicle.webtop.contacts;
  */
 public class ContactsSettings {
 	
-	/**************************************************************************/
-	/**
-	 * @deprecated
-	 * Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
-	 * Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
-	 */
-	public static final String CHECKED_CATEGORY_ROOTS = "category.roots.checked";
-	public static final String CHECKED_CATEGORY_FOLDERS = "category.folders.checked";
-	/**************************************************************************/
-	
 	/**
 	 * [system+domain]
 	 * [boolean](false)
@@ -124,9 +114,9 @@ public class ContactsSettings {
 	/**
 	 * [user]
 	 * [string[]]
-	 * List of deactivated folder root nodes.
+	 * List of deactivated origin nodes.
 	 */
-	public static final String INACTIVE_CATEGORY_ROOTS = "category.roots.inactive";
+	public static final String INACTIVE_CATEGORY_ORIGINS = "category.origins.inactive";
 	
 	/**
 	 * [user]

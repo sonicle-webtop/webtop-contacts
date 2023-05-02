@@ -39,12 +39,12 @@ import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.ContactsUtils;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactObjectChanged;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.contacts.swagger.v1.api.CarddavApi;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBook;
 import com.sonicle.webtop.contacts.swagger.v1.model.AddressBookNew;
@@ -56,10 +56,8 @@ import com.sonicle.webtop.contacts.swagger.v1.model.CardNew;
 import com.sonicle.webtop.contacts.swagger.v1.model.CardsChanges;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.model.FolderShare;
 import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
-import com.sonicle.webtop.core.model.SharePerms;
-import com.sonicle.webtop.core.model.SharePermsElements;
-import com.sonicle.webtop.core.model.SharePermsFolder;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -100,26 +98,23 @@ public class CardDav extends CarddavApi {
 		try {
 			Map<Integer, Category> cats = manager.listCategories();
 			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
-			for (Category cat : cats.values()) {
-				if (cat.isProviderRemote()) continue;
-				items.add(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, null));
+			for (Category category : cats.values()) {
+				if (category.isProviderRemote()) continue;
+				items.add(createAddressBook(currentProfileId, category, revisions.get(category.getCategoryId()), FolderShare.Permissions.full()));
 			}
-			
-			List<ShareRootCategory> shareRoots = manager.listIncomingCategoryRoots();
-			for (ShareRootCategory shareRoot : shareRoots) {
-				Map<Integer, ShareFolderCategory> folders = manager.listIncomingCategoryFolders(shareRoot.getShareId());
+			for (CategoryFSOrigin origin : manager.listIncomingCategoryOrigins().values()) {
+				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
 				revisions = manager.getCategoriesLastRevision(folders.keySet());
-				//Map<Integer, CategoryPropSet> props = manager.getCategoryCustomProps(folders.keySet());
-				for (ShareFolderCategory folder : folders.values()) {
-					Category cat = folder.getCategory();
-					if (cat.isProviderRemote()) continue;
-					items.add(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getElementsPerms()));
+				for (CategoryFSFolder folder : folders.values()) {
+					Category category = folder.getCategory();
+					if (category.isProviderRemote()) continue;
+					items.add(createAddressBook(currentProfileId, category, revisions.get(category.getCategoryId()), folder.getPermissions()));
 				}
 			}
 			
 			return respOk(items);
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] getAddressBooks()", currentProfileId, t);
 			return respError(t);
 		}
@@ -136,23 +131,20 @@ public class CardDav extends CarddavApi {
 		
 		try {
 			int categoryId = ContactsUtils.decodeAsCategoryId(addressBookUid);
-			Category cat = manager.getCategory(categoryId);
-			if (cat == null) return respErrorNotFound();
-			if (cat.isProviderRemote()) return respErrorBadRequest();
+			Category category = manager.getCategory(categoryId);
+			if (category == null) return respErrorNotFound();
+			if (category.isProviderRemote()) return respErrorBadRequest();
 			
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(cat.getCategoryId()));
-			
-			String rootShareId = manager.getIncomingCategoryShareRootId(categoryId);
-			if (rootShareId != null) {
-				Map<Integer, ShareFolderCategory> folders = manager.listIncomingCategoryFolders(rootShareId);
-				ShareFolderCategory folder = folders.get(categoryId);
-				return respOk(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), folder.getPerms(), folder.getElementsPerms()));
-				
+			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(category.getCategoryId()));
+			CategoryFSOrigin origin = manager.getIncomingCategoryOriginByFolderId(categoryId);
+			if (origin != null) {
+				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
+				return respOk(createAddressBook(currentProfileId, category, revisions.get(category.getCategoryId()), folders.get(categoryId).getPermissions()));
 			} else {
-				return respOk(createAddressBook(currentProfileId, cat, revisions.get(cat.getCategoryId()), null, null));
+				return respOk(createAddressBook(currentProfileId, category, revisions.get(category.getCategoryId()), FolderShare.Permissions.full()));
 			}
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] getAddressBook({})", currentProfileId, addressBookUid, t);
 			return respError(t);
 		}
@@ -169,14 +161,14 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			Category cat = new Category();
-			cat.setName(body.getDisplayName());
-			cat.setDescription(body.getDescription());
-			cat = manager.addCategory(cat);
+			Category category = new Category();
+			category.setName(body.getDisplayName());
+			category.setDescription(body.getDescription());
+			category = manager.addCategory(category);
 			// Categories are always added in currentProfile so we do not handle perms here (passing null = full rights)
-			return respOkCreated(createAddressBook(currentProfileId, cat, null, null, null));
+			return respOkCreated(createAddressBook(currentProfileId, category, null, FolderShare.Permissions.full()));
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] addAddressBook(...)", currentProfileId, t);
 			return respError(t);
 		}
@@ -206,9 +198,9 @@ public class CardDav extends CarddavApi {
 			manager.updateCategory(cat);
 			return respOk();
 			
-		} catch(WTNotFoundException ex) {
+		} catch (WTNotFoundException ex) {
 			return respErrorNotFound();
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] updateAddressBook({}, ...)", RunContext.getRunProfileId(), addressBookUid, t);
 			return respError(t);
 		}
@@ -231,9 +223,9 @@ public class CardDav extends CarddavApi {
 				return respErrorNotAllowed();
 			}
 			
-		} catch(WTNotFoundException ex) {
+		} catch (WTNotFoundException ex) {
 			return respErrorNotFound();
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] deleteAddressBook({})", RunContext.getRunProfileId(), addressBookUid, t);
 			return respError(t);
 		}
@@ -269,7 +261,7 @@ public class CardDav extends CarddavApi {
 				return respOk(items);
 			}
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid, t);
 			return respError(t);
 		}
@@ -300,7 +292,7 @@ public class CardDav extends CarddavApi {
 			CollectionChangeSet<ContactObjectChanged> changes = manager.listContactObjectsChanges(categoryId, since, limit);
 			return respOk(createCardsChanges(revisions.get(categoryId), changes));
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] getCardsChanges({}, {}, {})", RunContext.getRunProfileId(), addressBookUid, syncToken, limit, t);
 			return respError(t);
 		}
@@ -327,7 +319,7 @@ public class CardDav extends CarddavApi {
 				return respErrorNotFound();
 			}
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] getCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, t);
 			return respError(t);
 		}
@@ -349,7 +341,7 @@ public class CardDav extends CarddavApi {
 			manager.addContactObject(categoryId, body.getHref(), vCard);
 			return respOk();
 			
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] addCard({}, ...)", RunContext.getRunProfileId(), addressBookUid, t);
 			return respError(t);
 		}
@@ -371,9 +363,9 @@ public class CardDav extends CarddavApi {
 			manager.updateContactObject(categoryId, href, vCard);
 			return respOkNoContent();
 			
-		} catch(WTNotFoundException ex) {
+		} catch (WTNotFoundException ex) {
 			return respErrorNotFound();
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] updateCard({}, {}, ...)", RunContext.getRunProfileId(), addressBookUid, href, t);
 			return respError(t);
 		}
@@ -392,15 +384,15 @@ public class CardDav extends CarddavApi {
 			manager.deleteContactObject(categoryId, href);
 			return respOkNoContent();
 			
-		} catch(WTNotFoundException ex) {
+		} catch (WTNotFoundException ex) {
 			return respErrorNotFound();
-		} catch(Throwable t) {
+		} catch (Throwable t) {
 			logger.error("[{}] deleteCard({}, {})", RunContext.getRunProfileId(), addressBookUid, href, t);
 			return respError(t);
 		}
 	}
 	
-	private AddressBook createAddressBook(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, SharePerms folderPerms, SharePerms elementPerms) {
+	private AddressBook createAddressBook(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions) {
 		UserProfile.Data owud = WT.getUserData(cat.getProfileId());
 		
 		String displayName = cat.getName();
@@ -411,23 +403,23 @@ public class CardDav extends CarddavApi {
 		String ownerUsername = owud.getProfileEmailAddress();
 		
 		return new AddressBook()
-				.id(cat.getCategoryId())
-				.uid(ContactsUtils.encodeAsCategoryUid(cat.getCategoryId()))
-				.displayName(displayName)
-				.description(cat.getDescription())
-				.syncToken(buildEtag(lastRevisionTimestamp))
-				.aclFol((folderPerms == null) ? SharePermsFolder.full().toString() : folderPerms.toString())
-				.aclEle((elementPerms == null) ? SharePermsElements.full().toString() : elementPerms.toString())
-				.ownerUsername(ownerUsername);
+			.id(cat.getCategoryId())
+			.uid(ContactsUtils.encodeAsCategoryUid(cat.getCategoryId()))
+			.displayName(displayName)
+			.description(cat.getDescription())
+			.syncToken(buildEtag(lastRevisionTimestamp))
+			.aclFol(permissions.getFolderPermissions().toString())
+			.aclEle(permissions.getItemsPermissions().toString())
+			.ownerUsername(ownerUsername);
 	}
 	
 	private Card createDavObject(ContactObject obj) {
 		Card ret = new Card()
-				.id(obj.getContactId())
-				.uid(obj.getPublicUid())
-				.href(obj.getHref())
-				.lastModified(obj.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
-				.etag(buildEtag(obj.getRevisionTimestamp()));
+			.id(obj.getContactId())
+			.uid(obj.getPublicUid())
+			.href(obj.getHref())
+			.lastModified(obj.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
+			.etag(buildEtag(obj.getRevisionTimestamp()));
 		
 		if (obj instanceof ContactObjectWithVCard) {
 			ContactObjectWithVCard objwv = (ContactObjectWithVCard)obj;
@@ -442,9 +434,9 @@ public class CardDav extends CarddavApi {
 	
 	private CardChanged createCardChanged(ContactObjectChanged card) {
 		return new CardChanged()
-				.id(card.getContactId())
-				.href(card.getHref())
-				.etag(buildEtag(card.getRevisionTimestamp()));
+			.id(card.getContactId())
+			.href(card.getHref())
+			.etag(buildEtag(card.getRevisionTimestamp()));
 	}
 	
 	private CardsChanges createCardsChanges(DateTime lastRevisionTimestamp, CollectionChangeSet<ContactObjectChanged> changes) {
@@ -464,10 +456,10 @@ public class CardDav extends CarddavApi {
 		}
 		
 		return new CardsChanges()
-				.syncToken(buildEtag(lastRevisionTimestamp))
-				.inserted(inserted)
-				.updated(updated)
-				.deleted(deleted);
+			.syncToken(buildEtag(lastRevisionTimestamp))
+			.inserted(inserted)
+			.updated(updated)
+			.deleted(deleted);
 	}
 	
 	private String buildEtag(DateTime revisionTimestamp) {

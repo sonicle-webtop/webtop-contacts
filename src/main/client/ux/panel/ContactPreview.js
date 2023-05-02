@@ -38,7 +38,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		'Sonicle.form.field.DisplayImage',
 		'Sonicle.form.field.ColorDisplay',
 		'Sonicle.form.field.TagDisplay',
-		'WTA.util.FoldersTree',
+		'WTA.util.FoldersTree2',
 		'WTA.ux.grid.TileList',
 		'WTA.ux.panel.CustomFieldsPreview',
 		'Sonicle.webtop.contacts.model.ContactPreview'
@@ -67,9 +67,8 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 		
 		WTU.applyFormulas(me.getVM(), {
 			foHasPicture: WTF.foIsEqual('record', 'pic', true),
-			foIsEditable: WTF.foGetFn('record', '_erights', function(val) {
-				var er = WTA.util.FoldersTree.toRightsObj(val);
-				return er.UPDATE;
+			foIsEditable: WTF.foGetFn('record', '_itPerms', function(val) {
+				return WTA.util.FoldersTree2.toRightsObj(val).UPDATE;
 			}),
 			foHasData: {
 				bind: {bindTo: '{record}'},

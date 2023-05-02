@@ -34,9 +34,8 @@
 Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	extend: 'WTA.sdk.UIView',
 	requires: [
-		'Sonicle.String'
-	],
-	uses: [
+		'Sonicle.VMUtils',
+		'WTA.util.FoldersTree2',
 		'Sonicle.webtop.contacts.model.FolderNode'
 	],
 	
@@ -114,8 +113,15 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 			columns: [{
 				xtype: 'sotreecolumn',
 				dataIndex: 'text',
-				renderer: WTA.util.FoldersTree.coloredBoxTreeRenderer({
-					defaultText: me.res('trfolders.default')
+				renderer: WTA.util.FoldersTree2.coloredBoxTreeRenderer({
+					defaultText: me.res('trfolders.default'),
+					getNodeText: function(node, val) {
+						if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
+							return me.mys.resTpl(val);
+						} else {
+							return val;
+						}
+					}
 				}),
 				flex: 1
 			}],
@@ -127,11 +133,11 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 				},
 				selectionchange: function(s, sel) {
 					var me = this,
-							rec = sel[0];
-					if (rec) {
+						node = sel[0];
+					if (node) {
 						me.getVM().set({
-							categoryId: rec.get('_catId'),
-							profileId: rec.get('_pid')
+							categoryId: node.getFolderId(),
+							profileId: node.getOwnerPid()
 						});
 					}
 				},
@@ -142,7 +148,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	
 	okView: function() {
 		var me = this,
-				vm = me.getVM();
+			vm = me.getVM();
 		vm.set('result', 'ok');
 		me.fireEvent('viewok', me, vm.get('categoryId'), vm.get('profileId'));
 		me.closeView(false);

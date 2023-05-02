@@ -1,6 +1,5 @@
-/*
- * webtop-contacts is a WebTop Service developed by Sonicle S.r.l.
- * Copyright (C) 2014 Sonicle S.r.l.
+/* 
+ * Copyright (C) 2023 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -11,7 +10,7 @@
  *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
  * details.
  *
  * You should have received a copy of the GNU Affero General Public License
@@ -19,7 +18,7 @@
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
  * MA 02110-1301 USA.
  *
- * You can contact Sonicle S.r.l. at email address sonicle@sonicle.com
+ * You can contact Sonicle S.r.l. at email address sonicle[at]sonicle[dot]com
  *
  * The interactive user interfaces in modified source and object code versions
  * of this program must display Appropriate Legal Notices, as required under
@@ -27,26 +26,16 @@
  *
  * In accordance with Section 7(b) of the GNU Affero General Public License
  * version 3, these Appropriate Legal Notices must retain the display of the
- * "Powered by Sonicle WebTop" logo. If the display of the logo is not reasonably
- * feasible for technical reasons, the Appropriate Legal Notices must display
- * the words "Powered by Sonicle WebTop".
+ * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
+ * reasonably feasible for technical reasons, the Appropriate Legal Notices must
+ * display the words "Copyright (C) 2023 Sonicle S.r.l.".
  */
-Ext.define('Sonicle.webtop.contacts.model.Sharing', {
-	extend: 'WTA.sdk.model.Sharing',
+Ext.define('Sonicle.webtop.contacts.view.FolderSharing', {
+	extend: 'WTA.sdk.FolderSharingView',
 	requires: [
-		'Sonicle.webtop.contacts.model.SharingRights'
+		'Sonicle.webtop.contacts.model.FolderSharing'
 	],
-	proxy: WTF.apiProxy('com.sonicle.webtop.contacts', 'ManageSharing', 'data', {
-		writer: {
-			type: 'sojson',
-			writeAssociations: true
-		}
-	}),
 	
-	field:[
-		WTF.roField('description', 'string')
-	],
-	hasMany: [
-		WTF.hasMany('rights', 'Sonicle.webtop.contacts.model.SharingRights')
-	]
+	modelName: 'Sonicle.webtop.contacts.model.FolderSharing',
+	fieldTitle: 'description'
 });
