@@ -2591,15 +2591,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			});
 		},
 		
-		createHiddenCategories: function(rootNodeId) {
+		createHiddenCategories: function(originNodeId) {
 			var me = this;
 			return WT.createView(me.ID, 'view.HiddenCategories', {
 				swapReturn: true,
 				viewCfg: {
 					action: 'ManageHiddenCategories',
 					extraParams: {
-						crud: 'list',
-						rootId: rootNodeId
+						node: originNodeId
 					}
 				}
 			});
