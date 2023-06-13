@@ -32,6 +32,9 @@
  */
 Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 	extend: 'WTA.ux.data.EmptyModel',
+	mixins: [
+		'WTA.sdk.mixin.ItemWithinFolder'	
+	],
 	requires: [
 		'Sonicle.webtop.contacts.model.ContactValueItem'
 	],
@@ -56,9 +59,9 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
 		WTF.roField('tags', 'string'),
-		WTF.roField('_pid', 'string'),
-		WTF.roField('_frights', 'string'),
-		WTF.roField('_erights', 'string'),
+		WTF.roField('_owPid', 'string'),
+		WTF.roField('_foPerms', 'string'),
+		WTF.roField('_itPerms', 'string'),
 		WTF.calcField('businessInfo', 'string', ['company', 'function'], function(v, rec) {
 			return Sonicle.String.join(', ', rec.get('function'), rec.get('company'));
 		}),

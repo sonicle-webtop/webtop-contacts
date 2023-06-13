@@ -33,9 +33,10 @@
 package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShareRootCategory;
+import com.sonicle.webtop.core.app.model.FolderShare;
 
 /**
  *
@@ -59,9 +60,9 @@ public class JsCategoryLkp {
 		this._profileId = cat.getProfileId().toString();
 	}
 	
-	public JsCategoryLkp(ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, boolean isDefault, int order) {
+	public JsCategoryLkp(CategoryFSOrigin origin, CategoryFSFolder folder, CategoryPropSet folderProps, boolean isDefault, int order) {
 		this(folder.getCategory().applyPropSet(folderProps), isDefault);
-		this._profileDescription = root.getDescription();
-		this._writable = folder.getElementsPerms().implies("CREATE");
+		this._profileDescription = origin.getDisplayName();
+		this._writable = folder.getPermissions().getItemsPermissions().has(FolderShare.ItemsRight.CREATE);
 	}
 }

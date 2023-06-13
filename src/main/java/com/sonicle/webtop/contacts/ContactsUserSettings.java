@@ -120,12 +120,12 @@ public class ContactsUserSettings extends BaseUserSettings {
 		return setString(ANNIVERSARY_REMINDER_DELIVERY, value);
 	}
 	
-	public StringSet getInactiveCategoryRoots() {
-		return getObject(INACTIVE_CATEGORY_ROOTS, new StringSet(), StringSet.class);
+	public StringSet getInactiveCategoryOrigins() {
+		return getObject(INACTIVE_CATEGORY_ORIGINS, new StringSet(), StringSet.class);
 	}
 	
-	public boolean setInactiveCategoryRoots(StringSet value) {
-		return setObject(INACTIVE_CATEGORY_ROOTS, value, StringSet.class);
+	public boolean setInactiveCategoryOrigins(StringSet value) {
+		return setObject(INACTIVE_CATEGORY_ORIGINS, value, StringSet.class);
 	}
 	
 	public IntegerSet getInactiveCategoryFolders() {
@@ -248,39 +248,5 @@ public class ContactsUserSettings extends BaseUserSettings {
 		String key = MessageFormat.format(MAILCHIMP_INCOMING_CATEGORYID, pidAndCatId);
 		setString(MAILCHIMP_LAST_INCOMING_CATEGORYID, categoryId);
 		return setString(key, categoryId);
-	}
-	
-	/**
-	 * @deprecated Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
-	 * @return
-	 */
-	@Deprecated
-	public StringSet getCheckedCategoryRoots() {
-		return getObject(CHECKED_CATEGORY_ROOTS, null, StringSet.class);
-	}
-	
-	/**
-	 * @deprecated Remove when transition (CheckedCategoryRoots -> InactiveCategoryRoots) is completed
-	 */
-	@Deprecated
-	public void clearCheckedCategoryRoots() {
-		clear(CHECKED_CATEGORY_ROOTS);
-	}
-	
-	/**
-	 * @deprecated Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
-	 * @return
-	 */
-	@Deprecated
-	public IntegerSet getCheckedCategoryFolders() {
-		return getObject(CHECKED_CATEGORY_FOLDERS, null, IntegerSet.class);
-	}
-	
-	/**
-	 * @deprecated Remove when transition (CheckedCategoryFolders -> InactiveCategoryFolders) is completed
-	 */
-	@Deprecated
-	public void clearCheckedCategoryFolders() {
-		clear(CHECKED_CATEGORY_FOLDERS);
 	}
 }

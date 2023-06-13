@@ -120,12 +120,20 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 */
 	addContact: function(data, opts) {
 		opts = opts || {};
-		return this.service.addContactWithData(data, {
+		var svc = this.service,
+			FT = WTA.util.FoldersTree2,
+			tree = svc.trFolders(),
+			folder = FT.getFolderForAdd(tree, data.categoryId);
+		
+		if (!folder) folder = FT.getDefaultOrBuiltInFolder(tree);
+		delete data.categoryId;
+		
+		svc.addContact(folder.getFolderId(), data, {
 			callback: opts.callback,
 			scope: opts.scope,
 			dirty: opts.dirty,
 			uploadTag: opts.uploadTag
-		});
+		});	
 	},
 	
 	/**
@@ -168,7 +176,16 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 	 */
 	addContactsList: function(data, opts) {
 		opts = opts || {};
-		return this.service.addContactsList2(data, {
+		var svc = this.service,
+			FT = WTA.util.FoldersTree2,
+			tree = svc.trFolders(),
+			folder = FT.getFolderForAdd(tree, data.categoryId);
+		
+		if (!folder) folder = FT.getDefaultOrBuiltInFolder(tree);
+		if (Ext.isDefined(data.recipients)) data.recipients = this.parseRecipients(data.recipients);
+		delete data.categoryId;
+		
+		return svc.addContactsList(folder.getFolderId(), data, {
 			callback: opts.callback,
 			scope: opts.scope,
 			dirty: opts.dirty,
@@ -185,5 +202,31 @@ Ext.define('Sonicle.webtop.contacts.ServiceApi', {
 			callback: opts.callback,
 			scope: opts.scope
 		});
+	},
+	
+	privates: {
+		parseRecipients: function(value) {
+			var SoO = Sonicle.Object, arr = [];
+			Ext.iterate(Ext.Array.from(value), function(item) {
+				var o;
+				if (Ext.isString(item)) {
+					o = {
+						recipientType: 'to',
+						recipient: item
+					};
+				} else if (Ext.isObject(item)) {
+					o = SoO.remap(item, ['rcptType', 'address', 'refContactId'], false, {
+						'rcptType': 'recipientType',
+						'address': 'recipient',
+						'refContactId': 'recipientContactId'
+					});
+					SoO.copyProp(o, true, item, 'recipientType');
+					SoO.copyProp(o, true, item, 'recipient');
+					SoO.copyProp(o, true, item, 'recipientContactId');
+				}
+				if (o) arr.push(o);
+			});
+			return arr;
+		}
 	}
 });

@@ -67,6 +67,17 @@ public class CategoryDAO extends BaseDAO {
 		return nextID;
 	}
 	
+	public boolean existsById(Connection con, int categoryId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.selectCount()
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.CATEGORY_ID.equal(categoryId)
+			)
+			.fetchOne(0, Integer.class) == 1;
+	}
+	
 	public Owner selectOwnerById(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl

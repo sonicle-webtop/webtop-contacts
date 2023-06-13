@@ -35,11 +35,11 @@ package com.sonicle.webtop.contacts.bol.js;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactList;
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldDefs;
 import com.sonicle.webtop.core.bol.js.ObjCustomFieldValue;
 import com.sonicle.webtop.core.model.CustomField;
@@ -78,12 +78,12 @@ public class JsContactPreview {
 	public Integer catId;
 	public String catName;
 	public String catColor;
-	public String _pid;
-	public String _frights;
-	public String _erights;
+	public String _owPid;
+	public String _foPerms;
+	public String _itPerms;
 	public String _cfdefs;
 	
-	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
+	public JsContactPreview(CategoryFSFolder folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
@@ -129,13 +129,13 @@ public class JsContactPreview {
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
-		this._pid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
-		this._frights = folder.getPerms().toString();
-		this._erights = folder.getElementsPerms().toString();
+		this._owPid = category.getProfileId().toString();
+		this._foPerms = folder.getPermissions().getFolderPermissions().toString();
+		this._itPerms = folder.getPermissions().getItemsPermissions().toString();
 		_cfdefs = LangUtils.serialize(new ObjCustomFieldDefs(panels, fields), ObjCustomFieldDefs.class);
 	}
 
-	public JsContactPreview(ShareFolderCategory folder, CategoryPropSet folderProps, ContactList item) {
+	public JsContactPreview(CategoryFSFolder folder, CategoryPropSet folderProps, ContactList item) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), true).toString();
@@ -153,9 +153,9 @@ public class JsContactPreview {
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
-		this._pid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
-		this._frights = folder.getPerms().toString();
-		this._erights = folder.getElementsPerms().toString();
+		this._owPid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
+		this._foPerms = folder.getPermissions().getFolderPermissions().toString();
+		this._itPerms = folder.getPermissions().getItemsPermissions().toString();
 	}
 
 	private void addValueItem(ArrayList<ValueItem> array, String id, String value, String type) {

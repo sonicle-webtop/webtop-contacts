@@ -245,7 +245,6 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 								disabled: '{isView}'
 							},
 							text: WT.res('act-add.lbl'),
-							iconCls: 'wtcon-icon-addListRecipient',
 							handler: function() {
 								var gp = me.lref('gprecipients'),
 									sto = gp.getStore(),

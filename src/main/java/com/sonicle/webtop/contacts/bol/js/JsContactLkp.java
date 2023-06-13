@@ -32,12 +32,11 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
-import com.sonicle.webtop.contacts.GridView;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.ContactLookup;
-import com.sonicle.webtop.contacts.model.ShareFolderCategory;
-import com.sonicle.webtop.contacts.model.ShareRootCategory;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 
 /**
@@ -60,11 +59,11 @@ public class JsContactLkp {
 	public Integer catId;
 	public String catName;
 	public String catColor;
-	public String _ownerId;
-	public String _frights;
-	public String _erights;
+	public String _owPid;
+	public String _foPerms;
+	public String _itPerms;
 	
-	public JsContactLkp(ShareRootCategory root, ShareFolderCategory folder, CategoryPropSet folderProps, ContactLookup item) {
+	public JsContactLkp(CategoryFSOrigin origin, CategoryFSFolder folder, CategoryPropSet folderProps, ContactLookup item) {
 		Category category = folder.getCategory();
 		
 		this.id = String.valueOf(item.getContactId());
@@ -84,8 +83,8 @@ public class JsContactLkp {
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
-		this._ownerId = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
-		this._frights = folder.getPerms().toString();
-		this._erights = folder.getElementsPerms().toString();
+		this._owPid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
+		this._foPerms = folder.getPermissions().getFolderPermissions().toString();
+		this._itPerms = folder.getPermissions().getItemsPermissions().toString();
 	}
 }
