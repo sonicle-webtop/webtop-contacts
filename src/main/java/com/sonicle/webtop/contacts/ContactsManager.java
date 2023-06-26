@@ -3265,7 +3265,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					final String origin = getContactOriginBy(fieldCategory);
 					final List<VContact> vconts = dao.viewRecipientsByFieldCategoryQuery(con, fieldType, fieldCategory, categoryIds, queryText);
 					for(VContact vcont : vconts) {
-						final String value = vcont.getValueBy(fieldType, fieldCategory);
+						final String value = StringUtils.trim(vcont.getValueBy(fieldType, fieldCategory));
 						final String recipientId=vcont.getContactId()!=null?vcont.getContactId().toString():null;
 						if (vcont.getIsList() && fieldCategory.equals(RecipientFieldCategory.WORK) && fieldType.equals(RecipientFieldType.EMAIL)) {
 							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getDisplayName(), value, Recipient.Type.TO, recipientId));
