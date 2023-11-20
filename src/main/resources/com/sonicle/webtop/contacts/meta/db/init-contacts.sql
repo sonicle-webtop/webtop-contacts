@@ -39,10 +39,7 @@ CREATE TABLE "contacts"."categories" (
 "remote_sync_frequency" int2,
 "remote_sync_timestamp" timestamptz,
 "remote_sync_tag" varchar(255)
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for category_props
@@ -55,10 +52,7 @@ CREATE TABLE "contacts"."category_props" (
 "hidden" bool,
 "color" varchar(20),
 "sync" varchar(1)
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for contacts
@@ -125,10 +119,7 @@ CREATE TABLE "contacts"."contacts" (
 "notes" varchar(2000),
 "href" varchar(2048),
 "etag" varchar(2048)
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for contacts_attachments
@@ -142,10 +133,7 @@ CREATE TABLE "contacts"."contacts_attachments" (
 "filename" varchar(255) NOT NULL,
 "size" int8 NOT NULL,
 "media_type" varchar(255) NOT NULL
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for contacts_attachments_data
@@ -154,10 +142,7 @@ DROP TABLE IF EXISTS "contacts"."contacts_attachments_data";
 CREATE TABLE "contacts"."contacts_attachments_data" (
 "contact_attachment_id" varchar(36) NOT NULL,
 "bytes" bytea NOT NULL
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for contacts_pictures
@@ -169,10 +154,7 @@ CREATE TABLE "contacts"."contacts_pictures" (
 "height" int4,
 "media_type" varchar(50),
 "bytes" bytea
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for contacts_vcards
@@ -181,10 +163,7 @@ DROP TABLE IF EXISTS "contacts"."contacts_vcards";
 CREATE TABLE "contacts"."contacts_vcards" (
 "contact_id" int4 NOT NULL,
 "raw_data" text
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Table structure for list_recipients
@@ -196,10 +175,7 @@ CREATE TABLE "contacts"."list_recipients" (
 "recipient" varchar(320) NOT NULL,
 "recipient_contact_id" int4,
 "recipient_type" varchar(3)
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Alter Sequences Owned By 

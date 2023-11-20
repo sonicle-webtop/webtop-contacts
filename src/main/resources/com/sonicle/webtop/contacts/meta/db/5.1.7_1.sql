@@ -11,9 +11,7 @@ CREATE TABLE "contacts"."category_props" (
 "hidden" bool,
 "color" varchar(20),
 "sync" varchar(1)
-)
-WITH (OIDS=FALSE)
-;
+);
 
 -- ----------------------------
 -- Indexes structure for table category_props
