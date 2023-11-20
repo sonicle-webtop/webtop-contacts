@@ -40,10 +40,7 @@ ALTER COLUMN "creation_timestamp" SET NOT NULL;
 CREATE TABLE "contacts"."contacts_vcards" (
 "contact_id" int4 NOT NULL,
 "raw_data" text
-)
-WITH (OIDS=FALSE)
-
-;
+);
 
 -- ----------------------------
 -- Primary Key structure for table contacts_vcards
