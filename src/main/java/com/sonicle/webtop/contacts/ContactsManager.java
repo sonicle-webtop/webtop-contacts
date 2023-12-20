@@ -2554,7 +2554,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 		
 		if (ocontacts.size() == 1) {
-			return contDao.insert(con, ocontacts.get(0), BaseDAO.createRevisionTimestamp());
+			try {
+				return contDao.insert(con, ocontacts.get(0), BaseDAO.createRevisionTimestamp());
+			} catch (DAOException ex) {
+				if (logger.isTraceEnabled()) logger.trace("[BatchInsert] DAO Error: {}", LangUtils.getDeepestCauseMessage(ex));
+				throw ex;
+			}
 		} else {
 			return contDao.batchInsert(con, ocontacts, BaseDAO.createRevisionTimestamp());
 		}
