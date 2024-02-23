@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.webtop.contacts.bol.OContactAttachment;
 import com.sonicle.webtop.contacts.bol.OContactAttachmentData;
+import com.sonicle.webtop.contacts.bol.VContactAttachmentWithBytes;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_ATTACHMENTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_ATTACHMENTS_DATA;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsAttachmentsRecord;
@@ -67,6 +68,30 @@ public class ContactAttachmentDAO extends BaseDAO {
 				CONTACTS_ATTACHMENTS.FILENAME.asc()
 			)
 			.fetchInto(OContactAttachment.class);
+	}
+	
+	public List<VContactAttachmentWithBytes> selectByContactWithBytes(Connection con, int contactId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.select(
+					CONTACTS_ATTACHMENTS.CONTACT_ATTACHMENT_ID,
+					CONTACTS_ATTACHMENTS.CONTACT_ID,
+					CONTACTS_ATTACHMENTS.FILENAME,
+					CONTACTS_ATTACHMENTS.MEDIA_TYPE,
+					CONTACTS_ATTACHMENTS.REVISION_SEQUENCE,
+					CONTACTS_ATTACHMENTS.REVISION_TIMESTAMP,
+					CONTACTS_ATTACHMENTS.SIZE,
+					CONTACTS_ATTACHMENTS_DATA.BYTES
+			)
+			.from(CONTACTS_ATTACHMENTS)
+			.join(CONTACTS_ATTACHMENTS_DATA).on(CONTACTS_ATTACHMENTS.CONTACT_ATTACHMENT_ID.equal(CONTACTS_ATTACHMENTS_DATA.CONTACT_ATTACHMENT_ID))
+			.where(
+				CONTACTS_ATTACHMENTS.CONTACT_ID.equal(contactId)
+			)
+			.orderBy(
+				CONTACTS_ATTACHMENTS.FILENAME.asc()
+			)
+			.fetchInto(VContactAttachmentWithBytes.class);
 	}
 	
 	public OContactAttachment selectByIdContact(Connection con, String attachmentId, int contactId) throws DAOException {

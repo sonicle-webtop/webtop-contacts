@@ -48,6 +48,7 @@ import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.commons.concurrent.KeyedReentrantLocks;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.web.Crud;
+import com.sonicle.commons.web.DispositionType;
 import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.ServletUtils.IntegerArray;
@@ -83,6 +84,7 @@ import com.sonicle.webtop.contacts.bol.model.MyCategoryFSOrigin;
 import com.sonicle.webtop.contacts.bol.model.RBAddressbook;
 import com.sonicle.webtop.contacts.bol.model.RBContactDetail;
 import com.sonicle.webtop.contacts.bol.model.SetupDataCategoryRemote;
+import com.sonicle.webtop.contacts.io.CSVOutput;
 import com.sonicle.webtop.contacts.io.VCardOutput;
 import com.sonicle.webtop.contacts.io.input.ContactExcelFileReader;
 import com.sonicle.webtop.contacts.io.input.ContactLDIFFileReader;
@@ -109,6 +111,7 @@ import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
+import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
@@ -167,15 +170,24 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import jakarta.mail.internet.InternetAddress;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.StringJoiner;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
+import org.supercsv.io.CsvListWriter;
 import org.supercsv.prefs.CsvPreference;
 
 /**
@@ -1636,6 +1648,78 @@ public class Service extends BaseService {
 		} catch (Exception ex) {
 			logger.error("Error in PrepareSendContactAsEmail", ex);
 			new JsonResult(ex).printTo(out);
+		}
+	}
+	
+	public void processExportContactsToText(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String node = ServletUtils.getStringParameter(request, "id", true);
+			CategoryNodeId nodeId = new CategoryNodeId(node);
+
+			CSVOutput csvout = new CSVOutput();
+			
+			if (nodeId.getType().equals(CategoryNodeId.Type.FOLDER)) {
+				int categoryId = nodeId.getFolderId();
+				Category category = manager.getCategory(nodeId.getFolderId());
+				ServletUtils.setFileStreamHeaders(response, "text/csv", DispositionType.INLINE, 
+						"Contacts-"+nodeId.getOriginAsProfileId().getUserId()+"-"+category.getName()+".csv");
+				CsvListWriter wr=new CsvListWriter(new PrintWriter(response.getOutputStream()), CsvPreference.STANDARD_PREFERENCE);
+				csvout.writeHeader(wr);
+				outputCSVContacts(categoryId, category.getName(), csvout, wr);
+				wr.close();
+			} 
+			else if (nodeId.getType().equals(CategoryNodeId.Type.ORIGIN)) {
+				ServletUtils.setFileStreamHeaders(response, "text/csv", DispositionType.INLINE, 
+						"Contacts-"+nodeId.getOriginAsProfileId().getUserId()+".csv");
+				CsvListWriter wr=new CsvListWriter(new PrintWriter(response.getOutputStream()), CsvPreference.STANDARD_PREFERENCE);
+				csvout.writeHeader(wr);
+				for (CategoryFSFolder folder : foldersTreeCache.getFoldersByOrigin(nodeId.getOriginAsProfileId())) {
+					Category category = folder.getCategory();
+					outputCSVContacts(category.getCategoryId(), category.getName(), csvout, wr);
+					wr.flush();
+				}
+				wr.close();
+			}
+		} catch (Exception exc) {
+			Service.logger.error("Exception",exc);
+			ServletUtils.writeErrorHandlingJs(response, exc.getMessage());
+		}
+	}
+	
+	public void processExportContactsToVCard(HttpServletRequest request, HttpServletResponse response) {
+		try {
+			String node = ServletUtils.getStringParameter(request, "id", true);
+			CategoryNodeId nodeId = new CategoryNodeId(node);
+
+			if (nodeId.getType().equals(CategoryNodeId.Type.FOLDER)) {
+				OutputStream out = response.getOutputStream();
+				Category category = manager.getCategory(nodeId.getFolderId());
+				ServletUtils.setFileStreamHeaders(response, "text/x-vcard", DispositionType.INLINE, 
+						"Contacts-"+nodeId.getOriginAsProfileId().getUserId()+"-"+category.getName()+".vcf");
+				manager.outputVCardContactsByCategoryId(category, out);
+				out.close();
+			} 
+			else if (nodeId.getType().equals(CategoryNodeId.Type.ORIGIN)) {
+				ServletUtils.setFileStreamHeaders(response, "application/x-zip-compressed", DispositionType.INLINE, 
+						"Contacts-"+nodeId.getOriginAsProfileId().getUserId()+".zip");
+				ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+				ArrayList<Category> categories=new ArrayList<>();
+				for (CategoryFSFolder folder : foldersTreeCache.getFoldersByOrigin(nodeId.getOriginAsProfileId()))
+					categories.add(folder.getCategory());
+				manager.outputVCardContactsAsZipEntries(categories, zos);
+				zos.close();
+			}
+		} catch (Exception exc) {
+			Service.logger.error("Exception",exc);
+			ServletUtils.writeErrorHandlingJs(response, exc.getMessage());
+		}
+	}
+	
+	private void outputCSVContacts(int categoryId, String categoryName, CSVOutput csvout, CsvListWriter wr) throws WTException, IOException {
+		List<ContactObject> contacts = manager.listContactObjects(categoryId, ContactObjectOutputType.BEAN);
+		for (ContactObject contact : contacts) {
+			ContactObjectWithBean contactObj = (ContactObjectWithBean)contact;
+			csvout.writeContact(contactObj.getContact(), categoryName, wr);
 		}
 	}
 	
