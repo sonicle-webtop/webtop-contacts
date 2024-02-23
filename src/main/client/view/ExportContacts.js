@@ -32,8 +32,7 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.view.ExportContacts', {
-	//extend: 'WTA.sdk.ExportWizardView',
-	extend: 'Sonicle.webtop.contacts.sdk.ExportWizardView',
+	extend: 'WTA.sdk.ExportWizardView',
 	requires: [
 		'Sonicle.String'
 	],
