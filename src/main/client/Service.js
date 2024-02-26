@@ -68,7 +68,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.webtop.contacts.view.ContactsList',
 		'Sonicle.webtop.contacts.view.CategoryChooser',
 		'Sonicle.webtop.contacts.view.ListChooser',
-		'Sonicle.webtop.contacts.view.HiddenCategories'
+		'Sonicle.webtop.contacts.view.HiddenCategories',
+		'Sonicle.webtop.contacts.view.ImportContacts',
+		'Sonicle.webtop.contacts.view.ExportContacts'
 	],
 	
 	activeView: 'work',
@@ -715,6 +717,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) me.importContactsUI(node.getFolderId());
 			}
 		});
+		me.addAct('exportContacts', {
+			tooltip: null,
+			handler: function(s, e) {
+				var node = e.menuData.node;
+				if (node) me.exportContactsUI(node.getId());
+			}
+		});
 		me.addAct('applyTags', {
 			tooltip: null,
 			handler: function(s, e) {
@@ -1040,7 +1049,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				},
 				'-',
 				me.getAct('editSharing'),
-				me.getAct('manageHiddenCategories')
+				me.getAct('manageHiddenCategories'),
+				'-',
+				me.getAct('exportContacts')
 				//TODO: azioni altri servizi?
 			],
 			folderItems = [
@@ -1089,7 +1100,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				'-',
 				me.getAct('addContact'),
 				me.getAct('addContactsList'),
-				me.getAct('importContacts')
+				'-',
+				me.getAct('importContacts'),
+				me.getAct('exportContacts')
 				//TODO: azioni altri servizi?
 			];
 		
@@ -1131,6 +1144,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					me.getAct('addContact').setDisabled(!ir.CREATE);
 					me.getAct('addContactsList').setDisabled(!ir.CREATE);
 					me.getAct('importContacts').setDisabled(!ir.CREATE);
+					me.getAct('exportContacts').setDisabled(!ir.CREATE);
 					me.getAct('hideCategory').setDisabled(mine);
 					me.getAct('restoreCategoryColor').setDisabled(mine);
 					me.getAct('syncRemoteCategory').setDisabled(!Sonicle.webtop.contacts.view.Category.isRemote(node.get('_provider')));
@@ -1753,6 +1767,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 	},
 	
+	exportContactsUI: function(id) {
+		var me = this;
+		me.exportContacts(id);
+	},
+	
 	createEventUI: function(rec) {
 		var me = this;
 		me.confirmEventCreation(me.res('contact.confirm.eventCreation'), function(bid, value) {
@@ -2121,6 +2140,18 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		vw.on('dosuccess', function() {
 			Ext.callback(opts.callback, opts.scope || me, [true]);
 		});
+		vw.showView();
+	},
+	
+	exportContacts: function(id) {
+		var me = this,
+				vw = WT.createView(me.ID, 'view.ExportContacts', {
+					swapReturn: true,
+					viewCfg: {
+						id: id
+					}
+				});
+		
 		vw.showView();
 	},
 	

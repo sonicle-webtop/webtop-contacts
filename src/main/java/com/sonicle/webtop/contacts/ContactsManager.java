@@ -65,6 +65,7 @@ import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OContactPictureMetaOnly;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
+import com.sonicle.webtop.contacts.bol.VContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.bol.VContactObject;
 import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
@@ -197,7 +198,11 @@ import com.sonicle.webtop.core.app.model.FolderShareOriginFolders;
 import com.sonicle.webtop.core.app.model.FolderSharing;
 import com.sonicle.webtop.core.app.model.ShareOrigin;
 import com.sonicle.webtop.core.app.sdk.AbstractFolderShareCache;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  *
@@ -917,6 +922,60 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.closeQuietly(con);
 		}
 	}
+	
+	public void outputVCardContactsByCategoryId(Category category, OutputStream out) throws WTException, IOException {
+		CoreManager coreMgr = getCoreManager();
+		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+		VCardOutput vout = new VCardOutput(prodId)
+			.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED);
+		Map<String, String> tagNamesByIdMap = coreMgr.listTagNamesById();
+		outputVCardContacts(category.getCategoryId(), vout, out, tagNamesByIdMap);
+	}
+	
+	public void outputVCardContactsAsZipEntries(List<Category> categories, ZipOutputStream zos) throws WTException, IOException {
+		CoreManager coreMgr = getCoreManager();
+		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
+		VCardOutput vout = new VCardOutput(prodId)
+			.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED);
+		Map<String, String> tagNamesByIdMap = coreMgr.listTagNamesById();
+		for(Category category: categories) {
+			ZipEntry ze=new ZipEntry("Contacts-"+category.getUserId()+"-"+category.getName()+".vcf");
+			zos.putNextEntry(ze);
+			outputVCardContacts(category.getCategoryId(), vout, zos, tagNamesByIdMap);
+			zos.closeEntry();
+			zos.flush();
+		}
+	}
+	
+	private void outputVCardContacts(int categoryId, VCardOutput vout, OutputStream out, Map<String, String> tagNamesByIdMap) throws WTException, IOException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		try {
+			
+			con = WT.getConnection(SERVICE_ID);
+			contDao.lazy_viewOnlineContactObjects(con, false, categoryId,
+					new VContactObject.Consumer() {
+						@Override
+						public void consume(VContactObject vco, Connection con) throws WTException {
+							ContactObjectWithBean contactObj = (ContactObjectWithBean)doContactObjectPrepareComplete(con, vco, ContactObjectOutputType.BEAN, tagNamesByIdMap);
+							String vcard = vout.writeVCard(contactObj.getContact(), null);
+							InputStream is = IOUtils.toInputStream(vcard, StandardCharsets.UTF_8);
+							try {
+								IOUtils.copy(is, out);
+								is.close();
+							} catch(IOException exc) {
+								throw new WTException(exc);
+							}
+						}
+					}
+			);
+		} catch (Exception ex) {
+			throw ExceptionUtils.wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
 	
 	/*
 	@Override
@@ -2393,26 +2452,46 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		return catDao.update(con, ocat) == 1;
 	}
-	
+
+	//Prepare only Picture and Tags
 	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, Map<String, String> tagNamesByIdMap) throws WTException {
+		return doContactObjectPrepare(con, vcont, outputType, tagNamesByIdMap, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.TAGS));
+	}
+	
+	//Prepare all: Picture, Tags, Attachments, Custom Values
+	private ContactObject doContactObjectPrepareComplete(Connection con, VContactObject vcont, ContactObjectOutputType outputType, Map<String, String> tagNamesByIdMap) throws WTException {
+		return doContactObjectPrepare(con, vcont, outputType, tagNamesByIdMap, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.ATTACHMENTS, ContactGetOptions.TAGS, ContactGetOptions.CUSTOM_VALUES));
+	}
+	
+	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, Map<String, String> tagNamesByIdMap, final BitFlag<ContactGetOptions> options) throws WTException {
 		if (ContactObjectOutputType.STAT.equals(outputType)) {
 			return ManagerUtils.fillContactObject(new ContactObject(), vcont);
 			
 		} else {
 			ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
+			ContactAttachmentDAO cattDao = ContactAttachmentDAO.getInstance();
+			ContactCustomValueDAO ccvalDao = ContactCustomValueDAO.getInstance();
 			ContactVCardDAO vcaDao = ContactVCardDAO.getInstance();
 			
 			ContactEx contact = ManagerUtils.fillContact(new ContactEx(), vcont);
 			contact.setCompany(ManagerUtils.createContactCompany(vcont));
 			
-			if (vcont.getHasPicture()) {
+			if (options.has(ContactGetOptions.PICTURE) && vcont.getHasPicture()) {
 				OContactPicture opic = cpicDao.select(con, vcont.getContactId());
 				if (opic != null) contact.setPicture(ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic));
 			}
-			if (!StringUtils.isBlank(vcont.getTags())) {
+			if (options.has(ContactGetOptions.TAGS) && !StringUtils.isBlank(vcont.getTags())) {
 				contact.setTags(new LinkedHashSet(new CId(vcont.getTags()).getTokens()));
 			}
-			//TODO: add support to Attachments and CustomValues. See doContactGet...
+
+			if (options.has(ContactGetOptions.ATTACHMENTS) && vcont.getHasAttachments()) {
+				List<VContactAttachmentWithBytes> oatts = cattDao.selectByContactWithBytes(con, vcont.getContactId());
+				contact.setAttachments(ManagerUtils.createContactAttachmentListWithBytes(oatts));
+			}
+			if (options.has(ContactGetOptions.CUSTOM_VALUES) && vcont.getHasCustomValues()) {
+				List<OContactCustomValue> ovals = ccvalDao.selectByContact(con, vcont.getContactId());
+				contact.setCustomValues(ManagerUtils.createCustomValuesMap(ovals));
+			}
 			
 			if (ContactObjectOutputType.VCARD.equals(outputType)) {
 				ContactObjectWithVCard ret = ManagerUtils.fillContactObject(new ContactObjectWithVCard(), vcont);

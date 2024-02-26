@@ -41,6 +41,7 @@ import com.sonicle.webtop.contacts.bol.OContactAttachment;
 import com.sonicle.webtop.contacts.bol.OContactCustomValue;
 import com.sonicle.webtop.contacts.bol.OContactPicture;
 import com.sonicle.webtop.contacts.bol.OListRecipient;
+import com.sonicle.webtop.contacts.bol.VContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.bol.VContactBase;
 import com.sonicle.webtop.contacts.bol.VContactObject;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
@@ -50,6 +51,7 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
+import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactCompany;
@@ -449,6 +451,19 @@ public class ManagerUtils {
 	static ContactAttachment createContactAttachment(OContactAttachment src) {
 		if (src == null) return null;
 		return fillContactAttachment(new ContactAttachment(), src);
+	}
+	
+	static List<ContactAttachment> createContactAttachmentListWithBytes(List<VContactAttachmentWithBytes> items) {
+		ArrayList<ContactAttachment> list = new ArrayList<>(items.size());
+		for (VContactAttachmentWithBytes item : items) {
+			list.add(createContactAttachmentWithBytes(item));
+		}
+		return list;
+	}
+	
+	static ContactAttachment createContactAttachmentWithBytes(VContactAttachmentWithBytes src) {
+		if (src == null) return null;
+		return fillContactAttachment(new ContactAttachmentWithBytes(src.getBytes()), src);
 	}
 	
 	static <T extends ContactAttachment> T fillContactAttachment(T tgt, OContactAttachment src) {
