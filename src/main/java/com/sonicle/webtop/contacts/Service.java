@@ -1717,9 +1717,10 @@ public class Service extends BaseService {
 	
 	private void outputCSVContacts(int categoryId, String categoryName, CSVOutput csvout, CsvListWriter wr) throws WTException, IOException {
 		List<ContactObject> contacts = manager.listContactObjects(categoryId, ContactObjectOutputType.BEAN);
+		Map<String, String> tagNamesById = WT.getCoreManager().listTagNamesById();
 		for (ContactObject contact : contacts) {
 			ContactObjectWithBean contactObj = (ContactObjectWithBean)contact;
-			csvout.writeContact(contactObj.getContact(), categoryName, wr);
+			csvout.writeContact(contactObj.getContact(), categoryName, wr, tagNamesById);
 		}
 	}
 	
