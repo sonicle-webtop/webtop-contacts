@@ -193,6 +193,7 @@ import com.sonicle.webtop.contacts.io.ContactFileReader;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.core.app.AuditLogManager;
+import com.sonicle.webtop.core.app.ezvcard.XTag;
 import com.sonicle.webtop.core.app.model.FolderShare;
 import com.sonicle.webtop.core.app.model.FolderShareOriginFolders;
 import com.sonicle.webtop.core.app.model.FolderSharing;
@@ -868,7 +869,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					logger.trace("Many contacts ({}) found for same href [{} -> {}]", vcobjs.size(), vcobj.getHref(), vcobj.getContactId());
 				}
 				
-				items.add(doContactObjectPrepare(con, vcobj, outputType, tagNamesByIdMap));
+				items.add(doContactObjectPrepare(con, vcobj, outputType));
 			}
 			return items;
 			
@@ -927,27 +928,27 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		CoreManager coreMgr = getCoreManager();
 		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 		VCardOutput vout = new VCardOutput(prodId)
-			.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED);
-		Map<String, String> tagNamesByIdMap = coreMgr.listTagNamesById();
-		outputVCardContacts(category.getCategoryId(), vout, out, tagNamesByIdMap);
+			.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED)
+			.withTagNamesByIdMap(coreMgr.listTagNamesById());
+		outputVCardContacts(category.getCategoryId(), vout, out);
 	}
 	
 	public void outputVCardContactsAsZipEntries(List<Category> categories, ZipOutputStream zos) throws WTException, IOException {
 		CoreManager coreMgr = getCoreManager();
 		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 		VCardOutput vout = new VCardOutput(prodId)
-			.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED);
-		Map<String, String> tagNamesByIdMap = coreMgr.listTagNamesById();
+			.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED)
+			.withTagNamesByIdMap(coreMgr.listTagNamesById());
 		for(Category category: categories) {
 			ZipEntry ze=new ZipEntry("Contacts-"+category.getUserId()+"-"+category.getName()+".vcf");
 			zos.putNextEntry(ze);
-			outputVCardContacts(category.getCategoryId(), vout, zos, tagNamesByIdMap);
+			outputVCardContacts(category.getCategoryId(), vout, zos);
 			zos.closeEntry();
 			zos.flush();
 		}
 	}
 	
-	private void outputVCardContacts(int categoryId, VCardOutput vout, OutputStream out, Map<String, String> tagNamesByIdMap) throws WTException, IOException {
+	private void outputVCardContacts(int categoryId, VCardOutput vout, OutputStream out) throws WTException, IOException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		try {
@@ -957,7 +958,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					new VContactObject.Consumer() {
 						@Override
 						public void consume(VContactObject vco, Connection con) throws WTException {
-							ContactObjectWithBean contactObj = (ContactObjectWithBean)doContactObjectPrepareComplete(con, vco, ContactObjectOutputType.BEAN, tagNamesByIdMap);
+							ContactObjectWithBean contactObj = (ContactObjectWithBean)doContactObjectPrepareComplete(con, vco, ContactObjectOutputType.BEAN);
 							String vcard = vout.writeVCard(contactObj.getContact(), null);
 							InputStream is = IOUtils.toInputStream(vcard, StandardCharsets.UTF_8);
 							try {
@@ -1033,7 +1034,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
 			con = WT.getConnection(SERVICE_ID);
 			
-			Map<String, String> tagNamesByIdMap = coreMgr.listTagNamesById();
 			ArrayList<ContactObject> items = new ArrayList<>();
 			Map<String, List<VContactObject>> map = contDao.viewOnlineContactObjectsByCategoryHrefs(con, false, categoryId, hrefs);
 			for (String href : hrefs) {
@@ -1045,7 +1045,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					logger.trace("Many contacts ({}) found for same href [{} -> {}]", vcobjs.size(), vcobj.getHref(), vcobj.getContactId());
 				}
 				
-				items.add(doContactObjectPrepare(con, vcobj, outputType, tagNamesByIdMap));
+				items.add(doContactObjectPrepare(con, vcobj, outputType));
 			}
 			return items;
 			
@@ -1070,8 +1070,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			} else {
 				checkRightsOnCategory(vcobj.getCategoryId(), FolderShare.FolderRight.READ);
 				
-				Map<String, String> tagNamesByIdMap = coreMgr.listTagNamesById();
-				return doContactObjectPrepare(con, vcobj, outputType, tagNamesByIdMap);
+				return doContactObjectPrepare(con, vcobj, outputType);
 			}
 			
 		} catch (Exception ex) {
@@ -1099,8 +1098,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			input.contact.setHref(href);
 			
 			Set<String> tagIds = null;
+			Map<String, List<String>> tagIdsByName = null;
 			if (processOpts.has(ContactProcessOpts.TAGS)) {
 				tagIds = coreMgr.listTagIds();
+				tagIdsByName = coreMgr.listTagIdsByName();
 			}
 			Set<String> customFieldsIds = null;
 			if (processOpts.has(ContactProcessOpts.CUSTOM_VALUES)) {
@@ -1108,7 +1109,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 			con = WT.getConnection(SERVICE_ID, false);
-			ContactInsertResult result = doContactInputInsert(coreMgr, con, tagIds, customFieldsIds, input, processOpts);
+			ContactInsertResult result = doContactInputInsert(coreMgr, con, tagIds, tagIdsByName, customFieldsIds, input, processOpts);
 			Integer newContactId = result.ocontact.getContactId();
 			
 			DbUtils.commitQuietly(con);
@@ -2315,7 +2316,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									ci.contact.setCategoryId(categoryId);
 									ci.contact.setHref(href);
 									ci.contact.setEtag(dcard.geteTag());
-									doContactInputInsert(coreMgr, con, null, null, ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
+									doContactInputInsert(coreMgr, con, null, null, null, ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
 								}
 							}
 							
@@ -2394,7 +2395,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 									ci.contact.setEtag(etag);
 									
 									if (matchingContactId == null) {
-										doContactInputInsert(coreMgr, con, null, null, ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
+										doContactInputInsert(coreMgr, con, null, null, null, ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
 									} else {
 										boolean updated = doContactInputUpdate(coreMgr, con, null, matchingContactId, ci, BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.RAW_VCARD));
 										if (!updated) throw new WTException("Contact not found [{}]", matchingContactId);
@@ -2464,16 +2465,16 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 
 	//Prepare only Picture and Tags
-	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, Map<String, String> tagNamesByIdMap) throws WTException {
-		return doContactObjectPrepare(con, vcont, outputType, tagNamesByIdMap, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.TAGS));
+	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType) throws WTException {
+		return doContactObjectPrepare(con, vcont, outputType, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.TAGS));
 	}
 	
 	//Prepare all: Picture, Tags, Attachments, Custom Values
-	private ContactObject doContactObjectPrepareComplete(Connection con, VContactObject vcont, ContactObjectOutputType outputType, Map<String, String> tagNamesByIdMap) throws WTException {
-		return doContactObjectPrepare(con, vcont, outputType, tagNamesByIdMap, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.ATTACHMENTS, ContactGetOptions.TAGS, ContactGetOptions.CUSTOM_VALUES));
+	private ContactObject doContactObjectPrepareComplete(Connection con, VContactObject vcont, ContactObjectOutputType outputType) throws WTException {
+		return doContactObjectPrepare(con, vcont, outputType, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.ATTACHMENTS, ContactGetOptions.TAGS, ContactGetOptions.CUSTOM_VALUES));
 	}
 	
-	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, Map<String, String> tagNamesByIdMap, final BitFlag<ContactGetOptions> options) throws WTException {
+	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, final BitFlag<ContactGetOptions> options) throws WTException {
 		if (ContactObjectOutputType.STAT.equals(outputType)) {
 			return ManagerUtils.fillContactObject(new ContactObject(), vcont);
 			
@@ -2771,7 +2772,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return new ContactsListInsertResult(result.ocontact, orecipients, result.otags);
 	}
 	
-	private ContactInsertResult doContactInputInsert(CoreManager coreMgr, Connection con, Set<String> validTagIds, Set<String> customFieldsIds, ContactInput input, BitFlag<ContactProcessOpts> processOpts) throws IOException {
+	private ContactInsertResult doContactInputInsert(CoreManager coreMgr, Connection con, Set<String> validTagIds, Map<String, List<String>> tagIdsByName, Set<String> customFieldsIds, ContactInput input, BitFlag<ContactProcessOpts> processOpts) throws IOException {
 		ContactEx contact = new ContactEx(input.contact);
 		
 		if (input.contactCompany != null) {
@@ -2780,14 +2781,20 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if (processOpts.has(ContactProcessOpts.PICTURE) && input.contactPicture != null) {
 			contact.setPicture(input.contactPicture);
 		}
-		if (processOpts.has(ContactProcessOpts.TAGS) && input.tagIds != null && validTagIds!=null) {
-			Set<String> tagIds = new HashSet<>();
-			for (String tagId : input.tagIds) {
-				if (validTagIds.contains(tagId)) {
-					tagIds.add(tagId);
+		if (processOpts.has(ContactProcessOpts.TAGS) && validTagIds != null && tagIdsByName != null) {
+			if (input.sourceObject != null) {
+				Set<String> tagIds = new HashSet<>();
+				for (XTag tag : input.sourceObject.getProperties(XTag.class)) {
+					String uid = tag.getUid();
+					String name = tag.getValue();
+					if (validTagIds.contains(uid)) tagIds.add(uid);
+					else {
+						List<String> ids = tagIdsByName.get(name);
+						if (ids!=null && ids.size()>0) tagIds.add(ids.get(0));
+					}
 				}
+				contact.setTags(tagIds);
 			}
-			contact.setTags(tagIds);
 		}
 		if (processOpts.has(ContactProcessOpts.ATTACHMENTS)) {
 			for (ContactAttachment attachment : input.extractAttachments()) {
@@ -3497,11 +3504,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private class ContactImportOneBeanHandler extends ContactBatchImportBeanHandler {
 		
 		private Set<String> validTagIds = null;
+		private Map<String, List<String>> tagIdsByName = null;
 		private Set<String> customFieldsIds = null;
 		
 		public ContactImportOneBeanHandler(int categoryId, Connection con, CoreManager coreMgr) throws WTException {
 			super(categoryId, con, coreMgr, 1);
 			validTagIds = coreMgr.listTagIds();
+			tagIdsByName = coreMgr.listTagIdsByName();
 			customFieldsIds = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlag.none());
 		}
 		
@@ -3511,7 +3520,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				BitFlag<ContactProcessOpts> processOpts = BitFlag.of(ContactProcessOpts.PICTURE, ContactProcessOpts.TAGS, ContactProcessOpts.RAW_VCARD, ContactProcessOpts.ATTACHMENTS, ContactProcessOpts.CUSTOM_VALUES);
 				ContactInput contactInput = buffer.get(0);
 				contactInput.contact.setCategoryId(categoryId);
-				doContactInputInsert(coreMgr, con, validTagIds, customFieldsIds, contactInput, processOpts);
+				doContactInputInsert(coreMgr, con, validTagIds, tagIdsByName, customFieldsIds, contactInput, processOpts);
 				++insertedCount;
 				return true;
 			} catch(Throwable t) {
