@@ -1,3 +1,13 @@
+$	5.16.0
+	%	Version 5.16.0
+	*	<h1>Export contacts</h1>
+		<p>It is now possible to export contacts to various formats.
+		Selecting vCard format it will contains all WeTop extended properties
+		(tags, attachments, custom fields).</p>
+	*	<h1>Import contacts</h1>
+		<p>It is now possible to import contacts, with full support of WebTop 
+		extended properties in vCard format. This allows an easier migration of
+		data from a user to another, both in the same instance and to another.</p>
 $	5.11.0
 	%	Version 5.11.0
 	*	<h1>Mailchimp integragrion</h1>
