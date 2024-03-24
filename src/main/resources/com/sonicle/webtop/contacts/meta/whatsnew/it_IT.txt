@@ -1,3 +1,13 @@
+$	5.16.0
+	%	Versione 5.16.0
+	*	<h1>Esportazione contatti</h1>
+		<p>E' ora possibile esportare i contatti in vari formati.
+		Scegliendo il formato vCard questo conterrà anche le proprietà estese
+		di WebTop (tags, allegati, campi custom).</p>
+	*	<h1>Importazione contatti</h1>
+		<p>E' ora possibile importare i contatti, con il supporto delle proprietà
+		estese di WebTop nel formato vCard. Questo consente una semplice migrazione dei dati
+		da un utente ad un altro, sia nella stessa istanza che verso un altra.</p>
 $	5.11.0
 	%	Versione 5.11.0
 	*	<h1>Integrazione con Mailchimp</h1>

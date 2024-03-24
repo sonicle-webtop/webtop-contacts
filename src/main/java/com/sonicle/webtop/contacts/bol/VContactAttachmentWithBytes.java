@@ -32,53 +32,15 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.core.sdk.WTException;
-import java.sql.Connection;
-
 /**
  *
- * @author malbinola
+ * @author gbulfon
  */
-public class VContactObject extends VContactBase {
-	// We extend OTask (transitively) for convenience, not all fields are needed!
-	protected String tags;
-	protected Boolean hasVcard;
-	protected Boolean hasAttachments;
-	protected Boolean hasCustomValues;
+public class VContactAttachmentWithBytes extends OContactAttachment {
+	protected byte[] bytes;	
 	
-	public String getTags() {
-		return tags;
-	}
-
-	public void setTags(String tags) {
-		this.tags = tags;
+	public byte[] getBytes() {
+		return bytes;
 	}
 	
-	public Boolean getHasVcard() {
-		return hasVcard;
-	}
-
-	public void setHasVcard(Boolean hasVcard) {
-		this.hasVcard = hasVcard;
-	}
-	
-	public Boolean getHasAttachments() {
-		return hasAttachments;
-	}
-
-	public void setHasAttachments(Boolean hasAttachments) {
-		this.hasAttachments = hasAttachments;
-	}
-	
-	public Boolean getHasCustomValues() {
-		return hasCustomValues;
-	}
-
-	public void setHasCustomValues(Boolean hasCustomValues) {
-		this.hasCustomValues = hasCustomValues;
-	}
-	
-	public interface Consumer {
-		public void consume(VContactObject vco, Connection con) throws WTException;
-	}
 }
