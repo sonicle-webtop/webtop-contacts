@@ -116,6 +116,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 				renderer: WTA.util.FoldersTree2.coloredBoxTreeRenderer({
 					defaultText: me.res('trfolders.default'),
 					getNodeText: function(node, val) {
+						val = Ext.String.htmlEncode(val);
 						if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
 							return me.mys.resTpl(val);
 						} else {
