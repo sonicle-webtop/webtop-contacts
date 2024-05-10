@@ -63,7 +63,7 @@ Ext.define('Sonicle.webtop.contacts.ux.grid.column.Contact', {
 			'</div>',
 			'<div class="wtcon-contactcolumn-body-float">',
 				'<tpl for="tags">',
-					'<div class="wtcon-contactcolumn-glyph" style="color:{color};" data-qtip="{too	ltip}">',
+					'<div class="wtcon-contactcolumn-glyph" style="color:{color};" data-qtip="{tooltip}">',
 						'<i class="fas fa-tag"></i>',
 					'</div>',
 				'</tpl>',
