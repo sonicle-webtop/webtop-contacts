@@ -98,8 +98,8 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('notes', 'string', true),
 		WTF.field('tags', 'string', true),
 		WTF.field('picture', 'string', true),
-		WTF.calcField('calcDisplayName', 'string', ['firstName', 'lastName'], function(v, rec) {
-			return Sonicle.String.join(' ', rec.get('firstName'), rec.get('lastName'));
+		WTF.calcField('autoDisplayName', 'string', ['firstName', 'lastName'], function(v, rec, fn, ln) {
+			return Sonicle.String.join(' ', fn, ln);
 		}),
 		WTF.roField('_profileId', 'string'),
 		WTF.roField('_cfdefs', 'string')
@@ -107,5 +107,26 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 	hasMany: [
 		WTF.hasMany('attachments', 'Sonicle.webtop.contacts.model.ContactAttachment'),
 		WTF.hasMany('cvalues', 'Sonicle.webtop.core.ux.data.CustomFieldValueModel')
-	]
+	],
+	
+	isGroupEmpty: function(groupName) {
+		var me = this, empty;
+		if (groupName === 'workAddress') {
+			empty = me.isFieldEmpty('workAddress')
+				&& me.isFieldEmpty('workCity')
+				&& me.isFieldEmpty('workState')
+				&& me.isFieldEmpty('workCountry');
+		} else if (groupName === 'homeAddress') {
+			empty = me.isFieldEmpty('homeAddress')
+				&& me.isFieldEmpty('homeCity')
+				&& me.isFieldEmpty('homeState')
+				&& me.isFieldEmpty('homeCountry');
+		} else if (groupName === 'otherAddress') {
+			empty = me.isFieldEmpty('otherAddress')
+				&& me.isFieldEmpty('otherCity')
+				&& me.isFieldEmpty('otherState')
+				&& me.isFieldEmpty('otherCountry');
+		}
+		return empty;
+	}
 });

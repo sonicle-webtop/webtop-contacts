@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.GridView;
+import com.sonicle.webtop.contacts.bol.model.MyCategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
@@ -63,6 +64,7 @@ public class JsGridContact {
 	public Integer catId;
 	public String catName;
 	public String catColor;
+	public String _orDN; // Empty when mine!
 	public String _owPid;
 	public String _foPerms;
 	public String _itPerms;
@@ -106,6 +108,7 @@ public class JsGridContact {
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
+		this._orDN = (origin instanceof MyCategoryFSOrigin) ? null : origin.getDisplayName();
 		this._owPid = new UserProfileId(category.getDomainId(), category.getUserId()).toString();
 		this._foPerms = folder.getPermissions().getFolderPermissions().toString();
 		this._itPerms = folder.getPermissions().getItemsPermissions().toString();

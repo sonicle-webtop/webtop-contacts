@@ -32,8 +32,9 @@
  * the words "Powered by Sonicle WebTop".
  */
 Ext.define('Sonicle.webtop.contacts.view.ListChooser', {
-	extend: 'WTA.sdk.DockableView',
+	extend: 'WTA.sdk.UIView',
 	requires: [
+		'Sonicle.VMUtils',
 		'Sonicle.form.RadioGroup',
 		'Sonicle.webtop.core.ux.field.RecipientSuggestCombo'
 	],
@@ -61,25 +62,27 @@ Ext.define('Sonicle.webtop.contacts.view.ListChooser', {
 	
 	initComponent: function() {
 		var me = this,
-				ic = me.getInitialConfig();
+			ic = me.getInitialConfig();
 		me.recipientTypeName = Ext.id(null, 'recipientType-');
 		
 		if(!Ext.isEmpty(ic.ownerId)) me.getVM().set('list', ic.ownerId);
 		
 		Ext.apply(me, {
-			buttons: [{
-				text: WT.res('act-ok.lbl'),
-				handler: me.onOkClick,
-				scope: me
-			}, {
-				text: WT.res('act-cancel.lbl'),
-				handler: me.onCancelClick,
-				scope: me
-			}]
+			buttons: [
+				{
+					text: WT.res('act-ok.lbl'),
+					handler: me.onOkClick,
+					scope: me
+				}, {
+					text: WT.res('act-cancel.lbl'),
+					handler: me.onCancelClick,
+					scope: me
+				}
+			]
 		});
 		me.callParent(arguments);
 		
-		WTU.applyFormulas(me.getVM(), {
+		Sonicle.VMUtils.applyFormulas(me.getVM(), {
 			foRecipientType: WTF.radioGroupBind(null, 'recipientType', me.recipientTypeName)
 		});
 		

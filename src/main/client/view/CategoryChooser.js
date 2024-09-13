@@ -51,19 +51,32 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	
 	viewModel: {
 		data: {
-			result: 'cancel',
-			profileId: null,
-			categoryId: null
+			data: {
+				result: 'cancel',
+				profileId: null,
+				categoryId: null
+			}
 		}
 	},
 	defaultButton: 'btnok',
 	
+	/**
+	 * @cfg {Object} initialData
+	 * Initial data definition
+	 * @cfg {String} initialData.profileId
+	 * @cfg {String} initialData.categoryId
+	*/
+	
 	constructor: function(cfg) {
-		var me = this;
+		var me = this,
+			SoVMU = Sonicle.VMUtils,
+			vm;
 		me.callParent([cfg]);
 		
-		WTU.applyFormulas(me.getVM(), {
-			isValid: WTF.foGetFn(null, 'categoryId', function(v) {
+		vm = me.getVM();
+		SoVMU.setInitialData(vm, cfg.initialData);
+		SoVMU.applyFormulas(vm, {
+			isValid: WTF.foGetFn('data', 'categoryId', function(v) {
 				return v !== null;
 			})
 		});
@@ -73,21 +86,23 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 		var me = this;
 		
 		Ext.apply(me, {
-			buttons: [{
-				reference: 'btnok',
-				bind: {
-					disabled: '{!isValid}'
-				},
-				text: WT.res('act-ok.lbl'),
-				handler: function() {
-					me.okView();
+			buttons: [
+				{
+					reference: 'btnok',
+					bind: {
+						disabled: '{!isValid}'
+					},
+					text: WT.res('act-ok.lbl'),
+					handler: function() {
+						me.okView();
+					}
+				}, {
+					text: WT.res('act-cancel.lbl'),
+					handler: function() {
+						me.closeView(false);
+					}
 				}
-			}, {
-				text: WT.res('act-cancel.lbl'),
-				handler: function() {
-					me.closeView(false);
-				}
-			}]
+			]
 		});
 		me.callParent(arguments);
 		
@@ -99,10 +114,12 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 			rootVisible: false,
 			store: {
 				autoLoad: true,
+				hierarchyBulkLoad: true,
 				model: 'Sonicle.webtop.contacts.model.FolderNode',
 				proxy: WTF.apiProxy(me.mys.ID, 'ManageFoldersTree', 'children', {
 					extraParams: {
 						crud: 'read',
+						bulk: true,
 						chooser: true,
 						writableOnly: me.writableOnly
 					}
@@ -110,22 +127,24 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 				root: { id: 'root', expanded: true }
 			},
 			hideHeaders: true,
-			columns: [{
-				xtype: 'sotreecolumn',
-				dataIndex: 'text',
-				renderer: WTA.util.FoldersTree2.coloredBoxTreeRenderer({
-					defaultText: me.res('trfolders.default'),
-					getNodeText: function(node, val) {
-						val = Ext.String.htmlEncode(val);
-						if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
-							return me.mys.resTpl(val);
-						} else {
-							return val;
+			columns: [
+				{
+					xtype: 'sotreecolumn',
+					dataIndex: 'text',
+					renderer: WTA.util.FoldersTree2.coloredBoxTreeRenderer({
+						defaultText: me.res('trfolders.default'),
+						getNodeText: function(node, val) {
+							val = Ext.String.htmlEncode(val);
+							if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
+								return me.mys.resTpl(val);
+							} else {
+								return val;
+							}
 						}
-					}
-				}),
-				flex: 1
-			}],
+					}),
+					flex: 1
+				}
+			],
 			listeners: {
 				celldblclick: function(s, td, cidx, rec, tr, ridx, e) {
 					// ENTER key event is stolen by tree's nav model, so re-proxy it...
@@ -136,7 +155,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 					var me = this,
 						node = sel[0];
 					if (node) {
-						me.getVM().set({
+						Sonicle.VMUtils.setData(me.getVM(), {
 							categoryId: node.getFolderId(),
 							profileId: node.getOwnerPid()
 						});
@@ -149,9 +168,10 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryChooser', {
 	
 	okView: function() {
 		var me = this,
+			SoVMU = Sonicle.VMUtils,
 			vm = me.getVM();
-		vm.set('result', 'ok');
-		me.fireEvent('viewok', me, vm.get('categoryId'), vm.get('profileId'));
+		SoVMU.setData(vm, {result: 'ok'});
+		me.fireEvent('viewok', me, SoVMU.getData(vm));
 		me.closeView(false);
 	}
 });

@@ -1,55 +1,76 @@
-.wtcon-icon-service { background-image: url('service_16.svg') !important; background-size: contain; }
-.wtcon-icon-service-xs { background-image: url('service_16.svg') !important; background-size: contain; }
-.wtcon-icon-service-s { background-image: url('service_16.svg') !important; background-size: contain; }
-.wtcon-icon-service-m { background-image: url('service_32.svg') !important; background-size: contain; }
-.wtcon-icon-service-l { background-image: url('service_32.svg') !important; background-size: contain; }
-.wtcon-icon-category { background-image: url('category_16.svg') !important; background-size: contain; }
-.wtcon-icon-categoryMy { background-image: url('category-my_16.svg') !important; background-size: contain; }
-.wtcon-icon-categoryIncoming { background-image: url('category-incoming_16.svg') !important; background-size: contain; }
-.wtcon-icon-categoryRemote { background-image: url('category-remote_16.svg') !important; background-size: contain; }
+/* ---------- Icons (service) */
+.wtcon-icon-service,
+.wtcon-icon-service-sm { background-image: url('service@sm.svg') !important; background-size: contain; }
+.wtcon-icon-service-off-sm { background-image: url('service@sm.svg') !important; background-size: contain; }
+.wtcon-icon-service-md { background-image: url('service@md.svg') !important; background-size: contain; }
+.wtcon-icon-service-off-md { background-image: url('service@md.svg') !important; background-size: contain; }
+.wtcon-icon-service-lg { background-image: url('service@lg.svg') !important; background-size: contain; }
+.wtcon-icon-service-off-lg { background-image: url('service@lg.svg') !important; background-size: contain; }
+/* ---------- Icons (actions) */
 .wtcon-icon-addCategory { background-image: url('category-add_16.svg') !important; background-size: contain; }
+.wtcon-icon-addRemoteCategory { background-image: none !important; background-size: contain; }
+.wtcon-icon-viewCategoryLinks { background-image: none !important; background-size: contain; }
 .wtcon-icon-editCategory { background-image: url('category-edit_16.svg') !important; background-size: contain; }
 .wtcon-icon-deleteCategory { background-image: url('category-delete_16.svg') !important; background-size: contain; }
-.wtcon-icon-contact { background-image: url('contact_16.svg') !important; background-size: contain; }
-.wtcon-icon-contactsList { background-image: url('contactslist_16.svg') !important; background-size: contain; }
 .wtcon-icon-newContact { background-image: url('contact-new_16.svg') !important; background-size: contain; }
 .wtcon-icon-newContactsList { background-image: url('contactslist-new_16.svg') !important; background-size: contain; }
 .wtcon-icon-addContact { background-image: url('contact-add_16.svg') !important; background-size: contain; }
 .wtcon-icon-addContactsList { background-image: url('contactslist-add_16.svg') !important; background-size: contain; }
-.wtcon-icon-import { background-image: url('contact-import_16.svg') !important; background-size: contain; }
-.wtcon-icon-export { background-image: url('contact-export_16.svg') !important; background-size: contain; }
+.wtcon-icon-openContact { background-image: none !important; background-size: contain; }
+.wtcon-icon-copyContact { background-image: none !important; background-size: contain; }
+.wtcon-icon-moveContact { background-image: none !important; background-size: contain; }
+.wtcon-icon-importContacts { background-image: url('contact-import_16.svg') !important; background-size: contain; }
+.wtcon-icon-exportContacts { background-image: url('contact-export_16.svg') !important; background-size: contain; }
+.wtcon-icon-addContactsListFromSel { background-image: none !important; background-size: contain; }
+.wtcon-icon-addToContactsListFromSel { background-image: none !important; background-size: contain; }
+.wtcon-icon-sendByEmail { background-image: none !important; background-size: contain; }
 .wtcon-icon-writeMessage { background-image: url('message-new_16.svg') !important; background-size: contain; }
+.wtcon-icon-createEvent { background-image: none !important; background-size: contain; }
+.wtcon-icon-uploadContactPicture:before { content: '\f574'; font: var(--fa-font-solid); }
+.wtcon-icon-clearContactPicture:before { content: '\f2ed'; font: var(--fa-font-regular); }
+/* ---------- Icons (others) */
 .wtcon-icon-reminder-birthday { background-image: url('birthday_16.png') !important; background-size: contain; }
 .wtcon-icon-reminder-anniversary { background-image: url('anniversary_16.png') !important; background-size: contain; }
+.wtcon-icon-category { background-image: url('category_16.svg') !important; background-size: contain; }
+.wtcon-icon-categoryMy { background-image: url('category-my_16.svg') !important; background-size: contain; }
+.wtcon-icon-categoryIncoming { background-image: url('category-incoming_16.svg') !important; background-size: contain; }
+.wtcon-icon-categoryRemote { background-image: url('category-remote_16.svg') !important; background-size: contain; }
+.wtcon-icon-contact { background-image: url('contact_16.svg') !important; background-size: contain; }
+.wtcon-icon-contactsList { background-image: url('contactslist_16.svg') !important; background-size: contain; }
+.wtcon-icon-contactName:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactCompany:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactEmail:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactPhone:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactNotes:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactUrl:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactPartner:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactBirthday:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactAnniversary:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactAddress:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-contactAttachments:before { content: '\f0c6'; font: var(--fa-font-solid); background-size: contain; } /* FIXME: defaults to FA for now */
 .wtcon-icon-mailchimp { background-image: url('mailchimp-freddie-icon.svg') !important; background-size: contain; }
 .wtcon-icon-viewHome { background-image: url('view-home-grayed_16.svg') !important; background-size: contain; }
-.x-btn-pressed .wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; }
 .wtcon-icon-viewWork { background-image: url('view-work-grayed_16.svg') !important; background-size: contain; }
-.x-btn-pressed .wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; }
 
-.wtcon-gpcontacts .x-grid-empty { text-align: center; }
-.wtcon-gpcontacts .wtcon-group-letter {
-	padding-left: 10px;
-	font-weight: bold;
-	font-size: 1.5em;
-	line-height: calc(100% + 0.2em);
-}
-.wtcon-gpcontacts .wtcon-cell-caption {
-	padding-top: 3px;
-	font-size: 0.9em;
-	color: #888;
+/* ---------- Grid contacts */
+.wtcon-gpcontacts .x-grid-group-title {
+    font-weight: bold;
+    font-size: 1.5em;
+    line-height: calc(100% + 0.2em);
+    color: var(--wt-theme-color-1);
 }
 
-/* --- UX grid.column.Contact --- */
+/* ---------- Sonicle.webtop.contacts.ux.grid.column.Contact */
 .wtcon-contactcolumn-head {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 .wtcon-contactcolumn-head > span {
-	vertical-align: top;
-	color: #767676;
-	font-size: 0.9em;
+    vertical-align: top;
+    margin-left: 10px;
+    font-size: 0.9em; /* FIXME: make use of vars */
+    color: #767676; /* FIXME: make use of vars */
 }
 .wtcon-contactcolumn-body {
 	overflow: hidden;
@@ -58,8 +79,8 @@
 	margin-top: 5px;
 }
 .wtcon-contactcolumn-body > span {
-	color: #767676;
-	font-size: 0.9em;
+	color: #767676; /* FIXME: make use of vars */
+	font-size: 0.9em; /* FIXME: make use of vars */
 }
 .wtcon-contactcolumn-body-float {
 	display: inline-block;
@@ -71,4 +92,27 @@
 	margin: 0 0 0 2px;
 	text-align: center;
 }
-/* ------------------------------ */
+.wtcon-contactcolumn-icon {
+    margin-right: 5px;
+}
+.wtcon-contactcolumn-body span {
+    margin-left: 10px;
+}
+.wtcon-contactcolumn-body span:first-child {
+    margin-left: 0px;
+}
+
+/* ---------- Sonicle.webtop.contacts.ux.panel.ContactPreview */
+.wtcon-preview-header > * > .x-panel-body {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+.wtcon-preview-header-tbactions {
+    padding-left: 10px;
+}
+.wtcon-preview-main > * > .x-panel-body, .wtcon-preview-cfields > * > .x-panel-body {
+	padding-top: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	padding-left: 10px;
+}

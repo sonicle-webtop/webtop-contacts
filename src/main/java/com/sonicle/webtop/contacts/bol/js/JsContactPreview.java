@@ -34,8 +34,10 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.web.json.CompositeId;
+import com.sonicle.webtop.contacts.bol.model.MyCategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
+import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactCompany;
@@ -78,12 +80,13 @@ public class JsContactPreview {
 	public Integer catId;
 	public String catName;
 	public String catColor;
+	public String _orDN; // Empty when mine!
 	public String _owPid;
 	public String _foPerms;
 	public String _itPerms;
 	public String _cfdefs;
 	
-	public JsContactPreview(CategoryFSFolder folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
+	public JsContactPreview(CategoryFSOrigin origin, CategoryFSFolder folder, CategoryPropSet folderProps, Contact item, ContactCompany itemCompany, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
 		Category category = folder.getCategory();
 
 		this.uid = JsGridContact.Id.build(item.getContactId(), false).toString();
@@ -129,6 +132,7 @@ public class JsContactPreview {
 		this.catId = category.getCategoryId();
 		this.catName = category.getName();
 		this.catColor = (folderProps != null) ? folderProps.getColorOrDefault(category.getColor()) : folder.getCategory().getColor();
+		this._orDN = (origin instanceof MyCategoryFSOrigin) ? null : origin.getDisplayName();
 		this._owPid = category.getProfileId().toString();
 		this._foPerms = folder.getPermissions().getFolderPermissions().toString();
 		this._itPerms = folder.getPermissions().getItemsPermissions().toString();

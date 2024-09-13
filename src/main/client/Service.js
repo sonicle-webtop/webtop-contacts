@@ -37,6 +37,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		'Sonicle.Data',
 		'Sonicle.String',
 		'Sonicle.Utils',
+		'Sonicle.button.Combo',
 		'Sonicle.grid.column.Icon',
 		'Sonicle.grid.column.Color',
 		'Sonicle.grid.column.Avatar',
@@ -128,9 +129,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			xtype: 'toolbar',
 			referenceHolder: true,			
 			items: [
-				'-',
-				me.getAct('refresh'),
-				me.getAct('printAddressbook'),
 				'->',
 				{
 					xtype: 'wtsearchfield',
@@ -174,7 +172,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								displayField: 'name',
 								colorField: 'color',
 								sourceField: 'source',
-								sourceCls: 'wt-source'
+								listConfig: {
+									sourceCls: 'wt-source'
+								}
 							}
 						}, {
 							name: 'lists',
@@ -210,61 +210,127 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			]
 		}));
 		
+		var mineOrigin = 'O|'+WT.getVar('profileId');
 		me.setToolComponent(Ext.create({
 			xtype: 'panel',
-			layout: 'border',
 			referenceHolder: true,
-			title: me.getName(),
+			layout: 'vbox',
 			items: [
 				{
-					region: 'center',
-					xtype: 'treepanel',
+					xtype: 'wtplainpanel',
+					items: [
+						{
+							xtype: 'textfield',
+							emptyText: me.res('fldfolderssearch.emp'),
+							triggers: {
+								clear: {
+									type: 'soclear',
+									weight: -1,
+									hideWhenEmpty: true,
+									hideWhenMouseOut: true
+								}
+							},
+							listeners: {
+								change: {
+									fn: function(s, nv) {
+										WTA.util.FoldersTree2.filterFolder(this.trFolders(), nv, function(node, text) {
+											if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
+												return me.resTpl(text);
+											} else {
+												return text;
+											}
+										}, me);
+									},
+									scope: me,
+									buffer: 250
+								}
+							},
+							width: '100%'
+						}
+					],
+					bodyCls: 'wtcon-tool-searchpanel-body',
+					width: '100%'
+				}, {
+					xtype: 'sotreepanel',
 					reference: 'trfolders',
-					border: false,
 					useArrows: true,
+					hideRowBackground: true,
+					stateful: WT.plTags.desktop ? true : false,
+					stateId: me.buildStateId('trfolders'),
+					statefulExpansion: true,
+					defaultExpandedNodesState: Sonicle.Object.setProp({}, mineOrigin, '/root/'+mineOrigin),
 					rootVisible: false,
 					store: {
 						autoLoad: true,
 						autoSync: true,
+						hierarchyBulkLoad: true,
 						model: 'Sonicle.webtop.contacts.model.FolderNode',
 						proxy: WTF.apiProxy(me.ID, 'ManageFoldersTree', 'children', {
 							writer: {
-								allowSingle: false // Always wraps records into an array
+								allowSingle: false // Make update/delete using array payload
 							}
 						}),
 						root: {
 							id: 'root',
 							expanded: true
 						},
+						filterer: 'bottomup',
 						listeners: {
+							beforeload: function(s, op) {
+								if (op.getAction() === 'read' && op.getId() === 'root') {
+									op.setParams(Ext.apply(op.getParams() || {}, {
+										bulk: true
+									}));
+								}
+							},
 							write: function(s,op) {
 								me.reloadContacts();
 							}
 						}
 					},
-					//disableSelection: true,
 					selModel: {
 						mode: 'SIMPLE',
 						toggleOnClick: true,
 						ignoreRightMouseSelection: true
 					},
 					hideHeaders: true,
-					columns: [{
-						xtype: 'sotreecolumn',
-						dataIndex: 'text',
-						renderer: WTA.util.FoldersTree2.coloredCheckboxTreeRenderer({
-							defaultText: me.res('trfolders.default'),
-							getNodeText: function(node, val) {
-								val = Ext.String.htmlEncode(val);
-								if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
-									return me.resTpl(val);
-								} else {
-									return val;
+					columns: [
+						{
+							xtype: 'sotreecolumn',
+							dataIndex: 'text',
+							renderer: WTA.util.FoldersTree2.coloredCheckboxTreeRenderer({
+								defaultText: me.res('trfolders.default'),
+								showElbow: true,
+								getNodeText: function(node, val) {
+									val = Ext.String.htmlEncode(val);
+									if ((node.isOrigin() && node.isPersonalNode()) || node.isGrouper()) {
+										return me.resTpl(val);
+									} else {
+										return val;
+									}
 								}
-							}
-						}),
-						flex: 1
-					}],
+							}),
+							flex: 1
+						}, {
+							xtype: 'soactioncolumn',
+							showOnSelection: true,
+							showOnOver: true,
+							items: [
+								{
+									iconCls: 'fas fa-ellipsis-v',
+									handler: function(v, ridx, cidx, itm, e, node, row) {
+										if (node.isOrigin()) {
+											Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeOrigin'), {node: node});
+										} else if (node.isGrouper()) {
+											Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeGrouper'), {node: node});
+										} else {
+											Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeFolder'), {node: node});
+										}
+									}
+								}
+							]
+						}
+					],
 					listeners: {
 						checkchange: function(n, ck) {
 							n.refreshActive();
@@ -275,23 +341,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						beforedeselect: function(s, node) {
 							if (me.treeSelEnabled === false) return false;
 						},
-						itemclick: function(s, node, itm, i, e) {
-							if (me.treeSelEnabled === false) {
-								if (!e.getTarget(s.checkboxSelector, itm)) {
-									s.setChecked(node, !node.get('checked'), e);
-								}
-							}
-						},
 						itemcontextmenu: function(s, node, itm, i, e) {
-							if (node.isOrigin() || node.isGrouper()) {
-								Sonicle.Utils.showContextMenu(e, me.getRef('cxmFolderRoot'), {node: node});
+							if (node.isOrigin()) {
+								Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeOrigin'), {node: node});
+							} else if (node.isGrouper()) {
+								Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeGrouper'), {node: node});
 							} else {
-								Sonicle.Utils.showContextMenu(e, me.getRef('cxmFolder'), {node: node});
+								Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeFolder'), {node: node});
 							}
 						}
-					}
+					},
+					border: false,
+					cls: 'wtcon-tool-tree',
+					bodyCls: 'wt-tool-bg',
+					width: '100%',
+					flex: 1
 				}
-			]
+			],
+			border: false
 		}));
 		
 		var viewGroup = Ext.id(null, 'view-'),
@@ -300,242 +367,299 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			xtype: 'container',
 			layout: 'border',
 			referenceHolder: true,
-			items: [{
-				region: 'center',
-				xtype: 'gridpanel',
-				reference: 'gpcontacts',
-				cls: 'wtcon-gpcontacts',
-				store: {
-					type: 'buffered',
-					model: 'Sonicle.webtop.contacts.model.GridContact',
-					proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'data', {
-						extraParams: {
-							view: null,
-							groupBy: null,
-							showBy: null,
-							query: null
+			items: [
+				{
+					region: 'center',
+					xtype: 'gridpanel',
+					reference: 'gpcontacts',
+					cls: 'wtcon-gpcontacts',
+					store: {
+						type: 'buffered',
+						model: 'Sonicle.webtop.contacts.model.GridContact',
+						proxy: WTF.apiProxy(me.ID, 'ManageGridContacts', 'data', {
+							extraParams: {
+								view: null,
+								groupBy: null,
+								showBy: null,
+								query: null
+							}
+						}),
+						pageSize: 50,
+						leadingBufferZone: 50,
+						trailingBufferZone: 50,
+						listeners: {
+							beforeload: function(s) {
+								Sonicle.Data.applyExtraParams(s, {
+									view: me.activeView,
+									groupBy: me.activeGroupBy,
+									showBy: me.getVar('showBy')
+								});
+							},
+							load: function(s) {
+								me.pnlPreview().setContacts(me.getSelectedContacts(true));
+								me.fldSearch().highlight(me.gpContacts().getEl(), '.x-grid-item-container');
+								/*
+								var rec = me.getSelectedContact(), cmp;
+								if (rec && (s.getById(rec.getId()) === null)) { // Record is selected but no more existent in store
+									// I don't know if it is a ExtJs bug, anyway make sure to clear the preview panel and refresh actions affected by strange selections
+									cmp = me.pnlPreview();
+									if (cmp.isLoaded(rec.getId())) cmp.setContacts(null);
+									//me.updateDisabled('deleteContact');
+								}
+								*/
+							}
 						}
-					}),
-					pageSize: 50,
-					leadingBufferZone: 50,
-					trailingBufferZone: 50,
+					},
+					hideHeaders: true,
+					selModel: {
+						type: 'rowmodel',
+						mode : 'MULTI'
+					},
+					viewConfig: {
+						deferEmptyText: false,
+						emptyText: WT.res('grid.emp')
+					},
+					columns: [
+						{
+							itemId: 'idcolumn',
+							dataIndex: 'id',
+							hidden: true,
+							sortable: false,
+							groupable: false,
+							text: me.res('gpcontacts.contactId.lbl'),
+							width: 80
+						}, {
+							xtype: 'socolorcolumn',
+							itemId: 'categorycolumn',
+							dataIndex: 'catColor',
+							hidden: true,
+							sortable: false,
+							groupable: false,
+							swatchGeometry: 'circle',
+							hideLabel: true,
+							getTooltip: function(v, rec) {
+								return Sonicle.webtop.contacts.Service.calcCategoryLabel(rec.get('catName'), rec.get('_orDN'));
+							},
+							text: me.res('gpcontacts.category.lbl'),
+							width: 35
+						}, {
+							xtype: 'soavatarcolumn',
+							dataIndex: 'id',
+							sortable: false,
+							groupable: false,
+							nameField: 'avatarName',
+							getPictureUrl: function(v, rec) {
+								return (rec.get('pic') === true) ? Ext.String.urlAppend(WTF.processBinUrl(me.ID, 'GetContactPicture'), Ext.Object.toQueryString({id: v})) : null;
+							},
+							/*
+							getIconCls: function(v,rec) {
+								return (rec.get('isList') === true) ? me.cssIconCls('contactsList') : null;
+							},
+							*/
+							width: 60
+						}, {
+							xtype: 'wtcon-contactcolumn',
+							itemId: 'main',
+							text: me.res('gpcontacts.contacts.lbl'),
+							showCompany: me.activeGroupBy !== 'company',
+							tagsStore: tagsStore,
+							flex: 2
+						}
+					],
+					features: [
+						{
+							id: 'grouping',
+							ftype: 'grouping',
+							hdNotCollapsibleCls: Ext.baseCSSPrefix + 'grid-group-hd-not-collapsible' + ' wt-theme-bg-alt',
+							groupHeaderTpl: [
+								'<span class="{[this.getGroupCls(values)]}">{[this.getGroupLabel(values)]}</span>',
+								{
+									getGroupCls: function(values) {
+										return 'wt-theme-text-header1' + ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
+									},
+									getGroupLabel: function(values) {
+										var label;
+										// name property inside values is group's value
+										if (Sonicle.String.contains(values.groupField, 'letter') && ('*' === values.name)) {
+											label = me.res('gpcontacts.grouping.noname');
+										} else if (Sonicle.String.contains(values.groupField, 'company') && Ext.isEmpty(values.name)) {
+											label = me.res('gpcontacts.grouping.nocompany');
+										} else {
+											label = Ext.htmlEncode(values.name);
+										}
+										return label;
+									}
+								}
+							]
+						}/*, {
+							id: 'scrolltooltip',
+							ftype: 'wtscrolltooltip'
+						}*/
+					],
+					tbar: [
+						{
+							xtype: 'socombobutton',
+							tooltip: me.res('gpcontacts.viewChooser.tip'),
+							showText: true,
+							menu: {
+								items: [
+									{
+										itemId: 'work',
+										iconCls: 'wtcon-icon-viewWork',
+										text: me.res('store.view.work'),
+										checked: me.activeView === 'work'
+									}, {
+										itemId: 'home',
+										iconCls: 'wtcon-icon-viewHome',
+										text: me.res('store.view.home'),
+										checked: me.activeView === 'home'
+									}
+								]
+							},
+							changeHandler: function(s, menuItem) {
+								me.reloadContacts({view: menuItem.getItemId()});
+							}
+						},
+						'->',
+						me.getAct('refresh'),
+						{
+							xtype: 'button',
+							iconCls: 'wt-icon-viewOptions',
+							tooltip: me.res('gpcontacts.viewOptions.tip'),
+							menu: {
+								items: [
+									{
+										xtype: 'somenuheader',
+										text: me.res('gpcontacts.viewOptions.groupBy.lbl')
+									}, {
+										itemId: 'groupby-alpha',
+										group: groupByGroup,
+										text: me.res('store.groupBy.alpha'),
+										checked: false,
+										checkHandler: function(s, checked) {
+											if (checked) me.applyGroupBy(Sonicle.String.removeStart(s.getItemId(), 'groupby-'));
+										}
+									}, {
+										itemId: 'groupby-company',
+										group: groupByGroup,
+										text: me.res('store.groupBy.company'),
+										checked: false,
+										checkHandler: function(s, checked) {
+											if (checked) me.applyGroupBy(Sonicle.String.removeStart(s.getItemId(), 'groupby-'));
+										}
+									}, {
+										xtype: 'somenuheader',
+										text: me.res('gpcontacts.viewOptions.columns.lbl')
+									}, {
+										itemId: 'show-categorycolumn',
+										text: me.res('gpcontacts.viewOptions.showCategoryColumn.lbl'),
+										checked: false,
+										checkHandler: function(s, checked) {
+											me.updateColumnVisibility('categorycolumn', !checked);
+										}
+									}, {
+										itemId: 'show-idcolumn',
+										text: me.res('gpcontacts.viewOptions.showIdColumn.lbl'),
+										checked: false,
+										checkHandler: function(s, checked) {
+											me.updateColumnVisibility('idcolumn', !checked);
+										}
+									}
+								],
+								listeners: {
+									beforeshow: function(s) {
+										var cm = me.gpContacts().getColumnManager(), cmp;
+										if ((cmp = s.getComponent('show-idcolumn'))) cmp.setChecked(!cm.getHeaderById('idcolumn').getHidden());
+										if ((cmp = s.getComponent('show-categorycolumn'))) cmp.setChecked(!cm.getHeaderById('categorycolumn').getHidden());
+										if ((cmp = s.getComponent('groupby-' +  me.activeGroupBy))) cmp.setChecked(true);
+									}
+								}
+							}
+						}, {
+							xtype: 'button',
+							iconCls: 'fas fa-ellipsis-v',
+							arrowVisible: false,
+							handler: function(s, e) {
+								Sonicle.Utils.showContextMenu(e, me.getRef('cxmGrid'));
+							}
+						}
+					],
 					listeners: {
-						beforeload: function(s) {
-							Sonicle.Data.applyExtraParams(s, {
-								view: me.activeView,
-								groupBy: me.activeGroupBy,
-								showBy: me.getVar('showBy')
+						selectionchange: function(s) {
+							me.updateDisabled('openContact');
+							me.updateDisabled('printContact');
+							me.updateDisabled('copyContact');
+							me.updateDisabled('moveContact');
+							me.updateDisabled('deleteContact');
+							me.updateDisabled('tags');
+							me.updateDisabled('addContactsListFromSel');
+							me.updateDisabled('addToContactsListFromSel');
+							me.updateDisabled('callTelephone');
+							me.updateDisabled('callMobile');
+							me.updateDisabled('sendSms');
+							me.updateDisabled('createEvent');
+							if (me.hasAuditUI()) me.updateDisabled('contactAuditLog');
+							me.updateDisabled('sendByEmail');
+							me.pnlPreview().setContacts(s.getSelection());
+						},
+						rowdblclick: function(s, rec) {
+							me.openContactItemUI(rec.getItemsRights().UPDATE, rec);
+						},
+						rowcontextmenu: function(s, rec, itm, i, e) {
+							Sonicle.Utils.showContextMenu(e, me.getRef('cxmGrid'), {
+								contact: rec,
+								contacts: s.getSelection()
 							});
 						},
-						load: function(s) {
-							me.pnlPreview().setContacts(me.getSelectedContacts(true));
-							me.fldSearch().highlight(me.gpContacts().getEl(), '.x-grid-item-container');
-							/*
-							var rec = me.getSelectedContact(), cmp;
-							if (rec && (s.getById(rec.getId()) === null)) { // Record is selected but no more existent in store
-								// I don't know if it is a ExtJs bug, anyway make sure to clear the preview panel and refresh actions affected by strange selections
-								cmp = me.pnlPreview();
-								if (cmp.isLoaded(rec.getId())) cmp.setContacts(null);
-								//me.updateDisabled('deleteContact');
+						rowkeydown: function(s, rec, itm, indx, e) {
+							if (e.getKey() === e.DELETE) {
+								me.getAct('deleteContact').execute();
 							}
-							*/
 						}
 					}
-				},
-				selModel: {
-					type: 'rowmodel',
-					mode : 'MULTI'
-				},
-				viewConfig: {
-					deferEmptyText: false,
-					emptyText: WT.res('grid.emp')
-				},
-				columns: [{
-					dataIndex: 'id',
-					hidden: true,
-					sortable: false,
-					groupable: false,
-					text: 'ID',
-					width: 80
 				}, {
-					xtype: 'socolorcolumn',
-					dataIndex: 'catId',
-					hidden: true,
-					sortable: false,
-					groupable: false,
-					colorField: 'catColor',
-					displayField: 'catName',
-					text: me.res('gpcontacts.category.lbl'),
-					width: 80
-				}, {
-					xtype: 'soavatarcolumn',
-					dataIndex: 'id',
-					sortable: false,
-					groupable: false,
-					nameField: 'avatarName',
-					getPictureUrl: function(v, rec) {
-						return (rec.get('pic') === true) ? Ext.String.urlAppend(WTF.processBinUrl(me.ID, 'GetContactPicture'), Ext.Object.toQueryString({id: v})) : null;
-					},
-					/*
-					getIconCls: function(v,rec) {
-						return (rec.get('isList') === true) ? me.cssIconCls('contactsList') : null;
-					},
-					*/
-					width: 60
-				}, {
-					xtype: 'wtcon-contactcolumn',
-					itemId: 'main',
-					text: me.res('gpcontacts.contacts.lbl'),
-					showCompany: me.activeGroupBy !== 'company',
+					region: 'east',
+					xtype: 'wtconcontactpreviewpanel',
+					reference: 'pnlpreview',
+					mys: me,
 					tagsStore: tagsStore,
-					flex: 2
-				}],
-				features: [{
-					id: 'grouping',
-					ftype: 'grouping',
-					hdNotCollapsibleCls: Ext.baseCSSPrefix + 'grid-group-hd-not-collapsible' + ' wt-theme-bg-alt',
-					groupHeaderTpl: [
-						'<span class="{[this.getSpanCls(values)]}">{name}</span>',
-						{
-							getSpanCls: function(values) {
-								return 'wt-theme-text-header1' + ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
-							}
-						}
-					]
-				}/*, {
-					id: 'scrolltooltip',
-					ftype: 'wtscrolltooltip'
-				}*/],
-				tbar: [
-					{
-						xtype: 'button',
-						iconCls: 'wtcon-icon-viewWork',
-						tooltip: me.res('gpcontacts.viewOptions.view.lbl') + ': ' + me.res('store.view.work'),
-						toggleGroup: viewGroup,
-						enableToggle: true,
-						allowDepress: false,
-						pressed: me.activeView === 'work',
-						toggleHandler: function() {
-							me.reloadContacts({view: 'work'});
-						}
-					}, {
-						xtype: 'button',
-						iconCls: 'wtcon-icon-viewHome',
-						tooltip: me.res('gpcontacts.viewOptions.view.lbl') + ': ' + me.res('store.view.home'),
-						toggleGroup: viewGroup,
-						enableToggle: true,
-						allowDepress: false,
-						pressed: me.activeView === 'home',
-						toggleHandler: function() {
-							me.reloadContacts({view: 'home'});
+					hidden: !WT.plTags.desktop,
+					split: true,
+					listeners: {
+						showmenu: function(s, e) {
+							Sonicle.Utils.showContextMenu(e, me.getRef('cxmGrid'), {
+								hideActions: true
+							});
+						},
+						print: function(s) {
+							me.getAct('printContact').execute();
+						},
+						writeemail: function(s, rcpts) {
+							WT.handleNewMailMessage(rcpts);
+						},
+						callnumber: function(s, number) {
+							WT.handlePbxCall(number);
+						},
+						writesms: function(s, number, id, fn) {
+							WT.handleSendSMS(fn, number, null);
+						},
+						mapaddress: function(s, address) {
+							WT.openGoogleMaps({query: address});
+						},
+						clearselection: function(s) {
+							me.gpContacts().getSelectionModel().deselectAll();
+						},
+						opencontact: function(s, edit, isList, id) {
+							me.openContactItemUI(edit, isList, id);
+						},
+						showaudit: function(s, isList, id) {
+							me.openAuditUI(id, 'CONTACT', isList);
 						}
 					},
-					'->',
-					me.getAct('deleteContact2'),
-					'-',
-					{
-						xtype: 'button',
-						iconCls: 'wt-icon-viewOptions',
-						menu: {
-							items: [
-								{
-									xtype: 'somenuheader',
-									text: me.res('gpcontacts.viewOptions.groupBy.lbl')
-								}, {
-									itemId: 'groupby-alpha',
-									group: groupByGroup,
-									text: me.res('store.groupBy.alpha'),
-									checked: false,
-									checkHandler: function(s, checked) {
-										if (checked) me.applyGroupBy(Sonicle.String.removeStart(s.getItemId(), 'groupby-'));
-									}
-								}, {
-									itemId: 'groupby-company',
-									group: groupByGroup,
-									text: me.res('store.groupBy.company'),
-									checked: false,
-									checkHandler: function(s, checked) {
-										if (checked) me.applyGroupBy(Sonicle.String.removeStart(s.getItemId(), 'groupby-'));
-									}
-								}
-							],
-							listeners: {
-								beforeshow: function(s) {
-									var itm = s.getComponent('groupby-' +  me.activeGroupBy);
-									if (itm) itm.setChecked(true);
-								}
-							}
-						}
-					},
-					' '
-				],
-				listeners: {
-					selectionchange: function(s) {
-						me.updateDisabled('showContact');
-						me.updateDisabled('printContact');
-						me.updateDisabled('copyContact');
-						me.updateDisabled('moveContact');
-						me.updateDisabled('deleteContact');
-						me.updateDisabled('tags');
-						me.updateDisabled('addContactsListFromSel');
-						me.updateDisabled('addToContactsListFromSel');
-						me.updateDisabled('callTelephone');
-						me.updateDisabled('callMobile');
-						me.updateDisabled('sendSms');
-						me.updateDisabled('createEvent');
-						if (me.hasAuditUI()) me.updateDisabled('contactAuditLog');
-						me.updateDisabled('sendContact');
-						me.pnlPreview().setContacts(s.getSelection());
-					},
-					rowdblclick: function(s, rec) {
-						me.openContactItemUI(rec.getItemsRights().UPDATE, rec);
-					},
-					rowcontextmenu: function(s, rec, itm, i, e) {
-						Sonicle.Utils.showContextMenu(e, me.getRef('cxmGrid'), {
-							task: rec,
-							tasks: s.getSelection()
-						});
-					},
-					rowkeydown: function(s, rec, itm, indx, e) {
-						if (e.getKey() === e.DELETE) {
-							me.getAct('deleteContact').execute();
-						}
-					}
+					width: '60%',
+					minWidth: 350
 				}
-			}, {
-				region: 'east',
-				xtype: 'wtconcontactpreviewpanel',
-				reference: 'pnlpreview',
-				mys: me,
-				tagsStore: tagsStore,
-				hidden: !WT.plTags.desktop,
-				split: true,
-				listeners: {
-					writeemail: function(s, rcpts) {
-						WT.handleNewMailMessage(rcpts);
-					},
-					callnumber: function(s, number) {
-						WT.handlePbxCall(number);
-					},
-					writesms: function(s, number, id, fn) {
-						WT.handleSendSMS(fn, number, null);
-					},
-					mapaddress: function(s, address) {
-						WT.openGoogleMaps({query: address});
-					},
-					clearselection: function(s) {
-						me.gpContacts().getSelectionModel().deselectAll();
-					},
-					editcontact: function(s, isList, id) {
-						me.openContactItemUI(true, isList, id);
-					},
-					opencontactaudit: function(s, isList, id) {
-						me.openAuditUI(id, 'CONTACT', isList);
-					}
-				},
-				width: '60%',
-				minWidth: 350
-			}]
+			]
 		}));
 	},
 	
@@ -547,15 +671,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		var me = this;
 		if (Ext.String.startsWith(tag, me.self.NOTAG_REMOTESYNC)) {
 			me.reloadContacts();
-		}
-	},
-	
-	setActiveGroupBy: function(value) {
-		this.activeGroupBy = value;
-		var gp = this.gpContacts(), col;
-		if (gp) {
-			col = gp.getColumnManager().getHeaderById('main');
-			if (gp) col.setShowCompany(value !== 'company');
 		}
 	},
 	
@@ -581,12 +696,23 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	initActions: function() {
 		var me = this,
-				hdscale = WT.getHeaderScale();
+			hdscale = WT.getHeaderScale();
 		
+		me.addAct('toolbox', 'printAddressbook', {
+			text: WT.res('act-print.lbl'),
+			tooltip: WT.res('act-print.lbl'),
+			iconCls: 'wt-icon-print',
+			handler: function() {
+				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
+				delete params.action;
+				var url = WTF.processBinUrl(me.ID, 'PrintAddressbook', params);
+				Sonicle.URLMgr.openFile(url, {filename: 'addressbook', newWindow: true});
+			}
+		});
 		me.addAct('toolbox', 'manageTags', {
 			text: WT.res('act-manageTags.lbl'),
 			tooltip: WT.res('act-manageTags.tip'),
-			iconCls: 'wt-icon-tag',
+			iconCls: 'wt-icon-tags',
 			handler: function() {
 				me.showManageTagsUI();
 			}
@@ -611,13 +737,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		}
 		
 		me.addAct('new', 'newContact', {
-			ignoreSize: true,
 			handler: function() {
 				me.getAct('addContact').execute();
 			}
 		});
 		me.addAct('new', 'newContactsList', {
-			ignoreSize: true,
 			handler: function() {
 				me.getAct('addContactsList').execute();
 			}
@@ -657,7 +781,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addCategory', {
-			ignoreSize: true,
 			tooltip: null,
 			handler: function(s, e) {
 				var node = e.menuData.node;
@@ -679,7 +802,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('editCategory', {
-			ignoreSize: true,
 			tooltip: null,
 			handler: function(s, e) {
 				var node = e.menuData.node;
@@ -687,8 +809,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('deleteCategory', {
-			ignoreSize: true,
 			tooltip: null,
+			userCls: 'wt-dangerzone',
 			handler: function(s, e) {
 				var node = e.menuData.node;
 				if (node) me.deleteCategoryUI(node);
@@ -696,6 +818,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('syncRemoteCategory', {
 			tooltip: null,
+			hidden: true,
 			handler: function(s, e) {
 				var node = e.menuData.node;
 				if (node) me.syncRemoteCategoryUI(node.getFolderId());
@@ -727,6 +850,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('applyTags', {
 			tooltip: null,
+			iconCls: 'wt-icon-tags',
 			handler: function(s, e) {
 				var node = e.menuData.node;
 				if (node) me.applyCategoryTagsUI(node);
@@ -736,6 +860,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('tags', {
 			text: me.res('mni-tags.lbl'),
 			tooltip: null,
+			iconCls: 'wt-icon-tags',
 			menu: {
 				xtype: 'wttagmenu',
 				bottomStaticItems: [
@@ -777,7 +902,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						listeners: {
 							select: function(s, color) {
 								var node = s.menuData.node;
-								me.getRef('cxmFolder').hide();
+								me.getRef('cxmTreeFolder').hide();
 								if (node) me.updateCategoryColorUI(node, Sonicle.String.prepend(color, '#', true));
 							}
 						}
@@ -855,7 +980,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (node) WTA.util.FoldersTree2.setActiveAllFolders(node.getFolderRootNode(), false);
 			}
 		});
-		me.addAct('showContact', {
+		me.addAct('openContact', {
 			text: WT.res('act-open.lbl'),
 			tooltip: null,
 			handler: function() {
@@ -866,7 +991,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContact', {
-			ignoreSize: true,
 			tooltip: null,
 			handler: function(s, e) {
 				var folderId = (e && e.menuData) ? e.menuData.node.getFolderId() : null,
@@ -875,19 +999,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 		me.addAct('addContactsList', {
-			ignoreSize: true,
 			tooltip: null,
 			handler: function(s, e) {
 				var folderId = (e && e.menuData) ? e.menuData.node.getFolderId() : null,
 					node = WTA.util.FoldersTree2.getFolderForAdd(me.trFolders(), folderId);
 				if (node) me.addContactsListUI(node.getFolderId());
-			}
-		});
-		me.addAct('sendContact', {
-			tooltip: null,
-			handler: function() {
-				var sel = me.getSelectedContacts();
-				if (sel.length > 0) me.sendContactsAsEmail(Sonicle.Data.collectValues(sel, 'id'));
 			}
 		});
 		me.addAct('addContactsListFromSel', {
@@ -913,23 +1029,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addAct('deleteContact', {
 			text: WT.res('act-delete.lbl'),
 			tooltip: null,
-			iconCls: 'wt-icon-delete',
+			iconCls: 'wt-icon-trash',
+			userCls: 'wt-dangerzone',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if (sel.length > 0) me.deleteContactItemsUI(sel);
 			}
 		});
-		me.addAct('deleteContact2', {
-			text: null,
-			tooltip: WT.res('act-delete.lbl'),
-			iconCls: 'wt-icon-delete',
-			disabled: true,
-			handler: function() {
-				me.getAct('deleteContact').execute();
-			}
-		});
 		me.addAct('copyContact', {
 			tooltip: null,
+			iconCls: 'wt-icon-copy',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if (sel.length > 0) me.moveContactItemsUI(true, sel);
@@ -937,6 +1046,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		me.addAct('moveContact', {
 			tooltip: null,
+			iconCls: 'wt-icon-move',
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if (sel.length > 0) me.moveContactItemsUI(false, sel);
@@ -949,6 +1059,13 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			handler: function() {
 				var sel = me.getSelectedContacts();
 				if (sel.length > 0) me.printContactsDetail(Sonicle.Data.collectValues(sel, 'id'));
+			}
+		});
+		me.addAct('sendByEmail', {
+			tooltip: null,
+			handler: function() {
+				var sel = me.getSelectedContacts();
+				if (sel.length > 0) me.sendContactsAsEmail(Sonicle.Data.collectValues(sel, 'id'));
 			}
 		});
 		me.addAct('callTelephone', {
@@ -974,24 +1091,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		});
 		
 		me.addAct('refresh', {
-			scale: hdscale,
 			text: '',
 			tooltip: WT.res('act-refresh.lbl'),
 			iconCls: 'wt-icon-refresh',
 			handler: function() {
 				me.reloadContacts();
-			}
-		});
-		me.addAct('printAddressbook', {
-			scale: hdscale,
-			text: null,
-			tooltip: WT.res('act-print.lbl'),
-			iconCls: 'wt-icon-print',
-			handler: function() {
-				var params = Ext.clone(me.gpContacts().getStore().getProxy().getExtraParams());
-				delete params.action;
-				var url = WTF.processBinUrl(me.ID, 'PrintAddressbook', params);
-				Sonicle.URLMgr.openFile(url, {filename: 'addressbook', newWindow: true});
 			}
 		});
 		/*
@@ -1034,8 +1138,11 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	initCxm: function() {
-		var me = this,
-			rootItems = [
+		var me = this;
+		
+		me.addRef('cxmTreeOrigin', Ext.create({
+			xtype: 'menu',
+			items: [
 				me.getAct('addCategory'),
 				me.getAct('addRemoteCategory'),
 				'-',
@@ -1052,12 +1159,49 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				me.getAct('editSharing'),
 				me.getAct('manageHiddenCategories'),
 				'-',
+				me.hasMailchimp() ? me.getAct('syncMailchimp') : null,
 				me.getAct('exportContacts')
-				//TODO: azioni altri servizi?
+				//TODO: maybe add support to external actions coming from other services
 			],
-			folderItems = [
+			listeners: {
+				beforeshow: function(s) {
+					var node = s.menuData.node,
+						mine = node.isPersonalNode(),
+						or = node.getOriginRights();
+					me.getAct('addCategory').setDisabled(!or.MANAGE);
+					me.getAct('addRemoteCategory').setDisabled(!or.MANAGE);
+					me.getAct('editSharing').setDisabled(!or.MANAGE);
+					me.getAct('manageHiddenCategories').setDisabled(mine);
+				}
+			}
+		}));
+		me.addRef('cxmTreeGrouper', Ext.create({
+			xtype: 'menu',
+			items: [
+				{
+					text: me.res('mni-viewFolders.lbl'),
+					menu: {
+						items: [
+							me.getAct('viewAllFolders'),
+							me.getAct('viewNoneFolders')
+						]
+					}
+				}
+			],
+			listeners: {
+				beforeshow: function(s) {
+					var node = s.menuData.node,
+						grouper = node.isGrouper();
+					me.getAct('viewAllFolders').setDisabled(!grouper);
+					me.getAct('viewNoneFolders').setDisabled(!grouper);
+				}
+			}
+		}));
+		me.addRef('cxmTreeFolder', Ext.create({
+			xtype: 'menu',
+			items: [
 				me.getAct('editCategory'),
-				me.getAct('deleteCategory'),
+				me.getAct('viewCategoryLinks'),
 				'-',
 				{
 					text: me.res('mni-viewFolder.lbl'),
@@ -1071,9 +1215,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				},
 				'-',
 				me.getAct('editSharing'),
-				me.getAct('viewCategoryLinks'),
 				{
 					text: me.res('mni-customizeFolder.lbl'),
+					iconCls: 'wt-icon-customize',
 					menu: {
 						items: [
 							me.getAct('hideCategory'),
@@ -1094,44 +1238,20 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						]
 					}
 				},
-				me.getAct('syncRemoteCategory'),
-				'-',
 				me.getAct('applyTags'),
-				me.hasAuditUI() ? me.getAct('categoryAuditLog') : null,
-				'-',
-				me.getAct('addContact'),
-				me.getAct('addContactsList'),
 				'-',
 				me.getAct('importContacts'),
-				me.getAct('exportContacts')
-				//TODO: azioni altri servizi?
-			];
-		
-		if (me.hasMailchimp()) {
-			rootItems.push('-');
-			rootItems.push(me.getAct('syncMailchimp'));
-			folderItems.push('-');
-			folderItems.push(me.getAct('syncMailchimp'));
-		}
-		me.addRef('cxmFolderRoot', Ext.create({
-			xtype: 'menu',
-			items: rootItems,
-			listeners: {
-				beforeshow: function(s) {
-					var node = s.menuData.node,
-						mine = node.isPersonalNode(),
-						or = node.getOriginRights();
-					me.getAct('addCategory').setDisabled(!or.MANAGE);
-					me.getAct('addRemoteCategory').setDisabled(!or.MANAGE);
-					me.getAct('editSharing').setDisabled(!or.MANAGE);
-					me.getAct('manageHiddenCategories').setDisabled(mine);
-				}
-			}
-		}));
-		
-		me.addRef('cxmFolder', Ext.create({
-			xtype: 'menu',
-			items: folderItems,
+				me.getAct('exportContacts'),
+				me.hasAuditUI() ? me.getAct('categoryAuditLog') : null,
+				me.getAct('syncRemoteCategory'),
+				me.hasMailchimp() ? me.getAct('syncMailchimp') : null,
+				'-',
+				me.getAct('deleteCategory'),
+				'-',
+				//TODO: maybe add support to external actions coming from other services
+				me.getAct('addContactsList'),
+				me.getAct('addContact')
+			],
 			listeners: {
 				beforeshow: function(s) {
 					var node = s.menuData.node,
@@ -1148,7 +1268,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					me.getAct('exportContacts').setDisabled(!ir.CREATE);
 					me.getAct('hideCategory').setDisabled(mine);
 					me.getAct('restoreCategoryColor').setDisabled(mine);
-					me.getAct('syncRemoteCategory').setDisabled(!Sonicle.webtop.contacts.view.Category.isRemote(node.get('_provider')));
+					me.getAct('syncRemoteCategory').setHidden(!Sonicle.webtop.contacts.view.Category.isRemote(node.get('_provider')));
 					me.getAct('applyTags').setDisabled(!ir.UPDATE);
 					
 					var picker = s.down('menu#categoryColor').down('colorpicker');
@@ -1166,27 +1286,21 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.addRef('cxmGrid', Ext.create({
 			xtype: 'menu',
 			items: [
-				me.getAct('showContact'),
-				{
-					text: me.res('mni-copyormove.lbl'),
-					menu: {
-						items: [
-							me.getAct('moveContact'),
-							me.getAct('copyContact')
-						]
-					}
-				},
-				me.getAct('printContact'),
-				'-',
+				me.getAct('openContact'),
+				me.getAct('moveContact'),
+				me.getAct('copyContact'),
 				me.getAct('tags'),
-				me.hasAuditUI() ? me.getAct('contactAuditLog') : null,
 				'-',
-				me.getAct('deleteContact'),
-				'-',
+				me.getAct('printContact'),
 				me.getAct('addContactsListFromSel'),
 				me.getAct('addToContactsListFromSel'),
-				'-',
+				me.hasAuditUI() ? me.getAct('contactAuditLog') : null,
 				{
+					xtype: 'menuseparator',
+					itemId: 'actionsep1'
+				},
+				{
+					itemId: 'callitems',
 					text: WT.res('act-call.lbl'),
 					iconCls: 'wt-icon-call',
 					menu: {
@@ -1197,10 +1311,43 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 				},
 				me.getAct('sendSms'),
-				'-',
+				{
+					xtype: 'menuseparator',
+					itemId: 'actionsep2'
+				},
 				me.getAct('createEvent'),
-				me.getAct('sendContact')
-			]
+				me.getAct('sendByEmail'),
+				'-',
+				//TODO: maybe add support to external actions coming from other services
+				me.getAct('deleteContact')
+			],
+			listeners: {
+				beforeshow: function(s) {
+					var hideActions = s.menuData.hideActions === true;
+					s.getComponent('actionsep1').setHidden(hideActions);
+					s.getComponent('actionsep2').setHidden(hideActions);
+					s.getComponent('callitems').setHidden(hideActions);
+					me.getAct('openContact').setHidden(hideActions);
+					me.getAct('sendSms').setHidden(hideActions);
+					me.getAct('createEvent').setHidden(hideActions);
+					me.getAct('sendByEmail').setHidden(hideActions);
+					
+					me.updateDisabled('openContact');
+					me.updateDisabled('moveContact');
+					me.updateDisabled('copyContact');
+					me.updateDisabled('tags');
+					me.updateDisabled('printContact');
+					me.updateDisabled('addContactsListFromSel');
+					me.updateDisabled('addToContactsListFromSel');
+					if (me.hasAuditUI()) me.updateDisabled('contactAuditLog');
+					me.updateDisabled('callTelephone');
+					me.updateDisabled('callMobile');
+					me.updateDisabled('sendSms');
+					me.updateDisabled('createEvent');
+					me.updateDisabled('sendByEmail');
+					me.updateDisabled('deleteContact');
+				}
+			}
 		}));
 	},
 	
@@ -1212,7 +1359,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			me.reloadContacts();
 		}
 		
-		me.updateDisabled('showContact');
+		me.updateDisabled('openContact');
 		me.updateDisabled('printContact');
 		me.updateDisabled('copyContact');
 		me.updateDisabled('moveContact');
@@ -1224,7 +1371,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		me.updateDisabled('sendSms');
 		me.updateDisabled('createEvent');
 		if (me.hasAuditUI()) me.updateDisabled('contactAuditLog');
-		me.updateDisabled('sendContact');
+		me.updateDisabled('sendByEmail');
 	},
 	
 	loadOriginNode: function(originPid, reloadItemsIf) {
@@ -1323,7 +1470,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	applyGroupBy: function(groupBy, reload) {
 		var me = this;
-		me.setActiveGroupBy(groupBy);
+		me.updateActiveGroupby(groupBy);
 		if (reload !== false) {
 			me.gpContacts().getStore().setGroupField(me.calcGroupField(groupBy));
 		}	
@@ -1333,7 +1480,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		opts = opts || {};
 		var me = this, sto, pars = {};
 		// NB: opts.query is not persisted if service is not active!
-		if (Ext.isString(opts.groupBy)) me.setActiveGroupBy(opts.groupBy);
+		if (Ext.isString(opts.groupBy)) me.updateActiveGroupby(opts.groupBy);
 		if (Ext.isString(opts.view)) me.activeView = opts.view;
 		if (me.isActive()) {
 			sto = me.gpContacts().getStore();
@@ -1447,22 +1594,27 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	deleteCategoryUI: function(node) {
-		WT.confirm(this.res('category.confirm.delete', Ext.String.ellipsis(node.get('text'), 40)), function(bid) {
-			if (bid === 'yes') node.drop();
-		}, this);
+		WT.confirmDelete(this.res('category.confirm.delete', Ext.String.ellipsis(node.get('text'), 40)), function(bid) {
+			if (bid === 'ok') node.drop();
+		}, this, {
+			title: this.res('category.confirm.delete.tit')
+		});
 	},
 	
 	syncRemoteCategoryUI: function(categoryId) {
 		var me = this;
-		WT.confirm(this.res('category.confirm.remotesync'), function(bid) {
-			if (bid === 'yes') {
+		WT.confirmOk(me.res('category.confirm.remotesync'), function(bid) {
+			if (bid === 'ok') {
 				me.syncRemoteCategory(categoryId, false, {
 					callback: function(success, data, json) {
 						WT.handleError(success, json);
 					}
 				});
 			}
-		}, this);
+		}, this, {
+			title: me.res('category.confirm.remotesync.tit'),
+			okText: me.res('category.confirm.remotesync.ok')
+		});
 	},
 	
 	manageHiddenCategoriesUI: function(node) {
@@ -1481,8 +1633,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	hideCategoryUI: function(node) {
 		var me = this;
-		WT.confirm(this.res('category.confirm.hide', Ext.String.ellipsis(node.get('text'), 40)), function(bid) {
-			if(bid === 'yes') {
+		WT.confirmOk(me.res('category.confirm.hide', Ext.String.ellipsis(node.get('text'), 40)), function(bid) {
+			if (bid === 'ok') {
 				me.updateCategoryVisibility(node.getFolderId(), true, {
 					callback: function(success) {
 						if (success) {
@@ -1492,7 +1644,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 				});
 			}
-		}, this);
+		}, me, {
+			title: me.res('category.confirm.hide.tit'),
+			okText: me.res('category.confirm.hide.ok')
+		});
 	},
 	
 	updateCategoryColorUI: function(node, color) {
@@ -1537,15 +1692,18 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		WT.confirmSelectTags(function(bid, value) {
 			if (bid === 'yes' || bid === 'no') {
 				op = (bid === 'yes') ? 'set' : ((bid === 'no') ? 'unset' : ''); 
-				WT.confirm(me.res('category.confirm.tags.' + op, Ext.String.ellipsis(node.get('text'), 40)), function(bid2) {
-					if (bid2 === 'yes') {
+				WT.confirmOk(me.res('category.confirm.tags.' + op, Ext.String.ellipsis(node.get('text'), 40)), function(bid2) {
+					if (bid2 === 'ok') {
 						me.updateCategoryTags(node.getFolderId(), op, value, {
 							callback: function(success) {
 								if (success) me.reloadContacts();
 							}
 						});
 					}
-				}, this);
+				}, me, {
+					title: me.res('category.confirm.tags.tit'),
+					okText: me.res('category.confirm.tags.' + op + '.ok')
+				});
 			}
 		}, me);
 	},
@@ -1636,10 +1794,10 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		if (recs.length === 1) {
 			msg = me.res(contactType + '.confirm.delete', Ext.String.ellipsis(displayName, 40));
 		} else {
-			msg = me.res('gpcontacts.confirm.delete.selection');
+			msg = me.res('contact.confirm.delete.selection');
 		}
-		WT.confirm(msg, function(bid) {
-			if (bid === 'yes') {
+		WT.confirmDelete(msg, function(bid) {
+			if (bid === 'ok') {
 				me.deleteContactsItems(ids, {
 					callback: function(success) {
 						if (success) me.reloadContacts();
@@ -1654,9 +1812,9 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			ids = Sonicle.Data.collectValues(recs),
 			vw = me.createCategoryChooser(copy);
 		
-		vw.on('viewok', function(s, categoryId) {
+		vw.on('viewok', function(s, data) {
 			me.gpContacts().setLoading(true);
-			me.moveContactsItems(copy, ids, categoryId, {
+			me.moveContactsItems(copy, ids, data.categoryId, {
 				callback: function(success) {
 					me.gpContacts().setLoading(false);
 					if (success) me.reloadContacts();
@@ -1668,16 +1826,16 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	manageContactItemTagsUI: function(recs) {
 		var me = this,
-				ids = Sonicle.Data.collectValues(recs),
-				tags = me.toMutualTags(recs),
-				vw = WT.createView(WT.ID, 'view.Tags', {
-					swapReturn: true,
-					viewCfg: {
-						data: {
-							selection: tags
-						}
+			ids = Sonicle.Data.collectValues(recs),
+			tags = me.toMutualTags(recs),
+			vw = WT.createView(WT.ID, 'view.Tags', {
+				swapReturn: true,
+				viewCfg: {
+					data: {
+						selection: tags
 					}
-				});
+				}
+			});
 		vw.on('viewok', function(s, data) {
 			if (Sonicle.String.difference(tags, data.selection).length > 0) {
 				me.updateContactsItemsTags(ids, 'reset', data.selection, {
@@ -1832,7 +1990,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			});
 		
 		vw.on('viewclose', function(s) {
-			Ext.callback(opts.callback, opts.scope || me, [true, s.getVMData()]);
+			Ext.callback(opts.callback, opts.scope || me, [true, s.getVMBindData()]);
 		});
 		vw.showView();
 	},
@@ -2036,8 +2194,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	openContact: function(edit, contactId, opts) {
 		opts = opts || {};
 		var me = this,
-				vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true}),
-				mode = edit ? 'edit' : 'view';
+			vw = WT.createView(me.ID, 'view.Contact', {swapReturn: true}),
+			mode = edit ? 'edit' : 'view';
 		
 		vw.on('viewsave', function(s, success, model) {
 			Ext.callback(opts.callback, opts.scope || me, [success, model]);
@@ -2098,7 +2256,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 		return vw;
 	},
 	
-	/* No more used but working...
 	deleteContacts: function(contactIds, opts) {
 		opts = opts || {};
 		var me = this;
@@ -2126,7 +2283,6 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			}
 		});
 	},
-	*/
 	
 	importContacts: function(categoryId, opts) {
 		opts = opts || {};
@@ -2266,6 +2422,23 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	},
 	
 	privates: {
+		updateColumnVisibility: function(columnId, hidden) {
+			var gp = this.gpContacts(), col;
+			if (gp) {
+				col = gp.getColumnManager().getHeaderById(columnId);
+				if (col) col.setHidden(hidden);
+			}
+		},
+
+		updateActiveGroupby: function(groupBy) {
+			this.activeGroupBy = groupBy;
+			var gp = this.gpContacts(), col;
+			if (gp) {
+				col = gp.getColumnManager().getHeaderById('main');
+				if (col) col.setShowCompany(groupBy !== 'company');
+			}
+		},
+		
 		prepareContactData: function(data) {
 			data = data || {};
 			var me = this,
@@ -2463,19 +2636,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			var me = this,
 				dis = me.isDisabled(action);
 
-			if(action === 'deleteContact') {
-				me.setActDisabled(action, dis);
-				me.setActDisabled('deleteContact2', dis);
-			} else {
-				me.setActDisabled(action, dis);
-			}
+			me.setActDisabled(action, dis);
 		},
 		
 		isDisabled: function(action) {
 			var me = this, sel;
 
 			switch(action) {
-				case 'showContact':
+				case 'openContact':
 				case 'copyContact':
 					sel = me.getSelectedContacts();
 					if (sel && (sel.length > 0)) {
@@ -2485,14 +2653,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					}
 					break;
 				case 'printContact':
-					sel = me.getSelectedContact();
-					if (sel && (sel.get('isList') === false)) {
-						return false;
-					} else {
-						return true;
-					}
-					break;
-				case 'sendContact':
+				case 'sendByEmail':
 					sel = me.getSelectedContact();
 					if (sel && (sel.get('isList') === false)) {
 						return false;
@@ -2663,6 +2824,24 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 
 		noTagRemoteSync: function(categoryId) {
 			return this.NOTAG_REMOTESYNC + categoryId;
+		},
+		
+		/**
+		 * Computes a label for displaying category info.
+		 * @param {String} name Category name.
+		 * @param {String} [ownerDN] Category's owner display-name.
+		 * @param {Object} [opts] An object containing configuration.
+		 * 
+		 * This object may contain any of the following properties:
+		 * 
+		 * @param {Boolean} opts.htmlEncode Set to `true` to apply HTML encoding to resulting output.
+		 * @returns {String} The computed label
+		 */
+		calcCategoryLabel: function(name, ownerDN, opts) {
+			opts = opts || {};
+			var pattern = '{1}';
+			if (!Ext.isEmpty(ownerDN)) pattern = '[{0}] ' + pattern;
+			return Ext.String.format(pattern, ownerDN, name);
 		}
 	}
 });
