@@ -1037,14 +1037,10 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 						{
 							xtype: 'sofieldhgroup',
 							items: [
-								{
-									xtype: 'textareafield',
-									bind: '{record.notes}',
-									fieldLabel: me.res('contact.fld-notes.lbl'),
-									resizable: true,
-									smartResize: true,
+								me.createNotesFieldCfg({
+									minHeight: 100,
 									flex: 1
-								}
+								})
 							]	
 						}
 					]
@@ -1405,6 +1401,16 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				dummyIcon: 'loading',
 				hidden: true,
 				hideLabel: true
+			}, cfg);
+		},
+		
+		createNotesFieldCfg: function(cfg) {
+			return Ext.apply({
+				xtype: 'textareafield',
+				bind: '{record.notes}',
+				fieldLabel: this.res('contact.fld-notes.lbl'),
+				resizable: true,
+				smartResize: true
 			}, cfg);
 		},
 		

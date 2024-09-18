@@ -142,7 +142,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			foIsEditable: WTF.foGetFn('record', '_itPerms', function(val) {
 				return WTA.util.FoldersTree2.toRightsObj(val).UPDATE;
 			}),
-			foHasData: {
+			foHasTileData: {
 				bind: {bindTo: '{record}'},
 				get: function(val) {
 					return val ? val.hasData() : true;
@@ -498,155 +498,59 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								xtype: 'wtpanel',
 								title: me.mys.res('contactPreview.single.contact.tit'),
 								scrollable: true,
-								layout: 'anchor',
+								cls: me.cls + '-main',
+								layout: 'vbox',
 								defaults: {
-									anchor: '100%'
+									width: '100%'
 								},
 								items: [
 									{
 										xtype: 'container',
 										cls: me.cls + '-tiles',
+										bind: {
+											hidden: '{!foHasTileData}'
+										},
+										hidden: true,
+										layout: 'hbox',
 										items: [
-											{
-												xtype: 'container',
-												bind: {
-													hidden: '{!foHasData}'
-												},
-												hidden: true,
-												layout: 'hbox',
-												items: [
-													{
-														xtype: 'sotilelist',
-														reference: 'gpemaillist',
-														cls: me.cls + '-tilelist',
-														linkifyValue: true,
-														bind: {
-															store: '{record.data1}',
-															hidden: '{!foHasEmails}'
-														},
-														captionField: 'type',
-														captionTexts: {
-															work: me.mys.res('contactPreview.single.workEmail'),
-															home: me.mys.res('contactPreview.single.homeEmail')
-														},
-														captionIcons: {
-															work: 'fas fa-envelope',
-															home: 'fas fa-envelope'
-														},
-														clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
-														listeners: {
-															cellvalueclick: function(s, val) {
-																var vm = me.getVM();
-																me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-															}
-														},
-														flex: 1,
-														maxWidth: 230
-													}, {
-														xtype: 'sotilelist',
-														reference: 'gptelephonelist',
-														cls: me.cls + '-tilelist',
-														linkifyValue: true,
-														bind: {
-															store: '{record.data2}',
-															hidden: '{!foHasTelephones}'
-														},
-														captionField: 'type',
-														captionTexts: {
-															mobile: me.mys.res('contactPreview.single.mobile'),
-															work: me.mys.res('contactPreview.single.workTelephone'),
-															home: me.mys.res('contactPreview.single.homeTelephone')
-														},
-														captionIcons: {
-															mobile: 'fas fa-mobile-alt',
-															work: 'fas fa-phone',
-															home: 'fas fa-phone'
-														},
-														clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
-														listeners: {
-															cellvalueclick: function(s, val) {
-																var vm = me.getVM();
-																me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-															}
-														},
-														flex: 1,
-														maxWidth: 180
-													}, {
-														xtype: 'sotilelist',
-														reference: 'gpmorelist',
-														cls: me.cls + '-tilelist',
-														linkifyValue: true,
-														bind: {
-															store: '{record.data3}'
-														},
-														captionField: 'type',
-														captionTexts: {
-															fullName: me.mys.res('contactPreview.single.fullName'),
-															company: me.mys.res('contactPreview.single.company'),
-															workadd: me.mys.res('contactPreview.single.workAddress'),
-															homeadd: me.mys.res('contactPreview.single.homeAddress')
-														},
-														captionIcons: {
-															fullName: 'fas fa-signature',
-															company: 'fas fa-building',
-															workadd: 'fas fa-location-dot',
-															homeadd: 'fas fa-location-dot'
-														},
-														clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
-														listeners: {
-															cellvalueclick: function(s, val, rec) {
-																if (['workadd', 'homeadd'].indexOf(rec.get('type')) !== -1) {
-																	var vm = me.getVM();
-																	me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
-																}
-															}
-														},
-														flex: 1,
-														maxWidth: 230
-													}
-												]
-											}, {
-												xtype: 'container',
-												bind: {
-													hidden: '{foHasData}'
-												},
-												hidden: true,
-												layout: {
-													type: 'vbox',
-													pack: 'center',
-													align: 'middle'
-												},
-												items: [
-													{
-														xtype: 'label',
-														text: me.mys.res('contactPreview.single.contact.emp'),
-														cls: 'wt-theme-text-subtitle',
-														style: 'font-size:0.9em'
-													}
-												]
-											}
+											me.createMailTileListCfg({
+												reference: 'gpemaillist',
+												flex: 1
+											}),
+											me.createTelTileListCfg({
+												reference: 'gptelephonelist',
+												flex: 1
+											}),
+											me.createMoreTileListCfg({
+												reference: 'gpmorelist',
+												flex: 1
+											})
 										]
 									}, {
-										xtype: 'wtfieldspanel',
-										paddingSides: true,
+										xtype: 'container',
+										cls: me.cls + '-tiles',
+										bind: {
+											hidden: '{foHasTileData}'
+										},
+										hidden: true,
+										layout: {
+											type: 'vbox',
+											pack: 'center',
+											align: 'middle'
+										},
 										items: [
 											{
-												xtype: 'textarea',
-												bind: {
-													value: '{record.notes}',
-													hidden: '{!foHasNotes}'
-												},
-												cls: me.cls + '-notes',
-												fieldLabel: me.mys.res('contactPreview.single.fld-notes.lbl'),
-												labelAlign: 'top',
-												readOnly: true,
-												grow: true,
-												growMin: 60,
-												growMax: 200,
-												anchor: '100%'
+												xtype: 'label',
+												text: me.mys.res('contactPreview.single.contact.emp'),
+												cls: 'wt-theme-text-subtitle',
+												style: 'font-size:0.9em'
 											}
 										]
-									}
+									},
+									me.createNoteFieldCfg({
+										minHeight: 100,
+										flex: 1
+									})
 								]
 							}, {
 								xtype: 'wtcfieldspreviewpanel',
@@ -683,6 +587,119 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 						flex: 1
 					}
 				]
+			}, cfg);
+		},
+		
+		createMailTileListCfg: function(cfg) {
+			var me = this;
+			return Ext.apply({
+				xtype: 'sotilelist',
+				cls: me.cls + '-tilelist',
+				linkifyValue: true,
+				bind: {
+					store: '{record.data1}',
+					hidden: '{!foHasEmails}'
+				},
+				captionField: 'type',
+				captionTexts: {
+					work: me.mys.res('contactPreview.single.workEmail'),
+					home: me.mys.res('contactPreview.single.homeEmail')
+				},
+				captionIcons: {
+					work: 'fas fa-envelope',
+					home: 'fas fa-envelope'
+				},
+				clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
+				listeners: {
+					cellvalueclick: function(s, val) {
+						var vm = me.getVM();
+						me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+					}
+				}
+			}, cfg);
+		},
+		
+		createTelTileListCfg: function(cfg) {
+			var me = this;
+			return Ext.apply({
+				xtype: 'sotilelist',
+				cls: me.cls + '-tilelist',
+				linkifyValue: true,
+				bind: {
+					store: '{record.data2}',
+					hidden: '{!foHasTelephones}'
+				},
+				captionField: 'type',
+				captionTexts: {
+					mobile: me.mys.res('contactPreview.single.mobile'),
+					work: me.mys.res('contactPreview.single.workTelephone'),
+					home: me.mys.res('contactPreview.single.homeTelephone')
+				},
+				captionIcons: {
+					mobile: 'fas fa-mobile-alt',
+					work: 'fas fa-phone',
+					home: 'fas fa-phone'
+				},
+				clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
+				listeners: {
+					cellvalueclick: function(s, val) {
+						var vm = me.getVM();
+						me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+					}
+				}
+			}, cfg);
+		},
+		
+		createMoreTileListCfg: function(cfg) {
+			var me = this;
+			return Ext.apply({
+				xtype: 'sotilelist',
+				cls: me.cls + '-tilelist',
+				linkifyValue: true,
+				bind: {
+					store: '{record.data3}'
+				},
+				captionField: 'type',
+				captionTexts: {
+					fullName: me.mys.res('contactPreview.single.fullName'),
+					company: me.mys.res('contactPreview.single.company'),
+					workadd: me.mys.res('contactPreview.single.workAddress'),
+					homeadd: me.mys.res('contactPreview.single.homeAddress')
+				},
+				captionIcons: {
+					fullName: 'fas fa-signature',
+					company: 'fas fa-building',
+					workadd: 'fas fa-location-dot',
+					homeadd: 'fas fa-location-dot'
+				},
+				clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
+				listeners: {
+					cellvalueclick: function(s, val, rec) {
+						if (['workadd', 'homeadd'].indexOf(rec.get('type')) !== -1) {
+							var vm = me.getVM();
+							me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+						}
+					}
+				}
+			}, cfg);
+		},
+		
+		createNoteFieldCfg: function(cfg) {
+			return Ext.apply({
+				xtype: 'textarea',
+				bind: {
+					value: '{record.notes}',
+					hidden: '{!foHasNotes}'
+				},
+				hidden: true,
+				cls: this.cls + '-notes',
+				fieldLabel: this.mys.res('contactPreview.single.fld-notes.lbl'),
+				labelAlign: 'top',
+				readOnly: true
+				//grow: true,
+				//growMin: 60,
+				//growMax: 200,
+				//anchor: '100%'
 			}, cfg);
 		},
 		
