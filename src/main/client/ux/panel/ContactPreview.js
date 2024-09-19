@@ -255,11 +255,11 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					{
 						xtype: 'label',
 						text: me.mys.res('contactPreview.no.tit'),
-						cls: 'wt-theme-text-title'
+						cls: 'wt-pane-body-title wt-theme-text-color-title'
 					}, {
 						xtype: 'label',
 						text: me.mys.res('contactPreview.no.txt'),
-						cls: 'wt-theme-text-subtitle'
+						cls: 'wt-pane-body-subtitle wt-theme-text-color-subtitle'
 					}
 				]
 			}, cfg);
@@ -542,8 +542,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 											{
 												xtype: 'label',
 												text: me.mys.res('contactPreview.single.contact.emp'),
-												cls: 'wt-theme-text-subtitle',
-												style: 'font-size:0.9em'
+												cls: 'wt-form-body-subtitle wt-theme-text-color-subtitle'
 											}
 										]
 									},
@@ -718,7 +717,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 						bind: {
 							text: '{foMultiSelTitle}'
 						},
-						cls: 'wt-theme-text-title'
+						cls: 'wt-pane-body-title wt-theme-text-color-title'
 					}, {
 						xtype: 'toolbar',
 						vertical: true,
