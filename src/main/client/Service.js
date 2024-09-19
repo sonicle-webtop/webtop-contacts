@@ -475,7 +475,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 								'<span class="{[this.getGroupCls(values)]}">{[this.getGroupLabel(values)]}</span>',
 								{
 									getGroupCls: function(values) {
-										return 'wt-form-body-title' + ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
+										return ((values.groupField.indexOf('letter') !== -1) ? ' wtcon-group-letter' : '');
 									},
 									getGroupLabel: function(values) {
 										var label;

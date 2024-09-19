@@ -57,10 +57,13 @@
 }
 /* ---------- Grid (contacts) */
 .wtcon-gpcontacts .x-grid-group-title {
-    font-weight: bold;
-    font-size: 1.5em;
-    line-height: calc(100% + 0.2em);
-    color: var(--wt-theme-color-1);
+    font-size: var(--wt-theme-fontsize-lg);
+    line-height: var(--wt-theme-lineheight-lg);
+    font-weight: var(--wt-theme-fontweight-medium);
+    color: var(--wt-theme-color-info-ct-on);
+}
+.wtcon-gpcontacts .wtcon-group-letter {
+    padding-left: 16px;
 }
 /* ---------- Sonicle.webtop.contacts.ux.grid.column.Contact */
 .wtcon-contactcolumn-head {
