@@ -56,6 +56,9 @@
     padding: 5px 5px 10px 5px;
 }
 /* ---------- Grid (contacts) */
+.wtcon-gpcontacts .x-grid-group-hd {
+    /*background-color: #eff6fb;crisp-bg-alt*/
+}
 .wtcon-gpcontacts .x-grid-group-title {
     font-size: var(--wt-theme-fontsize-lg);
     line-height: var(--wt-theme-lineheight-lg);

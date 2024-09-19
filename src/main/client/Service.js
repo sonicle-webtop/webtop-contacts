@@ -470,7 +470,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 						{
 							id: 'grouping',
 							ftype: 'grouping',
-							hdNotCollapsibleCls: Ext.baseCSSPrefix + 'grid-group-hd-not-collapsible' + ' wt-theme-bg-alt',
+							hdNotCollapsibleCls: Ext.baseCSSPrefix + 'grid-group-hd-not-collapsible',
 							groupHeaderTpl: [
 								'<span class="{[this.getGroupCls(values)]}">{[this.getGroupLabel(values)]}</span>',
 								{
