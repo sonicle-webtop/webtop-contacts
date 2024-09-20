@@ -1201,13 +1201,13 @@ AND (ccnts.href IS NULL)
 		ArrayList<SortField<?>> fields = new ArrayList<>();
 		for (OrderField of : orderFields) {
 			if (OrderField.DISPLAYNAME.equals(of)) {
-				fields.add(CONTACTS_.DISPLAY_NAME.asc());
+				fields.add(DSL.upper(DSL.nullif(CONTACTS_.DISPLAY_NAME, "")).asc().nullsLast());
 			} else if (OrderField.FIRSTNAME.equals(of)) {
-				fields.add(CONTACTS_.FIRSTNAME.asc());
+				fields.add(DSL.upper(DSL.nullif(CONTACTS_.FIRSTNAME, "")).asc().nullsLast());
 			} else if (OrderField.LASTNAME.equals(of)) {
-				fields.add(CONTACTS_.LASTNAME.asc());
+				fields.add(DSL.upper(DSL.nullif(CONTACTS_.LASTNAME, "")).asc().nullsLast());
 			} else if (OrderField.COMPANY.equals(of)) {
-				fields.add(CONTACTS_.COMPANY.asc());
+				fields.add(DSL.upper(DSL.nullif(CONTACTS_.COMPANY, "")).asc().nullsLast());
 			}
 		}
 		return fields;
@@ -1231,9 +1231,9 @@ AND (ccnts.href IS NULL)
 		Condition cndt = DSL.trueCondition();
 		if (!StringUtils.isBlank(pattern)) {
 			return CONTACTS_.WORK_EMAIL.likeIgnoreCase(pattern)
-					.or(CONTACTS_.HOME_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS_.OTHER_EMAIL.likeIgnoreCase(pattern))
-					.or(CONTACTS_.COMPANY.likeIgnoreCase(pattern));
+				.or(CONTACTS_.HOME_EMAIL.likeIgnoreCase(pattern))
+				.or(CONTACTS_.OTHER_EMAIL.likeIgnoreCase(pattern))
+				.or(CONTACTS_.COMPANY.likeIgnoreCase(pattern));
 		}
 		return cndt;
 	}

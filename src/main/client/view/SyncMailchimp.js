@@ -34,6 +34,7 @@
 Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 	extend: 'WTA.sdk.WizardView',
 	requires: [
+		'Sonicle.form.field.LabelTag',
 		'WTA.ux.panel.Form'
 	],
 	
@@ -148,7 +149,7 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 							hideEmptyLabel: true,
 							boxLabel: me.res('syncMailchimp.fld-synctags.lbl')
 						}, {
-							xtype: 'sotagfield',
+							xtype: 'solabeltagfield',
 							bind: {
 								value: '{data.tags}',
 								disabled: '{!fldsynctags.checked}'
@@ -211,8 +212,7 @@ Ext.define('Sonicle.webtop.contacts.view.SyncMailchimp', {
 							reference: 'fldincategory',
 							bind: '{data.incomingCategoryId}',
 							listConfig: {
-								displayField: 'name',
-								groupCls: 'wt-theme-text-lighter2'
+								displayField: 'name'
 							},
 							autoLoadOnValue: true,
 							store: {

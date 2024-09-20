@@ -53,34 +53,42 @@ Ext.define('Sonicle.webtop.contacts.ux.grid.column.Contact', {
 	sortable: false,
 	groupable: false,
 	
+	tagIconCls: 'fas fa-tag',
+	dlistIconCls: 'fas fa-list-ul',
+	emailIconCls: 'far fa-envelope',
+	mobileIconCls: 'fas fa-mobile-alt',
+	telephoneIconCls: 'fas fa-phone',
+	
 	tpl: [
 		'<div class="wtcon-grid-cell-contactcolumn">',
 			'<div class="wtcon-contactcolumn-head">',
 				'{displayName:htmlEncode}',
 				'<tpl if="company">',
-				'<span style="padding-left:10px;">{company:htmlEncode}</span>',
+				'<span>{company:htmlEncode}</span>',
 				'</tpl>',
 			'</div>',
 			'<div class="wtcon-contactcolumn-body-float">',
 				'<tpl for="tags">',
 					'<div class="wtcon-contactcolumn-glyph" style="color:{color};" data-qtip="{tooltip}">',
-						'<i class="fas fa-tag"></i>',
+						'<i class="{parent.tagIconCls}"></i>',
 					'</div>',
 				'</tpl>',
 			'</div>',
 			'<div class="wtcon-contactcolumn-body">',
-				'<span>',
-					'<tpl if="email">',
-					'<i class="<tpl if="isList">fas fa-list-ul<tpl else>far fa-envelope</tpl>" aria-hidden="true"></i>&nbsp;{email:htmlEncode}',
-					'</tpl>',
-					'<tpl if="mobile">',
-					'&nbsp;&nbsp;<i class="fas fa-mobile-alt" aria-hidden="true"></i>&nbsp;{mobile:htmlEncode}',
-					'<tpl else>',
-					'<tpl if="telephone">',
-					'&nbsp;&nbsp;<i class="fas fa-phone" aria-hidden="true"></i>&nbsp;{telephone:htmlEncode}',
-					'</tpl>',
-					'</tpl>',
-				'</span>',
+				'<tpl if="email">',
+					'<span>',
+						'<i class="wtcon-contactcolumn-icon <tpl if="isList">{dlistIconCls}<tpl else>{emailIconCls}</tpl>" aria-hidden="true"></i>{email:htmlEncode}',
+					'</span>',
+				'</tpl>',
+				'<tpl if="mobile">',
+					'<span>',
+						'<i class="wtcon-contactcolumn-icon {mobileIconCls}" aria-hidden="true"></i>{mobile:htmlEncode}',
+					'</span>',
+				'<tpl elseif="telephone">',
+					'<span>',
+						'<i class="wtcon-contactcolumn-icon {telephoneIconCls}" aria-hidden="true"></i>{telephone:htmlEncode}',
+					'</span>',
+				'</tpl>',
 			'</div>',
 		'</div>'
 	],
@@ -98,23 +106,6 @@ Ext.define('Sonicle.webtop.contacts.ux.grid.column.Contact', {
 	},
 	
 	defaultRenderer: function(val, meta, rec, ridx, cidx, sto) {
-		/*
-		var me = this,
-				isList = rec.get('isList') === true,
-				email = rec.get('email'),
-				data = {};
-		
-		Ext.apply(data, {
-			isList: isList,
-			displayName: Sonicle.String.deflt(rec.get('calcDisplayName'), ''),
-			company: me.getShowCompany() ? rec.get('company') : undefined,
-			email: isList ? Sonicle.String.substrBeforeLast(email, '@') : email,
-			mobile: rec.get('mobile'),
-			telephone: rec.get('telephone'),
-			tags: me.buildTags(rec.get('tags'))
-		});
-		return me.tpl.apply(data);
-		*/
 		return this.tpl.apply(this.prepareTplData(rec));
 	},
 	
@@ -130,6 +121,11 @@ Ext.define('Sonicle.webtop.contacts.ux.grid.column.Contact', {
 		//TODO: handle store not ready case -> issue view update after the first load!
 		
 		return {
+			tagIconCls: me.tagIconCls,
+			dlistIconCls: me.dlistIconCls,
+			emailIconCls: me.emailIconCls,
+			mobileIconCls: me.mobileIconCls,
+			telephoneIconCls: me.telephoneIconCls,
 			isList: isList,
 			displayName: Sonicle.String.deflt(rec.get('calcDisplayName'), ''),
 			company: me.getShowCompany() ? rec.get('company') : undefined,

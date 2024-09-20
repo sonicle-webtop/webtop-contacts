@@ -56,36 +56,41 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
 		WTF.roField('tags', 'string'),
+		WTF.roField('_orDN', 'string'), // Empty when mine!
 		WTF.roField('_owPid', 'string'),
 		WTF.roField('_foPerms', 'string'),
 		WTF.roField('_itPerms', 'string'),
-		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec) {
-			return Sonicle.String.join(' ', rec.get('title'), rec.get('firstName'), rec.get('lastName'));
+		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec, title, fn, ln) {
+			return Sonicle.String.join(' ', title, fn, ln);
 		}),
-		WTF.calcField('avatarName', 'string', ['displayName'], function(v, rec) {
+		// Name field for avatar column
+		WTF.calcField('avatarName', 'string', ['displayName', 'company'], function(v, rec, dn, company) {
 			return Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
-					rec.get('isList') === true,
-					rec.get('firstName'),
-					rec.get('lastName'),
-					rec.get('displayName')
+				rec.get('isList') === true,
+				rec.get('firstName'),
+				rec.get('lastName'),
+				dn,
+				company
 			);
 		}),
-		WTF.calcField('calcDisplayName', 'string', ['displayName'], function(v, rec) {
+		// Name field for contact column when type is strictly a contact person or a list
+		WTF.calcField('calcDisplayName', 'string', ['displayName'], function(v, rec, dn) {
 			return Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
-					rec.get('isList') === true,
-					rec.get('firstName'),
-					rec.get('lastName'),
-					rec.get('displayName')
+				rec.get('isList') === true,
+				rec.get('firstName'),
+				rec.get('lastName'),
+				dn
 			);
 		}),
-		WTF.calcField('letter', 'string', ['firstName', 'lastName'], function(v, rec) {
+		// Ordering field when groupBy is 'letter'...
+		WTF.calcField('letter', 'string', ['firstName', 'lastName'], function(v, rec, fn, ln) {
 			var name = Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
-					rec.get('isList') === true,
-					rec.get('firstName'),
-					rec.get('lastName'),
-					rec.get('displayName')
+				rec.get('isList') === true,
+				fn,
+				ln,
+				rec.get('displayName')
 			);
-			return Sonicle.webtop.contacts.model.GridContact.calcLetter(name);
+			return Sonicle.webtop.contacts.model.GridContact.calcAddressbookLetter(name);
 		})
 	],
 	
@@ -96,18 +101,22 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 			this.showBy = value;
 		},
 		
-		calcDisplayName: function(isList, firstName, lastName, displayName) {
-			var sb = this.showBy;
+		calcDisplayName: function(isList, firstName, lastName, displayName, company) {
+			var SoS = Sonicle.String,
+				sb = this.showBy,
+				name;
+			
 			if (!isList && sb === 'fnln') {
-				return Sonicle.String.join(' ', firstName, lastName);
+				name = SoS.join(' ', firstName, lastName);
 			} else if (!isList && sb === 'lnfn') {
-				return Sonicle.String.join(', ', lastName, firstName);
+				name = SoS.join(' ', lastName, firstName);
 			} else {
-				return displayName;
+				name = displayName;
 			}
+			return SoS.coalesce(SoS.deflt(name, null), company);
 		},
 		
-		calcLetter: function(name) {
+		calcAddressbookLetter: function(name) {
 			if (Ext.isEmpty(name)) {
 				return '*';
 			} else {
@@ -119,16 +128,6 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 				} else {
 					return '!';
 				}
-				/*
-				match = name.match(/[a-zA-Z0-9]/);
-				if ((match !== null) && /^[\d]$/.test(match[0])) { // Digit
-					return '#';
-				} else if ((match !== null) && /^[a-zA-Z]$/.test(match[0])) { // Letter
-					return match[0].toUpperCase();
-				} else {
-					return '!';
-				}
-				*/
 			}
 		}
 	}

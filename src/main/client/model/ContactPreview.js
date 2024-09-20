@@ -59,6 +59,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 		WTF.roField('catName', 'string'),
 		WTF.roField('catColor', 'string'),
 		WTF.roField('tags', 'string'),
+		WTF.roField('_orDN', 'string'), // Empty when mine!
 		WTF.roField('_owPid', 'string'),
 		WTF.roField('_foPerms', 'string'),
 		WTF.roField('_itPerms', 'string'),
@@ -68,15 +69,16 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 		WTF.calcField('pictureId', 'int', ['pic'], function(v, rec) {
 			return rec.get('pic') === true ? rec.get('id') : null;
 		}),
-		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec) {
-			return Sonicle.String.join(' ', rec.get('title'), rec.get('firstName'), rec.get('lastName'));
+		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec, title, fn, ln) {
+			return Sonicle.String.join(' ', title, fn, ln);
 		}),
-		WTF.calcField('avatarName', 'string', ['displayName'], function(v, rec) {
+		WTF.calcField('avatarName', 'string', ['displayName', 'company'], function(v, rec, dn, company) {
 			return Sonicle.webtop.contacts.model.GridContact.calcDisplayName(
-					rec.get('isList') === true,
-					rec.get('firstName'),
-					rec.get('lastName'),
-					rec.get('displayName')
+				rec.get('isList') === true,
+				rec.get('firstName'),
+				rec.get('lastName'),
+				dn,
+				company
 			);
 		}),
 		WTF.roField('_cfdefs', 'string')
@@ -90,7 +92,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 	
 	hasData: function() {
 		return (this.data1().getCount() > 0)
-				|| (this.data2().getCount() > 0)
-				|| (this.data3().getCount() > 0);
+			|| (this.data2().getCount() > 0)
+			|| (this.data3().getCount() > 0);
 	}
 });

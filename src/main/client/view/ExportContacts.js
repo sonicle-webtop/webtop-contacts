@@ -39,7 +39,7 @@ Ext.define('Sonicle.webtop.contacts.view.ExportContacts', {
 	
 	dockableConfig: {
 		title: '{exportContacts.tit}',
-		iconCls: 'wtcon-icon-export',
+		iconCls: 'wtcon-icon-exportContacts',
 		width: 480,
 		height: 380
 	},
