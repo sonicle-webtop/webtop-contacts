@@ -135,6 +135,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	
 	constructor: function(cfg) {
 		var me = this;
+		me.config.viewModel = Ext.create('Ext.app.ViewModel');
 		me.callParent([cfg]);
 		
 		Sonicle.VMUtils.applyFormulas(me.getVM(), {
