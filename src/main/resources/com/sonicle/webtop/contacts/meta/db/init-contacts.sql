@@ -25,16 +25,16 @@ CREATE SEQUENCE "contacts"."seq_list_recipients";
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."categories";
 CREATE TABLE "contacts"."categories" (
-"category_id" int4 DEFAULT nextval('"contacts".seq_categories'::regclass) NOT NULL,
+"category_id" int4 NOT NULL DEFAULT nextval('"contacts".seq_categories'::regclass),
 "domain_id" varchar(20) NOT NULL,
 "user_id" varchar(100) NOT NULL,
-"built_in" bool DEFAULT false NOT NULL,
-"provider" varchar(20) DEFAULT 'local'::character varying NOT NULL,
+"built_in" bool NOT NULL DEFAULT false,
+"provider" varchar(20) NOT NULL DEFAULT 'local'::character varying,
 "name" varchar(100) NOT NULL,
 "description" varchar(255),
 "color" varchar(20),
 "sync" varchar(1) NOT NULL,
-"is_default" bool DEFAULT false NOT NULL,
+"is_default" bool NOT NULL DEFAULT false,
 "parameters" text,
 "remote_sync_frequency" int2,
 "remote_sync_timestamp" timestamptz,
@@ -59,14 +59,14 @@ CREATE TABLE "contacts"."category_props" (
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."contacts";
 CREATE TABLE "contacts"."contacts" (
-"contact_id" int4 DEFAULT nextval('"contacts".seq_contacts'::regclass) NOT NULL,
+"contact_id" int4 NOT NULL DEFAULT nextval('"contacts".seq_contacts'::regclass),
 "category_id" int4 NOT NULL,
 "revision_status" varchar(1) NOT NULL,
-"revision_timestamp" timestamptz(6) NOT NULL,
-"revision_sequence" int4 DEFAULT 0 NOT NULL,
-"creation_timestamp" timestamptz DEFAULT now() NOT NULL,
+"revision_timestamp" timestamptz NOT NULL,
+"revision_sequence" int4 NOT NULL DEFAULT 0,
+"creation_timestamp" timestamptz NOT NULL DEFAULT now(),
 "public_uid" varchar(255) NOT NULL,
-"is_list" bool DEFAULT false NOT NULL,
+"is_list" bool NOT NULL DEFAULT false,
 "searchfield" varchar(1024),
 "display_name" varchar(255),
 "title" varchar(30),
@@ -145,6 +145,20 @@ CREATE TABLE "contacts"."contacts_attachments_data" (
 );
 
 -- ----------------------------
+-- Table structure for contacts_custom_values
+-- ----------------------------
+DROP TABLE IF EXISTS "contacts"."contacts_custom_values";
+CREATE TABLE "contacts"."contacts_custom_values" (
+"contact_id" int4 NOT NULL,
+"custom_field_id" varchar(22) NOT NULL,
+"string_value" varchar(255),
+"number_value" float8,
+"boolean_value" bool,
+"date_value" timestamptz(6),
+"text_value" text
+);
+
+-- ----------------------------
 -- Table structure for contacts_pictures
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."contacts_pictures";
@@ -154,6 +168,15 @@ CREATE TABLE "contacts"."contacts_pictures" (
 "height" int4,
 "media_type" varchar(50),
 "bytes" bytea
+);
+
+-- ----------------------------
+-- Table structure for contacts_tags
+-- ----------------------------
+DROP TABLE IF EXISTS "contacts"."contacts_tags";
+CREATE TABLE "contacts"."contacts_tags" (
+"contact_id" int4 NOT NULL,
+"tag_id" varchar(22) NOT NULL
 );
 
 -- ----------------------------
@@ -170,7 +193,7 @@ CREATE TABLE "contacts"."contacts_vcards" (
 -- ----------------------------
 DROP TABLE IF EXISTS "contacts"."list_recipients";
 CREATE TABLE "contacts"."list_recipients" (
-"list_recipient_id" int4 DEFAULT nextval('"contacts".seq_list_recipients'::regclass) NOT NULL,
+"list_recipient_id" int4 NOT NULL DEFAULT nextval('"contacts".seq_list_recipients'::regclass),
 "contact_id" int4 NOT NULL,
 "recipient" varchar(320) NOT NULL,
 "recipient_contact_id" int4,
@@ -184,9 +207,20 @@ CREATE TABLE "contacts"."list_recipients" (
 -- ----------------------------
 -- Indexes structure for table categories
 -- ----------------------------
-CREATE INDEX "categories_ak1" ON "contacts"."categories" USING btree ("domain_id", "user_id", "built_in");
-CREATE UNIQUE INDEX "categories_ak2" ON "contacts"."categories" USING btree ("domain_id", "user_id", "name");
-CREATE INDEX "categories_ak3" ON "contacts"."categories" ("provider", "remote_sync_frequency");
+CREATE INDEX "categories_ak1" ON "contacts"."categories" USING btree (
+"domain_id",
+"user_id",
+"built_in"
+);
+CREATE UNIQUE INDEX "categories_ak2" ON "contacts"."categories" USING btree (
+"domain_id",
+"user_id",
+"name"
+);
+CREATE INDEX "categories_ak3" ON "contacts"."categories" USING btree (
+"provider",
+"remote_sync_frequency"
+);
 
 -- ----------------------------
 -- Primary Key structure for table categories
@@ -196,7 +230,9 @@ ALTER TABLE "contacts"."categories" ADD PRIMARY KEY ("category_id");
 -- ----------------------------
 -- Indexes structure for table category_props
 -- ----------------------------
-CREATE INDEX "category_props_ak1" ON "contacts"."category_props" USING btree ("category_id");
+CREATE INDEX "category_props_ak1" ON "contacts"."category_props" USING btree (
+"category_id"
+);
 
 -- ----------------------------
 -- Primary Key structure for table category_props
@@ -206,12 +242,35 @@ ALTER TABLE "contacts"."category_props" ADD PRIMARY KEY ("domain_id", "user_id",
 -- ----------------------------
 -- Indexes structure for table contacts
 -- ----------------------------
-CREATE INDEX "contacts_ak1" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "revision_timestamp");
-CREATE INDEX "contacts_ak2" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "lastname");
-CREATE INDEX "contacts_ak3" ON "contacts"."contacts" USING btree ("category_id", "revision_status", "searchfield");
-CREATE INDEX "contacts_ak4" ON "contacts"."contacts" USING btree ("revision_status", "birthday");
-CREATE INDEX "contacts_ak5" ON "contacts"."contacts" USING btree ("revision_status", "anniversary");
-CREATE INDEX "contacts_ak6" ON "contacts"."contacts" USING btree ("category_id", "is_list", "revision_status", "href");
+CREATE INDEX "contacts_ak1" ON "contacts"."contacts" USING btree (
+"category_id",
+"revision_status",
+"revision_timestamp"
+);
+CREATE INDEX "contacts_ak2" ON "contacts"."contacts" USING btree (
+"category_id",
+"revision_status",
+"lastname"
+);
+CREATE INDEX "contacts_ak3" ON "contacts"."contacts" USING btree (
+"category_id",
+"revision_status",
+"searchfield"
+);
+CREATE INDEX "contacts_ak4" ON "contacts"."contacts" USING btree (
+"revision_status",
+"birthday"
+);
+CREATE INDEX "contacts_ak5" ON "contacts"."contacts" USING btree (
+"revision_status",
+"anniversary"
+);
+CREATE INDEX "contacts_ak6" ON "contacts"."contacts" USING btree (
+"category_id",
+"is_list",
+"revision_status",
+"href"
+);
 
 -- ----------------------------
 -- Primary Key structure for table contacts
@@ -229,9 +288,26 @@ ALTER TABLE "contacts"."contacts_attachments" ADD PRIMARY KEY ("contact_attachme
 ALTER TABLE "contacts"."contacts_attachments_data" ADD PRIMARY KEY ("contact_attachment_id");
 
 -- ----------------------------
+-- Primary Key structure for table contacts_custom_values
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_custom_values" ADD PRIMARY KEY ("contact_id", "custom_field_id");
+
+-- ----------------------------
 -- Primary Key structure for table contacts_pictures
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_pictures" ADD PRIMARY KEY ("contact_id");
+
+-- ----------------------------
+-- Indexes structure for table contacts_tags
+-- ----------------------------
+CREATE INDEX "contacts_tags_ak1" ON "contacts"."contacts_tags" USING btree (
+"tag_id"
+);
+
+-- ----------------------------
+-- Primary Key structure for table contacts_tags
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_tags" ADD PRIMARY KEY ("contact_id", "tag_id");
 
 -- ----------------------------
 -- Primary Key structure for table contacts_vcards
@@ -244,33 +320,46 @@ ALTER TABLE "contacts"."contacts_vcards" ADD PRIMARY KEY ("contact_id");
 ALTER TABLE "contacts"."list_recipients" ADD PRIMARY KEY ("list_recipient_id");
 
 -- ----------------------------
--- Foreign Key structure for table "contacts"."contacts_attachments"
+-- Foreign Key structure for table contacts_attachments
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_attachments" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- ----------------------------
--- Foreign Key structure for table "contacts"."contacts_attachments_data"
+-- Foreign Key structure for table contacts_attachments_data
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_attachments_data" ADD FOREIGN KEY ("contact_attachment_id") REFERENCES "contacts"."contacts_attachments" ("contact_attachment_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- ----------------------------
--- Foreign Key structure for table "contacts"."contacts_pictures"
+-- Foreign Key structure for table contacts_custom_values
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_custom_values" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "contacts"."contacts_custom_values" ADD FOREIGN KEY ("custom_field_id") REFERENCES "core"."custom_fields" ("custom_field_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ----------------------------
+-- Foreign Key structure for table contacts_pictures
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_pictures" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- ----------------------------
--- Foreign Key structure for table "contacts"."contacts_vcards"
+-- Foreign Key structure for table contacts_tags
+-- ----------------------------
+ALTER TABLE "contacts"."contacts_tags" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "contacts"."contacts_tags" ADD FOREIGN KEY ("tag_id") REFERENCES "core"."tags" ("tag_id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- ----------------------------
+-- Foreign Key structure for table contacts_vcards
 -- ----------------------------
 ALTER TABLE "contacts"."contacts_vcards" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- ----------------------------
--- Foreign Key structure for table "contacts"."list_recipients"
+-- Foreign Key structure for table list_recipients
 -- ----------------------------
 ALTER TABLE "contacts"."list_recipients" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "contacts"."list_recipients" ADD FOREIGN KEY ("recipient_contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- ----------------------------
 -- Align service version
 -- ----------------------------
 @DataSource[default@com.sonicle.webtop.core]
 DELETE FROM "core"."settings" WHERE ("settings"."service_id" = 'com.sonicle.webtop.contacts') AND ("settings"."key" = 'manifest.version');
-INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.7.0');
+INSERT INTO "core"."settings" ("service_id", "key", "value") VALUES ('com.sonicle.webtop.contacts', 'manifest.version', '5.15.0');
