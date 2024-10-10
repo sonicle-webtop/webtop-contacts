@@ -112,6 +112,7 @@ import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
+import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
@@ -1376,7 +1377,7 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsContactsList> pl = ServletUtils.getPayload(request, JsContactsList.class);
 				
-				ContactListEx contact = pl.data.createContactListForInsert();
+				ContactListEx contact = JsContactsList.createContactListRecipientForInsert(pl.data);
 				manager.addContactList(contact);
 				
 				new JsonResult().printTo(out);
@@ -1384,8 +1385,8 @@ public class Service extends BaseService {
 			} else if(crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContactsList> pl = ServletUtils.getPayload(request, JsContactsList.class);
 				
-				ContactList contact = pl.data.createContactListForUpdate();
-				manager.updateContactList(contact.getContactId(), contact);
+				ContactListEx contact = JsContactsList.createContactListRecipientForUpdate(pl.data);
+				manager.updateContactList(pl.data.contactId, contact);
 				
 				new JsonResult().printTo(out);
 				
@@ -1418,11 +1419,11 @@ public class Service extends BaseService {
 			Integer listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
 			if (listId == null) throw new WTException("Recipient address is not a list [{}]", iaVirtualRecipient.getAddress());
 			
-			ArrayList<ContactListRecipient> recipients = new ArrayList<>();
+			ArrayList<ContactListRecipientBase> recipients = new ArrayList<>();
 			for (String email: emails) {
 				ContactListRecipient rcpt = new ContactListRecipient();
 				rcpt.setRecipient(email);
-				rcpt.setRecipientType(recipientType);
+				rcpt.setRecipientType(EnumUtils.forSerializedName(recipientType, ContactListRecipientBase.RecipientType.class));
 				recipients.add(rcpt);
 			}
 			manager.updateContactsListRecipients(listId, recipients, true);

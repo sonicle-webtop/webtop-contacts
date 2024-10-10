@@ -32,13 +32,16 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.ContactList;
 import com.sonicle.webtop.contacts.model.ContactListEx;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
+import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -50,60 +53,62 @@ public class JsContactsList {
 	public Integer categoryId;
 	public String name;
 	public String tags;
-	public ArrayList<Recipient> recipients;
+	public ArrayList<JsRecipient> recipients;
 	public String _profileId;
 	
 	public JsContactsList() {}
 	
-	public JsContactsList(UserProfileId ownerId, ContactList contact) {
+	public JsContactsList(UserProfileId ownerId, ContactList<ContactListRecipient> contact) {
 		id = contact.getContactId().toString();
 		contactId = contact.getContactId();
 		categoryId = contact.getCategoryId();
 		name = contact.getDisplayName();
 		tags = new CompositeId(contact.getTags()).toString();
 		recipients = new ArrayList<>();
-		for(ContactListRecipient rcpt : contact.getRecipients()) {
-			recipients.add(new Recipient(rcpt));
+		for (ContactListRecipient rcpt : contact.getRecipients()) {
+			recipients.add(new JsRecipient(rcpt));
 		}
 		_profileId = ownerId.toString();
 	}
 	
-	public static class Recipient {
+	public static class JsRecipient {
 		public Integer listRecipientId;
 		public String recipient;
 		public String recipientType;
 		public Integer recipientContactId;
 		
-		public Recipient() {}
+		public JsRecipient() {}
 		
-		public Recipient(ContactListRecipient rcpt) {
-			listRecipientId = rcpt.getListRecipientId();
-			recipient = rcpt.getRecipient();
-			recipientType = rcpt.getRecipientType();
-			recipientContactId = rcpt.getRecipientContactId();
+		public JsRecipient(ContactListRecipient item) {
+			this.listRecipientId = item.getListRecipientId();
+			this.recipient = item.getRecipient();
+			this.recipientType = EnumUtils.toSerializedName(item.getRecipientType());
+			this.recipientContactId = item.getRecipientContactId();
 		}
 	}
 	
-	public ContactListEx createContactListForInsert() {
-		return createContactListForUpdate();
+	public static ContactListEx createContactListRecipientForInsert(JsContactsList js) {
+		return createContactListRecipientForUpdate(js);
 	}
 	
-	public ContactList createContactListForUpdate() {
-		ContactList item = new ContactList();
-		item.setContactId(contactId);
-		item.setCategoryId(categoryId);
-		item.setDisplayName(name);
-		item.setTags(new LinkedHashSet<>(new CompositeId().parse(tags).getTokens()));
-		for(Recipient jsRcpt : recipients) {
-			if (jsRcpt.recipientType!=null && jsRcpt.recipient!=null && jsRcpt.recipient.trim().length()>0) {
-				ContactListRecipient rcpt = new ContactListRecipient();
-				rcpt.setListRecipientId(jsRcpt.listRecipientId);
-				rcpt.setRecipient(jsRcpt.recipient);
-				rcpt.setRecipientContactId(jsRcpt.recipientContactId);
-				rcpt.setRecipientType(jsRcpt.recipientType);
-				item.addRecipient(rcpt);
+	public static ContactListEx createContactListRecipientForUpdate(JsContactsList js) {
+		ContactListEx item = new ContactListEx();
+		item.setCategoryId(js.categoryId);
+		item.setDisplayName(js.name);
+		item.setTags(new LinkedHashSet<>(new CompositeId().parse(js.tags).getTokens()));
+		for (JsRecipient jsrcpt : js.recipients) {
+			if (!StringUtils.isBlank(StringUtils.trimToNull(jsrcpt.recipient))) {
+				item.addRecipient(createContactListRecipientForAdd(jsrcpt));
 			}
 		}
+		return item;
+	}
+	
+	public static ContactListRecipientBase createContactListRecipientForAdd(JsRecipient js) {
+		ContactListRecipientBase item = new ContactListRecipientBase();
+		item.setRecipient(js.recipient);
+		item.setRecipientContactId(js.recipientContactId);
+		item.setRecipientType(EnumUtils.forSerializedName(js.recipientType, ContactListRecipientBase.RecipientType.class));
 		return item;
 	}
 }
