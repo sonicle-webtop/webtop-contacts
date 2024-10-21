@@ -17,16 +17,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Bean for carry new card fields
  **/
 @ApiModel(description = "Bean for carry new card fields")
-@JsonTypeName("CardNew")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiCardNew   {
+@JsonTypeName("DavCardNew")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiDavCardNew   {
   private @Valid String href;
   private @Valid String vcard;
 
   /**
    * Reference URI
    **/
-  public ApiCardNew href(String href) {
+  public ApiDavCardNew href(String href) {
     this.href = href;
     return this;
   }
@@ -47,7 +47,7 @@ public class ApiCardNew   {
   /**
    * Card data (vCard format)
    **/
-  public ApiCardNew vcard(String vcard) {
+  public ApiDavCardNew vcard(String vcard) {
     this.vcard = vcard;
     return this;
   }
@@ -74,9 +74,9 @@ public class ApiCardNew   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiCardNew cardNew = (ApiCardNew) o;
-    return Objects.equals(this.href, cardNew.href) &&
-        Objects.equals(this.vcard, cardNew.vcard);
+    ApiDavCardNew davCardNew = (ApiDavCardNew) o;
+    return Objects.equals(this.href, davCardNew.href) &&
+        Objects.equals(this.vcard, davCardNew.vcard);
   }
 
   @Override
@@ -87,7 +87,7 @@ public class ApiCardNew   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiCardNew {\n");
+    sb.append("class ApiDavCardNew {\n");
     
     sb.append("    href: ").append(toIndentedString(href)).append("\n");
     sb.append("    vcard: ").append(toIndentedString(vcard)).append("\n");

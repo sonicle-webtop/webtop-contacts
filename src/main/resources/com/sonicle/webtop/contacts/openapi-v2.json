@@ -25,7 +25,7 @@
     "/carddav/addressbooks": {
       "get": {
         "tags": [
-          "dav-addressbooks"
+          "dav"
         ],
         "summary": "List all address-books",
         "operationId": "getAddressBooks",
@@ -37,7 +37,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AddressBook"
+                    "$ref": "#/components/schemas/DavAddressBook"
                   }
                 }
               }
@@ -48,7 +48,7 @@
       },
       "post": {
         "tags": [
-          "dav-addressbooks"
+          "dav"
         ],
         "summary": "Adds a new address-book",
         "operationId": "addAddressBook",
@@ -56,7 +56,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddressBookNew"
+                "$ref": "#/components/schemas/DavAddressBookNew"
               }
             }
           },
@@ -68,7 +68,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AddressBook"
+                  "$ref": "#/components/schemas/DavAddressBook"
                 }
               }
             }
@@ -81,7 +81,7 @@
     "/carddav/addressbooks/{addressBookUid}": {
       "get": {
         "tags": [
-          "dav-addressbooks"
+          "dav"
         ],
         "summary": "Gets a single address-book",
         "operationId": "getAddressBook",
@@ -91,7 +91,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AddressBook"
+                  "$ref": "#/components/schemas/DavAddressBook"
                 }
               }
             }
@@ -109,7 +109,7 @@
       },
       "put": {
         "tags": [
-          "dav-addressbooks"
+          "dav"
         ],
         "summary": "Updates an address-book",
         "operationId": "updateAddressBook",
@@ -117,7 +117,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AddressBookUpdate"
+                "$ref": "#/components/schemas/DavAddressBookUpdate"
               }
             }
           },
@@ -142,7 +142,7 @@
       },
       "delete": {
         "tags": [
-          "dav-addressbooks"
+          "dav"
         ],
         "summary": "Deletes an address-book",
         "operationId": "deleteAddressBook",
@@ -182,7 +182,7 @@
     "/carddav/addressbooks/{addressBookUid}/cards": {
       "get": {
         "tags": [
-          "dav-cards"
+          "dav"
         ],
         "summary": "List all cards for a specific address-book",
         "operationId": "getCards",
@@ -208,7 +208,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Card"
+                    "$ref": "#/components/schemas/DavCard"
                   }
                 }
               }
@@ -219,7 +219,7 @@
       },
       "post": {
         "tags": [
-          "dav-cards"
+          "dav"
         ],
         "summary": "Adds a new card",
         "operationId": "addCard",
@@ -227,7 +227,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CardNew"
+                "$ref": "#/components/schemas/DavCardNew"
               }
             }
           },
@@ -258,7 +258,7 @@
     "/carddav/addressbooks/{addressBookUid}/cards/changes": {
       "get": {
         "tags": [
-          "dav-cards"
+          "dav"
         ],
         "summary": "Get card changes",
         "description": "Returns changed cards (added/modified/deleted) since the specified syncToken. If token is not provided, the initial sync configuration will be returned.",
@@ -289,7 +289,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CardsChanges"
+                  "$ref": "#/components/schemas/DavCardsChanges"
                 }
               }
             }
@@ -316,7 +316,7 @@
     "/carddav/addressbooks/{addressBookUid}/cards/{href}": {
       "get": {
         "tags": [
-          "dav-cards"
+          "dav"
         ],
         "summary": "Get a single card",
         "operationId": "getCard",
@@ -326,7 +326,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Card"
+                  "$ref": "#/components/schemas/DavCard"
                 }
               }
             }
@@ -344,7 +344,7 @@
       },
       "put": {
         "tags": [
-          "dav-cards"
+          "dav"
         ],
         "summary": "Updates a card",
         "operationId": "updateCard",
@@ -377,7 +377,7 @@
       },
       "delete": {
         "tags": [
-          "dav-cards"
+          "dav"
         ],
         "summary": "Deletes a card",
         "operationId": "deleteCard",
@@ -422,7 +422,7 @@
     "/eas/folders": {
       "get": {
         "tags": [
-          "eas-folders"
+          "eas"
         ],
         "summary": "List all folders",
         "operationId": "getFolders",
@@ -434,7 +434,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SyncFolder"
+                    "$ref": "#/components/schemas/EasSyncFolder"
                   }
                 }
               }
@@ -447,7 +447,7 @@
     "/eas/folders/{folderId}/messages-stats": {
       "get": {
         "tags": [
-          "eas-messages"
+          "eas"
         ],
         "summary": "List all messages for a specific folder",
         "operationId": "getMessagesStats",
@@ -459,7 +459,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SyncContactStat"
+                    "$ref": "#/components/schemas/EasSyncContactStat"
                   }
                 }
               }
@@ -483,7 +483,7 @@
     "/eas/folders/{folderId}/messages": {
       "post": {
         "tags": [
-          "eas-messages"
+          "eas"
         ],
         "summary": "Adds a message",
         "operationId": "addMessage",
@@ -491,7 +491,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SyncContactUpdate"
+                "$ref": "#/components/schemas/EasSyncContactUpdate"
               }
             }
           },
@@ -503,7 +503,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncContactStat"
+                  "$ref": "#/components/schemas/EasSyncContactStat"
                 }
               }
             }
@@ -527,7 +527,7 @@
     "/eas/folders/{folderId}/messages/{id}": {
       "get": {
         "tags": [
-          "eas-messages"
+          "eas"
         ],
         "summary": "Get a single message",
         "operationId": "getMessage",
@@ -547,7 +547,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncContact"
+                  "$ref": "#/components/schemas/EasSyncContact"
                 }
               }
             }
@@ -565,7 +565,7 @@
       },
       "put": {
         "tags": [
-          "eas-messages"
+          "eas"
         ],
         "summary": "Updates a message",
         "operationId": "updateMessage",
@@ -583,7 +583,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SyncContactUpdate"
+                "$ref": "#/components/schemas/EasSyncContactUpdate"
               }
             }
           },
@@ -595,7 +595,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SyncContactStat"
+                  "$ref": "#/components/schemas/EasSyncContactStat"
                 }
               }
             }
@@ -614,7 +614,7 @@
       },
       "delete": {
         "tags": [
-          "eas-messages"
+          "eas"
         ],
         "summary": "Deletes a message",
         "operationId": "deleteMessage",
@@ -681,7 +681,7 @@
         "description": "This general detailed error structure is used throughout this API.",
         "title": ""
       },
-      "AddressBook": {
+      "DavAddressBook": {
         "type": "object",
         "description": "Bean for carry addressbook's fields",
         "properties": {
@@ -728,7 +728,7 @@
           "ownerUsername"
         ]
       },
-      "AddressBookUpdate": {
+      "DavAddressBookUpdate": {
         "type": "object",
         "properties": {
           "displayName": {
@@ -749,7 +749,7 @@
         },
         "description": "Bean for carry addressbook's updateable fields"
       },
-      "AddressBookNew": {
+      "DavAddressBookNew": {
         "required": [
           "displayName"
         ],
@@ -766,7 +766,7 @@
         },
         "description": "Bean for carry addressbook's fields"
       },
-      "Card": {
+      "DavCard": {
         "type": "object",
         "description": "Bean for carry card fields",
         "properties": {
@@ -806,7 +806,7 @@
           "href"
         ]
       },
-      "CardNew": {
+      "DavCardNew": {
         "required": [
           "href",
           "vcard"
@@ -824,7 +824,7 @@
         },
         "description": "Bean for carry new card fields"
       },
-      "CardChanged": {
+      "DavCardChanged": {
         "type": "object",
         "description": "Bean for carry fields of card that have been changed",
         "properties": {
@@ -847,7 +847,7 @@
           "etag"
         ]
       },
-      "CardsChanges": {
+      "DavCardsChanges": {
         "required": [
           "deleted",
           "inserted",
@@ -864,27 +864,27 @@
             "type": "array",
             "description": "Items that have been inserted",
             "items": {
-              "$ref": "#/components/schemas/CardChanged"
+              "$ref": "#/components/schemas/DavCardChanged"
             }
           },
           "updated": {
             "type": "array",
             "description": "Items that have been updated",
             "items": {
-              "$ref": "#/components/schemas/CardChanged"
+              "$ref": "#/components/schemas/DavCardChanged"
             }
           },
           "deleted": {
             "type": "array",
             "description": "Items that have been deleted",
             "items": {
-              "$ref": "#/components/schemas/CardChanged"
+              "$ref": "#/components/schemas/DavCardChanged"
             }
           }
         },
         "description": "Bean for carry card collection changes"
       },
-      "SyncFolder": {
+      "EasSyncFolder": {
         "type": "object",
         "description": "Bean for carry folder's fields",
         "properties": {
@@ -926,7 +926,7 @@
           "ownerId"
         ]
       },
-      "SyncContactStat": {
+      "EasSyncContactStat": {
         "type": "object",
         "description": "Bean for carry messageStat fields",
         "properties": {
@@ -944,7 +944,7 @@
           "etag"
         ]
       },
-      "SyncContact": {
+      "EasSyncContact": {
         "type": "object",
         "description": "Bean for carry messageStat fields",
         "properties": {
@@ -1150,7 +1150,7 @@
           "etag"
         ]
       },
-      "SyncContactUpdate": {
+      "EasSyncContactUpdate": {
         "type": "object",
         "properties": {
           "title": {
@@ -1358,16 +1358,10 @@
   },
   "tags": [
     {
-      "name": "dav-addressbooks"
+      "name": "dav"
     },
     {
-      "name": "dav-cards"
-    },
-    {
-      "name": "eas-folders"
-    },
-    {
-      "name": "eas-messages"
+      "name": "eas"
     }
   ]
 }

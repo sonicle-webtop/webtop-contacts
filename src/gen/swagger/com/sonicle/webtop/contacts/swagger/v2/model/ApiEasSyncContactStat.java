@@ -14,54 +14,55 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * This general detailed error structure is used throughout this API.
+ * Bean for carry messageStat fields
  **/
-@ApiModel(description = "This general detailed error structure is used throughout this API.")
-@JsonTypeName("Error")
+@ApiModel(description = "Bean for carry messageStat fields")
+@JsonTypeName("EasSyncContactStat")
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
-public class ApiError   {
-  private @Valid Integer code;
-  private @Valid String description;
+public class ApiEasSyncContactStat   {
+  private @Valid String id;
+  private @Valid String etag;
 
   /**
-   * minimum: 400
-   * maximum: 599
+   * Message ID (internal)
    **/
-  public ApiError code(Integer code) {
-    this.code = code;
+  public ApiEasSyncContactStat id(String id) {
+    this.id = id;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "")
-  @JsonProperty("code")
+  @ApiModelProperty(required = true, value = "Message ID (internal)")
+  @JsonProperty("id")
   @NotNull
- @Min(400) @Max(599)  public Integer getCode() {
-    return code;
+  public String getId() {
+    return id;
   }
 
-  @JsonProperty("code")
-  public void setCode(Integer code) {
-    this.code = code;
+  @JsonProperty("id")
+  public void setId(String id) {
+    this.id = id;
   }
 
   /**
+   * Revision tag
    **/
-  public ApiError description(String description) {
-    this.description = description;
+  public ApiEasSyncContactStat etag(String etag) {
+    this.etag = etag;
     return this;
   }
 
   
-  @ApiModelProperty(example = "Bad query parameter [$size]: Invalid integer value [abc]", value = "")
-  @JsonProperty("description")
-  public String getDescription() {
-    return description;
+  @ApiModelProperty(required = true, value = "Revision tag")
+  @JsonProperty("etag")
+  @NotNull
+  public String getEtag() {
+    return etag;
   }
 
-  @JsonProperty("description")
-  public void setDescription(String description) {
-    this.description = description;
+  @JsonProperty("etag")
+  public void setEtag(String etag) {
+    this.etag = etag;
   }
 
 
@@ -73,23 +74,23 @@ public class ApiError   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiError error = (ApiError) o;
-    return Objects.equals(this.code, error.code) &&
-        Objects.equals(this.description, error.description);
+    ApiEasSyncContactStat easSyncContactStat = (ApiEasSyncContactStat) o;
+    return Objects.equals(this.id, easSyncContactStat.id) &&
+        Objects.equals(this.etag, easSyncContactStat.etag);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(code, description);
+    return Objects.hash(id, etag);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiError {\n");
+    sb.append("class ApiEasSyncContactStat {\n");
     
-    sb.append("    code: ").append(toIndentedString(code)).append("\n");
-    sb.append("    description: ").append(toIndentedString(description)).append("\n");
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
     sb.append("}");
     return sb.toString();
   }

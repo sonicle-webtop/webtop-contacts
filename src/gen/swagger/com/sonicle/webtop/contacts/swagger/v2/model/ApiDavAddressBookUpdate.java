@@ -19,9 +19,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Bean for carry addressbook&#39;s updateable fields
  **/
 @ApiModel(description = "Bean for carry addressbook's updateable fields")
-@JsonTypeName("AddressBookUpdate")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiAddressBookUpdate   {
+@JsonTypeName("DavAddressBookUpdate")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiDavAddressBookUpdate   {
   private @Valid String displayName;
   private @Valid String description;
   private @Valid List<String> updatedFields = null;
@@ -29,7 +29,7 @@ public class ApiAddressBookUpdate   {
   /**
    * New value for displayName
    **/
-  public ApiAddressBookUpdate displayName(String displayName) {
+  public ApiDavAddressBookUpdate displayName(String displayName) {
     this.displayName = displayName;
     return this;
   }
@@ -49,7 +49,7 @@ public class ApiAddressBookUpdate   {
   /**
    * New value for description
    **/
-  public ApiAddressBookUpdate description(String description) {
+  public ApiDavAddressBookUpdate description(String description) {
     this.description = description;
     return this;
   }
@@ -69,7 +69,7 @@ public class ApiAddressBookUpdate   {
   /**
    * Specifies which fields have been updated
    **/
-  public ApiAddressBookUpdate updatedFields(List<String> updatedFields) {
+  public ApiDavAddressBookUpdate updatedFields(List<String> updatedFields) {
     this.updatedFields = updatedFields;
     return this;
   }
@@ -86,7 +86,7 @@ public class ApiAddressBookUpdate   {
     this.updatedFields = updatedFields;
   }
 
-  public ApiAddressBookUpdate addUpdatedFieldsItem(String updatedFieldsItem) {
+  public ApiDavAddressBookUpdate addUpdatedFieldsItem(String updatedFieldsItem) {
     if (this.updatedFields == null) {
       this.updatedFields = new ArrayList<>();
     }
@@ -95,7 +95,7 @@ public class ApiAddressBookUpdate   {
     return this;
   }
 
-  public ApiAddressBookUpdate removeUpdatedFieldsItem(String updatedFieldsItem) {
+  public ApiDavAddressBookUpdate removeUpdatedFieldsItem(String updatedFieldsItem) {
     if (updatedFieldsItem != null && this.updatedFields != null) {
       this.updatedFields.remove(updatedFieldsItem);
     }
@@ -111,10 +111,10 @@ public class ApiAddressBookUpdate   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiAddressBookUpdate addressBookUpdate = (ApiAddressBookUpdate) o;
-    return Objects.equals(this.displayName, addressBookUpdate.displayName) &&
-        Objects.equals(this.description, addressBookUpdate.description) &&
-        Objects.equals(this.updatedFields, addressBookUpdate.updatedFields);
+    ApiDavAddressBookUpdate davAddressBookUpdate = (ApiDavAddressBookUpdate) o;
+    return Objects.equals(this.displayName, davAddressBookUpdate.displayName) &&
+        Objects.equals(this.description, davAddressBookUpdate.description) &&
+        Objects.equals(this.updatedFields, davAddressBookUpdate.updatedFields);
   }
 
   @Override
@@ -125,7 +125,7 @@ public class ApiAddressBookUpdate   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiAddressBookUpdate {\n");
+    sb.append("class ApiDavAddressBookUpdate {\n");
     
     sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");

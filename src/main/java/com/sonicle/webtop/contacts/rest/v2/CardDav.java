@@ -46,13 +46,13 @@ import com.sonicle.webtop.contacts.model.ContactObjectChanged;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
 import com.sonicle.webtop.contacts.swagger.v2.api.CarddavApi;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiAddressBook;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiAddressBookNew;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiAddressBookUpdate;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiCard;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiCardChanged;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiCardNew;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiCardsChanges;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavAddressBook;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavAddressBookNew;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavAddressBookUpdate;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavCard;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavCardChanged;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavCardNew;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiDavCardsChanges;
 import com.sonicle.webtop.contacts.swagger.v2.model.ApiError;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
@@ -89,7 +89,7 @@ public class CardDav extends CarddavApi {
 	public Response getAddressBooks() {
 		UserProfileId currentProfileId = RunContext.getRunProfileId();
 		ContactsManager manager = getManager();
-		List<ApiAddressBook> items = new ArrayList<>();
+		List<ApiDavAddressBook> items = new ArrayList<>();
 		
 		if (logger.isDebugEnabled()) {
 			logger.debug("[{}] getAddressBooks()", currentProfileId);
@@ -151,7 +151,7 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response addAddressBook(ApiAddressBookNew body) {
+	public Response addAddressBook(ApiDavAddressBookNew body) {
 		UserProfileId currentProfileId = RunContext.getRunProfileId();
 		ContactsManager manager = getManager();
 		
@@ -175,7 +175,7 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response updateAddressBook(String addressBookUid, ApiAddressBookUpdate body) {
+	public Response updateAddressBook(String addressBookUid, ApiDavAddressBookUpdate body) {
 		ContactsManager manager = getManager();
 		
 		if (logger.isDebugEnabled()) {
@@ -234,7 +234,7 @@ public class CardDav extends CarddavApi {
 	@Override
 	public Response getCards(String addressBookUid, List<String> hrefs) {
 		ContactsManager manager = getManager();
-		List<ApiCard> items = new ArrayList<>();
+		List<ApiDavCard> items = new ArrayList<>();
 		
 		if (logger.isDebugEnabled()) {
 			logger.debug("[{}] getCards({})", RunContext.getRunProfileId(), addressBookUid);
@@ -326,7 +326,7 @@ public class CardDav extends CarddavApi {
 	}
 
 	@Override
-	public Response addCard(String addressBookUid, ApiCardNew body) {
+	public Response addCard(String addressBookUid, ApiDavCardNew body) {
 		ContactsManager manager = getManager();
 		
 		if (logger.isDebugEnabled()) {
@@ -392,7 +392,7 @@ public class CardDav extends CarddavApi {
 		}
 	}
 	
-	private ApiAddressBook createAddressBook(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions) {
+	private ApiDavAddressBook createAddressBook(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions) {
 		UserProfile.Data owud = WT.getUserData(cat.getProfileId());
 		
 		String displayName = cat.getName();
@@ -402,7 +402,7 @@ public class CardDav extends CarddavApi {
 		}
 		String ownerUsername = owud.getProfileEmailAddress();
 		
-		return new ApiAddressBook()
+		return new ApiDavAddressBook()
 			.id(String.valueOf(cat.getCategoryId()))
 			.uid(ContactsUtils.encodeAsCategoryUid(cat.getCategoryId()))
 			.displayName(displayName)
@@ -413,8 +413,8 @@ public class CardDav extends CarddavApi {
 			.ownerUsername(ownerUsername);
 	}
 	
-	private ApiCard createDavObject(ContactObject obj) {
-		ApiCard ret = new ApiCard()
+	private ApiDavCard createDavObject(ContactObject obj) {
+		ApiDavCard ret = new ApiDavCard()
 			.id(String.valueOf(obj.getContactId()))
 			.uid(obj.getPublicUid())
 			.href(obj.getHref())
@@ -432,30 +432,30 @@ public class CardDav extends CarddavApi {
 		}
 	}
 	
-	private ApiCardChanged createCardChanged(ContactObjectChanged card) {
-		return new ApiCardChanged()
+	private ApiDavCardChanged createCardChanged(ContactObjectChanged card) {
+		return new ApiDavCardChanged()
 			.id(String.valueOf(card.getContactId()))
 			.href(card.getHref())
 			.etag(buildEtag(card.getRevisionTimestamp()));
 	}
 	
-	private ApiCardsChanges createCardsChanges(DateTime lastRevisionTimestamp, CollectionChangeSet<ContactObjectChanged> changes) {
-		ArrayList<ApiCardChanged> inserted = new ArrayList<>();
+	private ApiDavCardsChanges createCardsChanges(DateTime lastRevisionTimestamp, CollectionChangeSet<ContactObjectChanged> changes) {
+		ArrayList<ApiDavCardChanged> inserted = new ArrayList<>();
 		for (ContactObjectChanged card : changes.inserted) {
 			inserted.add(createCardChanged(card));
 		}
 		
-		ArrayList<ApiCardChanged> updated = new ArrayList<>();
+		ArrayList<ApiDavCardChanged> updated = new ArrayList<>();
 		for (ContactObjectChanged card : changes.updated) {
 			updated.add(createCardChanged(card));
 		}
 		
-		ArrayList<ApiCardChanged> deleted = new ArrayList<>();
+		ArrayList<ApiDavCardChanged> deleted = new ArrayList<>();
 		for (ContactObjectChanged card : changes.deleted) {
 			deleted.add(createCardChanged(card));
 		}
 		
-		return new ApiCardsChanges()
+		return new ApiDavCardsChanges()
 			.syncToken(buildEtag(lastRevisionTimestamp))
 			.inserted(inserted)
 			.updated(updated)

@@ -17,9 +17,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Bean for carry addressbook&#39;s fields
  **/
 @ApiModel(description = "Bean for carry addressbook's fields")
-@JsonTypeName("AddressBook")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiAddressBook   {
+@JsonTypeName("DavAddressBook")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiDavAddressBook   {
   private @Valid String id;
   private @Valid String uid;
   private @Valid String displayName;
@@ -32,7 +32,7 @@ public class ApiAddressBook   {
   /**
    * AddressBook ID (internal)
    **/
-  public ApiAddressBook id(String id) {
+  public ApiDavAddressBook id(String id) {
     this.id = id;
     return this;
   }
@@ -53,7 +53,7 @@ public class ApiAddressBook   {
   /**
    * AddressBook UID (public)
    **/
-  public ApiAddressBook uid(String uid) {
+  public ApiDavAddressBook uid(String uid) {
     this.uid = uid;
     return this;
   }
@@ -74,7 +74,7 @@ public class ApiAddressBook   {
   /**
    * Display name
    **/
-  public ApiAddressBook displayName(String displayName) {
+  public ApiDavAddressBook displayName(String displayName) {
     this.displayName = displayName;
     return this;
   }
@@ -95,7 +95,7 @@ public class ApiAddressBook   {
   /**
    * Description
    **/
-  public ApiAddressBook description(String description) {
+  public ApiDavAddressBook description(String description) {
     this.description = description;
     return this;
   }
@@ -115,7 +115,7 @@ public class ApiAddressBook   {
   /**
    * Current sync token
    **/
-  public ApiAddressBook syncToken(String syncToken) {
+  public ApiDavAddressBook syncToken(String syncToken) {
     this.syncToken = syncToken;
     return this;
   }
@@ -136,7 +136,7 @@ public class ApiAddressBook   {
   /**
    * ACL info for folder itself
    **/
-  public ApiAddressBook aclFol(String aclFol) {
+  public ApiDavAddressBook aclFol(String aclFol) {
     this.aclFol = aclFol;
     return this;
   }
@@ -157,7 +157,7 @@ public class ApiAddressBook   {
   /**
    * ACL info for folder elements
    **/
-  public ApiAddressBook aclEle(String aclEle) {
+  public ApiDavAddressBook aclEle(String aclEle) {
     this.aclEle = aclEle;
     return this;
   }
@@ -178,7 +178,7 @@ public class ApiAddressBook   {
   /**
    * The owner profile&#39;s username
    **/
-  public ApiAddressBook ownerUsername(String ownerUsername) {
+  public ApiDavAddressBook ownerUsername(String ownerUsername) {
     this.ownerUsername = ownerUsername;
     return this;
   }
@@ -205,15 +205,15 @@ public class ApiAddressBook   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiAddressBook addressBook = (ApiAddressBook) o;
-    return Objects.equals(this.id, addressBook.id) &&
-        Objects.equals(this.uid, addressBook.uid) &&
-        Objects.equals(this.displayName, addressBook.displayName) &&
-        Objects.equals(this.description, addressBook.description) &&
-        Objects.equals(this.syncToken, addressBook.syncToken) &&
-        Objects.equals(this.aclFol, addressBook.aclFol) &&
-        Objects.equals(this.aclEle, addressBook.aclEle) &&
-        Objects.equals(this.ownerUsername, addressBook.ownerUsername);
+    ApiDavAddressBook davAddressBook = (ApiDavAddressBook) o;
+    return Objects.equals(this.id, davAddressBook.id) &&
+        Objects.equals(this.uid, davAddressBook.uid) &&
+        Objects.equals(this.displayName, davAddressBook.displayName) &&
+        Objects.equals(this.description, davAddressBook.description) &&
+        Objects.equals(this.syncToken, davAddressBook.syncToken) &&
+        Objects.equals(this.aclFol, davAddressBook.aclFol) &&
+        Objects.equals(this.aclEle, davAddressBook.aclEle) &&
+        Objects.equals(this.ownerUsername, davAddressBook.ownerUsername);
   }
 
   @Override
@@ -224,7 +224,7 @@ public class ApiAddressBook   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiAddressBook {\n");
+    sb.append("class ApiDavAddressBook {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    uid: ").append(toIndentedString(uid)).append("\n");

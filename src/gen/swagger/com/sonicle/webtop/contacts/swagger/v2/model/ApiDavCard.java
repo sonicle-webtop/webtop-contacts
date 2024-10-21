@@ -17,9 +17,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Bean for carry card fields
  **/
 @ApiModel(description = "Bean for carry card fields")
-@JsonTypeName("Card")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiCard   {
+@JsonTypeName("DavCard")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiDavCard   {
   private @Valid String id;
   private @Valid String uid;
   private @Valid String href;
@@ -31,7 +31,7 @@ public class ApiCard   {
   /**
    * Card ID (internal)
    **/
-  public ApiCard id(String id) {
+  public ApiDavCard id(String id) {
     this.id = id;
     return this;
   }
@@ -52,7 +52,7 @@ public class ApiCard   {
   /**
    * Card UID (public)
    **/
-  public ApiCard uid(String uid) {
+  public ApiDavCard uid(String uid) {
     this.uid = uid;
     return this;
   }
@@ -73,7 +73,7 @@ public class ApiCard   {
   /**
    * Reference URI
    **/
-  public ApiCard href(String href) {
+  public ApiDavCard href(String href) {
     this.href = href;
     return this;
   }
@@ -94,7 +94,7 @@ public class ApiCard   {
   /**
    * Last modification time (unix timestamp)
    **/
-  public ApiCard lastModified(Long lastModified) {
+  public ApiDavCard lastModified(Long lastModified) {
     this.lastModified = lastModified;
     return this;
   }
@@ -114,7 +114,7 @@ public class ApiCard   {
   /**
    * Revision tag
    **/
-  public ApiCard etag(String etag) {
+  public ApiDavCard etag(String etag) {
     this.etag = etag;
     return this;
   }
@@ -134,7 +134,7 @@ public class ApiCard   {
   /**
    * Size (in bytes) of card data
    **/
-  public ApiCard size(Integer size) {
+  public ApiDavCard size(Integer size) {
     this.size = size;
     return this;
   }
@@ -154,7 +154,7 @@ public class ApiCard   {
   /**
    * Card data (vCard format)
    **/
-  public ApiCard vcard(String vcard) {
+  public ApiDavCard vcard(String vcard) {
     this.vcard = vcard;
     return this;
   }
@@ -180,14 +180,14 @@ public class ApiCard   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiCard card = (ApiCard) o;
-    return Objects.equals(this.id, card.id) &&
-        Objects.equals(this.uid, card.uid) &&
-        Objects.equals(this.href, card.href) &&
-        Objects.equals(this.lastModified, card.lastModified) &&
-        Objects.equals(this.etag, card.etag) &&
-        Objects.equals(this.size, card.size) &&
-        Objects.equals(this.vcard, card.vcard);
+    ApiDavCard davCard = (ApiDavCard) o;
+    return Objects.equals(this.id, davCard.id) &&
+        Objects.equals(this.uid, davCard.uid) &&
+        Objects.equals(this.href, davCard.href) &&
+        Objects.equals(this.lastModified, davCard.lastModified) &&
+        Objects.equals(this.etag, davCard.etag) &&
+        Objects.equals(this.size, davCard.size) &&
+        Objects.equals(this.vcard, davCard.vcard);
   }
 
   @Override
@@ -198,7 +198,7 @@ public class ApiCard   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiCard {\n");
+    sb.append("class ApiDavCard {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    uid: ").append(toIndentedString(uid)).append("\n");

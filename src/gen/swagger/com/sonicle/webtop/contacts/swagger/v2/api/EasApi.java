@@ -1,9 +1,9 @@
 package com.sonicle.webtop.contacts.swagger.v2.api;
 
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncContact;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncContactStat;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncContactUpdate;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncFolder;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncContact;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncContactStat;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncContactUpdate;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncFolder;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -18,23 +18,23 @@ import javax.validation.Valid;
 
 @Path("/eas/folders")
 @Api(description = "the eas API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-14T17:59:50.160+02:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
 public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
     @Path("/{folderId}/messages")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Adds a message", notes = "Add new Contact into specified Category.", response = ApiSyncContactStat.class, authorizations = {
+    @ApiOperation(value = "Adds a message", notes = "Add new Contact into specified Category.", response = ApiEasSyncContactStat.class, authorizations = {
         
         @Authorization(value = "auth-basic"),
         
         @Authorization(value = "auth-bearer")
-         }, tags={ "eas-messages" })
+         }, tags={ "eas" })
     @ApiResponses(value = { 
-        @ApiResponse(code = 201, message = "Success", response = ApiSyncContactStat.class)
+        @ApiResponse(code = 201, message = "Success", response = ApiEasSyncContactStat.class)
     })
-    public Response addMessage(@PathParam("folderId") String folderId,@Valid @NotNull ApiSyncContactUpdate body) {
+    public Response addMessage(@PathParam("folderId") String folderId,@Valid @NotNull ApiEasSyncContactUpdate body) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -45,7 +45,7 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
         @Authorization(value = "auth-basic"),
         
         @Authorization(value = "auth-bearer")
-         }, tags={ "eas-messages" })
+         }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 204, message = "Success", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
@@ -57,14 +57,14 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
 
     @GET
     @Produces({ "application/json" })
-    @ApiOperation(value = "List all folders", notes = "Returns a list of available Categories with enabled synchronization.", response = ApiSyncFolder.class, responseContainer = "List", authorizations = {
+    @ApiOperation(value = "List all folders", notes = "Returns a list of available Categories with enabled synchronization.", response = ApiEasSyncFolder.class, responseContainer = "List", authorizations = {
         
         @Authorization(value = "auth-basic"),
         
         @Authorization(value = "auth-bearer")
-         }, tags={ "eas-folders" })
+         }, tags={ "eas" })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Success", response = ApiSyncFolder.class, responseContainer = "List")
+        @ApiResponse(code = 200, message = "Success", response = ApiEasSyncFolder.class, responseContainer = "List")
     })
     public Response getFolders() {
         return Response.ok().entity("magic!").build();
@@ -73,14 +73,14 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @GET
     @Path("/{folderId}/messages/{id}")
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get a single message", notes = "Gets the specified Contact.", response = ApiSyncContact.class, authorizations = {
+    @ApiOperation(value = "Get a single message", notes = "Gets the specified Contact.", response = ApiEasSyncContact.class, authorizations = {
         
         @Authorization(value = "auth-basic"),
         
         @Authorization(value = "auth-bearer")
-         }, tags={ "eas-messages" })
+         }, tags={ "eas" })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Success", response = ApiSyncContact.class),
+        @ApiResponse(code = 200, message = "Success", response = ApiEasSyncContact.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Contact not found", response = Void.class)
     })
@@ -91,14 +91,14 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @GET
     @Path("/{folderId}/messages-stats")
     @Produces({ "application/json" })
-    @ApiOperation(value = "List all messages for a specific folder", notes = "Returns sync informations for the specified Category.", response = ApiSyncContactStat.class, responseContainer = "List", authorizations = {
+    @ApiOperation(value = "List all messages for a specific folder", notes = "Returns sync informations for the specified Category.", response = ApiEasSyncContactStat.class, responseContainer = "List", authorizations = {
         
         @Authorization(value = "auth-basic"),
         
         @Authorization(value = "auth-bearer")
-         }, tags={ "eas-messages" })
+         }, tags={ "eas" })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Success", response = ApiSyncContactStat.class, responseContainer = "List")
+        @ApiResponse(code = 200, message = "Success", response = ApiEasSyncContactStat.class, responseContainer = "List")
     })
     public Response getMessagesStats(@PathParam("folderId") String folderId) {
         return Response.ok().entity("magic!").build();
@@ -108,18 +108,18 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Path("/{folderId}/messages/{id}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @ApiOperation(value = "Updates a message", notes = "Updates the specified Contact.", response = ApiSyncContactStat.class, authorizations = {
+    @ApiOperation(value = "Updates a message", notes = "Updates the specified Contact.", response = ApiEasSyncContactStat.class, authorizations = {
         
         @Authorization(value = "auth-basic"),
         
         @Authorization(value = "auth-bearer")
-         }, tags={ "eas-messages" })
+         }, tags={ "eas" })
     @ApiResponses(value = { 
-        @ApiResponse(code = 200, message = "Success", response = ApiSyncContactStat.class),
+        @ApiResponse(code = 200, message = "Success", response = ApiEasSyncContactStat.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Contact not found", response = Void.class)
     })
-    public Response updateMessage(@PathParam("folderId") @ApiParam("Folder ID") String folderId,@PathParam("id") @ApiParam("Message ID") String id,@Valid @NotNull ApiSyncContactUpdate body,@QueryParam("picture")  @ApiParam("Determine whether to update picture data")  Boolean picture) {
+    public Response updateMessage(@PathParam("folderId") @ApiParam("Folder ID") String folderId,@PathParam("id") @ApiParam("Message ID") String id,@Valid @NotNull ApiEasSyncContactUpdate body,@QueryParam("picture")  @ApiParam("Determine whether to update picture data")  Boolean picture) {
         return Response.ok().entity("magic!").build();
     }
 }

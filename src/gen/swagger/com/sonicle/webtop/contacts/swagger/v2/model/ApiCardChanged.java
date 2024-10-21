@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Bean for carry fields of card that have been changed")
 @JsonTypeName("CardChanged")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-14T17:59:50.160+02:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
 public class ApiCardChanged   {
   private @Valid String id;
   private @Valid String href;

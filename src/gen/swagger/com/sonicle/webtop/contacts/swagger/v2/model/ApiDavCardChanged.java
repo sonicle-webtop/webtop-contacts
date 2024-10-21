@@ -14,19 +14,41 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Bean for carry new card fields
+ * Bean for carry fields of card that have been changed
  **/
-@ApiModel(description = "Bean for carry new card fields")
-@JsonTypeName("CardNew")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiCardNew   {
+@ApiModel(description = "Bean for carry fields of card that have been changed")
+@JsonTypeName("DavCardChanged")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiDavCardChanged   {
+  private @Valid String id;
   private @Valid String href;
-  private @Valid String vcard;
+  private @Valid String etag;
+
+  /**
+   * Card ID (internal)
+   **/
+  public ApiDavCardChanged id(String id) {
+    this.id = id;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "Card ID (internal)")
+  @JsonProperty("id")
+  @NotNull
+  public String getId() {
+    return id;
+  }
+
+  @JsonProperty("id")
+  public void setId(String id) {
+    this.id = id;
+  }
 
   /**
    * Reference URI
    **/
-  public ApiCardNew href(String href) {
+  public ApiDavCardChanged href(String href) {
     this.href = href;
     return this;
   }
@@ -45,24 +67,24 @@ public class ApiCardNew   {
   }
 
   /**
-   * Card data (vCard format)
+   * Revision tag
    **/
-  public ApiCardNew vcard(String vcard) {
-    this.vcard = vcard;
+  public ApiDavCardChanged etag(String etag) {
+    this.etag = etag;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Card data (vCard format)")
-  @JsonProperty("vcard")
+  @ApiModelProperty(required = true, value = "Revision tag")
+  @JsonProperty("etag")
   @NotNull
-  public String getVcard() {
-    return vcard;
+  public String getEtag() {
+    return etag;
   }
 
-  @JsonProperty("vcard")
-  public void setVcard(String vcard) {
-    this.vcard = vcard;
+  @JsonProperty("etag")
+  public void setEtag(String etag) {
+    this.etag = etag;
   }
 
 
@@ -74,23 +96,25 @@ public class ApiCardNew   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiCardNew cardNew = (ApiCardNew) o;
-    return Objects.equals(this.href, cardNew.href) &&
-        Objects.equals(this.vcard, cardNew.vcard);
+    ApiDavCardChanged davCardChanged = (ApiDavCardChanged) o;
+    return Objects.equals(this.id, davCardChanged.id) &&
+        Objects.equals(this.href, davCardChanged.href) &&
+        Objects.equals(this.etag, davCardChanged.etag);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(href, vcard);
+    return Objects.hash(id, href, etag);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiCardNew {\n");
+    sb.append("class ApiDavCardChanged {\n");
     
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    href: ").append(toIndentedString(href)).append("\n");
-    sb.append("    vcard: ").append(toIndentedString(vcard)).append("\n");
+    sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
     sb.append("}");
     return sb.toString();
   }

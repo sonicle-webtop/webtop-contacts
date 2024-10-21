@@ -17,16 +17,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Bean for carry addressbook&#39;s fields
  **/
 @ApiModel(description = "Bean for carry addressbook's fields")
-@JsonTypeName("AddressBookNew")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiAddressBookNew   {
+@JsonTypeName("DavAddressBookNew")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiDavAddressBookNew   {
   private @Valid String displayName;
   private @Valid String description;
 
   /**
    * Display name
    **/
-  public ApiAddressBookNew displayName(String displayName) {
+  public ApiDavAddressBookNew displayName(String displayName) {
     this.displayName = displayName;
     return this;
   }
@@ -47,7 +47,7 @@ public class ApiAddressBookNew   {
   /**
    * Description
    **/
-  public ApiAddressBookNew description(String description) {
+  public ApiDavAddressBookNew description(String description) {
     this.description = description;
     return this;
   }
@@ -73,9 +73,9 @@ public class ApiAddressBookNew   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiAddressBookNew addressBookNew = (ApiAddressBookNew) o;
-    return Objects.equals(this.displayName, addressBookNew.displayName) &&
-        Objects.equals(this.description, addressBookNew.description);
+    ApiDavAddressBookNew davAddressBookNew = (ApiDavAddressBookNew) o;
+    return Objects.equals(this.displayName, davAddressBookNew.displayName) &&
+        Objects.equals(this.description, davAddressBookNew.description);
   }
 
   @Override
@@ -86,7 +86,7 @@ public class ApiAddressBookNew   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiAddressBookNew {\n");
+    sb.append("class ApiDavAddressBookNew {\n");
     
     sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");

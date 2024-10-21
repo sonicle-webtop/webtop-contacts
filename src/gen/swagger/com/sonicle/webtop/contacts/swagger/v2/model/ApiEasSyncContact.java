@@ -14,12 +14,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Bean for carry message&#39;s updateable fields
+ * Bean for carry messageStat fields
  **/
-@ApiModel(description = "Bean for carry message's updateable fields")
-@JsonTypeName("SyncContactUpdate")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:14:51.349+02:00[Europe/Berlin]")
-public class ApiSyncContactUpdate   {
+@ApiModel(description = "Bean for carry messageStat fields")
+@JsonTypeName("EasSyncContact")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+public class ApiEasSyncContact   {
+  private @Valid String id;
+  private @Valid String etag;
   private @Valid String title;
   private @Valid String firstName;
   private @Valid String lastName;
@@ -69,9 +71,51 @@ public class ApiSyncContactUpdate   {
   private @Valid String picture;
 
   /**
+   * Message ID (internal)
+   **/
+  public ApiEasSyncContact id(String id) {
+    this.id = id;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "Message ID (internal)")
+  @JsonProperty("id")
+  @NotNull
+  public String getId() {
+    return id;
+  }
+
+  @JsonProperty("id")
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  /**
+   * Revision tag
+   **/
+  public ApiEasSyncContact etag(String etag) {
+    this.etag = etag;
+    return this;
+  }
+
+  
+  @ApiModelProperty(required = true, value = "Revision tag")
+  @JsonProperty("etag")
+  @NotNull
+  public String getEtag() {
+    return etag;
+  }
+
+  @JsonProperty("etag")
+  public void setEtag(String etag) {
+    this.etag = etag;
+  }
+
+  /**
    * Title
    **/
-  public ApiSyncContactUpdate title(String title) {
+  public ApiEasSyncContact title(String title) {
     this.title = title;
     return this;
   }
@@ -91,7 +135,7 @@ public class ApiSyncContactUpdate   {
   /**
    * First name
    **/
-  public ApiSyncContactUpdate firstName(String firstName) {
+  public ApiEasSyncContact firstName(String firstName) {
     this.firstName = firstName;
     return this;
   }
@@ -111,7 +155,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Last name
    **/
-  public ApiSyncContactUpdate lastName(String lastName) {
+  public ApiEasSyncContact lastName(String lastName) {
     this.lastName = lastName;
     return this;
   }
@@ -131,7 +175,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Nickname
    **/
-  public ApiSyncContactUpdate nickname(String nickname) {
+  public ApiEasSyncContact nickname(String nickname) {
     this.nickname = nickname;
     return this;
   }
@@ -151,7 +195,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Mobile phone
    **/
-  public ApiSyncContactUpdate mobile(String mobile) {
+  public ApiEasSyncContact mobile(String mobile) {
     this.mobile = mobile;
     return this;
   }
@@ -171,7 +215,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Pager 1
    **/
-  public ApiSyncContactUpdate pager1(String pager1) {
+  public ApiEasSyncContact pager1(String pager1) {
     this.pager1 = pager1;
     return this;
   }
@@ -191,7 +235,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Pager 2
    **/
-  public ApiSyncContactUpdate pager2(String pager2) {
+  public ApiEasSyncContact pager2(String pager2) {
     this.pager2 = pager2;
     return this;
   }
@@ -211,7 +255,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Email address 1
    **/
-  public ApiSyncContactUpdate email1(String email1) {
+  public ApiEasSyncContact email1(String email1) {
     this.email1 = email1;
     return this;
   }
@@ -231,7 +275,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Email address 2
    **/
-  public ApiSyncContactUpdate email2(String email2) {
+  public ApiEasSyncContact email2(String email2) {
     this.email2 = email2;
     return this;
   }
@@ -251,7 +295,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Email address 3
    **/
-  public ApiSyncContactUpdate email3(String email3) {
+  public ApiEasSyncContact email3(String email3) {
     this.email3 = email3;
     return this;
   }
@@ -271,7 +315,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Instant Msg. 1
    **/
-  public ApiSyncContactUpdate im1(String im1) {
+  public ApiEasSyncContact im1(String im1) {
     this.im1 = im1;
     return this;
   }
@@ -291,7 +335,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Instant Msg. 2
    **/
-  public ApiSyncContactUpdate im2(String im2) {
+  public ApiEasSyncContact im2(String im2) {
     this.im2 = im2;
     return this;
   }
@@ -311,7 +355,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Instant Msg. 3
    **/
-  public ApiSyncContactUpdate im3(String im3) {
+  public ApiEasSyncContact im3(String im3) {
     this.im3 = im3;
     return this;
   }
@@ -331,7 +375,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business address
    **/
-  public ApiSyncContactUpdate workAddress(String workAddress) {
+  public ApiEasSyncContact workAddress(String workAddress) {
     this.workAddress = workAddress;
     return this;
   }
@@ -351,7 +395,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business postal code
    **/
-  public ApiSyncContactUpdate workPostalCode(String workPostalCode) {
+  public ApiEasSyncContact workPostalCode(String workPostalCode) {
     this.workPostalCode = workPostalCode;
     return this;
   }
@@ -371,7 +415,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business city
    **/
-  public ApiSyncContactUpdate workCity(String workCity) {
+  public ApiEasSyncContact workCity(String workCity) {
     this.workCity = workCity;
     return this;
   }
@@ -391,7 +435,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business state/province
    **/
-  public ApiSyncContactUpdate workState(String workState) {
+  public ApiEasSyncContact workState(String workState) {
     this.workState = workState;
     return this;
   }
@@ -411,7 +455,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business country
    **/
-  public ApiSyncContactUpdate workCountry(String workCountry) {
+  public ApiEasSyncContact workCountry(String workCountry) {
     this.workCountry = workCountry;
     return this;
   }
@@ -431,7 +475,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business telephone 1
    **/
-  public ApiSyncContactUpdate workTelephone1(String workTelephone1) {
+  public ApiEasSyncContact workTelephone1(String workTelephone1) {
     this.workTelephone1 = workTelephone1;
     return this;
   }
@@ -451,7 +495,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business telephone 2
    **/
-  public ApiSyncContactUpdate workTelephone2(String workTelephone2) {
+  public ApiEasSyncContact workTelephone2(String workTelephone2) {
     this.workTelephone2 = workTelephone2;
     return this;
   }
@@ -471,7 +515,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Business fax
    **/
-  public ApiSyncContactUpdate workFax(String workFax) {
+  public ApiEasSyncContact workFax(String workFax) {
     this.workFax = workFax;
     return this;
   }
@@ -491,7 +535,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home address
    **/
-  public ApiSyncContactUpdate homeAddress(String homeAddress) {
+  public ApiEasSyncContact homeAddress(String homeAddress) {
     this.homeAddress = homeAddress;
     return this;
   }
@@ -511,7 +555,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home postal code
    **/
-  public ApiSyncContactUpdate homePostalCode(String homePostalCode) {
+  public ApiEasSyncContact homePostalCode(String homePostalCode) {
     this.homePostalCode = homePostalCode;
     return this;
   }
@@ -531,7 +575,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home city
    **/
-  public ApiSyncContactUpdate homeCity(String homeCity) {
+  public ApiEasSyncContact homeCity(String homeCity) {
     this.homeCity = homeCity;
     return this;
   }
@@ -551,7 +595,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home state
    **/
-  public ApiSyncContactUpdate homeState(String homeState) {
+  public ApiEasSyncContact homeState(String homeState) {
     this.homeState = homeState;
     return this;
   }
@@ -571,7 +615,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home country
    **/
-  public ApiSyncContactUpdate homeCountry(String homeCountry) {
+  public ApiEasSyncContact homeCountry(String homeCountry) {
     this.homeCountry = homeCountry;
     return this;
   }
@@ -591,7 +635,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home telephone 1
    **/
-  public ApiSyncContactUpdate homeTelephone1(String homeTelephone1) {
+  public ApiEasSyncContact homeTelephone1(String homeTelephone1) {
     this.homeTelephone1 = homeTelephone1;
     return this;
   }
@@ -611,7 +655,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home telephone 2
    **/
-  public ApiSyncContactUpdate homeTelephone2(String homeTelephone2) {
+  public ApiEasSyncContact homeTelephone2(String homeTelephone2) {
     this.homeTelephone2 = homeTelephone2;
     return this;
   }
@@ -631,7 +675,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Home fax
    **/
-  public ApiSyncContactUpdate homeFax(String homeFax) {
+  public ApiEasSyncContact homeFax(String homeFax) {
     this.homeFax = homeFax;
     return this;
   }
@@ -651,7 +695,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Other address
    **/
-  public ApiSyncContactUpdate otherAddress(String otherAddress) {
+  public ApiEasSyncContact otherAddress(String otherAddress) {
     this.otherAddress = otherAddress;
     return this;
   }
@@ -671,7 +715,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Other postal code
    **/
-  public ApiSyncContactUpdate otherPostalCode(String otherPostalCode) {
+  public ApiEasSyncContact otherPostalCode(String otherPostalCode) {
     this.otherPostalCode = otherPostalCode;
     return this;
   }
@@ -691,7 +735,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Other city
    **/
-  public ApiSyncContactUpdate otherCity(String otherCity) {
+  public ApiEasSyncContact otherCity(String otherCity) {
     this.otherCity = otherCity;
     return this;
   }
@@ -711,7 +755,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Other state
    **/
-  public ApiSyncContactUpdate otherState(String otherState) {
+  public ApiEasSyncContact otherState(String otherState) {
     this.otherState = otherState;
     return this;
   }
@@ -731,7 +775,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Other country
    **/
-  public ApiSyncContactUpdate otherCountry(String otherCountry) {
+  public ApiEasSyncContact otherCountry(String otherCountry) {
     this.otherCountry = otherCountry;
     return this;
   }
@@ -751,7 +795,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Company ID
    **/
-  public ApiSyncContactUpdate companyId(String companyId) {
+  public ApiEasSyncContact companyId(String companyId) {
     this.companyId = companyId;
     return this;
   }
@@ -771,7 +815,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Company name
    **/
-  public ApiSyncContactUpdate companyName(String companyName) {
+  public ApiEasSyncContact companyName(String companyName) {
     this.companyName = companyName;
     return this;
   }
@@ -791,7 +835,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Job title
    **/
-  public ApiSyncContactUpdate function(String function) {
+  public ApiEasSyncContact function(String function) {
     this.function = function;
     return this;
   }
@@ -811,7 +855,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Department
    **/
-  public ApiSyncContactUpdate department(String department) {
+  public ApiEasSyncContact department(String department) {
     this.department = department;
     return this;
   }
@@ -831,7 +875,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Manager name
    **/
-  public ApiSyncContactUpdate manager(String manager) {
+  public ApiEasSyncContact manager(String manager) {
     this.manager = manager;
     return this;
   }
@@ -851,7 +895,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Assistant name
    **/
-  public ApiSyncContactUpdate assistant(String assistant) {
+  public ApiEasSyncContact assistant(String assistant) {
     this.assistant = assistant;
     return this;
   }
@@ -871,7 +915,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Assistant telephone
    **/
-  public ApiSyncContactUpdate assistantTelephone(String assistantTelephone) {
+  public ApiEasSyncContact assistantTelephone(String assistantTelephone) {
     this.assistantTelephone = assistantTelephone;
     return this;
   }
@@ -891,7 +935,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Partner
    **/
-  public ApiSyncContactUpdate partner(String partner) {
+  public ApiEasSyncContact partner(String partner) {
     this.partner = partner;
     return this;
   }
@@ -911,7 +955,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Birthday date (ISO date YYYYMMDD)
    **/
-  public ApiSyncContactUpdate birthday(String birthday) {
+  public ApiEasSyncContact birthday(String birthday) {
     this.birthday = birthday;
     return this;
   }
@@ -931,7 +975,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Anniversary date (ISO date YYYYMMDD)
    **/
-  public ApiSyncContactUpdate anniversary(String anniversary) {
+  public ApiEasSyncContact anniversary(String anniversary) {
     this.anniversary = anniversary;
     return this;
   }
@@ -951,7 +995,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Web-site URL
    **/
-  public ApiSyncContactUpdate url(String url) {
+  public ApiEasSyncContact url(String url) {
     this.url = url;
     return this;
   }
@@ -971,7 +1015,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Notes
    **/
-  public ApiSyncContactUpdate notes(String notes) {
+  public ApiEasSyncContact notes(String notes) {
     this.notes = notes;
     return this;
   }
@@ -991,7 +1035,7 @@ public class ApiSyncContactUpdate   {
   /**
    * Image base64 data URI
    **/
-  public ApiSyncContactUpdate picture(String picture) {
+  public ApiEasSyncContact picture(String picture) {
     this.picture = picture;
     return this;
   }
@@ -1017,66 +1061,70 @@ public class ApiSyncContactUpdate   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiSyncContactUpdate syncContactUpdate = (ApiSyncContactUpdate) o;
-    return Objects.equals(this.title, syncContactUpdate.title) &&
-        Objects.equals(this.firstName, syncContactUpdate.firstName) &&
-        Objects.equals(this.lastName, syncContactUpdate.lastName) &&
-        Objects.equals(this.nickname, syncContactUpdate.nickname) &&
-        Objects.equals(this.mobile, syncContactUpdate.mobile) &&
-        Objects.equals(this.pager1, syncContactUpdate.pager1) &&
-        Objects.equals(this.pager2, syncContactUpdate.pager2) &&
-        Objects.equals(this.email1, syncContactUpdate.email1) &&
-        Objects.equals(this.email2, syncContactUpdate.email2) &&
-        Objects.equals(this.email3, syncContactUpdate.email3) &&
-        Objects.equals(this.im1, syncContactUpdate.im1) &&
-        Objects.equals(this.im2, syncContactUpdate.im2) &&
-        Objects.equals(this.im3, syncContactUpdate.im3) &&
-        Objects.equals(this.workAddress, syncContactUpdate.workAddress) &&
-        Objects.equals(this.workPostalCode, syncContactUpdate.workPostalCode) &&
-        Objects.equals(this.workCity, syncContactUpdate.workCity) &&
-        Objects.equals(this.workState, syncContactUpdate.workState) &&
-        Objects.equals(this.workCountry, syncContactUpdate.workCountry) &&
-        Objects.equals(this.workTelephone1, syncContactUpdate.workTelephone1) &&
-        Objects.equals(this.workTelephone2, syncContactUpdate.workTelephone2) &&
-        Objects.equals(this.workFax, syncContactUpdate.workFax) &&
-        Objects.equals(this.homeAddress, syncContactUpdate.homeAddress) &&
-        Objects.equals(this.homePostalCode, syncContactUpdate.homePostalCode) &&
-        Objects.equals(this.homeCity, syncContactUpdate.homeCity) &&
-        Objects.equals(this.homeState, syncContactUpdate.homeState) &&
-        Objects.equals(this.homeCountry, syncContactUpdate.homeCountry) &&
-        Objects.equals(this.homeTelephone1, syncContactUpdate.homeTelephone1) &&
-        Objects.equals(this.homeTelephone2, syncContactUpdate.homeTelephone2) &&
-        Objects.equals(this.homeFax, syncContactUpdate.homeFax) &&
-        Objects.equals(this.otherAddress, syncContactUpdate.otherAddress) &&
-        Objects.equals(this.otherPostalCode, syncContactUpdate.otherPostalCode) &&
-        Objects.equals(this.otherCity, syncContactUpdate.otherCity) &&
-        Objects.equals(this.otherState, syncContactUpdate.otherState) &&
-        Objects.equals(this.otherCountry, syncContactUpdate.otherCountry) &&
-        Objects.equals(this.companyId, syncContactUpdate.companyId) &&
-        Objects.equals(this.companyName, syncContactUpdate.companyName) &&
-        Objects.equals(this.function, syncContactUpdate.function) &&
-        Objects.equals(this.department, syncContactUpdate.department) &&
-        Objects.equals(this.manager, syncContactUpdate.manager) &&
-        Objects.equals(this.assistant, syncContactUpdate.assistant) &&
-        Objects.equals(this.assistantTelephone, syncContactUpdate.assistantTelephone) &&
-        Objects.equals(this.partner, syncContactUpdate.partner) &&
-        Objects.equals(this.birthday, syncContactUpdate.birthday) &&
-        Objects.equals(this.anniversary, syncContactUpdate.anniversary) &&
-        Objects.equals(this.url, syncContactUpdate.url) &&
-        Objects.equals(this.notes, syncContactUpdate.notes) &&
-        Objects.equals(this.picture, syncContactUpdate.picture);
+    ApiEasSyncContact easSyncContact = (ApiEasSyncContact) o;
+    return Objects.equals(this.id, easSyncContact.id) &&
+        Objects.equals(this.etag, easSyncContact.etag) &&
+        Objects.equals(this.title, easSyncContact.title) &&
+        Objects.equals(this.firstName, easSyncContact.firstName) &&
+        Objects.equals(this.lastName, easSyncContact.lastName) &&
+        Objects.equals(this.nickname, easSyncContact.nickname) &&
+        Objects.equals(this.mobile, easSyncContact.mobile) &&
+        Objects.equals(this.pager1, easSyncContact.pager1) &&
+        Objects.equals(this.pager2, easSyncContact.pager2) &&
+        Objects.equals(this.email1, easSyncContact.email1) &&
+        Objects.equals(this.email2, easSyncContact.email2) &&
+        Objects.equals(this.email3, easSyncContact.email3) &&
+        Objects.equals(this.im1, easSyncContact.im1) &&
+        Objects.equals(this.im2, easSyncContact.im2) &&
+        Objects.equals(this.im3, easSyncContact.im3) &&
+        Objects.equals(this.workAddress, easSyncContact.workAddress) &&
+        Objects.equals(this.workPostalCode, easSyncContact.workPostalCode) &&
+        Objects.equals(this.workCity, easSyncContact.workCity) &&
+        Objects.equals(this.workState, easSyncContact.workState) &&
+        Objects.equals(this.workCountry, easSyncContact.workCountry) &&
+        Objects.equals(this.workTelephone1, easSyncContact.workTelephone1) &&
+        Objects.equals(this.workTelephone2, easSyncContact.workTelephone2) &&
+        Objects.equals(this.workFax, easSyncContact.workFax) &&
+        Objects.equals(this.homeAddress, easSyncContact.homeAddress) &&
+        Objects.equals(this.homePostalCode, easSyncContact.homePostalCode) &&
+        Objects.equals(this.homeCity, easSyncContact.homeCity) &&
+        Objects.equals(this.homeState, easSyncContact.homeState) &&
+        Objects.equals(this.homeCountry, easSyncContact.homeCountry) &&
+        Objects.equals(this.homeTelephone1, easSyncContact.homeTelephone1) &&
+        Objects.equals(this.homeTelephone2, easSyncContact.homeTelephone2) &&
+        Objects.equals(this.homeFax, easSyncContact.homeFax) &&
+        Objects.equals(this.otherAddress, easSyncContact.otherAddress) &&
+        Objects.equals(this.otherPostalCode, easSyncContact.otherPostalCode) &&
+        Objects.equals(this.otherCity, easSyncContact.otherCity) &&
+        Objects.equals(this.otherState, easSyncContact.otherState) &&
+        Objects.equals(this.otherCountry, easSyncContact.otherCountry) &&
+        Objects.equals(this.companyId, easSyncContact.companyId) &&
+        Objects.equals(this.companyName, easSyncContact.companyName) &&
+        Objects.equals(this.function, easSyncContact.function) &&
+        Objects.equals(this.department, easSyncContact.department) &&
+        Objects.equals(this.manager, easSyncContact.manager) &&
+        Objects.equals(this.assistant, easSyncContact.assistant) &&
+        Objects.equals(this.assistantTelephone, easSyncContact.assistantTelephone) &&
+        Objects.equals(this.partner, easSyncContact.partner) &&
+        Objects.equals(this.birthday, easSyncContact.birthday) &&
+        Objects.equals(this.anniversary, easSyncContact.anniversary) &&
+        Objects.equals(this.url, easSyncContact.url) &&
+        Objects.equals(this.notes, easSyncContact.notes) &&
+        Objects.equals(this.picture, easSyncContact.picture);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, picture);
+    return Objects.hash(id, etag, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, picture);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiSyncContactUpdate {\n");
+    sb.append("class ApiEasSyncContact {\n");
     
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
     sb.append("    title: ").append(toIndentedString(title)).append("\n");
     sb.append("    firstName: ").append(toIndentedString(firstName)).append("\n");
     sb.append("    lastName: ").append(toIndentedString(lastName)).append("\n");

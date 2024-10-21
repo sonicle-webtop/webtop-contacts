@@ -51,11 +51,11 @@ import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactPictureWithSize;
 import com.sonicle.webtop.contacts.swagger.v2.api.EasApi;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncContact;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncContactStat;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncContactUpdate;
+import com.sonicle.webtop.contacts.swagger.v2.model.ApiEasSyncFolder;
 import com.sonicle.webtop.contacts.swagger.v2.model.ApiError;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncContact;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncContactStat;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncContactUpdate;
-import com.sonicle.webtop.contacts.swagger.v2.model.ApiSyncFolder;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.model.FolderShare;
@@ -89,7 +89,7 @@ public class Eas extends EasApi {
 	public Response getFolders() {
 		UserProfileId currentProfileId = RunContext.getRunProfileId();
 		ContactsManager manager = getManager();
-		List<ApiSyncFolder> items = new ArrayList<>();
+		List<ApiEasSyncFolder> items = new ArrayList<>();
 		
 		if (logger.isDebugEnabled()) {
 			logger.debug("[{}] getFolders()", currentProfileId);
@@ -145,7 +145,7 @@ public class Eas extends EasApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			List<ApiSyncContactStat> items = new ArrayList<>();
+			List<ApiEasSyncContactStat> items = new ArrayList<>();
 			List<ContactObject> cards = manager.listContactObjects(Integer.valueOf(folderId), ContactObjectOutputType.STAT);
 			for (ContactObject card : cards) {
 				items.add(createSyncContactStat(card));
@@ -185,7 +185,7 @@ public class Eas extends EasApi {
 	}
 
 	@Override
-	public Response addMessage(String folderId, ApiSyncContactUpdate body) {
+	public Response addMessage(String folderId, ApiEasSyncContactUpdate body) {
 		ContactsManager manager = getManager();
 		
 		if (logger.isDebugEnabled()) {
@@ -212,7 +212,7 @@ public class Eas extends EasApi {
 	}
 
 	@Override
-	public Response updateMessage(String folderId, String id, ApiSyncContactUpdate body, Boolean picture) {
+	public Response updateMessage(String folderId, String id, ApiEasSyncContactUpdate body, Boolean picture) {
 		ContactsManager manager = getManager();
 		
 		if (logger.isDebugEnabled()) {
@@ -263,7 +263,7 @@ public class Eas extends EasApi {
 		}
 	}
 	
-	private ApiSyncFolder createSyncFolder(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions, boolean isDefault) {
+	private ApiEasSyncFolder createSyncFolder(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions, boolean isDefault) {
 		String displayName = cat.getName();
 		if (!currentProfileId.equals(cat.getProfileId())) {
 			UserProfile.Data owud = WT.getUserData(cat.getProfileId());
@@ -272,7 +272,7 @@ public class Eas extends EasApi {
 		}
 		//String ownerUsername = owud.getProfileEmailAddress();
 		
-		return new ApiSyncFolder()
+		return new ApiEasSyncFolder()
 			.id(String.valueOf(cat.getCategoryId()))
 			.displayName(displayName)
 			.etag(buildEtag(lastRevisionTimestamp))
@@ -282,13 +282,13 @@ public class Eas extends EasApi {
 			.ownerId(cat.getProfileId().toString());
 	}
 	
-	private ApiSyncContactStat createSyncContactStat(ContactObject card) {
-		return new ApiSyncContactStat()
+	private ApiEasSyncContactStat createSyncContactStat(ContactObject card) {
+		return new ApiEasSyncContactStat()
 			.id(String.valueOf(card.getContactId()))
 			.etag(buildEtag(card.getRevisionTimestamp()));
 	}
 	
-	private ApiSyncContact createSyncContact(ContactObjectWithBean card) {
+	private ApiEasSyncContact createSyncContact(ContactObjectWithBean card) {
 		ContactEx cont = card.getContact();
 		
 		String picture = null;
@@ -297,7 +297,7 @@ public class Eas extends EasApi {
 			picture = new DataUri(pic.getMediaType(), pic.getBytes()).toString(StandardCharsets.UTF_8.name());
 		}
 		
-		return new ApiSyncContact()
+		return new ApiEasSyncContact()
 			.id(String.valueOf(card.getContactId()))
 			.etag(buildEtag(card.getRevisionTimestamp()))
 			.title(cont.getTitle())
@@ -349,7 +349,7 @@ public class Eas extends EasApi {
 			.picture(picture);
 	}
 	
-	private boolean mergeContactPicture(ContactEx orig, ApiSyncContactUpdate src) {
+	private boolean mergeContactPicture(ContactEx orig, ApiEasSyncContactUpdate src) {
 		if (!StringUtils.isBlank(src.getPicture())) {
 			DataUri dataUri = parseQuietly(src.getPicture());
 			if (dataUri == null) return false;
@@ -365,7 +365,7 @@ public class Eas extends EasApi {
 		return true;
 	}
 	
-	private ContactEx mergeContact(ContactEx orig, ApiSyncContactUpdate src) {
+	private ContactEx mergeContact(ContactEx orig, ApiEasSyncContactUpdate src) {
 		orig.setTitle(src.getTitle());
 		orig.setFirstName(src.getFirstName());
 		orig.setLastName(src.getLastName());
