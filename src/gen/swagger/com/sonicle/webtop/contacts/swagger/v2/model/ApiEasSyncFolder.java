@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Bean for carry folder's fields")
 @JsonTypeName("EasSyncFolder")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-10-21T11:44:32.049+02:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-11-04T12:38:17.584+01:00[Europe/Berlin]")
 public class ApiEasSyncFolder   {
   private @Valid String id;
   private @Valid String displayName;
