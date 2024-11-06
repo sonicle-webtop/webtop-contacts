@@ -32,7 +32,6 @@
  */
 package com.sonicle.webtop.contacts.bol;
 
-import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.contacts.jooq.tables.pojos.ListRecipients;
 
 /**
@@ -42,10 +41,4 @@ import com.sonicle.webtop.contacts.jooq.tables.pojos.ListRecipients;
 public class OListRecipient extends ListRecipients {
 	
 	public OListRecipient() {}
-	
-	public OListRecipient(ContactListRecipient clr) {
-		setRecipient(clr.getRecipient());
-		setRecipientType(clr.getRecipientType());
-		setRecipientContactId(clr.getRecipientContactId());
-	}
 }

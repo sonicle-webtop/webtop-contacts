@@ -43,6 +43,7 @@ import com.sonicle.webtop.contacts.jooq.tables.Contacts;
 import com.sonicle.webtop.contacts.jooq.tables.records.ListRecipientsRecord;
 import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
+import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
@@ -154,7 +155,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int[] batchInsert(Connection con, int contactId, Collection<ContactListRecipient> recipients) throws DAOException {
+	public int[] batchInsert(Connection con, int contactId, Collection<ContactListRecipientBase> recipients) throws DAOException {
 		if (recipients.isEmpty()) return new int[0];
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
@@ -166,7 +167,7 @@ public class ListRecipientDAO extends BaseDAO {
 			)
 			.values((Integer)null, null, null, null)
 		);
-		for (ContactListRecipient recipient : recipients) {
+		for (ContactListRecipientBase recipient : recipients) {
 			batch.bind(
 				contactId,
 				recipient.getRecipient(),

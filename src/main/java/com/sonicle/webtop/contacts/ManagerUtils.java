@@ -63,6 +63,7 @@ import com.sonicle.webtop.contacts.model.ContactListEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
+import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.model.CustomFieldValue;
 import com.sonicle.webtop.core.sdk.UserProfileId;
@@ -182,9 +183,16 @@ public class ManagerUtils {
 	static <T extends ContactListRecipient> T fillContactsListRecipient(T tgt, OListRecipient src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setListRecipientId(src.getListRecipientId());
+		}
+		fillContactsListRecipient((ContactListRecipientBase)tgt, src);
+		return tgt;
+	}
+	
+	static <T extends ContactListRecipientBase> T fillContactsListRecipient(T tgt, OListRecipient src) {
+		if ((tgt != null) && (src != null)) {
 			tgt.setRecipient(src.getRecipient());
 			tgt.setRecipientContactId(src.getRecipientContactId());
-			tgt.setRecipientType(src.getRecipientType());
+			tgt.setRecipientType(EnumUtils.forSerializedName(src.getRecipientType(), ContactListRecipientBase.RecipientType.CC, ContactListRecipientBase.RecipientType.class));
 		}
 		return tgt;
 	}
@@ -515,11 +523,10 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static <T extends OListRecipient> T fillOListRecipient(T tgt, ContactListRecipient src) {
+	static <T extends OListRecipient> T fillOListRecipient(T tgt, ContactListRecipientBase src) {
 		if ((tgt != null) && (src != null)) {
-			tgt.setListRecipientId(src.getListRecipientId());
 			tgt.setRecipient(src.getRecipient());
-			tgt.setRecipientType(src.getRecipientType());
+			tgt.setRecipientType(EnumUtils.toSerializedName(src.getRecipientType()));
 			tgt.setRecipientContactId(src.getRecipientContactId());
 		}
 		return tgt;

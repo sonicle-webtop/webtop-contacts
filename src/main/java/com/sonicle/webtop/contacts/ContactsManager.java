@@ -192,6 +192,7 @@ import org.slf4j.Logger;
 import com.sonicle.webtop.contacts.io.ContactFileReader;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
+import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.core.app.AuditLogManager;
 import com.sonicle.webtop.core.app.ezvcard.XTag;
 import com.sonicle.webtop.core.app.model.FolderShare;
@@ -1695,13 +1696,13 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public ContactList getContactList(final int contactId, final BitFlag<ContactGetOptions> options) throws WTException {
+	public ContactList<ContactListRecipient> getContactList(final int contactId, final BitFlag<ContactGetOptions> options) throws WTException {
 		Connection con = null;
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
 			BitFlag<ContactProcessOpts> options2 = ContactProcessOpts.parseContactGetOptions(options);
-			ContactList contact = doContactListGet(con, contactId, options2);
+			ContactList<ContactListRecipient> contact = doContactListGet(con, contactId, options2);
 			if (contact == null) return null;
 			checkRightsOnCategory(contact.getCategoryId(), FolderShare.FolderRight.READ);
 			
@@ -1715,7 +1716,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public ContactList addContactList(final ContactListEx contact) throws WTException {
+	public ContactList<ContactListRecipient> addContactList(final ContactListEx<ContactListRecipientBase> contact) throws WTException {
 		CoreManager coreMgr = getCoreManager();
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		Connection con = null;
@@ -1747,12 +1748,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void updateContactList(final int contactId, final ContactListEx contact) throws WTException {
+	public void updateContactList(final int contactId, final ContactListEx<ContactListRecipientBase> contact) throws WTException {
 		updateContactList(contactId, contact, BitFlag.of(ContactUpdateOptions.TAGS, ContactUpdateOptions.LIST_RECIPIENTS));
 	}
 	
 	@Override
-	public void updateContactList(final int contactId, final ContactListEx contact, final BitFlag<ContactUpdateOptions> opts) throws WTException {
+	public void updateContactList(final int contactId, final ContactListEx<ContactListRecipientBase> contact, final BitFlag<ContactUpdateOptions> opts) throws WTException {
 		CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 		CategoryDAO catDao = CategoryDAO.getInstance();
 		ContactDAO contDao = ContactDAO.getInstance();
@@ -1785,7 +1786,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public void updateContactsListRecipients(final int contactId, final Collection<ContactListRecipient> recipients, final boolean append) throws WTException {
+	public void updateContactsListRecipients(final int contactId, final Collection<ContactListRecipientBase> recipients, final boolean append) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
 		Connection con = null;
@@ -2594,7 +2595,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return cont;
 	}
 	
-	private ContactList doContactListGet(Connection con, int contactId, BitFlag<ContactProcessOpts> processOptions) throws DAOException, WTException {
+	private ContactList<ContactListRecipient> doContactListGet(Connection con, int contactId, BitFlag<ContactProcessOpts> processOptions) throws DAOException, WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
 		ContactTagDAO tagDao = ContactTagDAO.getInstance();
@@ -2602,7 +2603,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		OContact ocont = contDao.selectOnlineById(con, contactId);
 		if ((ocont == null) || (!ocont.getIsList())) return null;
 		
-		ContactList cont = ManagerUtils.fillContactList(new ContactList(), ocont);
+		ContactList<ContactListRecipient> cont = ManagerUtils.fillContactList(new ContactList(), ocont);
 		
 		if (processOptions.has(ContactProcessOpts.LIST_RECIPIENTS)) {
 			List<VListRecipient> vlrecs = lrecDao.viewByContact(con, contactId);
@@ -2757,14 +2758,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return new ContactInsertResult(ocont, ocpic, otags, oatts, ocvals);
 	}
 	
-	private ContactsListInsertResult doContactListInsert(CoreManager coreMgr, Connection con, ContactListEx contact, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
+	private ContactsListInsertResult doContactListInsert(CoreManager coreMgr, Connection con, ContactListEx<ContactListRecipientBase> contact, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
 		BitFlag<ContactProcessOpts> processOpts2 = processOpts.has(ContactProcessOpts.TAGS) ? BitFlag.of(ContactProcessOpts.TAGS) : BitFlag.none();
 		ContactInsertResult result = doContactInsert(coreMgr, con, true, ManagerUtils.createContactEx(contact), null, processOpts2);
 		
 		ArrayList<OListRecipient> orecipients = null;
 		if (processOpts.has(ContactProcessOpts.LIST_RECIPIENTS) && contact.hasRecipients()) {
 			orecipients = new ArrayList<>(contact.getRecipients().size());
-			for (ContactListRecipient recipient : contact.getRecipients()) {
+			for (ContactListRecipientBase recipient : contact.getRecipients()) {
 				orecipients.add(doContactListRecipientInsert(con, result.ocontact.getContactId(), recipient));
 			}
 		}
@@ -2893,7 +2894,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ocontact;
 	}
 	
-	private OContact doContactListUpdate(CoreManager coreMgr, Connection con, int contactId, ContactListEx contact, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
+	private OContact doContactListUpdate(CoreManager coreMgr, Connection con, int contactId, ContactListEx<ContactListRecipientBase> contact, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
 		
 		BitFlag<ContactProcessOpts> processOpts2 = processOpts.has(ContactProcessOpts.TAGS) ? BitFlag.of(ContactProcessOpts.TAGS) : BitFlag.none();
@@ -2902,7 +2903,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		if (processOpts.has(ContactProcessOpts.LIST_RECIPIENTS) && contact.hasRecipients()) {
 			lrecDao.deleteByContact(con, contactId);
-			for (ContactListRecipient recipient : contact.getRecipients()) {
+			for (ContactListRecipientBase recipient : contact.getRecipients()) {
 				doContactListRecipientInsert(con, contactId, recipient);
 			}
 		}
@@ -2996,14 +2997,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return doContactInsert(coreMgr, con, isList, contact, rawVCard, processOpts.copy().set(ContactProcessOpts.RAW_VCARD));
 	}
 	
-	private ContactsListInsertResult doContactListCopy(CoreManager coreMgr, Connection con, int sourceContactId, ContactListEx contact, int targetCategoryId, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
+	private ContactsListInsertResult doContactListCopy(CoreManager coreMgr, Connection con, int sourceContactId, ContactListEx<ContactListRecipientBase> contact, int targetCategoryId, BitFlag<ContactProcessOpts> processOpts) throws DAOException, IOException {
 		BitFlag<ContactProcessOpts> processOpts2 = processOpts.has(ContactProcessOpts.TAGS) ? BitFlag.of(ContactProcessOpts.TAGS) : BitFlag.none();
 		ContactInsertResult result = doContactCopy(coreMgr, con, true, sourceContactId, ManagerUtils.createContactEx(contact), targetCategoryId, processOpts2);
 		
 		ArrayList<OListRecipient> orecipients = null;
 		if (processOpts.has(ContactProcessOpts.LIST_RECIPIENTS) && contact.hasRecipients()) {
 			orecipients = new ArrayList<>(contact.getRecipients().size());
-			for (ContactListRecipient recipient : contact.getRecipients()) {
+			for (ContactListRecipientBase recipient : contact.getRecipients()) {
 				orecipients.add(doContactListRecipientInsert(con, result.ocontact.getContactId(), recipient));
 			}
 		}
@@ -3097,7 +3098,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private OListRecipient doContactListRecipientInsert(Connection con, int contactId, ContactListRecipient recipient) throws DAOException, IOException {
+	private OListRecipient doContactListRecipientInsert(Connection con, int contactId, ContactListRecipientBase recipient) throws DAOException, IOException {
 		Check.notNull(recipient, "recipient");
 		ListRecipientDAO lrecDao = ListRecipientDAO.getInstance();
 		
