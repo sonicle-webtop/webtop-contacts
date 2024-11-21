@@ -38,7 +38,7 @@ import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactInfo;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactObject;
-import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
+import com.sonicle.webtop.contacts.bol.VContactObjectStat;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
@@ -72,6 +72,8 @@ import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
+import org.jooq.Select;
+import org.jooq.SelectLimitStep;
 import org.jooq.SortField;
 import org.jooq.impl.DSL;
 
@@ -173,7 +175,7 @@ AND (ccnts.href IS NULL)
 
 	*/
 	
-	public VContactObject viewContactObjectById(Connection con, int categoryId, int contactId) throws DAOException {
+	public VContactObject viewContactObjectById(Connection con, int categoryId, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		// New field: tags list
@@ -212,7 +214,7 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(VContactObject.class);
 	}
 	
-	public VContactObject viewContactObjectById(Connection con, int contactId) throws DAOException {
+	public VContactObject viewContactObjectById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		// New field: tags list
@@ -339,22 +341,22 @@ AND (ccnts.href IS NULL)
 		
 		// New field: has attachments
 		Field<Boolean> hasAttachments = DSL.field(DSL.exists(
-				DSL.selectOne()
-						.from(CONTACTS_ATTACHMENTS)
-						.where(CONTACTS_ATTACHMENTS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
-				)).as("has_attachments");
+			DSL.selectOne()
+				.from(CONTACTS_ATTACHMENTS)
+				.where(CONTACTS_ATTACHMENTS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			)).as("has_attachments");
 		
 		// New field: has custom values
 		Field<Boolean> hasCustomValues = DSL.field(DSL.exists(
-				DSL.selectOne()
-						.from(CONTACTS_CUSTOM_VALUES)
-						.where(CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
-				)).as("has_custom_values");
+			DSL.selectOne()
+				.from(CONTACTS_CUSTOM_VALUES)
+				.where(CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			)).as("has_custom_values");
 		
 		// New field: has vcard
 		Field<Boolean> hasVCard = DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard");
 		
-		Cursor<Record> cr = dsl
+		Cursor<Record> cursor = dsl
 			.select(
 				getVContactObjectFields(stat)
 			)
@@ -387,18 +389,16 @@ AND (ccnts.href IS NULL)
 
 		try {
 			for(;;) {
-				VContactObject vco = cr.fetchNextInto(VContactObject.class);
+				VContactObject vco = cursor.fetchNextInto(VContactObject.class);
 				if (vco == null) break;
-
 				consumer.consume(vco, con);
 			}
 		} finally {
-			cr.close();
+			cursor.close();
 		}
-		
 	}
 	
-	public List<VContactObjectChanged> viewOnlineContactObjectsChangedByCategory(Connection con, int categoryId, int limit) throws DAOException {
+	public List<VContactObjectStat> viewOnlineContactObjectStatsByCategory(Connection con, int categoryId, int limit) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
@@ -422,10 +422,10 @@ AND (ccnts.href IS NULL)
 				CONTACTS_.CONTACT_ID
 			)
 			.limit(limit)
-			.fetchInto(VContactObjectChanged.class);
+			.fetchInto(VContactObjectStat.class);
 	}
 	
-	public List<VContactObjectChanged> viewContactObjectsChangedByCategorySince(Connection con, int categoryId, DateTime since, int limit) throws DAOException {
+	public List<VContactObjectStat> viewContactObjectStatsByCategorySince(Connection con, int categoryId, DateTime since, int limit) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
@@ -446,7 +446,7 @@ AND (ccnts.href IS NULL)
 				CONTACTS_.CREATION_TIMESTAMP
 			)
 			.limit(limit)
-			.fetchInto(VContactObjectChanged.class);
+			.fetchInto(VContactObjectStat.class);
 	}
 	
 	public boolean existByCategoryTypeCondition(Connection con, Collection<Integer> categoryIds, ContactType type, Condition condition) throws DAOException {
@@ -573,7 +573,7 @@ AND (ccnts.href IS NULL)
 			.fetchInto(VContactLookup.class);
 	}
 	
-	public VContactCompany viewContactCompanyByContact(Connection con, int contactId) throws DAOException {
+	public VContactCompany viewContactCompanyByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		
 		return dsl
@@ -694,7 +694,7 @@ AND (ccnts.href IS NULL)
 	}
 	
 	@Deprecated
-	public OContact selectById(Connection con, int contactId) throws DAOException {
+	public OContact selectById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -703,7 +703,7 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(OContact.class);
 	}
 	
-	public OContact selectOnlineById(Connection con, int contactId) throws DAOException {
+	public OContact selectOnlineById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -718,7 +718,7 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(OContact.class);
 	}
 	
-	public OContactInfo selectOnlineContactInfoById(Connection con, int contactId) throws DAOException {
+	public OContactInfo selectOnlineContactInfoById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -736,7 +736,7 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(OContactInfo.class);
 	}
 	
-	public Map<Integer, OContactInfo> selectOnlineContactInfoByIds(Connection con, Collection<Integer> contactIds) throws DAOException {
+	public Map<String, OContactInfo> selectOnlineContactInfoByIds(Connection con, Collection<String> contactIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -755,7 +755,7 @@ AND (ccnts.href IS NULL)
 			.fetchMap(CONTACTS_.CONTACT_ID, OContactInfo.class);
 	}
 	
-	public Integer selectCategoryId(Connection con, int contactId) throws DAOException {
+	public Integer selectCategoryId(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -766,7 +766,7 @@ AND (ccnts.href IS NULL)
 			.fetchOneInto(Integer.class);
 	}
 	
-	public List<Integer> selectAliveIdsByCategoryHrefs(Connection con, int categoryId, String href) throws DAOException {
+	public List<String> selectAliveIdsByCategoryHrefs(Connection con, int categoryId, String href) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -786,7 +786,7 @@ AND (ccnts.href IS NULL)
 			.orderBy(
 				CONTACTS_.CONTACT_ID.asc()
 			)
-			.fetchInto(Integer.class);
+			.fetchInto(String.class);
 	}
 	
 	public Map<Integer, DateTime> selectMaxRevTimestampByCategoriesType(Connection con, Collection<Integer> categoryIds, boolean isList) throws DAOException {
@@ -807,7 +807,7 @@ AND (ccnts.href IS NULL)
 			.fetchMap(CONTACTS_.CATEGORY_ID, DSL.max(CONTACTS_.REVISION_TIMESTAMP));
 	}
 	
-	public Map<String, List<Integer>> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {
+	public Map<String, List<String>> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -828,7 +828,7 @@ AND (ccnts.href IS NULL)
 			.fetchGroups(CONTACTS_.HREF, CONTACTS_.CONTACT_ID);
 	}
 	
-	public Map<Integer, OContact> selectByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
+	public Map<String, OContact> selectByCategoryHrefs(Connection con, int categoryId, Collection<String> hrefs) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -851,7 +851,7 @@ AND (ccnts.href IS NULL)
 			.fetchMap(CONTACTS_.CONTACT_ID, OContact.class);
 	}
 	
-	public Map<Integer, Integer> selectCategoriesByIds(Connection con, Collection<Integer> contactIds) throws DAOException {
+	public Map<String, Integer> selectCategoriesByIds(Connection con, Collection<String> contactIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -865,7 +865,7 @@ AND (ccnts.href IS NULL)
 			.fetchMap(CONTACTS_.CONTACT_ID, CONTACTS_.CATEGORY_ID);
 	}
 	
-	public Map<Integer, Integer> selectCategoriesByIdsType(Connection con, Collection<Integer> contactIds, boolean isList) throws DAOException {
+	public Map<String, Integer> selectCategoriesByIdsType(Connection con, Collection<String> contactIds, boolean isList) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -993,7 +993,7 @@ AND (ccnts.href IS NULL)
 			.execute();
 	}
 	
-	public int updateCategory(Connection con, int contactId, int categoryId, DateTime revisionTimestamp) throws DAOException {
+	public int updateCategory(Connection con, String contactId, int categoryId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS_)
@@ -1006,7 +1006,7 @@ AND (ccnts.href IS NULL)
 			.execute();
 	}
 	
-	public int updateRevision(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
+	public int updateRevision(Connection con, String contactId, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS_)
@@ -1017,7 +1017,7 @@ AND (ccnts.href IS NULL)
 			.execute();
 	}
 	
-	public int updateRevisionStatus(Connection con, int contactId, ContactBase.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
+	public int updateRevisionStatus(Connection con, String contactId, ContactBase.RevisionStatus revisionStatus, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS_)
@@ -1029,7 +1029,7 @@ AND (ccnts.href IS NULL)
 			.execute();
 	}
 	
-	public int deleteById(Connection con, int contactId) throws DAOException {
+	public int deleteById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_)
@@ -1049,7 +1049,7 @@ AND (ccnts.href IS NULL)
 			.execute();
 	}
 	
-	public int logicDeleteById(Connection con, int contactId, DateTime revisionTimestamp) throws DAOException {
+	public int logicDeleteById(Connection con, String contactId, DateTime revisionTimestamp) throws DAOException {
 		final String DELETED = EnumUtils.toSerializedName(ContactBase.RevisionStatus.DELETED);
 		DSLContext dsl = getDSL(con);
 		return dsl

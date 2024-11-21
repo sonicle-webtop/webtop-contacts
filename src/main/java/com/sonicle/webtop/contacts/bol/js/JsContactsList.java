@@ -49,7 +49,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class JsContactsList {
 	public String id;
-	public Integer contactId;
+	public String contactId;
 	public Integer categoryId;
 	public String name;
 	public String tags;
@@ -72,10 +72,10 @@ public class JsContactsList {
 	}
 	
 	public static class JsRecipient {
-		public Integer listRecipientId;
+		public String listRecipientId;
 		public String recipient;
 		public String recipientType;
-		public Integer recipientContactId;
+		public String recipientContactId;
 		
 		public JsRecipient() {}
 		

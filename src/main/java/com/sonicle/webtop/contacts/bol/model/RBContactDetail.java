@@ -53,7 +53,7 @@ public class RBContactDetail {
 	public String categoryName;
 	public String categoryColor;
 	public Image categoryColorImage;
-	public Integer contactId;
+	public String contactId;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -194,7 +194,7 @@ public class RBContactDetail {
 		return categoryColorImage;
 	}
 
-	public Integer getContactId() {
+	public String getContactId() {
 		return contactId;
 	}
 

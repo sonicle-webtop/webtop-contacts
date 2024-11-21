@@ -195,7 +195,7 @@ public class CardDav extends CarddavApi {
 			if (body.getUpdatedFields().contains("description")) {
 				cat.setDescription(body.getDescription());
 			}
-			manager.updateCategory(cat);
+			manager.updateCategory(categoryId, cat);
 			return respOk();
 			
 		} catch (WTNotFoundException ex) {
@@ -415,7 +415,7 @@ public class CardDav extends CarddavApi {
 	
 	private Card createDavObject(ContactObject obj) {
 		Card ret = new Card()
-			.id(obj.getContactId())
+			.id(Integer.valueOf(obj.getContactId()))
 			.uid(obj.getPublicUid())
 			.href(obj.getHref())
 			.lastModified(obj.getRevisionTimestamp().withZone(DateTimeZone.UTC).getMillis()/1000)
@@ -434,7 +434,7 @@ public class CardDav extends CarddavApi {
 	
 	private CardChanged createCardChanged(ContactObjectChanged card) {
 		return new CardChanged()
-			.id(card.getContactId())
+			.id(Integer.valueOf(card.getContactId()))
 			.href(card.getHref())
 			.etag(buildEtag(card.getRevisionTimestamp()));
 	}

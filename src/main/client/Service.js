@@ -317,7 +317,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							showOnOver: true,
 							items: [
 								{
-									iconCls: 'fas fa-ellipsis-v',
+									iconCls: 'wt-glyph-menu-kebab',
 									handler: function(v, ridx, cidx, itm, e, node, row) {
 										if (node.isOrigin()) {
 											Sonicle.Utils.showContextMenu(e, me.getRef('cxmTreeOrigin'), {node: node});
@@ -577,7 +577,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							}
 						}, {
 							xtype: 'button',
-							iconCls: 'fas fa-ellipsis-v',
+							iconCls: 'wt-glyph-menu-kebab',
 							arrowVisible: false,
 							handler: function(s, e) {
 								Sonicle.Utils.showContextMenu(e, me.getRef('cxmGrid'));

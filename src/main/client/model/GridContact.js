@@ -40,7 +40,7 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 	idProperty: 'uid',
 	fields: [
 		WTF.roField('uid', 'string'),
-		WTF.roField('id', 'int'),
+		WTF.roField('id', 'string'),
 		WTF.roField('isList', 'boolean'),
 		WTF.roField('displayName', 'string'),
 		WTF.roField('title', 'string'),

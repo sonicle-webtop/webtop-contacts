@@ -34,12 +34,12 @@
 Ext.define('Sonicle.webtop.contacts.model.ContactsListRecipient', {
 	extend: 'WTA.ux.data.BaseModel',
 	
-	identifier: 'negative',
+	identifier: 'negativestring',
 	idProperty: 'listRecipientId',
 	fields: [
-		WTF.field('listRecipientId', 'int', false),
+		WTF.field('listRecipientId', 'string', false),
 		WTF.field('recipientType', 'string', false, {defaultValue: 'to'}),
 		WTF.field('recipient', 'string', false),
-		WTF.field('recipientContactId', 'int', true)
+		WTF.field('recipientContactId', 'string', true)
 	]
 });

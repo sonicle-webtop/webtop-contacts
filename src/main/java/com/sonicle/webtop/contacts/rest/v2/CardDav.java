@@ -195,7 +195,7 @@ public class CardDav extends CarddavApi {
 			if (body.getUpdatedFields().contains("description")) {
 				cat.setDescription(body.getDescription());
 			}
-			manager.updateCategory(cat);
+			manager.updateCategory(categoryId, cat);
 			return respOk();
 			
 		} catch (WTNotFoundException ex) {

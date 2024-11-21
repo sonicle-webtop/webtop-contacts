@@ -22,62 +22,6 @@
     }
   ],
   "paths": {
-    "/carddav/addressbooks": {
-      "get": {
-        "tags": [
-          "dav"
-        ],
-        "summary": "List all address-books",
-        "operationId": "getAddressBooks",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DavAddressBook"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "description": "List available AddressBooks."
-      },
-      "post": {
-        "tags": [
-          "dav"
-        ],
-        "summary": "Adds a new address-book",
-        "operationId": "addAddressBook",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DavAddressBookNew"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DavAddressBook"
-                }
-              }
-            }
-          }
-        },
-        "x-codegen-request-body-name": "body",
-        "description": "Creates new AddressBook."
-      }
-    },
     "/carddav/addressbooks/{addressBookUid}": {
       "get": {
         "tags": [
@@ -179,6 +123,62 @@
         }
       ]
     },
+    "/carddav/addressbooks": {
+      "get": {
+        "tags": [
+          "dav"
+        ],
+        "summary": "List all address-books",
+        "operationId": "getAddressBooks",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DavAddressBook"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "List available AddressBooks."
+      },
+      "post": {
+        "tags": [
+          "dav"
+        ],
+        "summary": "Adds a new address-book",
+        "operationId": "addAddressBook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DavAddressBookNew"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DavAddressBook"
+                }
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body",
+        "description": "Creates new AddressBook."
+      }
+    },
     "/carddav/addressbooks/{addressBookUid}/cards": {
       "get": {
         "tags": [
@@ -190,7 +190,7 @@
           {
             "name": "hrefs",
             "in": "query",
-			"style": "form",
+            "style": "form",
             "explode": true,
             "schema": {
               "type": "array",
@@ -655,6 +655,308 @@
           }
         }
       ]
+    },
+    "/me/contacts/{contact_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "contact_id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a Contact",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        },
+        "operationId": "getContact",
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "in": "query",
+            "name": "$select",
+            "style": "form",
+            "explode": true
+          }
+        ]
+      },
+      "put": {
+        "summary": "Update a Contact",
+        "operationId": "updateContact",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactEx"
+              }
+            }
+          }
+        },
+        "tags": [
+          "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "$update",
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      },
+      "delete": {
+        "summary": "Delete a Contact",
+        "operationId": "deleteContact",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/contacts": {
+      "post": {
+        "summary": "",
+        "operationId": "addContact",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/categories/{category_id}/contacts": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "category_id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "List Contacts",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "operationId": "listCategoryContacts",
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "in": "query",
+            "name": "$select"
+          }
+        ]
+      }
+    },
+    "/me/categories/{category_id}/contacts/delta": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "category_id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Your GET endpoint",
+        "tags": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsDelta"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "listCategoryContactsDelta",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "$sync_token"
+          }
+        ]
+      }
+    },
+    "/me/categories": {
+      "get": {
+        "summary": "List Categories",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        },
+        "operationId": "listCategories",
+        "description": ""
+      },
+      "post": {
+        "summary": "Add a Category",
+        "operationId": "addCategory",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/categories/{category_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "category_id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get a Category",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        },
+        "operationId": "getCategory"
+      },
+      "put": {
+        "summary": "Update a Category",
+        "operationId": "updateCategory",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      },
+      "delete": {
+        "summary": "Delete a Category",
+        "operationId": "deleteCategory",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Category not found"
+          }
+        },
+        "tags": [
+          "me"
+        ]
+      }
     }
   },
   "components": {
@@ -1343,6 +1645,423 @@
           }
         },
         "description": "Bean for carry message's updateable fields"
+      },
+      "Category": {
+        "title": "Category",
+        "x-stoplight": {
+          "id": "uducz87dq8777"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "ContactBase": {
+        "title": "ContactBase",
+        "x-stoplight": {
+          "id": "2wv8ke2qtm7hl"
+        },
+        "type": "object",
+        "description": "Object that carry writable fields of a Contact",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "fn0v1ylaqsd7f"
+            }
+          },
+          "title": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "tk3laqzvpnipq"
+            }
+          },
+          "firstName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "ozp6lubmx4loc"
+            }
+          },
+          "lastName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "8ihc5aqrsberk"
+            }
+          },
+          "nickname": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "vtdckrg6p08yb"
+            }
+          },
+          "mobile": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "aeqsb91fyd731"
+            }
+          },
+          "pager1": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "e146xf69j3ggs"
+            }
+          },
+          "pager2": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "brse0nov2bsi9"
+            }
+          },
+          "email1": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "eh8ddrwp81wsu"
+            }
+          },
+          "email2": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "b9n22mw06jdoq"
+            }
+          },
+          "email3": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "v7beil74jrmaz"
+            }
+          },
+          "im1": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "e06p461g9dhdi"
+            }
+          },
+          "im2": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "3o9cuwd9cm7r1"
+            }
+          },
+          "im3": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "vbjqgdumbmj2o"
+            }
+          },
+          "workAddress": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "lmvf76kzizpot"
+            }
+          },
+          "workPostalCode": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "jujarubn0gcng"
+            }
+          },
+          "workCity": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "rradh6st0vnxl"
+            }
+          },
+          "workState": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "ypqon18p3b0nl"
+            }
+          },
+          "workCountry": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "oy1asvxmrbapi"
+            }
+          },
+          "workTelephone1": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "tqi36r5ahdz9l"
+            }
+          },
+          "workTelephone2": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "74jwzwgtd0066"
+            }
+          },
+          "workFax": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "fetmamv3klm8y"
+            }
+          },
+          "homeAddress": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "46ypabe4jvk7k"
+            }
+          },
+          "homePostalCode": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "6m9v65wwwdm8i"
+            }
+          },
+          "homeCity": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "gttgf22wa3gum"
+            }
+          },
+          "homeState": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "pc4eo2tw9k6w3"
+            }
+          },
+          "homeCountry": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "dfa6ius1k3l4n"
+            }
+          },
+          "homeTelephone1": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "66ckdahlvw362"
+            }
+          },
+          "homeTelephone2": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "uu5lcqb8de5pa"
+            }
+          },
+          "homeFax": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "1ofl8097vn6rb"
+            }
+          },
+          "otherAddress": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "s04w085nuhauk"
+            }
+          },
+          "otherPostalCode": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "n26fciiuyp825"
+            }
+          },
+          "otherCity": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "hxmgwclaf3qa3"
+            }
+          },
+          "otherState": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "n2me161oa713m"
+            }
+          },
+          "otherCountry": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "0entjel17hf73"
+            }
+          },
+          "companyId": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "yz2xz9moa5djf"
+            }
+          },
+          "companyName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "hay1s72z1wadd"
+            }
+          },
+          "function": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "wym4vmt4wirou"
+            }
+          },
+          "department": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "439clolul3jsa"
+            }
+          },
+          "assistantName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "2bfxi6mbx919a"
+            }
+          },
+          "assistantTelephone": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "d7kiy2rkqbxna"
+            }
+          },
+          "managerName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "8zcpa884d6s53"
+            }
+          },
+          "partnerName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "et6wk1x8crvhv"
+            }
+          },
+          "birthday": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "8i1gfgtqg9h42"
+            }
+          },
+          "anniversary": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "rtt3fxcol38b7"
+            }
+          },
+          "url": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "93ng03aa7przc"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "w1xqv7gz3iadn"
+            }
+          }
+        }
+      },
+      "Contact": {
+        "title": "Contact",
+        "x-stoplight": {
+          "id": "jku72itukfuf5"
+        },
+        "allOf": [
+          {
+            "type": "object",
+            "x-stoplight": {
+              "id": "zt5m0xexm7v8y"
+            },
+            "properties": {
+              "id": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "i14agxpj3na8h"
+                },
+                "readOnly": true
+              },
+              "etag": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "mfsn0qhdd7etk"
+                },
+                "readOnly": true
+              },
+              "createTimestamp": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "2r8snl8qaxvux"
+                },
+                "readOnly": true
+              },
+              "updateTimestamp": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "r54ml5n3nl3zg"
+                },
+                "readOnly": true
+              }
+            },
+            "required": [
+              "id",
+              "etag",
+              "createTimestamp",
+              "updateTimestamp"
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/ContactEx"
+          }
+        ]
+      },
+      "ContactEx": {
+        "title": "ContactEx",
+        "x-stoplight": {
+          "id": "bslhvl5bl9qok"
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ContactBase"
+          }
+        ]
+      },
+      "ContactsDelta": {
+        "title": "ContactsDelta",
+        "x-stoplight": {
+          "id": "q5kauhq71d0jm"
+        },
+        "type": "object",
+        "properties": {
+          "syncToken": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "n259smoxxnut2"
+            },
+            "readOnly": true
+          },
+          "inserted": {
+            "type": "array",
+            "x-stoplight": {
+              "id": "9isqzjfmeong5"
+            },
+            "items": {
+              "$ref": "#/components/schemas/Contact"
+            }
+          },
+          "updated": {
+            "type": "array",
+            "x-stoplight": {
+              "id": "pk4wynriaaang"
+            },
+            "items": {
+              "$ref": "#/components/schemas/Contact"
+            }
+          },
+          "deleted": {
+            "type": "array",
+            "x-stoplight": {
+              "id": "brteob28jl4my"
+            },
+            "items": {
+              "$ref": "#/components/schemas/Contact"
+            }
+          }
+        },
+        "required": [
+          "syncToken",
+          "inserted",
+          "updated",
+          "deleted"
+        ]
       }
     },
     "securitySchemes": {
@@ -1362,6 +2081,9 @@
     },
     {
       "name": "eas"
+    },
+    {
+      "name": "me"
     }
   ]
 }

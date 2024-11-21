@@ -38,18 +38,18 @@ import org.joda.time.DateTime;
  *
  * @author malbinola
  */
-public class VContactObjectChanged {
-	protected Integer contactId;
+public class VContactObjectStat {
+	protected String contactId;
 	protected String revisionStatus;
 	protected DateTime revisionTimestamp;
 	protected DateTime creationTimestamp;
 	protected String href;
 
-	public Integer getContactId() {
+	public String getContactId() {
 		return contactId;
 	}
 
-	public void setContactId(Integer contactId) {
+	public void setContactId(String contactId) {
 		this.contactId = contactId;
 	}
 

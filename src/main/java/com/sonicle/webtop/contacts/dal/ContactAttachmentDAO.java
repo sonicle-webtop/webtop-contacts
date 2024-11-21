@@ -56,7 +56,7 @@ public class ContactAttachmentDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
-	public List<OContactAttachment> selectByContact(Connection con, int contactId) throws DAOException {
+	public List<OContactAttachment> selectByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -70,7 +70,7 @@ public class ContactAttachmentDAO extends BaseDAO {
 			.fetchInto(OContactAttachment.class);
 	}
 	
-	public List<VContactAttachmentWithBytes> selectByContactWithBytes(Connection con, int contactId) throws DAOException {
+	public List<VContactAttachmentWithBytes> selectByContactWithBytes(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -94,7 +94,7 @@ public class ContactAttachmentDAO extends BaseDAO {
 			.fetchInto(VContactAttachmentWithBytes.class);
 	}
 	
-	public OContactAttachment selectByIdContact(Connection con, String attachmentId, int contactId) throws DAOException {
+	public OContactAttachment selectByIdContact(Connection con, String attachmentId, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -131,7 +131,7 @@ public class ContactAttachmentDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByIdContact(Connection con, String attachmentId, int contactId) throws DAOException {
+	public int deleteByIdContact(Connection con, String attachmentId, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_ATTACHMENTS)
@@ -142,7 +142,7 @@ public class ContactAttachmentDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByIdsContact(Connection con, Collection<String> attachmentIds, int contactId) throws DAOException {
+	public int deleteByIdsContact(Connection con, Collection<String> attachmentIds, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_ATTACHMENTS)

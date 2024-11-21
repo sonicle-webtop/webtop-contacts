@@ -50,7 +50,7 @@ public class ContactVCardDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
-	public String selectRawDataById(Connection con, int contactId) throws DAOException {
+	public String selectRawDataById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -63,7 +63,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.fetchOneInto(String.class);
 	}
 	
-	public int insert(Connection con, int contactId, String rawData) throws DAOException {
+	public int insert(Connection con, String contactId, String rawData) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.insertInto(CONTACTS_VCARDS)
@@ -72,7 +72,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int update(Connection con, int contactId, String rawData) throws DAOException {
+	public int update(Connection con, String contactId, String rawData) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.update(CONTACTS_VCARDS)
@@ -81,13 +81,13 @@ public class ContactVCardDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int upsert(Connection con, int contactId, String rawData) throws DAOException {
+	public int upsert(Connection con, String contactId, String rawData) throws DAOException {
 		int ret = update(con, contactId, rawData);
 		if (ret == 0) ret = insert(con, contactId, rawData);
 		return ret;
 	}
 	
-	public boolean hasVCardById(Connection con, int contactId) throws DAOException {
+	public boolean hasVCardById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.selectCount()
@@ -98,7 +98,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.fetchOne(0, Integer.class) == 1;
 	}
 	
-	public OContactVCard selectById(Connection con, int contactId) throws DAOException {
+	public OContactVCard selectById(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -118,7 +118,7 @@ public class ContactVCardDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int delete(Connection con, int contactId) throws DAOException {
+	public int delete(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_VCARDS)

@@ -47,7 +47,7 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 	identifier: 'negative',
 	idProperty: 'id',
 	fields: [
-		WTF.field('id', 'int', false),
+		WTF.field('id', 'string', false),
 		WTF.field('categoryId', 'int', false),
 		WTF.field('displayName', 'string', true),
 		WTF.field('title', 'string', true),

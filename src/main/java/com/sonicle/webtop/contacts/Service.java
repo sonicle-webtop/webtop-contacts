@@ -634,14 +634,14 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				item = manager.addCategory(JsCategory.createCategory(pl.data));
+				item = manager.addCategory(pl.data.createCategoryForInsert());
 				foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				manager.updateCategory(JsCategory.createCategory(pl.data));
+				manager.updateCategory(pl.data.categoryId, pl.data.createCategoryForUpdate());
 				foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 				new JsonResult().printTo(out);
 				
@@ -904,11 +904,11 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.DELETE)) {
 				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 				
-				ArrayList<Integer> contactIds = new ArrayList<>();
-				ArrayList<Integer> contactsListIds = new ArrayList<>();
+				ArrayList<String> contactIds = new ArrayList<>();
+				ArrayList<String> contactsListIds = new ArrayList<>();
 				for (String uid : uids) {
 					CompositeId cid = JsGridContact.Id.parse(uid);
-					int contactId = JsGridContact.Id.contactId(cid);
+					String contactId = JsGridContact.Id.contactId(cid);
 					boolean isList = JsGridContact.Id.isList(cid);
 					if (isList) {
 						contactIds.add(contactId);
@@ -927,11 +927,11 @@ public class Service extends BaseService {
 				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
 				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
 				
-				ArrayList<Integer> contactIds = new ArrayList<>();
-				ArrayList<Integer> contactsListIds = new ArrayList<>();
+				ArrayList<String> contactIds = new ArrayList<>();
+				ArrayList<String> contactsListIds = new ArrayList<>();
 				for (String uid : uids) {
 					CompositeId cid = JsGridContact.Id.parse(uid);
-					int contactId = JsGridContact.Id.contactId(cid);
+					String contactId = JsGridContact.Id.contactId(cid);
 					boolean isList = JsGridContact.Id.isList(cid);
 					if (isList) {
 						//contactsListIds.add(contactId);
@@ -950,7 +950,7 @@ public class Service extends BaseService {
 				UpdateTagsOperation op = ServletUtils.getEnumParameter(request, "op", true, UpdateTagsOperation.class);
 				ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
 				
-				ArrayList<Integer> ids = new ArrayList<>();
+				ArrayList<String> ids = new ArrayList<>();
 				for (String uid : uids) {
 					CompositeId cid = JsGridContact.Id.parse(uid);
 					ids.add(JsGridContact.Id.contactId(cid));
@@ -1091,7 +1091,7 @@ public class Service extends BaseService {
 				String uid = ServletUtils.getStringParameter(request, "id", true);
 				
 				CompositeId cid = JsGridContact.Id.parse(uid);
-				int contactId = JsGridContact.Id.contactId(cid);
+				String contactId = JsGridContact.Id.contactId(cid);
 				boolean isList = JsGridContact.Id.isList(cid);
 				
 				if (isList) {
@@ -1165,8 +1165,7 @@ public class Service extends BaseService {
 			if (crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
-				int contactId = Integer.parseInt(id);
-				Contact contact = manager.getContact(contactId);
+				Contact contact = manager.getContact(id);
 				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
 				
 				Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
@@ -1240,7 +1239,7 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.DELETE)) {
-				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+				StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 				
 				if (ids.size() == 1) {
 					manager.deleteContact(ids.get(0));
@@ -1261,9 +1260,8 @@ public class Service extends BaseService {
 		try {
 			String id = ServletUtils.getStringParameter(request, "id", true);
 			String type = ServletUtils.getStringParameter(request, "type", true);
-			int contactId = Integer.parseInt(id);
 			
-			Contact contact = manager.getContact(contactId, BitFlag.of(ContactGetOptions.TAGS));
+			Contact contact = manager.getContact(id, BitFlag.of(ContactGetOptions.TAGS));
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);
@@ -1284,8 +1282,7 @@ public class Service extends BaseService {
 			if (hasUploadedFile(id)) {
 				picture = getUploadedContactPicture(id);
 			} else {
-				int contactId = Integer.parseInt(id);
-				picture = manager.getContactPicture(contactId);
+				picture = manager.getContactPicture(id);
 			}
 			if (picture != null) {
 				try (ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
@@ -1305,7 +1302,7 @@ public class Service extends BaseService {
 			String attachmentId = ServletUtils.getStringParameter(request, "attachmentId", null);
 			
 			if (!StringUtils.isBlank(attachmentId)) {
-				Integer contactId = ServletUtils.getIntParameter(request, "contactId", true);
+				String contactId = ServletUtils.getStringParameter(request, "contactId", true);
 				
 				ContactAttachmentWithBytes attch = manager.getContactAttachment(contactId, attachmentId);
 				InputStream is = null;
@@ -1340,7 +1337,7 @@ public class Service extends BaseService {
 		
 		try {
 			ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
-			Integer contactId = ServletUtils.getIntParameter(request, "id", false);
+			String contactId = ServletUtils.getStringParameter(request, "id", false);
 			
 			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, tags);
 			Map<String, CustomFieldValue> cvalues = (contactId != null) ? manager.getContactCustomValues(contactId) : null;
@@ -1367,8 +1364,7 @@ public class Service extends BaseService {
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
-				int contactId = Integer.parseInt(id);
-				ContactList list = manager.getContactList(contactId);
+				ContactList list = manager.getContactList(id);
 				UserProfileId ownerId = manager.getCategoryOwner(list.getCategoryId());
 				item = new JsContactsList(ownerId, list);
 				
@@ -1391,7 +1387,7 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+				StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 				
 				if (ids.size() == 1) {
 					manager.deleteContactList(ids.get(0));
@@ -1416,7 +1412,7 @@ public class Service extends BaseService {
 			
 			InternetAddress iaVirtualRecipient = InternetAddressUtils.toInternetAddress(virtualRecipient);
 			if (iaVirtualRecipient == null) throw new WTException("Unable to parse '{}' as internetAddress", virtualRecipient);
-			Integer listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
+			String listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
 			if (listId == null) throw new WTException("Recipient address is not a list [{}]", iaVirtualRecipient.getAddress());
 			
 			ArrayList<ContactListRecipientBase> recipients = new ArrayList<>();
@@ -1682,10 +1678,10 @@ public class Service extends BaseService {
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+			StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 			
 			Category category = null;
-			for (Integer id : ids) {
+			for (String id : ids) {
 				Contact contact = manager.getContact(id);
 				ContactPictureWithBytes picture = null;
 				ContactCompany company = null;
@@ -1714,12 +1710,12 @@ public class Service extends BaseService {
 		
 		try {
 			String tag = ServletUtils.getStringParameter(request, "uploadTag", true);
-			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+			StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 			
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 			VCardOutput vout = new VCardOutput(prodId)
 				.withEnableCaretEncoding(manager.VCARD_CARETENCODINGENABLED);
-			for (Integer id : ids) {
+			for (String id : ids) {
 				ContactObjectWithBean contactObj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
 				final String filename = buildContactFilename(contactObj) + ".vcf";
 				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vout.writeVCard(contactObj.getContact(), null)));
@@ -1965,7 +1961,7 @@ public class Service extends BaseService {
 		if (origin instanceof MyCategoryFSOrigin) {
 			Category category = manager.getCategory(categoryId);
 			category.setColor(color);
-			manager.updateCategory(category);
+			manager.updateCategory(category.getCategoryId(), category);
 			foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 			
 		} else if (origin instanceof CategoryFSOrigin) {
@@ -1981,7 +1977,7 @@ public class Service extends BaseService {
 		if (origin instanceof MyCategoryFSOrigin) {
 			Category category = manager.getCategory(categoryId);
 			category.setSync(sync);
-			manager.updateCategory(category);
+			manager.updateCategory(category.getCategoryId(), category);
 			foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 			
 		} else if (origin instanceof CategoryFSOrigin) {

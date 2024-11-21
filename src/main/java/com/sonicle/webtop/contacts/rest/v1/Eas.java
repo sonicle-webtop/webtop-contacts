@@ -171,7 +171,7 @@ public class Eas extends EasApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactObjectWithBean cobj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
+			ContactObjectWithBean cobj = (ContactObjectWithBean)manager.getContactObject(String.valueOf(id), ContactObjectOutputType.BEAN);
 			if (cobj != null) {
 				return respOk(createSyncContact(cobj));
 			} else {
@@ -222,7 +222,7 @@ public class Eas extends EasApi {
 		
 		try {
 			boolean photoUpdateEnabled = getServiceSettings().getEasContactPhotoUpdateEnabled();
-			Contact contact = manager.getContact(id, BitFlag.of(IContactsManager.ContactGetOptions.PICTURE));
+			Contact contact = manager.getContact(String.valueOf(id), BitFlag.of(IContactsManager.ContactGetOptions.PICTURE));
 			if (contact == null) return respErrorNotFound();
 			
 			BitFlag<ContactUpdateOptions> options = BitFlag.none();
@@ -230,9 +230,9 @@ public class Eas extends EasApi {
 			if (photoUpdateEnabled && mergeContactPicture(contact, body) == true) {
 				options.set(ContactUpdateOptions.PICTURE);
 			}
-			manager.updateContact(id, contact, options);
+			manager.updateContact(String.valueOf(id), contact, options);
 			
-			ContactObject card = manager.getContactObject(id, ContactObjectOutputType.STAT);
+			ContactObject card = manager.getContactObject(String.valueOf(id), ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();
 			
 			return respOk(createSyncContactStat(card));
@@ -252,7 +252,7 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			manager.deleteContact(id);
+			manager.deleteContact(String.valueOf(id));
 			return respOkNoContent();
 			
 		} catch (WTNotFoundException ex) {
@@ -284,7 +284,7 @@ public class Eas extends EasApi {
 	
 	private SyncContactStat createSyncContactStat(ContactObject card) {
 		return new SyncContactStat()
-			.id(card.getContactId())
+			.id(Integer.valueOf(card.getContactId()))
 			.etag(buildEtag(card.getRevisionTimestamp()));
 	}
 	
@@ -298,7 +298,7 @@ public class Eas extends EasApi {
 		}
 		
 		return new SyncContact()
-			.id(card.getContactId())
+			.id(Integer.valueOf(card.getContactId()))
 			.etag(buildEtag(card.getRevisionTimestamp()))
 			.title(cont.getTitle())
 			.firstName(cont.getFirstName())

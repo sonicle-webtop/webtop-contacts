@@ -60,7 +60,7 @@ import org.jooq.tools.StringUtils;
  */
 public class JsContactPreview {
 	public String uid;
-	public Integer id;
+	public String id;
 	public boolean isList;
 	public String displayName;
 	public String title;

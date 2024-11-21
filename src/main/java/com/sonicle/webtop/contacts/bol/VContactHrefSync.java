@@ -37,15 +37,15 @@ package com.sonicle.webtop.contacts.bol;
  * @author malbinola
  */
 public class VContactHrefSync {
-	private Integer contactId;
+	private String contactId;
 	private String href;
 	private String etag;
 
-	public Integer getContactId() {
+	public String getContactId() {
 		return contactId;
 	}
 
-	public void setContactId(Integer contactId) {
+	public void setContactId(String contactId) {
 		this.contactId = contactId;
 	}
 
