@@ -32,7 +32,6 @@
  */
 package com.sonicle.webtop.contacts;
 
-import com.sonicle.commons.BitFlag;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.IdentifierUtils;
@@ -1106,7 +1105,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			Set<String> customFieldsIds = null;
 			if (processOpts.has(ContactProcessOpt.CUSTOM_VALUES)) {
-				customFieldsIds = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlag.none());
+				customFieldsIds = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlags.noneOf(CoreManager.CustomFieldListOption.class));
 			}
 			
 			con = WT.getConnection(SERVICE_ID, false);
@@ -3514,7 +3513,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			super(categoryId, con, coreMgr, 1);
 			validTagIds = coreMgr.listTagIds();
 			tagIdsByName = coreMgr.listTagIdsByName();
-			customFieldsIds = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlag.none());
+			customFieldsIds = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlags.noneOf(CoreManager.CustomFieldListOption.class));
 		}
 		
 		@Override
