@@ -46,12 +46,12 @@ import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.commons.concurrent.KeyedReentrantLocks;
+import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.DispositionType;
 import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
-import com.sonicle.commons.web.ServletUtils.IntegerArray;
 import com.sonicle.commons.web.ServletUtils.StringArray;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.commons.web.json.PayloadAsList;
@@ -64,8 +64,8 @@ import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
-import com.sonicle.webtop.contacts.IContactsManager.ContactGetOptions;
-import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
+import com.sonicle.webtop.contacts.IContactsManager.ContactGetOption;
+import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOption;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
@@ -173,15 +173,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import jakarta.mail.internet.InternetAddress;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -1104,7 +1098,7 @@ public class Service extends BaseService {
 					
 				} else {
 					UserProfile up = getEnv().getProfile();
-					Contact contact = manager.getContact(contactId, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.TAGS, ContactGetOptions.CUSTOM_VALUES));
+					Contact contact = manager.getContact(contactId, BitFlags.with(ContactGetOption.PICTURE, ContactGetOption.TAGS, ContactGetOption.CUSTOM_VALUES));
 					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
 					ContactCompany company = contact.hasCompany() ? manager.getContactCompany(contactId) : null;
 					
@@ -1205,18 +1199,18 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				BitFlag<ContactUpdateOptions> processOpts = BitFlag.of(ContactUpdateOptions.TAGS, ContactUpdateOptions.ATTACHMENTS, ContactUpdateOptions.CUSTOM_VALUES);
+				BitFlags<ContactUpdateOption> processOpts = BitFlags.with(ContactUpdateOption.TAGS, ContactUpdateOption.ATTACHMENTS, ContactUpdateOption.CUSTOM_VALUES);
 				Contact contact = pl.data.createContactForUpdate(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
 				if (hasUploadedFile(pl.data.picture)) {
 					// If found, new picture has been uploaded!
-					processOpts.set(ContactUpdateOptions.PICTURE);
+					processOpts.set(ContactUpdateOption.PICTURE);
 					contact.setPicture(getUploadedContactPicture(pl.data.picture));
 				} else {
 					// If blank, picture has been deleted!
-					if (StringUtils.isBlank(pl.data.picture)) processOpts.set(ContactUpdateOptions.PICTURE);
+					if (StringUtils.isBlank(pl.data.picture)) processOpts.set(ContactUpdateOption.PICTURE);
 				}
 				for (JsContact.Attachment jsatt : pl.data.attachments) {
 					if (!StringUtils.isBlank(jsatt._uplId)) {
@@ -1261,7 +1255,7 @@ public class Service extends BaseService {
 			String id = ServletUtils.getStringParameter(request, "id", true);
 			String type = ServletUtils.getStringParameter(request, "type", true);
 			
-			Contact contact = manager.getContact(id, BitFlag.of(ContactGetOptions.TAGS));
+			Contact contact = manager.getContact(id, BitFlags.with(ContactGetOption.TAGS));
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);

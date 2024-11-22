@@ -32,13 +32,13 @@
  */
 package com.sonicle.webtop.contacts.rest.v2;
 
-import com.sonicle.commons.BitFlag;
+import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.IContactsManager;
-import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
+import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOption;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
@@ -222,13 +222,13 @@ public class Eas extends EasApi {
 		
 		try {
 			boolean photoUpdateEnabled = getServiceSettings().getEasContactPhotoUpdateEnabled();
-			Contact contact = manager.getContact(id, BitFlag.of(IContactsManager.ContactGetOptions.PICTURE));
+			Contact contact = manager.getContact(id, BitFlags.with(IContactsManager.ContactGetOption.PICTURE));
 			if (contact == null) return respErrorNotFound();
 			
-			BitFlag<ContactUpdateOptions> options = BitFlag.none();
+			BitFlags<ContactUpdateOption> options = BitFlags.noneOf(ContactUpdateOption.class);
 			mergeContact(contact, body);
 			if (photoUpdateEnabled && mergeContactPicture(contact, body) == true) {
-				options.set(ContactUpdateOptions.PICTURE);
+				options.set(ContactUpdateOption.PICTURE);
 			}
 			manager.updateContact(id, contact, options);
 			
