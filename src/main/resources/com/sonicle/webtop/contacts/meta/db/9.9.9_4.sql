@@ -16,7 +16,7 @@ FOR EACH ROW
 EXECUTE PROCEDURE "contacts"."log_categories_changes"();
 
 DROP TRIGGER IF EXISTS "trg_categories_onafter_2" ON "contacts"."categories";
-CREATE TRIGGER "trg_categories_onafter_1" AFTER DELETE ON "contacts"."categories"
+CREATE TRIGGER "trg_categories_onafter_2" AFTER DELETE ON "contacts"."categories"
 FOR EACH ROW
 EXECUTE PROCEDURE "contacts"."log_categories_changes"();
 
