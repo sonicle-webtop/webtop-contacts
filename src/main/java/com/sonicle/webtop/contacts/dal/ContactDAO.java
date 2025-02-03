@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.LangUtils;
+import com.sonicle.commons.beans.SortInfo;
 import com.sonicle.webtop.contacts.bol.OContact;
 import com.sonicle.webtop.contacts.bol.OContactInfo;
 import com.sonicle.webtop.contacts.bol.VContact;
@@ -42,6 +43,7 @@ import com.sonicle.webtop.contacts.bol.VContactObjectStat;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
+import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CONTACTS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_;
@@ -49,6 +51,7 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_ATTACHMENTS;
+import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_CHANGES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_CUSTOM_VALUES;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.contacts.model.ContactBase;
@@ -62,8 +65,10 @@ import com.sonicle.webtop.core.sdk.WTException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
@@ -385,6 +390,193 @@ AND (ccnts.href IS NULL)
 			.orderBy(
 				CONTACTS_.CONTACT_ID.asc()
 			)
+			.fetchLazy();
+
+		try {
+			for(;;) {
+				VContactObject vco = cursor.fetchNextInto(VContactObject.class);
+				if (vco == null) break;
+				consumer.consume(vco, con);
+			}
+		} finally {
+			cursor.close();
+		}
+	}
+	
+	public static Condition createContactsChangedNewOrModifiedCondition() {
+		return CONTACTS_CHANGES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
+			.or(CONTACTS_CHANGES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
+	}
+	
+	public static Condition createContactsChangedSinceUntilCondition(DateTime since, DateTime until) {
+		return CONTACTS_CHANGES.CHANGE_TIMESTAMP.greaterThan(since)
+			.and(CONTACTS_CHANGES.CHANGE_TIMESTAMP.lessThan(until));
+	}
+	
+	public void lazy_viewChangedContactObjects(Connection con, Collection<Integer> categoryIds, Condition condition, boolean statFields, int limit, int offset, VContactObjectChanged.Consumer consumer) throws DAOException, WTException {
+		DSLContext dsl = getDSL(con);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
+			).asField("tags");
+		
+		// New field: has picture
+		Field<Boolean> hasPicture = DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture");
+		
+		// New field: has attachments
+		Field<Boolean> hasAttachments = DSL.field(DSL.exists(
+			DSL.selectOne()
+				.from(CONTACTS_ATTACHMENTS)
+				.where(CONTACTS_ATTACHMENTS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			)).as("has_attachments");
+		
+		// New field: has custom values
+		Field<Boolean> hasCustomValues = DSL.field(DSL.exists(
+			DSL.selectOne()
+				.from(CONTACTS_CUSTOM_VALUES)
+				.where(CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			)).as("has_custom_values");
+		
+		// New field: has vcard
+		Field<Boolean> hasVCard = DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard");
+		
+		Cursor<Record> cursor = dsl
+			.select(
+				CONTACTS_CHANGES.CHANGE_TIMESTAMP,
+				CONTACTS_CHANGES.CHANGE_TYPE
+			)
+			.select(
+				getVContactObjectFields(statFields)
+			)
+			.select(
+				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
+				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
+				hasPicture,
+				hasAttachments,
+				hasCustomValues,
+				hasVCard
+			)
+			.distinctOn(CONTACTS_CHANGES.CONTACT_ID)
+			.from(CONTACTS_CHANGES)
+			.leftOuterJoin(CONTACTS_).on(CONTACTS_CHANGES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			.leftOuterJoin(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.where(
+				CONTACTS_CHANGES.CATEGORY_ID.in(categoryIds)
+				.and(CONTACTS_.IS_LIST.equal(false))
+				.and(filterCndt)
+			)
+			.orderBy(
+				CONTACTS_CHANGES.CONTACT_ID.asc(),
+				CONTACTS_CHANGES.ID.desc()
+			)
+			.limit(limit)
+			.offset(offset)
+			.fetchLazy();
+		
+		try {
+			for(;;) {
+				VContactObjectChanged vco = cursor.fetchNextInto(VContactObjectChanged.class);
+				if (vco == null) break;
+				consumer.consume(vco, con);
+			}
+		} finally {
+			cursor.close();
+		}
+	}
+	
+	public int countOnlineContactObjects(Connection con, Collection<Integer> categoryIds, Condition condition) throws DAOException, WTException {
+		DSLContext dsl = getDSL(con);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		return dsl
+			.selectCount()
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
+				.and(
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+				.and(CONTACTS_.IS_LIST.equal(false))
+				.and(filterCndt)
+			)
+			.fetchOne(0, Integer.class);
+	}
+	
+	public void lazy_viewOnlineContactObjects(Connection con, Collection<Integer> categoryIds, Condition condition, Set<SortInfo> sortInfo, boolean statFields, int limit, int offset, VContactObject.Consumer consumer) throws DAOException, WTException {
+		DSLContext dsl = getDSL(con);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
+			).asField("tags");
+		
+		// New field: has picture
+		Field<Boolean> hasPicture = DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture");
+		
+		// New field: has attachments
+		Field<Boolean> hasAttachments = DSL.field(DSL.exists(
+			DSL.selectOne()
+				.from(CONTACTS_ATTACHMENTS)
+				.where(CONTACTS_ATTACHMENTS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			)).as("has_attachments");
+		
+		// New field: has custom values
+		Field<Boolean> hasCustomValues = DSL.field(DSL.exists(
+			DSL.selectOne()
+				.from(CONTACTS_CUSTOM_VALUES)
+				.where(CONTACTS_CUSTOM_VALUES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			)).as("has_custom_values");
+		
+		// New field: has vcard
+		Field<Boolean> hasVCard = DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard");
+		
+		Cursor<Record> cursor = dsl
+			.select(
+				getVContactObjectFields(statFields)
+			)
+			.select(
+				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
+				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
+				hasPicture,
+				hasAttachments,
+				hasCustomValues,
+				hasVCard
+			)
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.where(
+				CONTACTS_.CATEGORY_ID.in(categoryIds)
+				.and(
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+				.and(CONTACTS_.IS_LIST.equal(false))
+				.and(filterCndt)
+			)
+			.orderBy(
+				toContactsOrderByClause(sortInfo)
+			)
+			.limit(limit)
+			.offset(offset)
 			.fetchLazy();
 
 		try {
@@ -1194,8 +1386,17 @@ AND (ccnts.href IS NULL)
 		}
 	}
 	*/
-
 	
+	private static Collection<SortField<?>> toContactsOrderByClause(final Set<SortInfo> sortInfo) {
+		ArrayList<SortField<?>> fields = new ArrayList<>();
+		for (SortInfo si : sortInfo) {
+			if (si.getField().equals("displayName")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CONTACTS_.DISPLAY_NAME, "")), si).nullsLast());
+			else if (si.getField().equals("firstName")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CONTACTS_.FIRSTNAME, "")), si).nullsLast());
+			else if (si.getField().equals("lastName")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CONTACTS_.LASTNAME, "")), si).nullsLast());
+			else if (si.getField().equals("company")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CONTACTS_.COMPANY, "")), si).nullsLast());
+		}
+		return fields;
+	}
 	
 	private ArrayList<SortField<?>> toSortClause(Collection<OrderField> orderFields) {
 		ArrayList<SortField<?>> fields = new ArrayList<>();

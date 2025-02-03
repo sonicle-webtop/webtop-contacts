@@ -14,28 +14,27 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
-/**
- * Bean for carry messageStat fields
- **/
-@ApiModel(description = "Bean for carry messageStat fields")
-@JsonTypeName("EasSyncContactStat")
+
+
+@JsonTypeName("Contact_allOf")
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
-public class ApiEasSyncContactStat   {
+public class ApiContactAllOf   {
   private @Valid String id;
   private @Valid String etag;
+  private @Valid String createdOn;
+  private @Valid String updatedOn;
 
   /**
-   * Message ID (internal)
+   * The contact&#39;s unique ID.
    **/
-  public ApiEasSyncContactStat id(String id) {
+  public ApiContactAllOf id(String id) {
     this.id = id;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Message ID (internal)")
+  @ApiModelProperty(value = "The contact's unique ID.")
   @JsonProperty("id")
-  @NotNull
   public String getId() {
     return id;
   }
@@ -46,17 +45,16 @@ public class ApiEasSyncContactStat   {
   }
 
   /**
-   * Revision tag
+   * The revision identifier that refers to the last modification.
    **/
-  public ApiEasSyncContactStat etag(String etag) {
+  public ApiContactAllOf etag(String etag) {
     this.etag = etag;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Revision tag")
+  @ApiModelProperty(value = "The revision identifier that refers to the last modification.")
   @JsonProperty("etag")
-  @NotNull
   public String getEtag() {
     return etag;
   }
@@ -64,6 +62,46 @@ public class ApiEasSyncContactStat   {
   @JsonProperty("etag")
   public void setEtag(String etag) {
     this.etag = etag;
+  }
+
+  /**
+   * Creation timestamp in ISO 8601 format and UTC time.
+   **/
+  public ApiContactAllOf createdOn(String createdOn) {
+    this.createdOn = createdOn;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "Creation timestamp in ISO 8601 format and UTC time.")
+  @JsonProperty("createdOn")
+  public String getCreatedOn() {
+    return createdOn;
+  }
+
+  @JsonProperty("createdOn")
+  public void setCreatedOn(String createdOn) {
+    this.createdOn = createdOn;
+  }
+
+  /**
+   * Modification timestamp in ISO 8601 format and UTC time.
+   **/
+  public ApiContactAllOf updatedOn(String updatedOn) {
+    this.updatedOn = updatedOn;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "Modification timestamp in ISO 8601 format and UTC time.")
+  @JsonProperty("updatedOn")
+  public String getUpdatedOn() {
+    return updatedOn;
+  }
+
+  @JsonProperty("updatedOn")
+  public void setUpdatedOn(String updatedOn) {
+    this.updatedOn = updatedOn;
   }
 
 
@@ -75,23 +113,27 @@ public class ApiEasSyncContactStat   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiEasSyncContactStat easSyncContactStat = (ApiEasSyncContactStat) o;
-    return Objects.equals(this.id, easSyncContactStat.id) &&
-        Objects.equals(this.etag, easSyncContactStat.etag);
+    ApiContactAllOf contactAllOf = (ApiContactAllOf) o;
+    return Objects.equals(this.id, contactAllOf.id) &&
+        Objects.equals(this.etag, contactAllOf.etag) &&
+        Objects.equals(this.createdOn, contactAllOf.createdOn) &&
+        Objects.equals(this.updatedOn, contactAllOf.updatedOn);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, etag);
+    return Objects.hash(id, etag, createdOn, updatedOn);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiEasSyncContactStat {\n");
+    sb.append("class ApiContactAllOf {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
+    sb.append("    createdOn: ").append(toIndentedString(createdOn)).append("\n");
+    sb.append("    updatedOn: ").append(toIndentedString(updatedOn)).append("\n");
     sb.append("}");
     return sb.toString();
   }

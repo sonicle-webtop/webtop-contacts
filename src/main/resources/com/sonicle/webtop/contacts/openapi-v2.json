@@ -656,6 +656,369 @@
         }
       ]
     },
+    "/me/categories": {
+      "get": {
+        "summary": "List Categories",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesResult"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Not allowed"
+          }
+        },
+        "operationId": "listCategories",
+        "description": "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dollar_filter"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_select"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_orderBy"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_pageNo"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_returnCount"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Add a Category",
+        "operationId": "addCategory",
+        "responses": {
+          "201": {
+            "description": "Category created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "405": {
+            "description": "Not allowed"
+          }
+        },
+        "tags": [
+          "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "user_id",
+            "description": "The ID of a user"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryBase"
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body",
+        "description": "Adds new category specifying the owning user ID. If no user ID is provided, the owner will be the current user."
+      }
+    },
+    "/me/categories/{category_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "category_id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of a category"
+        }
+      ],
+      "get": {
+        "summary": "Get a category",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Category"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Category not found"
+          },
+          "405": {
+            "description": "Not allowed"
+          }
+        },
+        "operationId": "getCategory",
+        "description": "Gets the specified category given its ID."
+      },
+      "put": {
+        "summary": "Update a category",
+        "operationId": "updateCategory",
+        "responses": {
+          "200": {
+            "description": "Category updated"
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Category not found"
+          },
+          "405": {
+            "description": "Not allowed"
+          }
+        },
+        "tags": [
+          "me"
+        ],
+        "x-codegen-request-body-name": "body",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryBase"
+              }
+            }
+          }
+        },
+        "description": "Update the specified category given its ID. You can choose to update the entire object or only a subset of data."
+      },
+      "delete": {
+        "summary": "Delete a category",
+        "operationId": "deleteCategory",
+        "responses": {
+          "204": {
+            "description": "Category deleted"
+          },
+          "400": {
+            "description": "Invalid parameter"
+          },
+          "404": {
+            "description": "Category not found"
+          },
+          "405": {
+            "description": "Not allowed"
+          }
+        },
+        "tags": [
+          "me"
+        ],
+        "description": "Delete a category given its ID."
+      }
+    },
+    "/me/categories/{category_id}/contacts": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "category_id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of a category"
+        }
+      ],
+      "get": {
+        "summary": "List contacts",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not found"
+          },
+          "405": {
+            "description": "Not allowed"
+          }
+        },
+        "operationId": "listCategoryContacts",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dollar_filter"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_select"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_orderBy"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_pageNo"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_pageSize"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_returnCount"
+          }
+        ],
+        "description": "Returns a list of contacts from specified category."
+      },
+      "post": {
+        "summary": "Add a contact",
+        "tags": [
+          "me"
+        ],
+        "operationId": "addCategoryContact",
+        "responses": {
+          "201": {
+            "description": "Contact created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Category not Found"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactEx"
+              }
+            }
+          }
+        },
+        "x-codegen-request-body-name": "body",
+        "description": "Adds new contact into given category."
+      }
+    },
+    "/me/categories/{category_id}/contacts/delta": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "category_id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of a category"
+        }
+      ],
+      "get": {
+        "summary": "List changes on contacts collection",
+        "tags": [
+          "me"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactsResultDelta"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "listCategoryContactsDelta",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dollar_syncToken"
+          },
+          {
+            "$ref": "#/components/parameters/dollar_select"
+          }
+        ],
+        "description": "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken."
+      }
+    },
+    "/me/contacts": {
+      "post": {
+        "summary": "Add a contact",
+        "operationId": "addContact",
+        "responses": {
+          "201": {
+            "description": "Contact created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "me"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "category_id",
+            "required": true,
+            "description": "The category ID where the contact will be added into"
+          }
+        ],
+        "x-codegen-request-body-name": "body",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactEx"
+              }
+            }
+          }
+        },
+        "description": "Adds new contact into specified category."
+      }
+    },
     "/me/contacts/{contact_id}": {
       "parameters": [
         {
@@ -664,11 +1027,12 @@
           },
           "name": "contact_id",
           "in": "path",
-          "required": true
+          "required": true,
+          "description": "The ID of a contact"
         }
       ],
       "get": {
-        "summary": "Get a Contact",
+        "summary": "Get a contact",
         "tags": [
           "me"
         ],
@@ -693,33 +1057,18 @@
         "operationId": "getContact",
         "parameters": [
           {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "uniqueItems": true
-            },
-            "in": "query",
-            "name": "$select",
-            "style": "form",
-            "explode": true
+            "$ref": "#/components/parameters/dollar_select"
           }
-        ]
+        ],
+        "description": "Gets the specified contact given its ID."
       },
       "put": {
-        "summary": "Update a Contact",
+        "summary": "Update a contact",
         "operationId": "updateContact",
         "responses": {
           "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Contact"
-                }
-              }
-            }
+            "description": "Contact updated",
+            "content": {}
           },
           "400": {
             "description": "Invalid parameter"
@@ -742,27 +1091,18 @@
         ],
         "parameters": [
           {
-            "schema": {
-              "type": "array",
-              "uniqueItems": true,
-              "items": {
-                "type": "string"
-              }
-            },
-            "in": "query",
-            "name": "$update",
-            "style": "form",
-            "explode": true
+            "$ref": "#/components/parameters/dollar_update"
           }
         ],
-        "x-codegen-request-body-name": "body"
+        "x-codegen-request-body-name": "body",
+        "description": "Update the specified contact given its ID. You can choose to update the entire object or only a subset of data."
       },
       "delete": {
-        "summary": "Delete a Contact",
+        "summary": "Delete a contact",
         "operationId": "deleteContact",
         "responses": {
-          "200": {
-            "description": "Success"
+          "204": {
+            "description": "Contact deleted"
           },
           "400": {
             "description": "Invalid parameter"
@@ -773,189 +1113,135 @@
         },
         "tags": [
           "me"
-        ]
+        ],
+        "description": "Delete a contact given its ID."
       }
     },
-    "/me/contacts": {
-      "post": {
-        "summary": "",
-        "operationId": "addContact",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "me"
-        ]
-      }
-    },
-    "/me/categories/{category_id}/contacts": {
+    "/me/contacts/{contact_id}/picture": {
       "parameters": [
         {
           "schema": {
             "type": "string"
           },
-          "name": "category_id",
+          "name": "contact_id",
           "in": "path",
-          "required": true
+          "required": true,
+          "description": "The ID of a contact"
         }
       ],
       "get": {
-        "summary": "List Contacts",
+        "summary": "Get a contact picture metadata",
         "tags": [
           "me"
         ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        },
-        "operationId": "listCategoryContacts",
-        "parameters": [
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "uniqueItems": true
-            },
-            "in": "query",
-            "name": "$select"
-          }
-        ]
-      }
-    },
-    "/me/categories/{category_id}/contacts/delta": {
-      "parameters": [
-        {
-          "schema": {
-            "type": "string"
-          },
-          "name": "category_id",
-          "in": "path",
-          "required": true
-        }
-      ],
-      "get": {
-        "summary": "Your GET endpoint",
-        "tags": [],
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ContactsDelta"
+                  "$ref": "#/components/schemas/ContactPictureMeta"
                 }
               }
             }
+          },
+          "404": {
+            "description": "Contact not found",
+            "content": {}
           }
         },
-        "operationId": "listCategoryContactsDelta",
+        "operationId": "getContactPictureMeta",
+        "description": "Gets the contact's picture metatada of a given contact ID."
+      },
+      "put": {
+        "summary": "Set contact picture",
+        "tags": [
+          "me"
+        ],
+        "operationId": "setContactPicture",
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        },
+        "description": "Assign a picture to the given contact ID. The picture should be in binary. It replaces any existing photo for that contact.",
+        "requestBody": {
+          "content": {
+            "image/*": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          },
+          "description": "The binary data of the picture."
+        },
         "parameters": [
           {
             "schema": {
               "type": "string"
             },
-            "in": "query",
-            "name": "$sync_token"
+            "in": "header",
+            "name": "Content-Type",
+            "description": "The picture media-type."
           }
         ]
-      }
-    },
-    "/me/categories": {
-      "get": {
-        "summary": "List Categories",
-        "tags": [
-          "me"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        },
-        "operationId": "listCategories",
-        "description": ""
       },
-      "post": {
-        "summary": "Add a Category",
-        "operationId": "addCategory",
+      "delete": {
+        "summary": "",
+        "operationId": "clearContactPicture",
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "Contact's picture deleted"
+          },
+          "404": {
+            "description": "Contact not found"
           }
         },
+        "description": "Deletes the contact's picture of a given contact ID.",
         "tags": [
           "me"
         ]
       }
     },
-    "/me/categories/{category_id}": {
+    "/me/contacts/{contact_id}/picture/$value": {
       "parameters": [
         {
           "schema": {
             "type": "string"
           },
-          "name": "category_id",
+          "name": "contact_id",
           "in": "path",
-          "required": true
+          "required": true,
+          "description": "The ID of a contact"
         }
       ],
       "get": {
-        "summary": "Get a Category",
+        "summary": "Get contact picture binary data",
         "tags": [
           "me"
         ],
         "responses": {
           "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Invalid parameter"
-          },
-          "404": {
-            "description": "Category not found"
-          }
-        },
-        "operationId": "getCategory"
-      },
-      "put": {
-        "summary": "Update a Category",
-        "operationId": "updateCategory",
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Invalid parameter"
+            "description": "Success",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "object",
+                  "properties": {}
+                }
+              }
+            }
           },
           "404": {
-            "description": "Category not found"
+            "description": "Contact not found"
           }
         },
-        "tags": [
-          "me"
-        ]
-      },
-      "delete": {
-        "summary": "Delete a Category",
-        "operationId": "deleteCategory",
-        "responses": {
-          "200": {
-            "description": "Success"
-          },
-          "400": {
-            "description": "Invalid parameter"
-          },
-          "404": {
-            "description": "Category not found"
-          }
-        },
-        "tags": [
-          "me"
-        ]
+        "operationId": "getContactPictureBytes",
+        "description": "Gets the contact's picture raw data (binary), if any, for a given contact ID."
       }
     }
   },
@@ -1646,15 +1932,183 @@
         },
         "description": "Bean for carry message's updateable fields"
       },
+      "CategoryBase": {
+        "title": "CategoryBase",
+        "x-stoplight": {
+          "id": "lk9h4ifgjfkvg"
+        },
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "yy7rv05md7vy4"
+            },
+            "enum": [
+              "local",
+              "carddav"
+            ]
+          },
+          "builtIn": {
+            "type": "boolean",
+            "x-stoplight": {
+              "id": "cueiw4vv3z6cu"
+            }
+          },
+          "name": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "vdpesxix1oa8y"
+            }
+          },
+          "description": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "ndrxgzeewdhc3"
+            }
+          },
+          "color": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "v3ksxehzwblnf"
+            }
+          },
+          "easSync": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "4xmlutgx9a34u"
+            },
+            "enum": [
+              "off",
+              "read",
+              "read-write"
+            ]
+          },
+          "isPrivate": {
+            "type": "boolean",
+            "x-stoplight": {
+              "id": "yxg45bzlgf4zh"
+            }
+          },
+          "remoteSyncFrequency": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "4j6lwegn92wj9"
+            }
+          },
+          "remoteSyncTimestamp": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "gsr12pr20muzh"
+            },
+            "readOnly": true
+          },
+          "remoteSyncToken": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "3kd3g184em03x"
+            },
+            "readOnly": true
+          },
+          "providerParams": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "fb2ve2bhdka0i"
+            }
+          }
+        },
+        "required": [
+          "provider",
+          "builtIn",
+          "name",
+          "color",
+          "easSync",
+          "isPrivate"
+        ],
+        "description": "Represent a category object with base updateable fields."
+      },
       "Category": {
         "title": "Category",
         "x-stoplight": {
           "id": "uducz87dq8777"
         },
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The category ID.",
+                "readOnly": true
+              },
+              "etag": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "h8gd56gox4tmi"
+                },
+                "description": "The revision identifier that refers to the last modification.",
+                "readOnly": true
+              },
+              "itemsETag": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "bp38d1bl3gfo3"
+                },
+                "description": "The revision identifier that refers to the last modification of the items.",
+                "readOnly": true
+              },
+              "createdOn": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "80znhqnynal4j"
+                },
+                "description": "Creation timestamp in ISO 8601 format and UTC time.",
+                "readOnly": true
+              },
+              "updatedOn": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "5kf80dtfdw0u8"
+                },
+                "description": "Modification timestamp in ISO 8601 format and UTC time.",
+                "readOnly": true
+              },
+              "owner": {
+                "$ref": "#/components/schemas/OwnerInfo"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/CategoryBase"
+          }
+        ],
+        "description": "Represent a complete category object."
+      },
+      "CategoriesResult": {
+        "title": "CategoriesResult",
+        "x-stoplight": {
+          "id": "9cwwa9calzrpg"
+        },
         "type": "object",
+        "description": "Represents a response object for a collection of categories.",
+        "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
         "properties": {
-          "id": {
-            "type": "string"
+          "totalCount": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "y3ogz86j919ct"
+            },
+            "description": "Items total count, usually used for pagination.",
+            "readOnly": true
+          },
+          "items": {
+            "type": "array",
+            "x-stoplight": {
+              "id": "2sgsj1752mcd3"
+            },
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            }
           }
         }
       },
@@ -1664,289 +2118,337 @@
           "id": "2wv8ke2qtm7hl"
         },
         "type": "object",
-        "description": "Object that carry writable fields of a Contact",
+        "description": "Represent a contact object with base updateable fields.",
+        "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
         "properties": {
           "displayName": {
             "type": "string",
             "x-stoplight": {
               "id": "fn0v1ylaqsd7f"
-            }
+            },
+            "description": "The contact's display name."
           },
           "title": {
             "type": "string",
             "x-stoplight": {
               "id": "tk3laqzvpnipq"
-            }
+            },
+            "description": "The contact's title."
           },
           "firstName": {
             "type": "string",
             "x-stoplight": {
               "id": "ozp6lubmx4loc"
-            }
+            },
+            "description": "The contact's first-name."
           },
           "lastName": {
             "type": "string",
             "x-stoplight": {
               "id": "8ihc5aqrsberk"
-            }
+            },
+            "description": "The contact's last-name."
           },
           "nickname": {
             "type": "string",
             "x-stoplight": {
               "id": "vtdckrg6p08yb"
-            }
+            },
+            "description": "The contact's nickname."
           },
           "mobile": {
             "type": "string",
             "x-stoplight": {
               "id": "aeqsb91fyd731"
-            }
+            },
+            "description": "The contact's mobile number."
           },
           "pager1": {
             "type": "string",
             "x-stoplight": {
               "id": "e146xf69j3ggs"
-            }
+            },
+            "description": "The contact's pager number #1."
           },
           "pager2": {
             "type": "string",
             "x-stoplight": {
               "id": "brse0nov2bsi9"
-            }
+            },
+            "description": "The contact's pager number #2."
           },
           "email1": {
             "type": "string",
             "x-stoplight": {
               "id": "eh8ddrwp81wsu"
-            }
+            },
+            "description": "The contact's email address #1."
           },
           "email2": {
             "type": "string",
             "x-stoplight": {
               "id": "b9n22mw06jdoq"
-            }
+            },
+            "description": "The contact's email address #2."
           },
           "email3": {
             "type": "string",
             "x-stoplight": {
               "id": "v7beil74jrmaz"
-            }
+            },
+            "description": "The contact's email address #3."
           },
           "im1": {
             "type": "string",
             "x-stoplight": {
               "id": "e06p461g9dhdi"
-            }
+            },
+            "description": "The contact's IM #1."
           },
           "im2": {
             "type": "string",
             "x-stoplight": {
               "id": "3o9cuwd9cm7r1"
-            }
+            },
+            "description": "The contact's IM #2."
           },
           "im3": {
             "type": "string",
             "x-stoplight": {
               "id": "vbjqgdumbmj2o"
-            }
+            },
+            "description": "The contact's IM #3."
           },
           "workAddress": {
             "type": "string",
             "x-stoplight": {
               "id": "lmvf76kzizpot"
-            }
+            },
+            "description": "Contact's work address."
           },
           "workPostalCode": {
             "type": "string",
             "x-stoplight": {
               "id": "jujarubn0gcng"
-            }
+            },
+            "description": "Contact's work address postal-code."
           },
           "workCity": {
             "type": "string",
             "x-stoplight": {
               "id": "rradh6st0vnxl"
-            }
+            },
+            "description": "Contact's work address city."
           },
           "workState": {
             "type": "string",
             "x-stoplight": {
               "id": "ypqon18p3b0nl"
-            }
+            },
+            "description": "Contact's work address state."
           },
           "workCountry": {
             "type": "string",
             "x-stoplight": {
               "id": "oy1asvxmrbapi"
-            }
+            },
+            "description": "Contact's work address country."
           },
           "workTelephone1": {
             "type": "string",
             "x-stoplight": {
               "id": "tqi36r5ahdz9l"
-            }
+            },
+            "description": "Contact's work telephone number #1."
           },
           "workTelephone2": {
             "type": "string",
             "x-stoplight": {
               "id": "74jwzwgtd0066"
-            }
+            },
+            "description": "Contact's work telephone number #2."
           },
           "workFax": {
             "type": "string",
             "x-stoplight": {
               "id": "fetmamv3klm8y"
-            }
+            },
+            "description": "Contact's work fax number."
           },
           "homeAddress": {
             "type": "string",
             "x-stoplight": {
               "id": "46ypabe4jvk7k"
-            }
+            },
+            "description": "Contact's home address."
           },
           "homePostalCode": {
             "type": "string",
             "x-stoplight": {
               "id": "6m9v65wwwdm8i"
-            }
+            },
+            "description": "Contact's home address postal-code."
           },
           "homeCity": {
             "type": "string",
             "x-stoplight": {
               "id": "gttgf22wa3gum"
-            }
+            },
+            "description": "Contact's home address city."
           },
           "homeState": {
             "type": "string",
             "x-stoplight": {
               "id": "pc4eo2tw9k6w3"
-            }
+            },
+            "description": "Contact's home address state."
           },
           "homeCountry": {
             "type": "string",
             "x-stoplight": {
               "id": "dfa6ius1k3l4n"
-            }
+            },
+            "description": "Contact's home address country."
           },
           "homeTelephone1": {
             "type": "string",
             "x-stoplight": {
               "id": "66ckdahlvw362"
-            }
+            },
+            "description": "Contact's home telephone number #1."
           },
           "homeTelephone2": {
             "type": "string",
             "x-stoplight": {
               "id": "uu5lcqb8de5pa"
-            }
+            },
+            "description": "Contact's home telephone number #2."
           },
           "homeFax": {
             "type": "string",
             "x-stoplight": {
               "id": "1ofl8097vn6rb"
-            }
+            },
+            "description": "Contact's home fax number."
           },
           "otherAddress": {
             "type": "string",
             "x-stoplight": {
               "id": "s04w085nuhauk"
-            }
+            },
+            "description": "Contact's other address."
           },
           "otherPostalCode": {
             "type": "string",
             "x-stoplight": {
               "id": "n26fciiuyp825"
-            }
+            },
+            "description": "Contact's other address postal-code."
           },
           "otherCity": {
             "type": "string",
             "x-stoplight": {
               "id": "hxmgwclaf3qa3"
-            }
+            },
+            "description": "Contact's other address city."
           },
           "otherState": {
             "type": "string",
             "x-stoplight": {
               "id": "n2me161oa713m"
-            }
+            },
+            "description": "Contact's other address state."
           },
           "otherCountry": {
             "type": "string",
             "x-stoplight": {
               "id": "0entjel17hf73"
-            }
+            },
+            "description": "Contact's other address country."
           },
           "companyId": {
             "type": "string",
             "x-stoplight": {
               "id": "yz2xz9moa5djf"
-            }
+            },
+            "description": "The ID of the contact's company."
           },
           "companyName": {
             "type": "string",
             "x-stoplight": {
               "id": "hay1s72z1wadd"
-            }
+            },
+            "description": "The name of the contact's company."
           },
           "function": {
             "type": "string",
             "x-stoplight": {
               "id": "wym4vmt4wirou"
-            }
+            },
+            "description": "The contact's job title."
           },
           "department": {
             "type": "string",
             "x-stoplight": {
               "id": "439clolul3jsa"
-            }
+            },
+            "description": "The contact's department."
           },
           "assistantName": {
             "type": "string",
             "x-stoplight": {
               "id": "2bfxi6mbx919a"
-            }
+            },
+            "description": "The name of the contact's assistant."
           },
           "assistantTelephone": {
             "type": "string",
             "x-stoplight": {
               "id": "d7kiy2rkqbxna"
-            }
+            },
+            "description": "The telephone number of the contact's assistant."
           },
           "managerName": {
             "type": "string",
             "x-stoplight": {
               "id": "8zcpa884d6s53"
-            }
+            },
+            "description": "The name of the contact's manager."
           },
           "partnerName": {
             "type": "string",
             "x-stoplight": {
               "id": "et6wk1x8crvhv"
-            }
+            },
+            "description": "The name of the contact's spouse/partner."
           },
           "birthday": {
             "type": "string",
             "x-stoplight": {
               "id": "8i1gfgtqg9h42"
-            }
+            },
+            "description": "The contact's birthday date in ISO 8601 format."
           },
           "anniversary": {
             "type": "string",
             "x-stoplight": {
               "id": "rtt3fxcol38b7"
-            }
+            },
+            "description": "The contact's anniversary date in ISO 8601 format."
           },
           "url": {
             "type": "string",
             "x-stoplight": {
               "id": "93ng03aa7przc"
-            }
+            },
+            "description": "Contact's reference URL."
           },
           "notes": {
             "type": "string",
             "x-stoplight": {
               "id": "w1xqv7gz3iadn"
-            }
+            },
+            "description": "The user's notes about the contact."
           }
         }
       },
@@ -1967,6 +2469,7 @@
                 "x-stoplight": {
                   "id": "i14agxpj3na8h"
                 },
+                "description": "The contact's unique ID.",
                 "readOnly": true
               },
               "etag": {
@@ -1974,34 +2477,32 @@
                 "x-stoplight": {
                   "id": "mfsn0qhdd7etk"
                 },
+                "description": "The revision identifier that refers to the last modification.",
                 "readOnly": true
               },
-              "createTimestamp": {
+              "createdOn": {
                 "type": "string",
                 "x-stoplight": {
                   "id": "2r8snl8qaxvux"
                 },
+                "description": "Creation timestamp in ISO 8601 format and UTC time.",
                 "readOnly": true
               },
-              "updateTimestamp": {
+              "updatedOn": {
                 "type": "string",
                 "x-stoplight": {
                   "id": "r54ml5n3nl3zg"
                 },
+                "description": "Modification timestamp in ISO 8601 format and UTC time.",
                 "readOnly": true
               }
-            },
-            "required": [
-              "id",
-              "etag",
-              "createTimestamp",
-              "updateTimestamp"
-            ]
+            }
           },
           {
             "$ref": "#/components/schemas/ContactEx"
           }
-        ]
+        ],
+        "description": "Represent a complete contact object."
       },
       "ContactEx": {
         "title": "ContactEx",
@@ -2012,56 +2513,206 @@
           {
             "$ref": "#/components/schemas/ContactBase"
           }
+        ],
+        "description": "Represent a contact object with extended data."
+      },
+      "ContactPictureMeta": {
+        "title": "ContactPictureMeta",
+        "x-stoplight": {
+          "id": "myzl3iqcsmwwt"
+        },
+        "type": "object",
+        "description": "Represent data of a contact's picture.",
+        "properties": {
+          "mediaType": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "yr7psum2uzzeo"
+            },
+            "description": "The image MediaType: like 'image-<subtype>'",
+            "readOnly": true
+          },
+          "width": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "q0vi63nkj9os5"
+            },
+            "description": "The image width in pixels.",
+            "readOnly": true
+          },
+          "height": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "1maok9niii9kv"
+            },
+            "description": "The image height in pixels.",
+            "readOnly": true
+          },
+          "size": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "d7aggjpfulfo8"
+            },
+            "description": "The image size in bytes.",
+            "format": "int64",
+            "readOnly": true
+          }
+        },
+        "required": [
+          "mediaType"
         ]
       },
-      "ContactsDelta": {
-        "title": "ContactsDelta",
+      "ContactChanged": {
+        "title": "ContactChanged",
+        "x-stoplight": {
+          "id": "sre2hruit2d5m"
+        },
+        "allOf": [
+          {
+            "x-stoplight": {
+              "id": "6hzo2bdiolyjj"
+            },
+            "oneOf": [
+              {
+                "x-stoplight": {
+                  "id": "a5bn37nz4i1d9"
+                },
+                "properties": {
+                  "$added": {
+                    "type": "boolean",
+                    "x-stoplight": {
+                      "id": "j49meadqz41gw"
+                    },
+                    "readOnly": true
+                  }
+                }
+              },
+              {
+                "x-stoplight": {
+                  "id": "47tx76sr3n10q"
+                },
+                "properties": {
+                  "$updated": {
+                    "type": "boolean",
+                    "x-stoplight": {
+                      "id": "7eahx66brhb8a"
+                    },
+                    "readOnly": true
+                  }
+                }
+              },
+              {
+                "x-stoplight": {
+                  "id": "xhg3v97ykz9vu"
+                },
+                "properties": {
+                  "$deleted": {
+                    "type": "boolean",
+                    "x-stoplight": {
+                      "id": "molx0ed6g6k8n"
+                    },
+                    "readOnly": true
+                  }
+                }
+              }
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/components/schemas/Contact"
+          }
+        ],
+        "description": "Represent an intermediate object for better organizing changes."
+      },
+      "ContactsResultDelta": {
+        "title": "ContactsResultDelta",
         "x-stoplight": {
           "id": "q5kauhq71d0jm"
         },
         "type": "object",
+        "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
         "properties": {
-          "syncToken": {
+          "nextSyncToken": {
             "type": "string",
             "x-stoplight": {
               "id": "n259smoxxnut2"
             },
             "readOnly": true
           },
-          "inserted": {
-            "type": "array",
+          "items": {
             "x-stoplight": {
-              "id": "9isqzjfmeong5"
+              "id": "72sgk2u0689z9"
             },
+            "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Contact"
+              "$ref": "#/components/schemas/ContactChanged"
             }
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "description": "Represent a response object for delta endpoint."
+      },
+      "ContactsResult": {
+        "title": "ContactsResult",
+        "x-stoplight": {
+          "id": "xoskr9h7q5lgh"
+        },
+        "type": "object",
+        "description": "Represents a response object for a collection of contacts.",
+        "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "description": "Items total count, usually used for pagination.",
+            "readOnly": true
           },
-          "updated": {
+          "items": {
             "type": "array",
-            "x-stoplight": {
-              "id": "pk4wynriaaang"
-            },
-            "items": {
-              "$ref": "#/components/schemas/Contact"
-            }
-          },
-          "deleted": {
-            "type": "array",
-            "x-stoplight": {
-              "id": "brteob28jl4my"
-            },
             "items": {
               "$ref": "#/components/schemas/Contact"
             }
           }
         },
         "required": [
-          "syncToken",
-          "inserted",
-          "updated",
-          "deleted"
+          "items"
         ]
+      },
+      "OwnerInfo": {
+        "title": "OwnerInfo",
+        "x-stoplight": {
+          "id": "ian4uy3v4yg3l"
+        },
+        "type": "object",
+        "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "tv48twmdo8tyl"
+            },
+            "description": "User profile ID.",
+            "readOnly": true
+          },
+          "displayName": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "ek4xquu52tdei"
+            },
+            "description": "User profile display-name.",
+            "readOnly": true
+          },
+          "emailAddress": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "8yxb846q4hb8j"
+            },
+            "description": "User profile personal email address.",
+            "readOnly": true
+          }
+        },
+        "description": "Represent a user owning an item."
       }
     },
     "securitySchemes": {
@@ -2073,7 +2724,99 @@
         "type": "http",
         "scheme": "bearer"
       }
-    }
+    },
+    "parameters": {
+      "dollar_syncToken": {
+        "name": "$sync_token",
+        "in": "query",
+        "schema": {
+          "type": "string"
+        },
+        "description": "Token exchanged between client and server that tracks changes from a precise state."
+      },
+      "dollar_select": {
+        "name": "$select",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "name, description"
+        },
+        "description": "List (comma-separated) of field names to include in resulting items. Optional."
+      },
+      "dollar_orderBy": {
+        "name": "$order_by",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "name ASC, year DESC"
+        },
+        "description": "List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional."
+      },
+      "dollar_pageNo": {
+        "name": "$page_no",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": "The page number to return, providing a value actually activates pagination. Optional."
+      },
+      "dollar_pageSize": {
+        "name": "$page_size",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": "How many items to return when paginating. Defaults to 50."
+      },
+      "dollar_returnCount": {
+        "name": "$return_count",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        },
+        "description": "Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional."
+      },
+      "dollar_filter": {
+        "name": "$filter",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "description": "A RSQL filter query to filter out resulting items. Optional."
+      },
+      "dollar_test": {
+        "name": "$test",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "description": "Dummy parameter. Do not use!"
+      },
+      "dollar_update": {
+        "name": "$update",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "displayName"
+        },
+        "description": "List (comma-separated) of field names to update. Optional."
+      }
+    },
+    "responses": {}
   },
   "tags": [
     {

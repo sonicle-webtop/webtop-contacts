@@ -28,6 +28,8 @@ CREATE TABLE "contacts"."categories" (
 "category_id" int4 NOT NULL DEFAULT nextval('"contacts".seq_categories'::regclass),
 "domain_id" varchar(20) NOT NULL,
 "user_id" varchar(100) NOT NULL,
+"revision_timestamp" timestamptz NOT NULL DEFAULT now(),
+"creation_timestamp" timestamptz NOT NULL DEFAULT now(),
 "built_in" bool NOT NULL DEFAULT false,
 "provider" varchar(20) NOT NULL DEFAULT 'local'::character varying,
 "name" varchar(100) NOT NULL,

@@ -43,6 +43,7 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
+import com.sonicle.commons.beans.ItemsListResult;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.commons.concurrent.KeyedReentrantLocks;
 import com.sonicle.commons.flags.BitFlags;
@@ -108,11 +109,12 @@ import com.sonicle.webtop.contacts.model.ContactListEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
-import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.contacts.model.ContactObject;
+import com.sonicle.webtop.contacts.model.ContactQuery;
+import com.sonicle.webtop.contacts.model.ContactQueryUI;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
@@ -863,7 +865,28 @@ public class Service extends BaseService {
 					.build();
 				
 				Integer cachedTotalCount = cacheManageGridContactsTotalCount.getIfPresent(reqId);
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, cachedTotalCount == null);
+				ItemsListResult<ContactLookup> result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI.build(queryObj, map, utz), page, limit, cachedTotalCount == null);
+				int totalCount;
+				if (cachedTotalCount != null) {
+					totalCount = cachedTotalCount;
+				} else {
+					cacheManageGridContactsTotalCount.put(reqId, result.fullCount);
+					totalCount = result.getFullCount();
+				}
+				
+				for (ContactLookup item : result.getItems()) {
+					final CategoryFSOrigin origin = foldersTreeCache.getOriginByFolder(item.getCategoryId());
+					if (origin == null) continue;
+					final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
+					if (folder == null) continue;
+					
+					final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
+					items.add(new JsGridContact(view, origin, folder, props, item));
+				}
+				
+				// Replace old impl. with ContactQueryUI_OLD
+				/*
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI_OLD.createCondition(queryObj, map, utz), page, limit, cachedTotalCount == null);
 				int totalCount;
 				if (cachedTotalCount != null) {
 					totalCount = cachedTotalCount;
@@ -882,6 +905,7 @@ public class Service extends BaseService {
 					final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 					items.add(new JsGridContact(view, origin, folder, props, item));
 				}
+				*/
 				
 				GridMetadata meta = new GridMetadata(true);
 				if (Grouping.COMPANY.equals(groupBy)) {
@@ -978,17 +1002,44 @@ public class Service extends BaseService {
 				categoryIds = manager.listAllCategoryIds();
 			}
 			
-			Condition<ContactQuery> conditionPredicate = null;
+			Condition<ContactQuery> filterQuery = null;
 			if (!StringUtils.isBlank(id)) { // ID is set, force precise match (eg. custom-fields preview)
-				conditionPredicate = new ContactQuery()
+				filterQuery = new ContactQuery()
 					.id().eq(id);
 			} else if (!StringUtils.isBlank(query)) { // Query (from type-ahead) is set, try a match on name/email
-				conditionPredicate = new ContactQuery()
+				filterQuery = new ContactQuery()
+					.anyName().eq(query)
+					.or().anyEmail().eq(query);
+			} else if (queryObj != null) { // Full query object is set, try match from that
+				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
+				filterQuery = ContactQueryUI.build(queryObj, map, utz);
+			}
+			
+			ItemsListResult<ContactLookup> result = manager.listContacts(categoryIds, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, filterQuery, page, limit, true);
+			ArrayList<JsContactLkp> items = new ArrayList<>(result.items.size());
+			for (ContactLookup item : result.getItems()) {
+				final CategoryFSOrigin origin = foldersTreeCache.getOriginByFolder(item.getCategoryId());
+				if (origin == null) continue;
+				final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
+				if (folder == null) continue;
+
+				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
+				items.add(new JsContactLkp(origin, folder, props, item));
+			}
+			
+			// Replace old impl. with ContactQueryUI_OLD
+			/*
+			Condition<ContactQueryUI_OLD> conditionPredicate = null;
+			if (!StringUtils.isBlank(id)) { // ID is set, force precise match (eg. custom-fields preview)
+				conditionPredicate = new ContactQueryUI_OLD()
+					.id().eq(id);
+			} else if (!StringUtils.isBlank(query)) { // Query (from type-ahead) is set, try a match on name/email
+				conditionPredicate = new ContactQueryUI_OLD()
 					.name().eq(query)
 					.or().email().eq(query);
 			} else if (queryObj != null) { // Full query object is set, try match from that
 				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
-				conditionPredicate = ContactQuery.createCondition(queryObj, map, utz);
+				conditionPredicate = ContactQueryUI_OLD.createCondition(queryObj, map, utz);
 			}
 			
 			ListContactsResult result = manager.listContacts(categoryIds, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, conditionPredicate, page, limit, true);
@@ -1003,6 +1054,7 @@ public class Service extends BaseService {
 				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 				items.add(new JsContactLkp(origin, folder, props, item));
 			}
+			*/
 			new JsonResult(items, result.fullCount)
 				.setPage(page)
 				.printTo(out);
@@ -1643,7 +1695,18 @@ public class Service extends BaseService {
 			
 			Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 			List<Integer> visibleCategoryIds = getActiveFolderIds();
-			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), 1, limit, true);
+			ItemsListResult<ContactLookup> result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI.build(queryObj, map, utz), 1, limit, true);
+			if (result.getFullCount() > limit) throw new WTException("Too many elements, limit is {}", limit);
+			for (ContactLookup item : result.getItems()) {
+				final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
+				if (folder == null) continue;
+
+				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
+				items.add(new RBAddressbook(folder.getCategory(), props, item));
+			}
+			// Replace old impl. with ContactQueryUI_OLD
+			/*
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI_OLD.createCondition(queryObj, map, utz), 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
 				final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
@@ -1652,6 +1715,7 @@ public class Service extends BaseService {
 				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 				items.add(new RBAddressbook(folder.getCategory(), props, item));
 			}
+			*/
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
 			RptAddressbook rpt = new RptAddressbook(builder.build());

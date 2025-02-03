@@ -1,4 +1,4 @@
-	/* 
+/* 
  * Copyright (C) 2014 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
@@ -39,10 +39,14 @@ import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.PathUtils;
+import com.sonicle.commons.beans.ItemsListResult;
+import com.sonicle.commons.beans.SortInfo;
+import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.commons.concurrent.KeyedReentrantLocks;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.flags.BitFlagsEnum;
+import com.sonicle.commons.qbuilders.QBuilderUtils;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.web.json.CId;
 import com.sonicle.commons.web.json.JsonResult;
@@ -71,16 +75,20 @@ import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
+import com.sonicle.webtop.contacts.bol.VContactObjectChanged;
+import com.sonicle.webtop.contacts.dal.CategoryConditionBuildingVisitor;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.contacts.dal.CategoryDAO;
 import com.sonicle.webtop.contacts.dal.CategoryPropsDAO;
 import com.sonicle.webtop.contacts.dal.ContactAttachmentDAO;
+import com.sonicle.webtop.contacts.dal.ContactConditionBuildingVisitor;
 import com.sonicle.webtop.contacts.dal.ContactCustomValueDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ContactVCardDAO;
 import com.sonicle.webtop.contacts.dal.ContactPredicateVisitor;
 import com.sonicle.webtop.contacts.dal.ContactTagDAO;
+import com.sonicle.webtop.contacts.dal.ContactUIConditionBuildingVisitor;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
@@ -106,7 +114,7 @@ import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactPictureWithSize;
-import com.sonicle.webtop.contacts.model.ContactQuery;
+import com.sonicle.webtop.contacts.model.ContactQueryUI_OLD;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
@@ -192,7 +200,12 @@ import com.sonicle.webtop.contacts.io.ContactFileReader;
 import com.sonicle.webtop.contacts.model.CategoryBase;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
+import com.sonicle.webtop.contacts.model.CategoryQuery;
+import com.sonicle.webtop.contacts.model.ChangedItem;
+import com.sonicle.webtop.contacts.model.Delta;
 import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
+import com.sonicle.webtop.contacts.model.ContactQuery;
+import com.sonicle.webtop.contacts.model.ContactQueryUI;
 import com.sonicle.webtop.core.app.AuditLogManager;
 import com.sonicle.webtop.core.app.ezvcard.XTag;
 import com.sonicle.webtop.core.app.model.FolderShare;
@@ -200,6 +213,9 @@ import com.sonicle.webtop.core.app.model.FolderShareOriginFolders;
 import com.sonicle.webtop.core.app.model.FolderSharing;
 import com.sonicle.webtop.core.app.model.ShareOrigin;
 import com.sonicle.webtop.core.app.sdk.AbstractFolderShareCache;
+import com.sonicle.webtop.core.app.sdk.WTOperationException;
+import com.sonicle.webtop.core.app.sdk.WTParseException;
+import com.sonicle.webtop.core.model.CustomField;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -217,6 +233,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public final boolean VCARD_CARETENCODINGENABLED;
 	private final OwnerCache ownerCache = new OwnerCache();
 	private final ShareCache shareCache = new ShareCache();
+	private final CustomFieldsNameToIDCache cacheCustomFieldsNameToID = new CustomFieldsNameToIDCache(5, TimeUnit.SECONDS);
+	private final CustomFieldIDToTypeCache cacheCustomFieldsIDToType = new CustomFieldIDToTypeCache(5, TimeUnit.SECONDS);
 	private final KeyedReentrantLocks<String> locks = new KeyedReentrantLocks<>();
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
@@ -476,6 +494,47 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return calDao.selectIdsByProfile(con, profileId.getDomainId(), profileId.getUserId());
 		} else {
 			return calDao.selectIdsByProfileIn(con, profileId.getDomainId(), profileId.getUserId(), categoryIds);
+		}
+	}
+	
+	// We cannot add support to listCategoriesDelta now due to lack of historical data for sharing configuration.
+	//public Delta<Category> listCategoriesDelta(final String syncToken) throws WTParseException, WTException {}
+	
+	@Override
+	public ItemsListResult<Category> listCategories(final Condition<CategoryQuery> filterQuery, final Set<SortInfo> sortInfo, final Integer page, final Integer limit, final boolean returnFullCount) throws WTException {
+		return listCategories(QBuilderUtils.toStringQuery(filterQuery), sortInfo, page, limit, returnFullCount);
+	}
+	
+	@Override
+	public ItemsListResult<Category> listCategories(final String filterQuery, final Set<SortInfo> sortInfo, final Integer page, final Integer limit, final boolean returnFullCount) throws WTException {
+		CategoryDAO catDao = CategoryDAO.getInstance();
+		Connection con = null;
+		
+		final int myLimit = limit == null ? Integer.MAX_VALUE : limit;
+		final int myPage = page == null ? 1 : page;
+		
+		try {
+			List<Integer> okCategoryIds = listAllCategoryIds().stream()
+				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, FolderShare.FolderRight.READ))
+				.collect(Collectors.toList());
+			
+			org.jooq.Condition condition = BaseDAO.createCondition(filterQuery, new CategoryConditionBuildingVisitor());
+			
+			final String domainId = getTargetProfileId().getDomainId();
+			final ArrayList<Category> items = new ArrayList<>();
+			Integer fullCount = null;
+			con = WT.getConnection(SERVICE_ID);
+			if (returnFullCount) fullCount = catDao.countByDomainIn(con, domainId, okCategoryIds, condition);
+			for (OCategory ocat : catDao.selectByDomainIn(con, domainId, okCategoryIds, condition, sortInfo, myLimit, ManagerUtils.toOffset(myPage, myLimit))) {
+				items.add(ManagerUtils.createCategory(ocat));
+			}
+
+			return new ItemsListResult(items, fullCount);
+			
+		} catch (Exception ex) {
+			throw ExceptionUtils.wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
 		}
 	}
 	
@@ -1232,7 +1291,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public boolean existContact(final Collection<Integer> categoryIds, final Condition<ContactQuery> conditionPredicate) throws WTException {
+	@Deprecated public boolean existContact(final Collection<Integer> categoryIds, final Condition<ContactQueryUI_OLD> queryPredicate) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1241,7 +1300,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, FolderShare.FolderRight.READ))
 				.collect(Collectors.toList());
 			
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor()
+			org.jooq.Condition condition = BaseDAO.createCondition(queryPredicate, new ContactPredicateVisitor()
 				.withIgnoreCase(true)
 				.withForceStringLikeComparison(true)
 			);
@@ -1257,17 +1316,17 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public ListContactsResult listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final String pattern) throws WTException {
-		return listContacts(categoryIds, type, groupBy, showBy, ContactQuery.createCondition(pattern), 1, Integer.MAX_VALUE, false);
+	@Deprecated public ListContactsResult listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final String pattern) throws WTException {
+		return listContacts(categoryIds, type, groupBy, showBy, ContactQueryUI_OLD.createCondition(pattern), 1, Integer.MAX_VALUE, false);
 	}
 	
 	@Override
-	public ListContactsResult listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final Condition<ContactQuery> conditionPredicate) throws WTException {
-		return listContacts(categoryIds, type, groupBy, showBy, conditionPredicate, 1, Integer.MAX_VALUE, false);
+	@Deprecated public ListContactsResult listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final Condition<ContactQueryUI_OLD> queryPredicate) throws WTException {
+		return listContacts(categoryIds, type, groupBy, showBy, queryPredicate, 1, Integer.MAX_VALUE, false);
 	}
 	
 	@Override
-	public ListContactsResult listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final Condition<ContactQuery> conditionPredicate, final int page, final int limit, final boolean returnFullCount) throws WTException {
+	@Deprecated public ListContactsResult listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final Condition<ContactQueryUI_OLD> queryPredicate, final int page, final int limit, final boolean returnFullCount) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1276,7 +1335,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, FolderShare.FolderRight.READ))
 				.collect(Collectors.toList());
 			
-			org.jooq.Condition condition = BaseDAO.createCondition(conditionPredicate, new ContactPredicateVisitor()
+			org.jooq.Condition condition = BaseDAO.createCondition(queryPredicate, new ContactPredicateVisitor()
 				.withIgnoreCase(true)
 				.withForceStringLikeComparison(true)
 			);
@@ -1292,6 +1351,179 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			}
 			
 			return new ListContactsResult(items, fullCount);
+			
+		} catch (Exception ex) {
+			throw ExceptionUtils.wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public ItemsListResult<ContactLookup> listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final Condition<ContactQuery> filterQuery, final Integer page, final Integer limit, final boolean returnFullCount) throws WTException {
+		return listContacts(categoryIds, type, groupBy, showBy, QBuilderUtils.toStringQuery(filterQuery), page, limit, returnFullCount);
+	}
+	
+	@Override
+	public ItemsListResult<ContactLookup> listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final String filterQuery, final Integer page, final Integer limit, final boolean returnFullCount) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		final int myLimit = limit == null ? Integer.MAX_VALUE : limit;
+		final int myPage = page == null ? 1 : page;
+		
+		try {
+			List<Integer> okCategoryIds = categoryIds.stream()
+				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, FolderShare.FolderRight.READ))
+				.collect(Collectors.toList());
+			
+			org.jooq.Condition condition = BaseDAO.createCondition(filterQuery, new ContactUIConditionBuildingVisitor());
+			Collection<ContactDAO.OrderField> orderFields = toContactDAOOrderFields(groupBy, showBy);
+			
+			con = WT.getConnection(SERVICE_ID);
+			Integer fullCount = null;
+			if (returnFullCount) fullCount = contDao.countByCategoryTypeCondition(con, okCategoryIds, type, condition);
+			ArrayList<ContactLookup> items = new ArrayList<>();
+			for (VContactLookup vcont : contDao.viewByCategoryTypeCondition(con, orderFields, okCategoryIds, type, condition, limit, ManagerUtils.toOffset(myPage, myLimit))) {
+				items.add(ManagerUtils.fillContactLookup(new ContactLookup(), vcont));
+			}
+			return new ItemsListResult(items, fullCount);
+			
+		} catch (Exception ex) {
+			throw ExceptionUtils.wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	@Override
+	public ItemsListResult<ContactObject> listContacts(final Collection<Integer> categoryIds, final Condition<ContactQuery> filterQuery, final Set<SortInfo> sortInfo, final Integer page, final Integer limit, final boolean returnFullCount, final ContactObjectOutputType outputType) throws WTException {
+		return listContacts(categoryIds, QBuilderUtils.toStringQuery(filterQuery), sortInfo, page, limit, returnFullCount, outputType);
+	}
+	
+	@Override
+	public ItemsListResult<ContactObject> listContacts(final Collection<Integer> categoryIds, final String filterQuery, final Set<SortInfo> sortInfo, final Integer page, final Integer limit, final boolean returnFullCount, final ContactObjectOutputType outputType) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		final int myLimit = limit == null ? Integer.MAX_VALUE : limit;
+		final int myPage = page == null ? 1 : page;
+		
+		try {
+			List<Integer> okCategoryIds = categoryIds.stream()
+				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, FolderShare.FolderRight.READ))
+				.collect(Collectors.toList());
+			
+			org.jooq.Condition condition = BaseDAO.createCondition(filterQuery, new ContactConditionBuildingVisitor()
+				.withFieldNameAsCustomFieldName(cacheCustomFieldsNameToID.shallowCopy(), cacheCustomFieldsIDToType.shallowCopy())
+			);
+			
+			final BitFlags<ContactGetOption> prepareOpts = BitFlags.with(ContactGetOption.TAGS);
+			final ArrayList<ContactObject> items = new ArrayList<>();
+			Integer fullCount = null;
+			con = WT.getConnection(SERVICE_ID);
+			if (returnFullCount) fullCount = contDao.countOnlineContactObjects(con, okCategoryIds, condition);
+			contDao.lazy_viewOnlineContactObjects(
+				con,
+				okCategoryIds,
+				condition,
+				sortInfo,
+				ContactObjectOutputType.STAT.equals(outputType),
+				myLimit,
+				ManagerUtils.toOffset(myPage, myLimit),
+				(VContactObject vco, Connection con1) -> {
+					items.add(doContactObjectPrepare(con1, vco, outputType, prepareOpts));
+				}
+			);
+			return new ItemsListResult(items, fullCount);
+			
+		} catch (Exception ex) {
+			throw ExceptionUtils.wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	public Delta<ContactObject> listContactsDelta(final int categoryId, final String syncToken, final ContactObjectOutputType outputType) throws WTParseException, WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		// Do NOT support page/limit for now
+		//final int myLimit = limit == null ? Integer.MAX_VALUE : limit;
+		//final int myPage = page == null ? 1 : page;
+		final int myLimit = Integer.MAX_VALUE;
+		final int myPage = 1;
+		
+		try {
+			final DateTime since = (syncToken == null) ? null : Delta.parseSyncToken(syncToken, false);
+			final boolean fullSync = since == null;
+			final DateTime until = DateTimeUtils.now(true);
+			
+			checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
+			
+			final BitFlags<ContactGetOption> prepareOpts = BitFlags.with(ContactGetOption.TAGS);
+			final ArrayList<ChangedItem<ContactObject>> items = new ArrayList<>();
+			con = WT.getConnection(SERVICE_ID);
+			if (fullSync) {
+				contDao.lazy_viewChangedContactObjects(
+					con,
+					Arrays.asList(categoryId),
+					ContactDAO.createContactsChangedNewOrModifiedCondition(),
+					ContactObjectOutputType.STAT.equals(outputType),
+					myLimit,
+					ManagerUtils.toOffset(myPage, myLimit),
+					(VContactObjectChanged vcoc, Connection con1) -> {
+						items.add(new ChangedItem<>(ChangedItem.ChangeType.ADDED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+					}
+				);
+				
+			} else {
+				contDao.lazy_viewChangedContactObjects(
+					con,
+					Arrays.asList(categoryId),
+					ContactDAO.createContactsChangedSinceUntilCondition(since, until),
+					ContactObjectOutputType.STAT.equals(outputType),
+					myLimit,
+					ManagerUtils.toOffset(myPage, myLimit),
+					(VContactObjectChanged vcoc, Connection con1) -> {
+						if (vcoc.isChangeInsertion()) {
+							items.add(new ChangedItem<>(ChangedItem.ChangeType.ADDED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+						} else if (vcoc.isChangeUpdate()) {
+							items.add(new ChangedItem<>(ChangedItem.ChangeType.UPDATED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+						} else if (vcoc.isChangeDeletion()) {
+							items.add(new ChangedItem<>(ChangedItem.ChangeType.DELETED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+						}
+					}
+				);
+			}
+			return new Delta<>(until, items);
+			
+		} catch (Exception ex) {
+			throw ExceptionUtils.wrapThrowable(ex);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}		
+	}
+	
+	@Override
+	public boolean existAnyContact(final Collection<Integer> categoryIds, final Condition<ContactQuery> filterQuery) throws WTException {
+		return existAnyContact(categoryIds, QBuilderUtils.toStringQuery(filterQuery));
+	}
+		
+	@Override
+	public boolean existAnyContact(final Collection<Integer> categoryIds, final String filterQuery) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			List<Integer> okCategoryIds = categoryIds.stream()
+				.filter(categoryId -> quietlyCheckRightsOnCategory(categoryId, FolderShare.FolderRight.READ))
+				.collect(Collectors.toList());
+			
+			org.jooq.Condition condition = BaseDAO.createCondition(filterQuery, new ContactConditionBuildingVisitor());
+			
+			con = WT.getConnection(SERVICE_ID);
+			return contDao.existByCategoryTypeCondition(con, okCategoryIds, ContactType.CONTACT, condition);
 			
 		} catch (Exception ex) {
 			throw ExceptionUtils.wrapThrowable(ex);
@@ -1346,6 +1578,42 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public ContactPictureWithBytes getContactPicture(final String contactId) throws WTException {
+		return (ContactPictureWithBytes)getContactPicture(contactId, false);
+	}
+	
+	@Override
+	public ContactPicture getContactPicture(final String contactId, final boolean metaOnly) throws WTException {
+		ContactDAO contDao = ContactDAO.getInstance();
+		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
+		Connection con = null;
+		
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			Integer catId = contDao.selectCategoryId(con, contactId);
+			if (catId == null) return null;
+			checkRightsOnCategory(catId, FolderShare.FolderRight.READ);
+			
+			if (metaOnly) {
+				OContactPictureMetaOnly opicm = cpicDao.selectMeta(con, contactId);
+				if (opicm == null) return null;
+				return ManagerUtils.fillContactPicture(new ContactPictureWithSize(opicm.getSize()), opicm);
+				
+			} else {
+				OContactPicture opic = cpicDao.select(con, contactId);
+				if (opic == null) return null;
+				return ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic);
+			}
+		
+		} catch (Throwable t) {
+			throw ExceptionUtils.wrapThrowable(t);
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+	}
+	
+	/*
+	@Override
+	public ContactPictureWithBytes getContactPicture(final String contactId) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
 		Connection con = null;
@@ -1366,6 +1634,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.closeQuietly(con);
 		}
 	}
+	*/
 	
 	@Override
 	public ContactCompany getContactCompany(final String contactId) throws WTException {
@@ -1516,7 +1785,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		Connection con = null;
 		
 		try {
-			if (picture == null) throw new WTException("Picture is null");
 			con = WT.getConnection(SERVICE_ID, false);
 			
 			OContactInfo ocoinfo = contDao.selectOnlineContactInfoById(con, contactId);
@@ -1524,7 +1792,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			checkRightsOnCategory(ocoinfo.getCategoryId(), FolderShare.ItemsRight.UPDATE);
 			
 			contDao.updateRevision(con, contactId, BaseDAO.createRevisionTimestamp());
-			doContactPictureUpdate(con, contactId, picture);
+			if (picture != null) {
+				doContactPictureUpdate(con, contactId, picture);
+			} else {
+				doContactPictureDelete(con, contactId);
+			}
 			
 			DbUtils.commitQuietly(con);
 			if (isAuditEnabled()) {
@@ -2032,10 +2304,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 							throw sex;
 						}
 					}
-					throw new WTImportException(lex, "Unexpected error. Reason: {0}", lex.getMessage());
+					throw new WTOperationException("import", lex, "Unexpected error. Reason: {0}", lex.getMessage());
 				}
 			} catch (IOException | WTReaderException ex1) {
-				throw new WTImportException(ex1, "Problems while opening source file. Reason: {}", ex1.getMessage());
+				throw new WTOperationException("import", ex1, "Problems while opening source file. Reason: {}", ex1.getMessage());
 			}
 			
 			DbUtils.commitQuietly(con);
@@ -2044,7 +2316,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				new LogMessage(0, LogMessage.Level.INFO, "{} contact/s imported!", handler.getInsertedCount())
 			);
 			
-		} catch(WTImportException ex) {
+		} catch(WTOperationException ex) {
 			DbUtils.rollbackQuietly(con);
 			logger.error("Import error", ex.getCause());
 			logHandler.handle(
@@ -2450,7 +2722,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		fillOCategoryWithDefaults(ocat);
 		if (ocat.getIsDefault()) catDao.resetIsDefaultByProfile(con, ocat.getDomainId(), ocat.getUserId());
 		
-		catDao.insert(con, ocat);
+		catDao.insert(con, ocat, BaseDAO.createRevisionTimestamp());
 		return ManagerUtils.createCategory(ocat);
 	}
 	
@@ -2462,7 +2734,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		fillOCategoryWithDefaults(ocat);
 		if (ocat.getIsDefault()) catDao.resetIsDefaultByProfile(con, ocat.getDomainId(), ocat.getUserId());
 		
-		return catDao.update(con, ocat) == 1;
+		return catDao.update(con, ocat, BaseDAO.createRevisionTimestamp()) == 1;
 	}
 
 	//Prepare only Picture and Tags
@@ -3532,17 +3804,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	private static class ImportException extends Exception {
-		
-		public ImportException(Throwable cause) {
-			super(cause);
-		}
-		
-		public ImportException(String message, Throwable cause) {
-			super(message, cause);
-		}
-	}
-	
 	public static class CategoryContacts {
 		public final OCategory folder;
 		public final List<VContact> contacts;
@@ -3671,6 +3932,44 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	private enum CheckRightsTarget {
 		FOLDER, ELEMENTS
+	}
+	
+	private class CustomFieldsNameToIDCache extends AbstractPassiveExpiringBulkMap<String, String> {
+		
+		public CustomFieldsNameToIDCache(final long timeToLive, final TimeUnit timeUnit) {
+			super(timeToLive, timeUnit);
+		}
+		
+		@Override
+		protected Map<String, String> internalGetMap() {
+			try {
+				CoreManager coreMgr = WT.getCoreManager();
+				return coreMgr.getCustomFieldNamesMap(SERVICE_ID, BitFlags.noneOf(CoreManager.CustomFieldListOption.class));
+				
+			} catch(Throwable t) {
+				logger.error("[CustomFieldsNameToIDCache] Unable to build cache", t);
+				throw new UnsupportedOperationException();
+			}
+		}
+	}
+	
+	private class CustomFieldIDToTypeCache extends AbstractPassiveExpiringBulkMap<String, CustomField.Type> {
+		
+		public CustomFieldIDToTypeCache(final long timeToLive, final TimeUnit timeUnit) {
+			super(timeToLive, timeUnit);
+		}
+		
+		@Override
+		protected Map<String, CustomField.Type> internalGetMap() {
+			try {
+				CoreManager coreMgr = WT.getCoreManager();
+				return coreMgr.listCustomFieldTypesById(SERVICE_ID, BitFlags.noneOf(CoreManager.CustomFieldListOption.class));
+				
+			} catch(Throwable t) {
+				logger.error("[CustomFieldIDToTypeCache] Unable to build cache", t);
+				throw new UnsupportedOperationException();
+			}
+		}
 	}
 	
 	private enum AuditContext {

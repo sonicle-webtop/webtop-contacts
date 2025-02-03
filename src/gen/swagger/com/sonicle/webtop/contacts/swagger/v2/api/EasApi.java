@@ -18,7 +18,7 @@ import javax.validation.Valid;
 
 @Path("/eas/folders")
 @Api(description = "the eas API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-11-04T12:38:17.584+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
 public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -27,9 +27,9 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Produces({ "application/json" })
     @ApiOperation(value = "Adds a message", notes = "Add new Contact into specified Category.", response = ApiEasSyncContactStat.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Success", response = ApiEasSyncContactStat.class)
@@ -42,9 +42,9 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Path("/{folderId}/messages/{id}")
     @ApiOperation(value = "Deletes a message", notes = "Deletes the specified Contact.", response = Void.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 204, message = "Success", response = Void.class),
@@ -59,9 +59,9 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Produces({ "application/json" })
     @ApiOperation(value = "List all folders", notes = "Returns a list of available Categories with enabled synchronization.", response = ApiEasSyncFolder.class, responseContainer = "List", authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiEasSyncFolder.class, responseContainer = "List")
@@ -75,9 +75,9 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Produces({ "application/json" })
     @ApiOperation(value = "Get a single message", notes = "Gets the specified Contact.", response = ApiEasSyncContact.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiEasSyncContact.class),
@@ -93,9 +93,9 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Produces({ "application/json" })
     @ApiOperation(value = "List all messages for a specific folder", notes = "Returns sync informations for the specified Category.", response = ApiEasSyncContactStat.class, responseContainer = "List", authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiEasSyncContactStat.class, responseContainer = "List")
@@ -110,9 +110,9 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @Produces({ "application/json" })
     @ApiOperation(value = "Updates a message", notes = "Updates the specified Contact.", response = ApiEasSyncContactStat.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiEasSyncContactStat.class),

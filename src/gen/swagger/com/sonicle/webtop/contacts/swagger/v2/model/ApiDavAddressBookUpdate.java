@@ -12,6 +12,7 @@ import io.swagger.annotations.*;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -20,11 +21,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Bean for carry addressbook's updateable fields")
 @JsonTypeName("DavAddressBookUpdate")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-11-04T12:38:17.584+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
 public class ApiDavAddressBookUpdate   {
   private @Valid String displayName;
   private @Valid String description;
-  private @Valid List<String> updatedFields = null;
+  private @Valid List<String> updatedFields;
 
   /**
    * New value for displayName
@@ -147,4 +148,3 @@ public class ApiDavAddressBookUpdate   {
 
 
 }
-

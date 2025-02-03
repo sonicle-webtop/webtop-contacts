@@ -15,12 +15,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Bean for carry message&#39;s updateable fields
+ * Represent a contact object with base updateable fields.
  **/
-@ApiModel(description = "Bean for carry message's updateable fields")
-@JsonTypeName("EasSyncContactUpdate")
+@ApiModel(description = "Represent a contact object with base updateable fields.")
+@JsonTypeName("ContactBase")
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
-public class ApiEasSyncContactUpdate   {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiContactBase   {
+  private @Valid String displayName;
   private @Valid String title;
   private @Valid String firstName;
   private @Valid String lastName;
@@ -59,26 +61,45 @@ public class ApiEasSyncContactUpdate   {
   private @Valid String companyName;
   private @Valid String function;
   private @Valid String department;
-  private @Valid String manager;
-  private @Valid String assistant;
+  private @Valid String assistantName;
   private @Valid String assistantTelephone;
-  private @Valid String partner;
+  private @Valid String managerName;
+  private @Valid String partnerName;
   private @Valid String birthday;
   private @Valid String anniversary;
   private @Valid String url;
   private @Valid String notes;
-  private @Valid String picture;
 
   /**
-   * Title
+   * The contact&#39;s display name.
    **/
-  public ApiEasSyncContactUpdate title(String title) {
+  public ApiContactBase displayName(String displayName) {
+    this.displayName = displayName;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "The contact's display name.")
+  @JsonProperty("displayName")
+  public String getDisplayName() {
+    return displayName;
+  }
+
+  @JsonProperty("displayName")
+  public void setDisplayName(String displayName) {
+    this.displayName = displayName;
+  }
+
+  /**
+   * The contact&#39;s title.
+   **/
+  public ApiContactBase title(String title) {
     this.title = title;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Title")
+  @ApiModelProperty(value = "The contact's title.")
   @JsonProperty("title")
   public String getTitle() {
     return title;
@@ -90,15 +111,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * First name
+   * The contact&#39;s first-name.
    **/
-  public ApiEasSyncContactUpdate firstName(String firstName) {
+  public ApiContactBase firstName(String firstName) {
     this.firstName = firstName;
     return this;
   }
 
   
-  @ApiModelProperty(value = "First name")
+  @ApiModelProperty(value = "The contact's first-name.")
   @JsonProperty("firstName")
   public String getFirstName() {
     return firstName;
@@ -110,15 +131,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Last name
+   * The contact&#39;s last-name.
    **/
-  public ApiEasSyncContactUpdate lastName(String lastName) {
+  public ApiContactBase lastName(String lastName) {
     this.lastName = lastName;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Last name")
+  @ApiModelProperty(value = "The contact's last-name.")
   @JsonProperty("lastName")
   public String getLastName() {
     return lastName;
@@ -130,15 +151,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Nickname
+   * The contact&#39;s nickname.
    **/
-  public ApiEasSyncContactUpdate nickname(String nickname) {
+  public ApiContactBase nickname(String nickname) {
     this.nickname = nickname;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Nickname")
+  @ApiModelProperty(value = "The contact's nickname.")
   @JsonProperty("nickname")
   public String getNickname() {
     return nickname;
@@ -150,15 +171,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Mobile phone
+   * The contact&#39;s mobile number.
    **/
-  public ApiEasSyncContactUpdate mobile(String mobile) {
+  public ApiContactBase mobile(String mobile) {
     this.mobile = mobile;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Mobile phone")
+  @ApiModelProperty(value = "The contact's mobile number.")
   @JsonProperty("mobile")
   public String getMobile() {
     return mobile;
@@ -170,15 +191,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Pager 1
+   * The contact&#39;s pager number #1.
    **/
-  public ApiEasSyncContactUpdate pager1(String pager1) {
+  public ApiContactBase pager1(String pager1) {
     this.pager1 = pager1;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Pager 1")
+  @ApiModelProperty(value = "The contact's pager number #1.")
   @JsonProperty("pager1")
   public String getPager1() {
     return pager1;
@@ -190,15 +211,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Pager 2
+   * The contact&#39;s pager number #2.
    **/
-  public ApiEasSyncContactUpdate pager2(String pager2) {
+  public ApiContactBase pager2(String pager2) {
     this.pager2 = pager2;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Pager 2")
+  @ApiModelProperty(value = "The contact's pager number #2.")
   @JsonProperty("pager2")
   public String getPager2() {
     return pager2;
@@ -210,15 +231,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Email address 1
+   * The contact&#39;s email address #1.
    **/
-  public ApiEasSyncContactUpdate email1(String email1) {
+  public ApiContactBase email1(String email1) {
     this.email1 = email1;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Email address 1")
+  @ApiModelProperty(value = "The contact's email address #1.")
   @JsonProperty("email1")
   public String getEmail1() {
     return email1;
@@ -230,15 +251,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Email address 2
+   * The contact&#39;s email address #2.
    **/
-  public ApiEasSyncContactUpdate email2(String email2) {
+  public ApiContactBase email2(String email2) {
     this.email2 = email2;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Email address 2")
+  @ApiModelProperty(value = "The contact's email address #2.")
   @JsonProperty("email2")
   public String getEmail2() {
     return email2;
@@ -250,15 +271,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Email address 3
+   * The contact&#39;s email address #3.
    **/
-  public ApiEasSyncContactUpdate email3(String email3) {
+  public ApiContactBase email3(String email3) {
     this.email3 = email3;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Email address 3")
+  @ApiModelProperty(value = "The contact's email address #3.")
   @JsonProperty("email3")
   public String getEmail3() {
     return email3;
@@ -270,15 +291,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Instant Msg. 1
+   * The contact&#39;s IM #1.
    **/
-  public ApiEasSyncContactUpdate im1(String im1) {
+  public ApiContactBase im1(String im1) {
     this.im1 = im1;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Instant Msg. 1")
+  @ApiModelProperty(value = "The contact's IM #1.")
   @JsonProperty("im1")
   public String getIm1() {
     return im1;
@@ -290,15 +311,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Instant Msg. 2
+   * The contact&#39;s IM #2.
    **/
-  public ApiEasSyncContactUpdate im2(String im2) {
+  public ApiContactBase im2(String im2) {
     this.im2 = im2;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Instant Msg. 2")
+  @ApiModelProperty(value = "The contact's IM #2.")
   @JsonProperty("im2")
   public String getIm2() {
     return im2;
@@ -310,15 +331,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Instant Msg. 3
+   * The contact&#39;s IM #3.
    **/
-  public ApiEasSyncContactUpdate im3(String im3) {
+  public ApiContactBase im3(String im3) {
     this.im3 = im3;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Instant Msg. 3")
+  @ApiModelProperty(value = "The contact's IM #3.")
   @JsonProperty("im3")
   public String getIm3() {
     return im3;
@@ -330,15 +351,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business address
+   * Contact&#39;s work address.
    **/
-  public ApiEasSyncContactUpdate workAddress(String workAddress) {
+  public ApiContactBase workAddress(String workAddress) {
     this.workAddress = workAddress;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business address")
+  @ApiModelProperty(value = "Contact's work address.")
   @JsonProperty("workAddress")
   public String getWorkAddress() {
     return workAddress;
@@ -350,15 +371,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business postal code
+   * Contact&#39;s work address postal-code.
    **/
-  public ApiEasSyncContactUpdate workPostalCode(String workPostalCode) {
+  public ApiContactBase workPostalCode(String workPostalCode) {
     this.workPostalCode = workPostalCode;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business postal code")
+  @ApiModelProperty(value = "Contact's work address postal-code.")
   @JsonProperty("workPostalCode")
   public String getWorkPostalCode() {
     return workPostalCode;
@@ -370,15 +391,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business city
+   * Contact&#39;s work address city.
    **/
-  public ApiEasSyncContactUpdate workCity(String workCity) {
+  public ApiContactBase workCity(String workCity) {
     this.workCity = workCity;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business city")
+  @ApiModelProperty(value = "Contact's work address city.")
   @JsonProperty("workCity")
   public String getWorkCity() {
     return workCity;
@@ -390,15 +411,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business state/province
+   * Contact&#39;s work address state.
    **/
-  public ApiEasSyncContactUpdate workState(String workState) {
+  public ApiContactBase workState(String workState) {
     this.workState = workState;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business state/province")
+  @ApiModelProperty(value = "Contact's work address state.")
   @JsonProperty("workState")
   public String getWorkState() {
     return workState;
@@ -410,15 +431,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business country
+   * Contact&#39;s work address country.
    **/
-  public ApiEasSyncContactUpdate workCountry(String workCountry) {
+  public ApiContactBase workCountry(String workCountry) {
     this.workCountry = workCountry;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business country")
+  @ApiModelProperty(value = "Contact's work address country.")
   @JsonProperty("workCountry")
   public String getWorkCountry() {
     return workCountry;
@@ -430,15 +451,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business telephone 1
+   * Contact&#39;s work telephone number #1.
    **/
-  public ApiEasSyncContactUpdate workTelephone1(String workTelephone1) {
+  public ApiContactBase workTelephone1(String workTelephone1) {
     this.workTelephone1 = workTelephone1;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business telephone 1")
+  @ApiModelProperty(value = "Contact's work telephone number #1.")
   @JsonProperty("workTelephone1")
   public String getWorkTelephone1() {
     return workTelephone1;
@@ -450,15 +471,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business telephone 2
+   * Contact&#39;s work telephone number #2.
    **/
-  public ApiEasSyncContactUpdate workTelephone2(String workTelephone2) {
+  public ApiContactBase workTelephone2(String workTelephone2) {
     this.workTelephone2 = workTelephone2;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business telephone 2")
+  @ApiModelProperty(value = "Contact's work telephone number #2.")
   @JsonProperty("workTelephone2")
   public String getWorkTelephone2() {
     return workTelephone2;
@@ -470,15 +491,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Business fax
+   * Contact&#39;s work fax number.
    **/
-  public ApiEasSyncContactUpdate workFax(String workFax) {
+  public ApiContactBase workFax(String workFax) {
     this.workFax = workFax;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Business fax")
+  @ApiModelProperty(value = "Contact's work fax number.")
   @JsonProperty("workFax")
   public String getWorkFax() {
     return workFax;
@@ -490,15 +511,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home address
+   * Contact&#39;s home address.
    **/
-  public ApiEasSyncContactUpdate homeAddress(String homeAddress) {
+  public ApiContactBase homeAddress(String homeAddress) {
     this.homeAddress = homeAddress;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home address")
+  @ApiModelProperty(value = "Contact's home address.")
   @JsonProperty("homeAddress")
   public String getHomeAddress() {
     return homeAddress;
@@ -510,15 +531,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home postal code
+   * Contact&#39;s home address postal-code.
    **/
-  public ApiEasSyncContactUpdate homePostalCode(String homePostalCode) {
+  public ApiContactBase homePostalCode(String homePostalCode) {
     this.homePostalCode = homePostalCode;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home postal code")
+  @ApiModelProperty(value = "Contact's home address postal-code.")
   @JsonProperty("homePostalCode")
   public String getHomePostalCode() {
     return homePostalCode;
@@ -530,15 +551,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home city
+   * Contact&#39;s home address city.
    **/
-  public ApiEasSyncContactUpdate homeCity(String homeCity) {
+  public ApiContactBase homeCity(String homeCity) {
     this.homeCity = homeCity;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home city")
+  @ApiModelProperty(value = "Contact's home address city.")
   @JsonProperty("homeCity")
   public String getHomeCity() {
     return homeCity;
@@ -550,15 +571,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home state
+   * Contact&#39;s home address state.
    **/
-  public ApiEasSyncContactUpdate homeState(String homeState) {
+  public ApiContactBase homeState(String homeState) {
     this.homeState = homeState;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home state")
+  @ApiModelProperty(value = "Contact's home address state.")
   @JsonProperty("homeState")
   public String getHomeState() {
     return homeState;
@@ -570,15 +591,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home country
+   * Contact&#39;s home address country.
    **/
-  public ApiEasSyncContactUpdate homeCountry(String homeCountry) {
+  public ApiContactBase homeCountry(String homeCountry) {
     this.homeCountry = homeCountry;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home country")
+  @ApiModelProperty(value = "Contact's home address country.")
   @JsonProperty("homeCountry")
   public String getHomeCountry() {
     return homeCountry;
@@ -590,15 +611,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home telephone 1
+   * Contact&#39;s home telephone number #1.
    **/
-  public ApiEasSyncContactUpdate homeTelephone1(String homeTelephone1) {
+  public ApiContactBase homeTelephone1(String homeTelephone1) {
     this.homeTelephone1 = homeTelephone1;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home telephone 1")
+  @ApiModelProperty(value = "Contact's home telephone number #1.")
   @JsonProperty("homeTelephone1")
   public String getHomeTelephone1() {
     return homeTelephone1;
@@ -610,15 +631,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home telephone 2
+   * Contact&#39;s home telephone number #2.
    **/
-  public ApiEasSyncContactUpdate homeTelephone2(String homeTelephone2) {
+  public ApiContactBase homeTelephone2(String homeTelephone2) {
     this.homeTelephone2 = homeTelephone2;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home telephone 2")
+  @ApiModelProperty(value = "Contact's home telephone number #2.")
   @JsonProperty("homeTelephone2")
   public String getHomeTelephone2() {
     return homeTelephone2;
@@ -630,15 +651,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Home fax
+   * Contact&#39;s home fax number.
    **/
-  public ApiEasSyncContactUpdate homeFax(String homeFax) {
+  public ApiContactBase homeFax(String homeFax) {
     this.homeFax = homeFax;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Home fax")
+  @ApiModelProperty(value = "Contact's home fax number.")
   @JsonProperty("homeFax")
   public String getHomeFax() {
     return homeFax;
@@ -650,15 +671,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Other address
+   * Contact&#39;s other address.
    **/
-  public ApiEasSyncContactUpdate otherAddress(String otherAddress) {
+  public ApiContactBase otherAddress(String otherAddress) {
     this.otherAddress = otherAddress;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Other address")
+  @ApiModelProperty(value = "Contact's other address.")
   @JsonProperty("otherAddress")
   public String getOtherAddress() {
     return otherAddress;
@@ -670,15 +691,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Other postal code
+   * Contact&#39;s other address postal-code.
    **/
-  public ApiEasSyncContactUpdate otherPostalCode(String otherPostalCode) {
+  public ApiContactBase otherPostalCode(String otherPostalCode) {
     this.otherPostalCode = otherPostalCode;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Other postal code")
+  @ApiModelProperty(value = "Contact's other address postal-code.")
   @JsonProperty("otherPostalCode")
   public String getOtherPostalCode() {
     return otherPostalCode;
@@ -690,15 +711,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Other city
+   * Contact&#39;s other address city.
    **/
-  public ApiEasSyncContactUpdate otherCity(String otherCity) {
+  public ApiContactBase otherCity(String otherCity) {
     this.otherCity = otherCity;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Other city")
+  @ApiModelProperty(value = "Contact's other address city.")
   @JsonProperty("otherCity")
   public String getOtherCity() {
     return otherCity;
@@ -710,15 +731,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Other state
+   * Contact&#39;s other address state.
    **/
-  public ApiEasSyncContactUpdate otherState(String otherState) {
+  public ApiContactBase otherState(String otherState) {
     this.otherState = otherState;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Other state")
+  @ApiModelProperty(value = "Contact's other address state.")
   @JsonProperty("otherState")
   public String getOtherState() {
     return otherState;
@@ -730,15 +751,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Other country
+   * Contact&#39;s other address country.
    **/
-  public ApiEasSyncContactUpdate otherCountry(String otherCountry) {
+  public ApiContactBase otherCountry(String otherCountry) {
     this.otherCountry = otherCountry;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Other country")
+  @ApiModelProperty(value = "Contact's other address country.")
   @JsonProperty("otherCountry")
   public String getOtherCountry() {
     return otherCountry;
@@ -750,15 +771,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Company ID
+   * The ID of the contact&#39;s company.
    **/
-  public ApiEasSyncContactUpdate companyId(String companyId) {
+  public ApiContactBase companyId(String companyId) {
     this.companyId = companyId;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Company ID")
+  @ApiModelProperty(value = "The ID of the contact's company.")
   @JsonProperty("companyId")
   public String getCompanyId() {
     return companyId;
@@ -770,15 +791,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Company name
+   * The name of the contact&#39;s company.
    **/
-  public ApiEasSyncContactUpdate companyName(String companyName) {
+  public ApiContactBase companyName(String companyName) {
     this.companyName = companyName;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Company name")
+  @ApiModelProperty(value = "The name of the contact's company.")
   @JsonProperty("companyName")
   public String getCompanyName() {
     return companyName;
@@ -790,15 +811,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Job title
+   * The contact&#39;s job title.
    **/
-  public ApiEasSyncContactUpdate function(String function) {
+  public ApiContactBase function(String function) {
     this.function = function;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Job title")
+  @ApiModelProperty(value = "The contact's job title.")
   @JsonProperty("function")
   public String getFunction() {
     return function;
@@ -810,15 +831,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Department
+   * The contact&#39;s department.
    **/
-  public ApiEasSyncContactUpdate department(String department) {
+  public ApiContactBase department(String department) {
     this.department = department;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Department")
+  @ApiModelProperty(value = "The contact's department.")
   @JsonProperty("department")
   public String getDepartment() {
     return department;
@@ -830,55 +851,35 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Manager name
+   * The name of the contact&#39;s assistant.
    **/
-  public ApiEasSyncContactUpdate manager(String manager) {
-    this.manager = manager;
+  public ApiContactBase assistantName(String assistantName) {
+    this.assistantName = assistantName;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Manager name")
-  @JsonProperty("manager")
-  public String getManager() {
-    return manager;
+  @ApiModelProperty(value = "The name of the contact's assistant.")
+  @JsonProperty("assistantName")
+  public String getAssistantName() {
+    return assistantName;
   }
 
-  @JsonProperty("manager")
-  public void setManager(String manager) {
-    this.manager = manager;
-  }
-
-  /**
-   * Assistant name
-   **/
-  public ApiEasSyncContactUpdate assistant(String assistant) {
-    this.assistant = assistant;
-    return this;
-  }
-
-  
-  @ApiModelProperty(value = "Assistant name")
-  @JsonProperty("assistant")
-  public String getAssistant() {
-    return assistant;
-  }
-
-  @JsonProperty("assistant")
-  public void setAssistant(String assistant) {
-    this.assistant = assistant;
+  @JsonProperty("assistantName")
+  public void setAssistantName(String assistantName) {
+    this.assistantName = assistantName;
   }
 
   /**
-   * Assistant telephone
+   * The telephone number of the contact&#39;s assistant.
    **/
-  public ApiEasSyncContactUpdate assistantTelephone(String assistantTelephone) {
+  public ApiContactBase assistantTelephone(String assistantTelephone) {
     this.assistantTelephone = assistantTelephone;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Assistant telephone")
+  @ApiModelProperty(value = "The telephone number of the contact's assistant.")
   @JsonProperty("assistantTelephone")
   public String getAssistantTelephone() {
     return assistantTelephone;
@@ -890,35 +891,55 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Partner
+   * The name of the contact&#39;s manager.
    **/
-  public ApiEasSyncContactUpdate partner(String partner) {
-    this.partner = partner;
+  public ApiContactBase managerName(String managerName) {
+    this.managerName = managerName;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Partner")
-  @JsonProperty("partner")
-  public String getPartner() {
-    return partner;
+  @ApiModelProperty(value = "The name of the contact's manager.")
+  @JsonProperty("managerName")
+  public String getManagerName() {
+    return managerName;
   }
 
-  @JsonProperty("partner")
-  public void setPartner(String partner) {
-    this.partner = partner;
+  @JsonProperty("managerName")
+  public void setManagerName(String managerName) {
+    this.managerName = managerName;
   }
 
   /**
-   * Birthday date (ISO date YYYYMMDD)
+   * The name of the contact&#39;s spouse/partner.
    **/
-  public ApiEasSyncContactUpdate birthday(String birthday) {
+  public ApiContactBase partnerName(String partnerName) {
+    this.partnerName = partnerName;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "The name of the contact's spouse/partner.")
+  @JsonProperty("partnerName")
+  public String getPartnerName() {
+    return partnerName;
+  }
+
+  @JsonProperty("partnerName")
+  public void setPartnerName(String partnerName) {
+    this.partnerName = partnerName;
+  }
+
+  /**
+   * The contact&#39;s birthday date in ISO 8601 format.
+   **/
+  public ApiContactBase birthday(String birthday) {
     this.birthday = birthday;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Birthday date (ISO date YYYYMMDD)")
+  @ApiModelProperty(value = "The contact's birthday date in ISO 8601 format.")
   @JsonProperty("birthday")
   public String getBirthday() {
     return birthday;
@@ -930,15 +951,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Anniversary date (ISO date YYYYMMDD)
+   * The contact&#39;s anniversary date in ISO 8601 format.
    **/
-  public ApiEasSyncContactUpdate anniversary(String anniversary) {
+  public ApiContactBase anniversary(String anniversary) {
     this.anniversary = anniversary;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Anniversary date (ISO date YYYYMMDD)")
+  @ApiModelProperty(value = "The contact's anniversary date in ISO 8601 format.")
   @JsonProperty("anniversary")
   public String getAnniversary() {
     return anniversary;
@@ -950,15 +971,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Web-site URL
+   * Contact&#39;s reference URL.
    **/
-  public ApiEasSyncContactUpdate url(String url) {
+  public ApiContactBase url(String url) {
     this.url = url;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Web-site URL")
+  @ApiModelProperty(value = "Contact's reference URL.")
   @JsonProperty("url")
   public String getUrl() {
     return url;
@@ -970,15 +991,15 @@ public class ApiEasSyncContactUpdate   {
   }
 
   /**
-   * Notes
+   * The user&#39;s notes about the contact.
    **/
-  public ApiEasSyncContactUpdate notes(String notes) {
+  public ApiContactBase notes(String notes) {
     this.notes = notes;
     return this;
   }
 
   
-  @ApiModelProperty(value = "Notes")
+  @ApiModelProperty(value = "The user's notes about the contact.")
   @JsonProperty("notes")
   public String getNotes() {
     return notes;
@@ -987,26 +1008,6 @@ public class ApiEasSyncContactUpdate   {
   @JsonProperty("notes")
   public void setNotes(String notes) {
     this.notes = notes;
-  }
-
-  /**
-   * Image base64 data URI
-   **/
-  public ApiEasSyncContactUpdate picture(String picture) {
-    this.picture = picture;
-    return this;
-  }
-
-  
-  @ApiModelProperty(value = "Image base64 data URI")
-  @JsonProperty("picture")
-  public String getPicture() {
-    return picture;
-  }
-
-  @JsonProperty("picture")
-  public void setPicture(String picture) {
-    this.picture = picture;
   }
 
 
@@ -1018,66 +1019,67 @@ public class ApiEasSyncContactUpdate   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiEasSyncContactUpdate easSyncContactUpdate = (ApiEasSyncContactUpdate) o;
-    return Objects.equals(this.title, easSyncContactUpdate.title) &&
-        Objects.equals(this.firstName, easSyncContactUpdate.firstName) &&
-        Objects.equals(this.lastName, easSyncContactUpdate.lastName) &&
-        Objects.equals(this.nickname, easSyncContactUpdate.nickname) &&
-        Objects.equals(this.mobile, easSyncContactUpdate.mobile) &&
-        Objects.equals(this.pager1, easSyncContactUpdate.pager1) &&
-        Objects.equals(this.pager2, easSyncContactUpdate.pager2) &&
-        Objects.equals(this.email1, easSyncContactUpdate.email1) &&
-        Objects.equals(this.email2, easSyncContactUpdate.email2) &&
-        Objects.equals(this.email3, easSyncContactUpdate.email3) &&
-        Objects.equals(this.im1, easSyncContactUpdate.im1) &&
-        Objects.equals(this.im2, easSyncContactUpdate.im2) &&
-        Objects.equals(this.im3, easSyncContactUpdate.im3) &&
-        Objects.equals(this.workAddress, easSyncContactUpdate.workAddress) &&
-        Objects.equals(this.workPostalCode, easSyncContactUpdate.workPostalCode) &&
-        Objects.equals(this.workCity, easSyncContactUpdate.workCity) &&
-        Objects.equals(this.workState, easSyncContactUpdate.workState) &&
-        Objects.equals(this.workCountry, easSyncContactUpdate.workCountry) &&
-        Objects.equals(this.workTelephone1, easSyncContactUpdate.workTelephone1) &&
-        Objects.equals(this.workTelephone2, easSyncContactUpdate.workTelephone2) &&
-        Objects.equals(this.workFax, easSyncContactUpdate.workFax) &&
-        Objects.equals(this.homeAddress, easSyncContactUpdate.homeAddress) &&
-        Objects.equals(this.homePostalCode, easSyncContactUpdate.homePostalCode) &&
-        Objects.equals(this.homeCity, easSyncContactUpdate.homeCity) &&
-        Objects.equals(this.homeState, easSyncContactUpdate.homeState) &&
-        Objects.equals(this.homeCountry, easSyncContactUpdate.homeCountry) &&
-        Objects.equals(this.homeTelephone1, easSyncContactUpdate.homeTelephone1) &&
-        Objects.equals(this.homeTelephone2, easSyncContactUpdate.homeTelephone2) &&
-        Objects.equals(this.homeFax, easSyncContactUpdate.homeFax) &&
-        Objects.equals(this.otherAddress, easSyncContactUpdate.otherAddress) &&
-        Objects.equals(this.otherPostalCode, easSyncContactUpdate.otherPostalCode) &&
-        Objects.equals(this.otherCity, easSyncContactUpdate.otherCity) &&
-        Objects.equals(this.otherState, easSyncContactUpdate.otherState) &&
-        Objects.equals(this.otherCountry, easSyncContactUpdate.otherCountry) &&
-        Objects.equals(this.companyId, easSyncContactUpdate.companyId) &&
-        Objects.equals(this.companyName, easSyncContactUpdate.companyName) &&
-        Objects.equals(this.function, easSyncContactUpdate.function) &&
-        Objects.equals(this.department, easSyncContactUpdate.department) &&
-        Objects.equals(this.manager, easSyncContactUpdate.manager) &&
-        Objects.equals(this.assistant, easSyncContactUpdate.assistant) &&
-        Objects.equals(this.assistantTelephone, easSyncContactUpdate.assistantTelephone) &&
-        Objects.equals(this.partner, easSyncContactUpdate.partner) &&
-        Objects.equals(this.birthday, easSyncContactUpdate.birthday) &&
-        Objects.equals(this.anniversary, easSyncContactUpdate.anniversary) &&
-        Objects.equals(this.url, easSyncContactUpdate.url) &&
-        Objects.equals(this.notes, easSyncContactUpdate.notes) &&
-        Objects.equals(this.picture, easSyncContactUpdate.picture);
+    ApiContactBase contactBase = (ApiContactBase) o;
+    return Objects.equals(this.displayName, contactBase.displayName) &&
+        Objects.equals(this.title, contactBase.title) &&
+        Objects.equals(this.firstName, contactBase.firstName) &&
+        Objects.equals(this.lastName, contactBase.lastName) &&
+        Objects.equals(this.nickname, contactBase.nickname) &&
+        Objects.equals(this.mobile, contactBase.mobile) &&
+        Objects.equals(this.pager1, contactBase.pager1) &&
+        Objects.equals(this.pager2, contactBase.pager2) &&
+        Objects.equals(this.email1, contactBase.email1) &&
+        Objects.equals(this.email2, contactBase.email2) &&
+        Objects.equals(this.email3, contactBase.email3) &&
+        Objects.equals(this.im1, contactBase.im1) &&
+        Objects.equals(this.im2, contactBase.im2) &&
+        Objects.equals(this.im3, contactBase.im3) &&
+        Objects.equals(this.workAddress, contactBase.workAddress) &&
+        Objects.equals(this.workPostalCode, contactBase.workPostalCode) &&
+        Objects.equals(this.workCity, contactBase.workCity) &&
+        Objects.equals(this.workState, contactBase.workState) &&
+        Objects.equals(this.workCountry, contactBase.workCountry) &&
+        Objects.equals(this.workTelephone1, contactBase.workTelephone1) &&
+        Objects.equals(this.workTelephone2, contactBase.workTelephone2) &&
+        Objects.equals(this.workFax, contactBase.workFax) &&
+        Objects.equals(this.homeAddress, contactBase.homeAddress) &&
+        Objects.equals(this.homePostalCode, contactBase.homePostalCode) &&
+        Objects.equals(this.homeCity, contactBase.homeCity) &&
+        Objects.equals(this.homeState, contactBase.homeState) &&
+        Objects.equals(this.homeCountry, contactBase.homeCountry) &&
+        Objects.equals(this.homeTelephone1, contactBase.homeTelephone1) &&
+        Objects.equals(this.homeTelephone2, contactBase.homeTelephone2) &&
+        Objects.equals(this.homeFax, contactBase.homeFax) &&
+        Objects.equals(this.otherAddress, contactBase.otherAddress) &&
+        Objects.equals(this.otherPostalCode, contactBase.otherPostalCode) &&
+        Objects.equals(this.otherCity, contactBase.otherCity) &&
+        Objects.equals(this.otherState, contactBase.otherState) &&
+        Objects.equals(this.otherCountry, contactBase.otherCountry) &&
+        Objects.equals(this.companyId, contactBase.companyId) &&
+        Objects.equals(this.companyName, contactBase.companyName) &&
+        Objects.equals(this.function, contactBase.function) &&
+        Objects.equals(this.department, contactBase.department) &&
+        Objects.equals(this.assistantName, contactBase.assistantName) &&
+        Objects.equals(this.assistantTelephone, contactBase.assistantTelephone) &&
+        Objects.equals(this.managerName, contactBase.managerName) &&
+        Objects.equals(this.partnerName, contactBase.partnerName) &&
+        Objects.equals(this.birthday, contactBase.birthday) &&
+        Objects.equals(this.anniversary, contactBase.anniversary) &&
+        Objects.equals(this.url, contactBase.url) &&
+        Objects.equals(this.notes, contactBase.notes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, picture);
+    return Objects.hash(displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, assistantName, assistantTelephone, managerName, partnerName, birthday, anniversary, url, notes);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiEasSyncContactUpdate {\n");
+    sb.append("class ApiContactBase {\n");
     
+    sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
     sb.append("    title: ").append(toIndentedString(title)).append("\n");
     sb.append("    firstName: ").append(toIndentedString(firstName)).append("\n");
     sb.append("    lastName: ").append(toIndentedString(lastName)).append("\n");
@@ -1116,15 +1118,14 @@ public class ApiEasSyncContactUpdate   {
     sb.append("    companyName: ").append(toIndentedString(companyName)).append("\n");
     sb.append("    function: ").append(toIndentedString(function)).append("\n");
     sb.append("    department: ").append(toIndentedString(department)).append("\n");
-    sb.append("    manager: ").append(toIndentedString(manager)).append("\n");
-    sb.append("    assistant: ").append(toIndentedString(assistant)).append("\n");
+    sb.append("    assistantName: ").append(toIndentedString(assistantName)).append("\n");
     sb.append("    assistantTelephone: ").append(toIndentedString(assistantTelephone)).append("\n");
-    sb.append("    partner: ").append(toIndentedString(partner)).append("\n");
+    sb.append("    managerName: ").append(toIndentedString(managerName)).append("\n");
+    sb.append("    partnerName: ").append(toIndentedString(partnerName)).append("\n");
     sb.append("    birthday: ").append(toIndentedString(birthday)).append("\n");
     sb.append("    anniversary: ").append(toIndentedString(anniversary)).append("\n");
     sb.append("    url: ").append(toIndentedString(url)).append("\n");
     sb.append("    notes: ").append(toIndentedString(notes)).append("\n");
-    sb.append("    picture: ").append(toIndentedString(picture)).append("\n");
     sb.append("}");
     return sb.toString();
   }
