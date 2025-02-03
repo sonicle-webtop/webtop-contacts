@@ -1191,7 +1191,7 @@
         ]
       },
       "delete": {
-        "summary": "",
+        "summary": "Delete contact picture",
         "operationId": "clearContactPicture",
         "responses": {
           "204": {
