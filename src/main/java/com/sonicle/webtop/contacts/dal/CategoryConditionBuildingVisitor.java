@@ -33,7 +33,6 @@
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.commons.EnumUtils;
-import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.rsql.parser.Operator;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import com.sonicle.webtop.contacts.model.CategoryBase;
@@ -53,6 +52,9 @@ public class CategoryConditionBuildingVisitor extends JOOQConditionBuildingVisit
 	protected Condition buildCondition(String fieldName, Operator operator, Collection<?> values) {
 		if (CategoryQuery.ID.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.CATEGORY_ID, operator, values);
+			
+		} else if (CategoryQuery.USER_ID.equals(fieldName)) {
+			return defaultCondition(CATEGORIES.USER_ID, operator, values);
 			
 		} else if (CategoryQuery.BUILT_IN.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.BUILT_IN, operator, values);

@@ -41,6 +41,7 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES_CHANGES;
 import com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryQuery;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
@@ -165,10 +166,15 @@ public class CategoryDAO extends BaseDAO {
 	private static Collection<SortField<?>> toCategoriesOrderByClause(final Set<SortInfo> sortInfo) {
 		ArrayList<SortField<?>> fields = new ArrayList<>();
 		for (SortInfo si : sortInfo) {
-			if (si.getField().equals("userId")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.USER_ID, "")), si));
-			else if (si.getField().equals("name")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.NAME, "")), si));
-			else if (si.getField().equals("description")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.DESCRIPTION, "")), si).nullsLast());
-			else if (si.getField().equals("color")) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.COLOR, "")), si).nullsLast());
+			if (si.getField().equals(CategoryQuery.ID)) fields.add(BaseDAO.toSortField(CATEGORIES.CATEGORY_ID, si));
+			else if (si.getField().equals(CategoryQuery.USER_ID)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.USER_ID, "")), si));
+			else if (si.getField().equals(CategoryQuery.BUILT_IN)) fields.add(BaseDAO.toSortField(CATEGORIES.BUILT_IN, si));
+			else if (si.getField().equals(CategoryQuery.PROVIDER)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.PROVIDER, "")), si));
+			else if (si.getField().equals(CategoryQuery.NAME)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.NAME, "")), si));
+			else if (si.getField().equals(CategoryQuery.DESCRIPTION)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.DESCRIPTION, "")), si).nullsLast());
+			else if (si.getField().equals(CategoryQuery.COLOR)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.COLOR, "")), si).nullsLast());
+			else if (si.getField().equals(CategoryQuery.SYNC)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.SYNC, "")), si));
+			else if (si.getField().equals(CategoryQuery.IS_DEFAULT)) fields.add(BaseDAO.toSortField(CATEGORIES.IS_DEFAULT, si));
 		}
 		return fields;
 	}
