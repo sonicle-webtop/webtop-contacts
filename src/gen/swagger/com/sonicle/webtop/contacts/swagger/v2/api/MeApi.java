@@ -24,7 +24,7 @@ import javax.validation.Valid;
 
 @Path("/me")
 @Api(description = "the me API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
 public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -73,7 +73,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @Authorization(value = "auth-bearer"),
         
         @Authorization(value = "auth-basic")
-         }, tags={ "me" })
+         }, tags={ "me", "contacts" })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Contact created", response = ApiContact.class)
     })
@@ -83,7 +83,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
 
     @DELETE
     @Path("/contacts/{contact_id}/picture")
-    @ApiOperation(value = "", notes = "Deletes the contact's picture of a given contact ID.", response = Void.class, authorizations = {
+    @ApiOperation(value = "Delete contact picture", notes = "Deletes the contact's picture of a given contact ID.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
         
@@ -159,13 +159,13 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @Authorization(value = "auth-bearer"),
         
         @Authorization(value = "auth-basic")
-         }, tags={ "me" })
+         }, tags={ "me", "contacts" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiContact.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Contact not found", response = Void.class)
     })
-    public Response getContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("$select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String $select) {
+    public Response getContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -216,7 +216,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @ApiResponse(code = 200, message = "Success", response = ApiCategoriesResult.class),
         @ApiResponse(code = 405, message = "Not allowed", response = Void.class)
     })
-    public Response listCategories(@QueryParam("$filter")  @ApiParam("A RSLQ filter query to filter out resulting items. Optional.")  String $filter,@QueryParam("$select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String $select,@QueryParam("$order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String $orderBy,@QueryParam("$page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer $pageNo,@QueryParam("$page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer $pageSize,@QueryParam("$return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean $returnCount) {
+    public Response listCategories(@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -234,7 +234,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @ApiResponse(code = 404, message = "Category not found", response = Void.class),
         @ApiResponse(code = 405, message = "Not allowed", response = Void.class)
     })
-    public Response listCategoryContacts(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("$filter")  @ApiParam("A RSLQ filter query to filter out resulting items. Optional.")  String $filter,@QueryParam("$select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String $select,@QueryParam("$order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String $orderBy,@QueryParam("$page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer $pageNo,@QueryParam("$page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer $pageSize,@QueryParam("$return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean $returnCount) {
+    public Response listCategoryContacts(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -250,7 +250,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiContactsResultDelta.class)
     })
-    public Response listCategoryContactsDelta(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("$sync_token")   String $syncToken,@QueryParam("$select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String $select) {
+    public Response listCategoryContactsDelta(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_sync_token")  @ApiParam("Token exchanged between client and server that tracks changes from a precise state.")  String syncToken,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -298,13 +298,13 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @Authorization(value = "auth-bearer"),
         
         @Authorization(value = "auth-basic")
-         }, tags={ "me" })
+         }, tags={ "me", "contacts" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Contact updated", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Contact not found", response = Void.class)
     })
-    public Response updateContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("$update")  @ApiParam("List (comma-separated) of field names to update. Optional.")  String $update,@Valid ApiContactEx body) {
+    public Response updateContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("_update")  @ApiParam("List (comma-separated) of field names to update. Optional.")  String update,@Valid ApiContactEx body) {
         return Response.ok().entity("magic!").build();
     }
 }

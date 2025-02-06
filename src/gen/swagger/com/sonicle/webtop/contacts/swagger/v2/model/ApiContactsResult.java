@@ -18,11 +18,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Represents a response object for a collection of contacts.
+ * Represent a response object that returns a collection of contacts.
  **/
-@ApiModel(description = "Represents a response object for a collection of contacts.")
+@ApiModel(description = "Represent a response object that returns a collection of contacts.")
 @JsonTypeName("ContactsResult")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiContactsResult   {
   private @Valid Integer totalCount;

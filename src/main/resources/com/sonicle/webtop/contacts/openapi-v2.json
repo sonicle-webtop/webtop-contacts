@@ -681,22 +681,22 @@
         "description": "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.",
         "parameters": [
           {
-            "$ref": "#/components/parameters/dollar_filter"
+            "$ref": "#/components/parameters/_filter"
           },
           {
-            "$ref": "#/components/parameters/dollar_select"
+            "$ref": "#/components/parameters/_select"
           },
           {
-            "$ref": "#/components/parameters/dollar_orderBy"
+            "$ref": "#/components/parameters/_orderBy"
           },
           {
-            "$ref": "#/components/parameters/dollar_pageNo"
+            "$ref": "#/components/parameters/_pageNo"
           },
           {
-            "$ref": "#/components/parameters/dollar_pageSize"
+            "$ref": "#/components/parameters/_pageSize"
           },
           {
-            "$ref": "#/components/parameters/dollar_returnCount"
+            "$ref": "#/components/parameters/_returnCount"
           }
         ]
       },
@@ -881,22 +881,22 @@
         "operationId": "listCategoryContacts",
         "parameters": [
           {
-            "$ref": "#/components/parameters/dollar_filter"
+            "$ref": "#/components/parameters/_filter"
           },
           {
-            "$ref": "#/components/parameters/dollar_select"
+            "$ref": "#/components/parameters/_select"
           },
           {
-            "$ref": "#/components/parameters/dollar_orderBy"
+            "$ref": "#/components/parameters/_orderBy"
           },
           {
-            "$ref": "#/components/parameters/dollar_pageNo"
+            "$ref": "#/components/parameters/_pageNo"
           },
           {
-            "$ref": "#/components/parameters/dollar_pageSize"
+            "$ref": "#/components/parameters/_pageSize"
           },
           {
-            "$ref": "#/components/parameters/dollar_returnCount"
+            "$ref": "#/components/parameters/_returnCount"
           }
         ],
         "description": "Returns a list of contacts from specified category."
@@ -967,10 +967,10 @@
         "operationId": "listCategoryContactsDelta",
         "parameters": [
           {
-            "$ref": "#/components/parameters/dollar_syncToken"
+            "$ref": "#/components/parameters/_syncToken"
           },
           {
-            "$ref": "#/components/parameters/dollar_select"
+            "$ref": "#/components/parameters/_select"
           }
         ],
         "description": "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken."
@@ -1057,7 +1057,7 @@
         "operationId": "getContact",
         "parameters": [
           {
-            "$ref": "#/components/parameters/dollar_select"
+            "$ref": "#/components/parameters/_select"
           }
         ],
         "description": "Gets the specified contact given its ID."
@@ -1091,7 +1091,7 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/dollar_update"
+            "$ref": "#/components/parameters/_update"
           }
         ],
         "x-codegen-request-body-name": "body",
@@ -1938,6 +1938,7 @@
           "id": "lk9h4ifgjfkvg"
         },
         "type": "object",
+        "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
         "properties": {
           "provider": {
             "type": "string",
@@ -2082,7 +2083,7 @@
             "$ref": "#/components/schemas/CategoryBase"
           }
         ],
-        "description": "Represent a complete category object."
+        "description": "Represent a category that contains contacts."
       },
       "CategoriesResult": {
         "title": "CategoriesResult",
@@ -2502,7 +2503,7 @@
             "$ref": "#/components/schemas/ContactEx"
           }
         ],
-        "description": "Represent a complete contact object."
+        "description": "Represent a contact, which is an item for users to organize and save information about the people and organizations that they communicate with. Contacts are contained in contact categories."
       },
       "ContactEx": {
         "title": "ContactEx",
@@ -2522,7 +2523,7 @@
           "id": "myzl3iqcsmwwt"
         },
         "type": "object",
-        "description": "Represent data of a contact's picture.",
+        "description": "Represent the meta-data of a picture associated to a contact.",
         "properties": {
           "mediaType": {
             "type": "string",
@@ -2631,12 +2632,14 @@
         },
         "type": "object",
         "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
+        "description": "Represent a response object that returns a collection of changed contacts between an instant in past.",
         "properties": {
           "nextSyncToken": {
             "type": "string",
             "x-stoplight": {
               "id": "n259smoxxnut2"
             },
+            "description": "The syncToken that identifies the instant in past since to get changes.",
             "readOnly": true
           },
           "items": {
@@ -2651,8 +2654,7 @@
         },
         "required": [
           "items"
-        ],
-        "description": "Represent a response object for delta endpoint."
+        ]
       },
       "ContactsResult": {
         "title": "ContactsResult",
@@ -2660,7 +2662,7 @@
           "id": "xoskr9h7q5lgh"
         },
         "type": "object",
-        "description": "Represents a response object for a collection of contacts.",
+        "description": "Represent a response object that returns a collection of contacts.",
         "x-class-extra-annotation": "@JsonInclude(JsonInclude.Include.NON_NULL)",
         "properties": {
           "totalCount": {
@@ -2718,7 +2720,8 @@
     "securitySchemes": {
       "auth-basic": {
         "type": "http",
-        "scheme": "basic"
+        "scheme": "basic",
+        "description": ""
       },
       "auth-bearer": {
         "type": "http",
@@ -2726,16 +2729,16 @@
       }
     },
     "parameters": {
-      "dollar_syncToken": {
-        "name": "$sync_token",
+      "_syncToken": {
+        "name": "_sync_token",
         "in": "query",
         "schema": {
           "type": "string"
         },
         "description": "Token exchanged between client and server that tracks changes from a precise state."
       },
-      "dollar_select": {
-        "name": "$select",
+      "_select": {
+        "name": "_select",
         "in": "query",
         "required": false,
         "schema": {
@@ -2744,8 +2747,8 @@
         },
         "description": "List (comma-separated) of field names to include in resulting items. Optional."
       },
-      "dollar_orderBy": {
-        "name": "$order_by",
+      "_orderBy": {
+        "name": "_order_by",
         "in": "query",
         "required": false,
         "schema": {
@@ -2754,8 +2757,8 @@
         },
         "description": "List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional."
       },
-      "dollar_pageNo": {
-        "name": "$page_no",
+      "_pageNo": {
+        "name": "_page_no",
         "in": "query",
         "required": false,
         "schema": {
@@ -2764,8 +2767,8 @@
         },
         "description": "The page number to return, providing a value actually activates pagination. Optional."
       },
-      "dollar_pageSize": {
-        "name": "$page_size",
+      "_pageSize": {
+        "name": "_page_size",
         "in": "query",
         "required": false,
         "schema": {
@@ -2774,8 +2777,8 @@
         },
         "description": "How many items to return when paginating. Defaults to 50."
       },
-      "dollar_returnCount": {
-        "name": "$return_count",
+      "_returnCount": {
+        "name": "_return_count",
         "in": "query",
         "required": false,
         "schema": {
@@ -2783,8 +2786,8 @@
         },
         "description": "Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional."
       },
-      "dollar_filter": {
-        "name": "$filter",
+      "_filter": {
+        "name": "_filter",
         "in": "query",
         "required": false,
         "schema": {
@@ -2792,8 +2795,8 @@
         },
         "description": "A RSQL filter query to filter out resulting items. Optional."
       },
-      "dollar_test": {
-        "name": "$test",
+      "_test": {
+        "name": "_test",
         "in": "query",
         "required": false,
         "schema": {
@@ -2805,8 +2808,8 @@
         },
         "description": "Dummy parameter. Do not use!"
       },
-      "dollar_update": {
-        "name": "$update",
+      "_update": {
+        "name": "_update",
         "in": "query",
         "required": false,
         "schema": {
@@ -2820,13 +2823,16 @@
   },
   "tags": [
     {
-      "name": "dav"
+      "name": "dav",
+      "description": "DAV Server's specific communication endpoints"
     },
     {
-      "name": "eas"
+      "name": "eas",
+      "description": "EAS Server's specific communication endpoints"
     },
     {
-      "name": "me"
+      "name": "me",
+      "description": "User-centric endpoints for managing categories and contacts"
     }
   ]
 }

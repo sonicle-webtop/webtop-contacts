@@ -15,11 +15,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Represent data of a contact&#39;s picture.
+ * Represent the meta-data of a picture associated to a contact.
  **/
-@ApiModel(description = "Represent data of a contact's picture.")
+@ApiModel(description = "Represent the meta-data of a picture associated to a contact.")
 @JsonTypeName("ContactPictureMeta")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
 public class ApiContactPictureMeta   {
   private @Valid String mediaType;
   private @Valid Integer width;

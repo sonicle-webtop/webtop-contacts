@@ -18,7 +18,7 @@ import javax.validation.Valid;
 
 @Path("/eas/folders")
 @Api(description = "the eas API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
 public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST

@@ -123,7 +123,7 @@ public class Me extends MeApi {
 	}
 
 	@Override
-	public Response listCategories(String $filter, String $select, String $orderBy, Integer $pageNo, Integer $pageSize, Boolean $returnCount) {
+	public Response listCategories(String _filter, String _select, String _orderBy, Integer _pageNo, Integer _pageSize, Boolean _returnCount) {
 		ContactsManager manager = getManager();
 		
 		if (LOGGER.isDebugEnabled()) {
@@ -131,8 +131,8 @@ public class Me extends MeApi {
 		}
 		
 		try {
-			boolean returnFullCount = $returnCount == null ? false : $returnCount;
-			ItemsListResult<Category> result = manager.listCategories($filter, BaseRestApiUtils.parseSortInfo($orderBy), $pageNo, BaseRestApiUtils.pageSizeOrDefault($pageNo, $pageSize), returnFullCount);
+			boolean returnFullCount = _returnCount == null ? false : _returnCount;
+			ItemsListResult<Category> result = manager.listCategories(_filter, BaseRestApiUtils.parseSortInfo(_orderBy), _pageNo, BaseRestApiUtils.pageSizeOrDefault(_pageNo, _pageSize), returnFullCount);
 			Map<Integer, DateTime> itemsLastRevisionMap = manager.getCategoriesLastRevision(
 				result.items.stream()
 					.map((category) -> {
@@ -140,7 +140,7 @@ public class Me extends MeApi {
 					})
 					.collect(Collectors.toList())
 			);
-			return respOk(ApiUtils.fillApiCategoriesResult(new ApiCategoriesResult(), BaseRestApiUtils.parseSet($select), result, itemsLastRevisionMap));
+			return respOk(ApiUtils.fillApiCategoriesResult(new ApiCategoriesResult(), BaseRestApiUtils.parseSet(_select), result, itemsLastRevisionMap));
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] listCategories()", RunContext.getRunProfileId(), t);
@@ -230,7 +230,7 @@ public class Me extends MeApi {
 	}
 
 	@Override
-	public Response listCategoryContacts(String categoryId, String $filter, String $select, String $orderBy, Integer $pageNo, Integer $pageSize, Boolean $returnCount) {
+	public Response listCategoryContacts(String categoryId, String _filter, String _select, String _orderBy, Integer _pageNo, Integer _pageSize, Boolean _returnCount) {
 		ContactsManager manager = getManager();
 		
 		if (LOGGER.isDebugEnabled()) {
@@ -238,9 +238,9 @@ public class Me extends MeApi {
 		}
 		
 		try {
-			boolean returnFullCount = $returnCount == null ? false : $returnCount;
-			ItemsListResult<ContactObject> result = manager.listContacts(Arrays.asList(ApiUtils.parseCategory(categoryId)), $filter, BaseRestApiUtils.parseSortInfo($orderBy), $pageNo, BaseRestApiUtils.pageSizeOrDefault($pageNo, $pageSize), returnFullCount, ContactObjectOutputType.BEAN);
-			return respOk(ApiUtils.fillApiContactsResult(new ApiContactsResult(), BaseRestApiUtils.parseSet($select), result));
+			boolean returnFullCount = _returnCount == null ? false : _returnCount;
+			ItemsListResult<ContactObject> result = manager.listContacts(Arrays.asList(ApiUtils.parseCategory(categoryId)), _filter, BaseRestApiUtils.parseSortInfo(_orderBy), _pageNo, BaseRestApiUtils.pageSizeOrDefault(_pageNo, _pageSize), returnFullCount, ContactObjectOutputType.BEAN);
+			return respOk(ApiUtils.fillApiContactsResult(new ApiContactsResult(), BaseRestApiUtils.parseSet(_select), result));
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] listCategoryContacts({})", RunContext.getRunProfileId(), categoryId, t);
@@ -249,11 +249,11 @@ public class Me extends MeApi {
 	}
 	
 	@Override
-	public Response listCategoryContactsDelta(String categoryId, String $syncToken, String $select) {
+	public Response listCategoryContactsDelta(String categoryId, String _syncToken, String _select) {
 		ContactsManager manager = getManager();
 		
 		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("[{}] listCategoryContactsDelta({}, {})", RunContext.getRunProfileId(), categoryId, $syncToken);
+			LOGGER.debug("[{}] listCategoryContactsDelta({}, {})", RunContext.getRunProfileId(), categoryId, _syncToken);
 		}
 		
 		//x-field-extra-annotation
@@ -262,8 +262,8 @@ public class Me extends MeApi {
 		//@JsonInclude(JsonInclude.Include.NON_NULL)
 		
 		try {
-			Delta<ContactObject> changes = manager.listContactsDelta(ApiUtils.parseCategory(categoryId), $syncToken, ContactObjectOutputType.BEAN);
-			return respOk(ApiUtils.fillApiContactsResultDelta(new ApiContactsResultDelta(), BaseRestApiUtils.parseSet($select), changes));
+			Delta<ContactObject> changes = manager.listContactsDelta(ApiUtils.parseCategory(categoryId), _syncToken, ContactObjectOutputType.BEAN);
+			return respOk(ApiUtils.fillApiContactsResultDelta(new ApiContactsResultDelta(), BaseRestApiUtils.parseSet(_select), changes));
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] listCategoryContactsDelta({})", RunContext.getRunProfileId(), categoryId, t);
@@ -292,7 +292,7 @@ public class Me extends MeApi {
 	}
 
 	@Override
-	public Response getContact(String contactId, String $select) {
+	public Response getContact(String contactId, String _select) {
 		ContactsManager manager = getManager();
 		
 		if (LOGGER.isDebugEnabled()) {
@@ -303,7 +303,7 @@ public class Me extends MeApi {
 			//BitFlags<IContactsManager.ContactGetOptions> options = new BitFlags<>(IContactsManager.ContactGetOptions.class);
 			Contact contact = manager.getContact(contactId, BitFlags.noneOf(ContactGetOption.class));
 			if (contact != null) {
-				return respOk(ApiUtils.fillApiContact(new ApiContact(), BaseRestApiUtils.parseSet($select), contact));
+				return respOk(ApiUtils.fillApiContact(new ApiContact(), BaseRestApiUtils.parseSet(_select), contact));
 			} else {
 				return respErrorNotFound();
 			}
@@ -335,7 +335,7 @@ public class Me extends MeApi {
 	}
 
 	@Override
-	public Response updateContact(String contactId, String $update, ApiContactEx body) {
+	public Response updateContact(String contactId, String _update, ApiContactEx body) {
 		ContactsManager manager = getManager();
 		
 		if (LOGGER.isDebugEnabled()) {
@@ -346,7 +346,7 @@ public class Me extends MeApi {
 			Contact contact = manager.getContact(contactId, BitFlags.noneOf(ContactGetOption.class));
 			if (contact == null) return respErrorNotFound();
 			
-			ApiUtils.fillContactEx(contact, BaseRestApiUtils.parseSet($update), body);
+			ApiUtils.fillContactEx(contact, BaseRestApiUtils.parseSet(_update), body);
 			BitFlags<ContactUpdateOption> options = BitFlags.noneOf(ContactUpdateOption.class);
 			manager.updateContact(contactId, contact, options);
 			return respOk();

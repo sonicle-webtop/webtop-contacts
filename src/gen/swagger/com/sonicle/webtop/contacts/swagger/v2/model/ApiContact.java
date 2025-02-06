@@ -16,11 +16,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Represent a complete contact object.
+ * Represent a contact, which is an item for users to organize and save information about the people and organizations that they communicate with. Contacts are contained in contact categories.
  **/
-@ApiModel(description = "Represent a complete contact object.")
+@ApiModel(description = "Represent a contact, which is an item for users to organize and save information about the people and organizations that they communicate with. Contacts are contained in contact categories.")
 @JsonTypeName("Contact")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-01-31T17:20:03.694+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
 public class ApiContact extends ApiContactEx  {
   private @Valid String id;
   private @Valid String etag;
