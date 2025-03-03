@@ -97,14 +97,14 @@ public class CardDav extends CarddavApi {
 		
 		try {
 			Map<Integer, Category> cats = manager.listCategories();
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(cats.keySet());
 			for (Category category : cats.values()) {
 				if (category.isProviderRemote()) continue;
 				items.add(createAddressBook(currentProfileId, category, revisions.get(category.getCategoryId()), FolderShare.Permissions.full()));
 			}
 			for (CategoryFSOrigin origin : manager.listIncomingCategoryOrigins().values()) {
 				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
-				revisions = manager.getCategoriesLastRevision(folders.keySet());
+				revisions = manager.getCategoriesItemsLastRevision(folders.keySet());
 				for (CategoryFSFolder folder : folders.values()) {
 					Category category = folder.getCategory();
 					if (category.isProviderRemote()) continue;
@@ -135,7 +135,7 @@ public class CardDav extends CarddavApi {
 			if (category == null) return respErrorNotFound();
 			if (category.isProviderRemote()) return respErrorBadRequest();
 			
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(category.getCategoryId()));
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(Arrays.asList(category.getCategoryId()));
 			CategoryFSOrigin origin = manager.getIncomingCategoryOriginByFolderId(categoryId);
 			if (origin != null) {
 				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
@@ -281,7 +281,7 @@ public class CardDav extends CarddavApi {
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(categoryId));
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(Arrays.asList(categoryId));
 			
 			DateTime since = null;
 			if (!StringUtils.isBlank(syncToken)) {

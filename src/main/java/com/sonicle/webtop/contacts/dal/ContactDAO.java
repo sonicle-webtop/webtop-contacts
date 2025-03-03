@@ -51,8 +51,8 @@ import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_PICTURES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_TAGS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_VCARDS;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_ATTACHMENTS;
-import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_CHANGES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CONTACTS_CUSTOM_VALUES;
+import static com.sonicle.webtop.contacts.jooq.Tables.HISTORY_CONTACTS;
 import com.sonicle.webtop.contacts.jooq.tables.records.ContactsRecord;
 import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactType;
@@ -404,13 +404,13 @@ AND (ccnts.href IS NULL)
 	}
 	
 	public static Condition createContactsChangedNewOrModifiedCondition() {
-		return CONTACTS_CHANGES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
-			.or(CONTACTS_CHANGES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
+		return HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
+			.or(HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
 	}
 	
 	public static Condition createContactsChangedSinceUntilCondition(DateTime since, DateTime until) {
-		return CONTACTS_CHANGES.CHANGE_TIMESTAMP.greaterThan(since)
-			.and(CONTACTS_CHANGES.CHANGE_TIMESTAMP.lessThan(until));
+		return HISTORY_CONTACTS.CHANGE_TIMESTAMP.greaterThan(since)
+			.and(HISTORY_CONTACTS.CHANGE_TIMESTAMP.lessThan(until));
 	}
 	
 	public void lazy_viewChangedContactObjects(Connection con, Collection<Integer> categoryIds, Condition condition, boolean statFields, int limit, int offset, VContactObjectChanged.Consumer consumer) throws DAOException, WTException {
@@ -447,8 +447,8 @@ AND (ccnts.href IS NULL)
 		
 		Cursor<Record> cursor = dsl
 			.select(
-				CONTACTS_CHANGES.CHANGE_TIMESTAMP,
-				CONTACTS_CHANGES.CHANGE_TYPE
+				HISTORY_CONTACTS.CHANGE_TIMESTAMP,
+				HISTORY_CONTACTS.CHANGE_TYPE
 			)
 			.select(
 				getVContactObjectFields(statFields)
@@ -462,21 +462,21 @@ AND (ccnts.href IS NULL)
 				hasCustomValues,
 				hasVCard
 			)
-			.distinctOn(CONTACTS_CHANGES.CONTACT_ID)
-			.from(CONTACTS_CHANGES)
-			.leftOuterJoin(CONTACTS_).on(CONTACTS_CHANGES.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
+			.distinctOn(HISTORY_CONTACTS.CONTACT_ID)
+			.from(HISTORY_CONTACTS)
+			.leftOuterJoin(CONTACTS_).on(HISTORY_CONTACTS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID))
 			.leftOuterJoin(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
 			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
 			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
 			.where(
-				CONTACTS_CHANGES.CATEGORY_ID.in(categoryIds)
+				HISTORY_CONTACTS.CATEGORY_ID.in(categoryIds)
 				.and(CONTACTS_.IS_LIST.equal(false))
 				.and(filterCndt)
 			)
 			.orderBy(
-				CONTACTS_CHANGES.CONTACT_ID.asc(),
-				CONTACTS_CHANGES.ID.desc()
+				HISTORY_CONTACTS.CONTACT_ID.asc(),
+				HISTORY_CONTACTS.ID.desc()
 			)
 			.limit(limit)
 			.offset(offset)
@@ -985,18 +985,17 @@ AND (ccnts.href IS NULL)
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
-				CONTACTS_.CATEGORY_ID,
-				DSL.max(CONTACTS_.REVISION_TIMESTAMP)
+				HISTORY_CONTACTS.CATEGORY_ID,
+				DSL.max(HISTORY_CONTACTS.CHANGE_TIMESTAMP)
 			)
-			.from(CONTACTS_)
+			.from(HISTORY_CONTACTS)
 			.where(
-				CONTACTS_.CATEGORY_ID.in(categoryIds)
-				.and(CONTACTS_.IS_LIST.equal(isList))
+				HISTORY_CONTACTS.CATEGORY_ID.in(categoryIds)
 			)
 			.groupBy(
-				CONTACTS_.CATEGORY_ID
+				HISTORY_CONTACTS.CATEGORY_ID
 			)
-			.fetchMap(CONTACTS_.CATEGORY_ID, DSL.max(CONTACTS_.REVISION_TIMESTAMP));
+			.fetchMap(HISTORY_CONTACTS.CATEGORY_ID, DSL.max(HISTORY_CONTACTS.CHANGE_TIMESTAMP));
 	}
 	
 	public Map<String, List<String>> selectHrefsByByCategory(Connection con, int categoryId) throws DAOException {

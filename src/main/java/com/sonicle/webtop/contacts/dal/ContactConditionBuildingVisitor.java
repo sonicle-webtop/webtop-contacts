@@ -65,6 +65,12 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 		if (ContactQuery.ID.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.CONTACT_ID, operator, values);
 			
+		} else if (ContactQuery.CREATED_ON.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.CREATION_TIMESTAMP, operator, values);
+			
+		} else if (ContactQuery.UPDATED_ON.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.REVISION_TIMESTAMP, operator, values);
+			
 		} else if (ContactQuery.DISPLAY_NAME.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.DISPLAY_NAME, operator, values);
 			
@@ -224,7 +230,7 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 			return evalFieldNameAndGenerateCFieldCondition(fieldName, operator, values);
 		}
 		
-		throw new UnsupportedOperationException("Field not supported: " + fieldName);
+		return null;
 	}
 
 	@Override

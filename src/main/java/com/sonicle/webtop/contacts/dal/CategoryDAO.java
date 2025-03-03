@@ -38,7 +38,6 @@ import com.sonicle.webtop.contacts.bol.OCategory;
 import com.sonicle.webtop.contacts.bol.VCategoryChanged;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
-import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES_CHANGES;
 import com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryQuery;
@@ -216,13 +215,13 @@ public class CategoryDAO extends BaseDAO {
 	
 	/*
 	public static Condition createCategoriesChangedNewOrModifiedCondition() {
-		return CATEGORIES_CHANGES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
-			.or(CATEGORIES_CHANGES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
+		return HISTORY_CATEGORIES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
+			.or(HISTORY_CATEGORIES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
 	}
 	
 	public static Condition createCategoriesChangedSinceUntilCondition(DateTime since, DateTime until) {
-		return CATEGORIES_CHANGES.CHANGE_TIMESTAMP.greaterThan(since)
-			.and(CATEGORIES_CHANGES.CHANGE_TIMESTAMP.lessThan(until));
+		return HISTORY_CATEGORIES.CHANGE_TIMESTAMP.greaterThan(since)
+			.and(HISTORY_CATEGORIES.CHANGE_TIMESTAMP.lessThan(until));
 	}
 	
 	public void lazy_viewChangedCategories(Connection con, Collection<Integer> categoryIds, Condition condition, boolean statFields, int limit, int offset, VCategoryChanged.Consumer consumer) throws DAOException, WTException {
@@ -231,22 +230,22 @@ public class CategoryDAO extends BaseDAO {
 		
 		Cursor<Record> cursor = dsl
 			.select(
-				CATEGORIES_CHANGES.CHANGE_TIMESTAMP,
-				CATEGORIES_CHANGES.CHANGE_TYPE
+				HISTORY_CATEGORIES.CHANGE_TIMESTAMP,
+				HISTORY_CATEGORIES.CHANGE_TYPE
 			)
 			.select(
 				CATEGORIES.fields()
 			)
-			.distinctOn(CATEGORIES_CHANGES.CATEGORY_ID)
-			.from(CATEGORIES_CHANGES)
-			.leftOuterJoin(CATEGORIES).on(CATEGORIES_CHANGES.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.distinctOn(HISTORY_CATEGORIES.CATEGORY_ID)
+			.from(HISTORY_CATEGORIES)
+			.leftOuterJoin(CATEGORIES).on(HISTORY_CATEGORIES.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
 			.where(
-				CATEGORIES_CHANGES.CATEGORY_ID.in(categoryIds)
+				HISTORY_CATEGORIES.CATEGORY_ID.in(categoryIds)
 				.and(filterCndt)
 			)
 			.orderBy(
-				CATEGORIES_CHANGES.CATEGORY_ID.asc(),
-				CATEGORIES_CHANGES.ID.desc()
+				HISTORY_CATEGORIES.CATEGORY_ID.asc(),
+				HISTORY_CATEGORIES.ID.desc()
 			)
 			.limit(limit)
 			.offset(offset)

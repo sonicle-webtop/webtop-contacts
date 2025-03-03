@@ -201,11 +201,8 @@ import com.sonicle.webtop.contacts.model.CategoryBase;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.CategoryQuery;
-import com.sonicle.webtop.contacts.model.ChangedItem;
-import com.sonicle.webtop.contacts.model.Delta;
 import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.contacts.model.ContactQuery;
-import com.sonicle.webtop.contacts.model.ContactQueryUI;
 import com.sonicle.webtop.core.app.AuditLogManager;
 import com.sonicle.webtop.core.app.ezvcard.XTag;
 import com.sonicle.webtop.core.app.model.FolderShare;
@@ -215,7 +212,9 @@ import com.sonicle.webtop.core.app.model.ShareOrigin;
 import com.sonicle.webtop.core.app.sdk.AbstractFolderShareCache;
 import com.sonicle.webtop.core.app.sdk.WTOperationException;
 import com.sonicle.webtop.core.app.sdk.WTParseException;
+import com.sonicle.webtop.core.model.ChangedItem;
 import com.sonicle.webtop.core.model.CustomField;
+import com.sonicle.webtop.core.model.Delta;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
@@ -592,7 +591,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	@Override
-	public Map<Integer, DateTime> getCategoriesLastRevision(final Collection<Integer> categoryIds) throws WTException {
+	public Map<Integer, DateTime> getCategoriesItemsLastRevision(final Collection<Integer> categoryIds) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -939,8 +938,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
+	/**
+	 * @deprecated Use listContactsDelta instead
+	 */
 	@Override
-	public CollectionChangeSet<ContactObjectChanged> listContactObjectsChanges(final int categoryId, final DateTime since, final Integer limit) throws WTException {
+	@Deprecated public CollectionChangeSet<ContactObjectChanged> listContactObjectsChanges(final int categoryId, final DateTime since, final Integer limit) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1085,7 +1087,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public List<ContactObject> getContactObjects(final int categoryId, final Collection<String> hrefs, final ContactObjectOutputType outputType) throws WTException {
-		CoreManager coreMgr = getCoreManager();
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1117,7 +1118,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	
 	@Override
 	public ContactObject getContactObject(final String contactId, final ContactObjectOutputType outputType) throws WTException {
-		CoreManager coreMgr = getCoreManager();
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1418,7 +1418,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				.withFieldNameAsCustomFieldName(cacheCustomFieldsNameToID.shallowCopy(), cacheCustomFieldsIDToType.shallowCopy())
 			);
 			
-			final BitFlags<ContactGetOption> prepareOpts = BitFlags.with(ContactGetOption.TAGS);
+			final BitFlags<ContactProcessOpt> processOpts = BitFlags.with(ContactProcessOpt.TAGS);
 			final ArrayList<ContactObject> items = new ArrayList<>();
 			Integer fullCount = null;
 			con = WT.getConnection(SERVICE_ID);
@@ -1432,7 +1432,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				myLimit,
 				ManagerUtils.toOffset(myPage, myLimit),
 				(VContactObject vco, Connection con1) -> {
-					items.add(doContactObjectPrepare(con1, vco, outputType, prepareOpts));
+					items.add(doContactObjectPrepare(con1, vco, outputType, processOpts));
 				}
 			);
 			return new ItemsListResult(items, fullCount);
@@ -1444,7 +1444,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
+	@Override
 	public Delta<ContactObject> listContactsDelta(final int categoryId, final String syncToken, final ContactObjectOutputType outputType) throws WTParseException, WTException {
+		final DateTime since = (syncToken == null) ? null : Delta.parseSyncToken(syncToken, false);
+		return listContactsDelta(categoryId, since, outputType);
+	}
+	
+	@Override
+	public Delta<ContactObject> listContactsDelta(final int categoryId, final DateTime since, final ContactObjectOutputType outputType) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
 		Connection con = null;
 		
@@ -1455,13 +1462,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		final int myPage = 1;
 		
 		try {
-			final DateTime since = (syncToken == null) ? null : Delta.parseSyncToken(syncToken, false);
-			final boolean fullSync = since == null;
+			final boolean fullSync = (since == null);
 			final DateTime until = DateTimeUtils.now(true);
 			
 			checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
 			
-			final BitFlags<ContactGetOption> prepareOpts = BitFlags.with(ContactGetOption.TAGS);
+			final BitFlags<ContactProcessOpt> processOpts = BitFlags.with(ContactProcessOpt.TAGS);
 			final ArrayList<ChangedItem<ContactObject>> items = new ArrayList<>();
 			con = WT.getConnection(SERVICE_ID);
 			if (fullSync) {
@@ -1473,7 +1479,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					myLimit,
 					ManagerUtils.toOffset(myPage, myLimit),
 					(VContactObjectChanged vcoc, Connection con1) -> {
-						items.add(new ChangedItem<>(ChangedItem.ChangeType.ADDED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+						items.add(new ChangedItem<>(ChangedItem.ChangeType.ADDED, doContactObjectPrepare(con1, vcoc, outputType, processOpts)));
 					}
 				);
 				
@@ -1487,11 +1493,11 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					ManagerUtils.toOffset(myPage, myLimit),
 					(VContactObjectChanged vcoc, Connection con1) -> {
 						if (vcoc.isChangeInsertion()) {
-							items.add(new ChangedItem<>(ChangedItem.ChangeType.ADDED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+							items.add(new ChangedItem<>(ChangedItem.ChangeType.ADDED, doContactObjectPrepare(con1, vcoc, outputType, processOpts)));
 						} else if (vcoc.isChangeUpdate()) {
-							items.add(new ChangedItem<>(ChangedItem.ChangeType.UPDATED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+							items.add(new ChangedItem<>(ChangedItem.ChangeType.UPDATED, doContactObjectPrepare(con1, vcoc, outputType, processOpts)));
 						} else if (vcoc.isChangeDeletion()) {
-							items.add(new ChangedItem<>(ChangedItem.ChangeType.DELETED, doContactObjectPrepare(con1, vcoc, outputType, prepareOpts)));
+							items.add(new ChangedItem<>(ChangedItem.ChangeType.DELETED, doContactObjectPrepare(con1, vcoc, outputType, processOpts)));
 						}
 					}
 				);
@@ -1502,7 +1508,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			throw ExceptionUtils.wrapThrowable(ex);
 		} finally {
 			DbUtils.closeQuietly(con);
-		}		
+		}
 	}
 	
 	@Override
@@ -2739,15 +2745,15 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 
 	//Prepare only Picture and Tags
 	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType) throws WTException {
-		return doContactObjectPrepare(con, vcont, outputType, BitFlags.with(ContactGetOption.PICTURE, ContactGetOption.TAGS));
+		return doContactObjectPrepare(con, vcont, outputType, BitFlags.with(ContactProcessOpt.PICTURE, ContactProcessOpt.TAGS));
 	}
 	
 	//Prepare all: Picture, Tags, Attachments, Custom Values
 	private ContactObject doContactObjectPrepareComplete(Connection con, VContactObject vcont, ContactObjectOutputType outputType) throws WTException {
-		return doContactObjectPrepare(con, vcont, outputType, BitFlags.with(ContactGetOption.PICTURE, ContactGetOption.ATTACHMENTS, ContactGetOption.TAGS, ContactGetOption.CUSTOM_VALUES));
+		return doContactObjectPrepare(con, vcont, outputType, BitFlags.with(ContactProcessOpt.PICTURE, ContactProcessOpt.ATTACHMENTS, ContactProcessOpt.TAGS, ContactProcessOpt.CUSTOM_VALUES));
 	}
 	
-	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, final BitFlags<ContactGetOption> options) throws WTException {
+	private ContactObject doContactObjectPrepare(Connection con, VContactObject vcont, ContactObjectOutputType outputType, final BitFlags<ContactProcessOpt> options) throws WTException {
 		if (ContactObjectOutputType.STAT.equals(outputType)) {
 			return ManagerUtils.fillContactObject(new ContactObject(), vcont);
 			
@@ -2760,19 +2766,18 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			ContactEx contact = ManagerUtils.fillContact(new ContactEx(), vcont);
 			contact.setCompany(ManagerUtils.createContactCompany(vcont));
 			
-			if (options.has(ContactGetOption.PICTURE) && vcont.getHasPicture()) {
+			if (options.has(ContactProcessOpt.PICTURE) && vcont.getHasPicture()) {
 				OContactPicture opic = cpicDao.select(con, vcont.getContactId());
 				if (opic != null) contact.setPicture(ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic));
 			}
-			if (options.has(ContactGetOption.TAGS) && !StringUtils.isBlank(vcont.getTags())) {
+			if (options.has(ContactProcessOpt.TAGS) && !StringUtils.isBlank(vcont.getTags())) {
 				contact.setTags(new LinkedHashSet(new CId(vcont.getTags()).getTokens()));
 			}
-
-			if (options.has(ContactGetOption.ATTACHMENTS) && vcont.getHasAttachments()) {
+			if (options.has(ContactProcessOpt.ATTACHMENTS) && vcont.getHasAttachments()) {
 				List<VContactAttachmentWithBytes> oatts = cattDao.selectByContactWithBytes(con, vcont.getContactId());
 				contact.setAttachments(ManagerUtils.createContactAttachmentListWithBytes(oatts));
 			}
-			if (options.has(ContactGetOption.CUSTOM_VALUES) && vcont.getHasCustomValues()) {
+			if (options.has(ContactProcessOpt.CUSTOM_VALUES) && vcont.getHasCustomValues()) {
 				List<OContactCustomValue> ovals = ccvalDao.selectByContact(con, vcont.getContactId());
 				contact.setCustomValues(ManagerUtils.createCustomValuesMap(ovals));
 			}

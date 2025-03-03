@@ -41,7 +41,6 @@ import com.sonicle.webtop.contacts.IContactsManager.ContactGetOption;
 import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOption;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryBase;
-import com.sonicle.webtop.contacts.model.Delta;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.ContactObject;
@@ -59,6 +58,7 @@ import com.sonicle.webtop.contacts.swagger.v2.model.ApiContactsResultDelta;
 import com.sonicle.webtop.contacts.swagger.v2.model.ApiError;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.model.Delta;
 import com.sonicle.webtop.core.sdk.BaseRestApiUtils;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -133,7 +133,7 @@ public class Me extends MeApi {
 		try {
 			boolean returnFullCount = _returnCount == null ? false : _returnCount;
 			ItemsListResult<Category> result = manager.listCategories(_filter, BaseRestApiUtils.parseSortInfo(_orderBy), _pageNo, BaseRestApiUtils.pageSizeOrDefault(_pageNo, _pageSize), returnFullCount);
-			Map<Integer, DateTime> itemsLastRevisionMap = manager.getCategoriesLastRevision(
+			Map<Integer, DateTime> itemsLastRevisionMap = manager.getCategoriesItemsLastRevision(
 				result.items.stream()
 					.map((category) -> {
 						return category.getCategoryId();
@@ -159,7 +159,7 @@ public class Me extends MeApi {
 		try {
 			Category category = manager.getCategory(ApiUtils.parseCategory(categoryId));
 			if (category == null) return respErrorNotFound();
-			Map<Integer, DateTime> itemsLastRevisionMap = manager.getCategoriesLastRevision(Arrays.asList(category.getCategoryId()));
+			Map<Integer, DateTime> itemsLastRevisionMap = manager.getCategoriesItemsLastRevision(Arrays.asList(category.getCategoryId()));
 			
 			return respOk(ApiUtils.fillApiCategory(new ApiCategory(), null, category, itemsLastRevisionMap.get(category.getCategoryId())));
 			

@@ -98,7 +98,7 @@ public class Eas extends EasApi {
 		try {
 			Integer defltCategoryId = manager.getDefaultCategoryId();
 			Map<Integer, Category> cats = manager.listCategories();
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(cats.keySet());
 			for (Category category : cats.values()) {
 				if (category.isProviderRemote()) continue;
 				if (Category.Sync.OFF.equals(category.getSync())) continue;
@@ -111,7 +111,7 @@ public class Eas extends EasApi {
 			for (CategoryFSOrigin origin : manager.listIncomingCategoryOrigins().values()) {
 				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
 				Map<Integer, CategoryPropSet> folderProps = manager.getCategoriesCustomProps(folders.keySet());
-				revisions = manager.getCategoriesLastRevision(folders.keySet());
+				revisions = manager.getCategoriesItemsLastRevision(folders.keySet());
 				for (CategoryFSFolder folder : folders.values()) {
 					Category category = folder.getCategory();
 					if (category.isProviderRemote()) continue;
