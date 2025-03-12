@@ -103,7 +103,6 @@ import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
 import com.sonicle.webtop.contacts.model.ContactBase;
 import com.sonicle.webtop.contacts.model.ContactObject;
-import com.sonicle.webtop.contacts.model.ContactObjectChanged;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
 import com.sonicle.webtop.contacts.model.ContactCompany;
@@ -938,53 +937,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	/**
-	 * @deprecated Use listContactsDelta instead
-	 */
-	@Override
-	@Deprecated public CollectionChangeSet<ContactObjectChanged> listContactObjectsChanges(final int categoryId, final DateTime since, final Integer limit) throws WTException {
-		ContactDAO contDao = ContactDAO.getInstance();
-		Connection con = null;
-		
-		try {
-			Integer myLimit = limit == null ? Integer.MAX_VALUE : limit;
-			checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
-			
-			con = WT.getConnection(SERVICE_ID);
-			ArrayList<ContactObjectChanged> inserted = new ArrayList<>();
-			ArrayList<ContactObjectChanged> updated = new ArrayList<>();
-			ArrayList<ContactObjectChanged> deleted = new ArrayList<>();
-			
-			if (since == null) {
-				List<VContactObjectStat> vstats = contDao.viewOnlineContactObjectStatsByCategory(con, categoryId, myLimit);
-				for (VContactObjectStat vstat : vstats) {
-					inserted.add(new ContactObjectChanged(vstat.getContactId(), vstat.getRevisionTimestamp(), vstat.getHref()));
-				}
-			} else {
-				List<VContactObjectStat> vstats = contDao.viewContactObjectStatsByCategorySince(con, categoryId, since, myLimit);
-				for (VContactObjectStat vstat : vstats) {
-					ContactBase.RevisionStatus revStatus = EnumUtils.forSerializedName(vstat.getRevisionStatus(), ContactBase.RevisionStatus.class);
-					if (ContactBase.RevisionStatus.DELETED.equals(revStatus)) {
-						deleted.add(new ContactObjectChanged(vstat.getContactId(), vstat.getRevisionTimestamp(), vstat.getHref()));
-					} else {
-						if (ContactBase.RevisionStatus.NEW.equals(revStatus) || (vstat.getCreationTimestamp().compareTo(since) >= 0)) {
-							inserted.add(new ContactObjectChanged(vstat.getContactId(), vstat.getRevisionTimestamp(), vstat.getHref()));
-						} else {
-							updated.add(new ContactObjectChanged(vstat.getContactId(), vstat.getRevisionTimestamp(), vstat.getHref()));
-						}
-					}
-				}
-			}
-			
-			return new CollectionChangeSet<>(inserted, updated, deleted);
-			
-		} catch (Exception ex) {
-			throw ExceptionUtils.wrapThrowable(ex);
-		} finally {
-			DbUtils.closeQuietly(con);
-		}
-	}
-	
 	public void outputVCardContactsByCategoryId(Category category, OutputStream out) throws WTException, IOException {
 		CoreManager coreMgr = getCoreManager();
 		String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
@@ -1123,7 +1075,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			con = WT.getConnection(SERVICE_ID);
-			VContactObject vcobj = contDao.viewContactObjectById(con, contactId);
+			VContactObject vcobj = contDao.viewContactObjectById(con, null, contactId);
 			if (vcobj == null) {
 				return null;
 			} else {
@@ -1474,7 +1426,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				contDao.lazy_viewChangedContactObjects(
 					con,
 					Arrays.asList(categoryId),
-					ContactDAO.createContactsChangedNewOrModifiedCondition(),
+					ContactDAO.createChangedContactsNewOrModifiedCondition(),
 					ContactObjectOutputType.STAT.equals(outputType),
 					myLimit,
 					ManagerUtils.toOffset(myPage, myLimit),
@@ -1487,7 +1439,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				contDao.lazy_viewChangedContactObjects(
 					con,
 					Arrays.asList(categoryId),
-					ContactDAO.createContactsChangedSinceUntilCondition(since, until),
+					ContactDAO.createChangedContactsSinceUntilCondition(since, until),
 					ContactObjectOutputType.STAT.equals(outputType),
 					myLimit,
 					ManagerUtils.toOffset(myPage, myLimit),
@@ -2758,31 +2710,30 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return ManagerUtils.fillContactObject(new ContactObject(), vcont);
 			
 		} else {
-			ContactPictureDAO cpicDao = ContactPictureDAO.getInstance();
-			ContactAttachmentDAO cattDao = ContactAttachmentDAO.getInstance();
-			ContactCustomValueDAO ccvalDao = ContactCustomValueDAO.getInstance();
-			ContactVCardDAO vcaDao = ContactVCardDAO.getInstance();
-			
 			ContactEx contact = ManagerUtils.fillContact(new ContactEx(), vcont);
 			contact.setCompany(ManagerUtils.createContactCompany(vcont));
 			
 			if (options.has(ContactProcessOpt.PICTURE) && vcont.getHasPicture()) {
-				OContactPicture opic = cpicDao.select(con, vcont.getContactId());
+				ContactPictureDAO picDao = ContactPictureDAO.getInstance();
+				OContactPicture opic = picDao.select(con, vcont.getContactId());
 				if (opic != null) contact.setPicture(ManagerUtils.fillContactPicture(new ContactPictureWithBytes(opic.getBytes()), opic));
 			}
 			if (options.has(ContactProcessOpt.TAGS) && !StringUtils.isBlank(vcont.getTags())) {
 				contact.setTags(new LinkedHashSet(new CId(vcont.getTags()).getTokens()));
 			}
 			if (options.has(ContactProcessOpt.ATTACHMENTS) && vcont.getHasAttachments()) {
-				List<VContactAttachmentWithBytes> oatts = cattDao.selectByContactWithBytes(con, vcont.getContactId());
+				ContactAttachmentDAO attDao = ContactAttachmentDAO.getInstance();
+				List<VContactAttachmentWithBytes> oatts = attDao.selectByContactWithBytes(con, vcont.getContactId());
 				contact.setAttachments(ManagerUtils.createContactAttachmentListWithBytes(oatts));
 			}
 			if (options.has(ContactProcessOpt.CUSTOM_VALUES) && vcont.getHasCustomValues()) {
-				List<OContactCustomValue> ovals = ccvalDao.selectByContact(con, vcont.getContactId());
+				ContactCustomValueDAO cvalDao = ContactCustomValueDAO.getInstance();
+				List<OContactCustomValue> ovals = cvalDao.selectByContact(con, vcont.getContactId());
 				contact.setCustomValues(ManagerUtils.createCustomValuesMap(ovals));
 			}
 			
 			if (ContactObjectOutputType.VCARD.equals(outputType)) {
+				ContactVCardDAO vcaDao = ContactVCardDAO.getInstance();
 				ContactObjectWithVCard ret = ManagerUtils.fillContactObject(new ContactObjectWithVCard(), vcont);
 				VCardOutput out = new VCardOutput(VCardUtils.buildProdId(ManagerUtils.getProductName()))
 					.withEnableCaretEncoding(VCARD_CARETENCODINGENABLED);

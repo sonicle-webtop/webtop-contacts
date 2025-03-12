@@ -42,5 +42,4 @@ public class VContactAttachmentWithBytes extends OContactAttachment {
 	public byte[] getBytes() {
 		return bytes;
 	}
-	
 }

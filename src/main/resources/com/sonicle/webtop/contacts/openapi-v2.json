@@ -678,7 +678,7 @@
           }
         },
         "operationId": "listCategories",
-        "description": "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.",
+        "description": "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.\n\nParam *_filter* supports the following fields in RSQL condition:\nid, createdOn, updatedOn, userId, builtIn, provider, name, description, color, sync, default\n\nParam *_select* supports the following fields:\nprovider, builtIn, name, description, color, easSync, isPrivate, remoteSyncFrequency, remoteSyncTimestamp, remoteSyncToken",
         "parameters": [
           {
             "$ref": "#/components/parameters/_filter"
@@ -899,7 +899,7 @@
             "$ref": "#/components/parameters/_returnCount"
           }
         ],
-        "description": "Returns a list of contacts from specified category."
+        "description": "Returns a list of contacts from specified category.\n\nParam *_filter* supports the following fields in RSQL query conditions:\nid, createdOn, updatedOn, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, tagId\n\nWith the addition of the following composite fields that helps filtering:\n* anyName: matches displayName || firstName || lastName\n* anyEmail: matches email1 || email2 || email3\n* anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax\n* anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax\n* anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
       },
       "post": {
         "summary": "Add a contact",
@@ -973,7 +973,7 @@
             "$ref": "#/components/parameters/_select"
           }
         ],
-        "description": "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken."
+        "description": "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
       }
     },
     "/me/contacts": {
@@ -1060,7 +1060,7 @@
             "$ref": "#/components/parameters/_select"
           }
         ],
-        "description": "Gets the specified contact given its ID."
+        "description": "Gets the specified contact given its ID.\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
       },
       "put": {
         "summary": "Update a contact",
@@ -2745,7 +2745,7 @@
           "type": "string",
           "example": "name, description"
         },
-        "description": "List (comma-separated) of field names to include in resulting items. Optional."
+        "description": "List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account."
       },
       "_orderBy": {
         "name": "_order_by",
@@ -2816,7 +2816,7 @@
           "type": "string",
           "example": "displayName"
         },
-        "description": "List (comma-separated) of field names to update. Optional."
+        "description": "List (comma-separated) of field names to update. Optional, if omitted all available field will be taken into account."
       }
     },
     "responses": {}

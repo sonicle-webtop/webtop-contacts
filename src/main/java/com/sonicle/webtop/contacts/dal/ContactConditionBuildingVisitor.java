@@ -74,6 +74,9 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 		} else if (ContactQuery.DISPLAY_NAME.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.DISPLAY_NAME, operator, values);
 			
+		} else if (ContactQuery.TITLE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.TITLE, operator, values);
+			
 		} else if (ContactQuery.FIRSTNAME.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.FIRSTNAME, operator, values);
 			
@@ -101,6 +104,15 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 		} else if (ContactQuery.EMAIL3.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.OTHER_EMAIL, operator, values);
 			
+		} else if (ContactQuery.IM1.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.WORK_IM, operator, values);
+			
+		} else if (ContactQuery.IM2.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.HOME_IM, operator, values);
+			
+		} else if (ContactQuery.IM3.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.OTHER_IM, operator, values);
+			
 		} else if (ContactQuery.WORK_TELEPHONE1.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.WORK_TELEPHONE, operator, values);
 			
@@ -122,11 +134,47 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 		} else if (ContactQuery.WORK_ADDRESS.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.WORK_ADDRESS, operator, values);
 			
+		} else if (ContactQuery.WORK_POSTALCODE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.WORK_POSTALCODE, operator, values);
+			
+		} else if (ContactQuery.WORK_CITY.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.WORK_CITY, operator, values);
+			
+		} else if (ContactQuery.WORK_STATE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.WORK_STATE, operator, values);
+			
+		} else if (ContactQuery.WORK_COUNTRY.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.WORK_COUNTRY, operator, values);
+			
 		} else if (ContactQuery.HOME_ADDRESS.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.HOME_ADDRESS, operator, values);
 			
+		} else if (ContactQuery.HOME_POSTALCODE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.HOME_POSTALCODE, operator, values);
+			
+		} else if (ContactQuery.HOME_CITY.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.HOME_CITY, operator, values);
+			
+		} else if (ContactQuery.HOME_STATE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.HOME_STATE, operator, values);
+			
+		} else if (ContactQuery.HOME_COUNTRY.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.HOME_COUNTRY, operator, values);
+			
 		} else if (ContactQuery.OTHER_ADDRESS.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.OTHER_ADDRESS, operator, values);
+			
+		} else if (ContactQuery.OTHER_POSTALCODE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.OTHER_POSTALCODE, operator, values);
+			
+		} else if (ContactQuery.OTHER_CITY.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.OTHER_CITY, operator, values);
+			
+		} else if (ContactQuery.OTHER_STATE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.OTHER_STATE, operator, values);
+			
+		} else if (ContactQuery.OTHER_COUNTRY.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.OTHER_COUNTRY, operator, values);
 			
 		} else if (ContactQuery.COMPANY.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.COMPANY, operator, values);
@@ -186,29 +234,25 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 			
 		} else if (ContactQuery.ANY_PHONES.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.WORK_MOBILE, operator, values)
+				.or(defaultCondition(CONTACTS_.WORK_PAGER, operator, values)) // aka pager1
+				.or(defaultCondition(CONTACTS_.HOME_PAGER, operator, values)) // aka pager2
 				.or(defaultCondition(CONTACTS_.WORK_TELEPHONE, operator, values))
 				.or(defaultCondition(CONTACTS_.WORK_TELEPHONE2, operator, values))
-				.or(defaultCondition(CONTACTS_.WORK_PAGER, operator, values))
 				.or(defaultCondition(CONTACTS_.WORK_FAX, operator, values))
 				.or(defaultCondition(CONTACTS_.HOME_TELEPHONE, operator, values))
 				.or(defaultCondition(CONTACTS_.HOME_TELEPHONE2, operator, values))
-				.or(defaultCondition(CONTACTS_.HOME_PAGER, operator, values))
 				.or(defaultCondition(CONTACTS_.HOME_FAX, operator, values));
 			
 		} else if (ContactQuery.ANY_WORK_PHONE.equals(fieldName)) {
-			return defaultCondition(CONTACTS_.WORK_MOBILE, operator, values)
-				.or(defaultCondition(CONTACTS_.WORK_TELEPHONE, operator, values))
+			return defaultCondition(CONTACTS_.WORK_TELEPHONE, operator, values)
 				.or(defaultCondition(CONTACTS_.WORK_TELEPHONE2, operator, values))
-				.or(defaultCondition(CONTACTS_.WORK_PAGER, operator, values))
 				.or(defaultCondition(CONTACTS_.WORK_FAX, operator, values));
 			
 		} else if (ContactQuery.ANY_HOME_PHONE.equals(fieldName)) {
-			return defaultCondition(CONTACTS_.WORK_MOBILE, operator, values)
-				.or(defaultCondition(CONTACTS_.HOME_TELEPHONE, operator, values))
+			return defaultCondition(CONTACTS_.HOME_TELEPHONE, operator, values)
 				.or(defaultCondition(CONTACTS_.HOME_TELEPHONE2, operator, values))
-				.or(defaultCondition(CONTACTS_.HOME_PAGER, operator, values))
 				.or(defaultCondition(CONTACTS_.HOME_FAX, operator, values));
-			
+		
 		} else if (ContactQuery.ANY_ADDRESS.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.WORK_ADDRESS, operator, values)
 				.or(defaultCondition(CONTACTS_.WORK_POSTALCODE, operator, values))

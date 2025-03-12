@@ -180,97 +180,47 @@ AND (ccnts.href IS NULL)
 
 	*/
 	
-	public VContactObject viewContactObjectById(Connection con, int categoryId, String contactId) throws DAOException {
+	public VContactObject viewContactObjectById(Connection con, Collection<Integer> categoryIds, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		
-		// New field: tags list
-		Field<String> tags = DSL
-			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
-			.from(CONTACTS_TAGS)
-			.where(
-				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
-			).asField("tags");
-		
-		return dsl
-			.select(
-				CONTACTS_.fields()
-			)
-			.select(
-				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
-				MASTER_DATA.DESCRIPTION.as("master_data_description"),
-				tags,
-				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
-				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
-			)
-			.from(CONTACTS_)
-			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
-			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
-			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
-			.where(
-				CONTACTS_.CONTACT_ID.equal(contactId)
-				.and(CONTACTS_.CATEGORY_ID.equal(categoryId))
-				.and(CONTACTS_.IS_LIST.equal(false))
-				.and(
-					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
-					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
-				)
-			)
-			.fetchOneInto(VContactObject.class);
-	}
-	
-	public VContactObject viewContactObjectById(Connection con, String contactId) throws DAOException {
-		DSLContext dsl = getDSL(con);
-		
-		// New field: tags list
-		Field<String> tags = DSL
-			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
-			.from(CONTACTS_TAGS)
-			.where(
-				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
-			).asField("tags");
-		
-		return dsl
-			.select(
-				CONTACTS_.fields()
-			)
-			.select(
-				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
-				MASTER_DATA.DESCRIPTION.as("master_data_description"),
-				tags,
-				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
-				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
-			)
-			.from(CONTACTS_)
-			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
-			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
-			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
-			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
-			.where(
-				CONTACTS_.CONTACT_ID.equal(contactId)
-				.and(CONTACTS_.IS_LIST.equal(false))
-				.and(
-					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
-					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
-				)
-			)
-			.fetchOneInto(VContactObject.class);
-	}
-	
-	private Field[] getVContactObjectFields(boolean stat) {
-		if (stat) {
-			return new Field[]{
-				CONTACTS_.CONTACT_ID,
-				CONTACTS_.CATEGORY_ID,
-				CONTACTS_.REVISION_STATUS,
-				CONTACTS_.REVISION_TIMESTAMP,
-				CONTACTS_.CREATION_TIMESTAMP,
-				CONTACTS_.PUBLIC_UID,
-				CONTACTS_.HREF
-			};
-		} else {
-			return CONTACTS_.fields();
+		Condition catCndt = DSL.trueCondition();
+		if (categoryIds != null && categoryIds.size() > 0) {
+			catCndt = CONTACTS_.CATEGORY_ID.in(categoryIds);
 		}
+		
+		// New field: tags list
+		Field<String> tags = DSL
+			.select(DSL.groupConcat(CONTACTS_TAGS.TAG_ID, "|"))
+			.from(CONTACTS_TAGS)
+			.where(
+				CONTACTS_TAGS.CONTACT_ID.equal(CONTACTS_.CONTACT_ID)
+			).asField("tags");
+		
+		return dsl	
+			.select(
+				CONTACTS_.fields()
+			)
+			.select(
+				MASTER_DATA.MASTER_DATA_ID.as("master_data_id"),
+				MASTER_DATA.DESCRIPTION.as("master_data_description"),
+				tags,
+				DSL.nvl2(CONTACTS_PICTURES.CONTACT_ID, true, false).as("has_picture"),
+				DSL.nvl2(CONTACTS_VCARDS.CONTACT_ID, true, false).as("has_vcard")
+			)
+			.from(CONTACTS_)
+			.join(CATEGORIES).on(CONTACTS_.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.leftOuterJoin(MASTER_DATA).on(CONTACTS_.COMPANY_MASTER_DATA_ID.equal(MASTER_DATA.MASTER_DATA_ID))
+			.leftOuterJoin(CONTACTS_PICTURES).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_PICTURES.CONTACT_ID))
+			.leftOuterJoin(CONTACTS_VCARDS).on(CONTACTS_.CONTACT_ID.equal(CONTACTS_VCARDS.CONTACT_ID))
+			.where(
+				CONTACTS_.CONTACT_ID.equal(contactId)
+				.and(catCndt)
+				.and(CONTACTS_.IS_LIST.equal(false))
+				.and(
+					CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+					.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED)))
+				)
+			)
+			.fetchOneInto(VContactObject.class);
 	}
 	
 	public Map<String, List<VContactObject>> viewOnlineContactObjectsByCategory(Connection con, boolean stat, int categoryId) throws DAOException {
@@ -330,6 +280,7 @@ AND (ccnts.href IS NULL)
 			.fetchGroups(CONTACTS_.HREF, VContactObject.class);
 	}
 	
+	//export
 	public void lazy_viewOnlineContactObjects(Connection con, boolean stat, int categoryId, VContactObject.Consumer consumer) throws DAOException, WTException {
 		DSLContext dsl = getDSL(con);
 		
@@ -401,16 +352,6 @@ AND (ccnts.href IS NULL)
 		} finally {
 			cursor.close();
 		}
-	}
-	
-	public static Condition createContactsChangedNewOrModifiedCondition() {
-		return HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
-			.or(HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
-	}
-	
-	public static Condition createContactsChangedSinceUntilCondition(DateTime since, DateTime until) {
-		return HISTORY_CONTACTS.CHANGE_TIMESTAMP.greaterThan(since)
-			.and(HISTORY_CONTACTS.CHANGE_TIMESTAMP.lessThan(until));
 	}
 	
 	public void lazy_viewChangedContactObjects(Connection con, Collection<Integer> categoryIds, Condition condition, boolean statFields, int limit, int offset, VContactObjectChanged.Consumer consumer) throws DAOException, WTException {
@@ -1266,6 +1207,32 @@ AND (ccnts.href IS NULL)
 				.and(CONTACTS_.REVISION_STATUS.notEqual(DELETED))
 			)
 			.execute();
+	}
+	
+	private Field[] getVContactObjectFields(boolean stat) {
+		if (stat) {
+			return new Field[]{
+				CONTACTS_.CONTACT_ID,
+				CONTACTS_.CATEGORY_ID,
+				CONTACTS_.REVISION_STATUS,
+				CONTACTS_.REVISION_TIMESTAMP,
+				CONTACTS_.CREATION_TIMESTAMP,
+				CONTACTS_.PUBLIC_UID,
+				CONTACTS_.HREF
+			};
+		} else {
+			return CONTACTS_.fields();
+		}
+	}
+	
+	public static Condition createChangedContactsNewOrModifiedCondition() {
+		return HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
+			.or(HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
+	}
+	
+	public static Condition createChangedContactsSinceUntilCondition(DateTime since, DateTime until) {
+		return HISTORY_CONTACTS.CHANGE_TIMESTAMP.greaterThan(since)
+			.and(HISTORY_CONTACTS.CHANGE_TIMESTAMP.lessThan(until));
 	}
 	
 	public boolean hasTableFieldFor(RecipientFieldType fieldType, RecipientFieldCategory fieldCategory) {
