@@ -35,7 +35,6 @@ package com.sonicle.webtop.contacts.dal;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.beans.SortInfo;
 import com.sonicle.webtop.contacts.bol.OCategory;
-import com.sonicle.webtop.contacts.bol.VCategoryChanged;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord;
@@ -44,7 +43,6 @@ import com.sonicle.webtop.contacts.model.CategoryQuery;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
-import com.sonicle.webtop.core.sdk.WTException;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,9 +51,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.jooq.Condition;
-import org.jooq.Cursor;
 import org.jooq.DSLContext;
-import org.jooq.Record;
 import org.jooq.SortField;
 import org.jooq.impl.DSL;
 
@@ -392,8 +388,8 @@ public class CategoryDAO extends BaseDAO {
 	
 	public int insert(Connection con, OCategory item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
-		item.setRevisionTimestamp(revisionTimestamp);
 		item.setCreationTimestamp(revisionTimestamp);
+		item.setRevisionTimestamp(revisionTimestamp);
 		CategoriesRecord record = dsl.newRecord(CATEGORIES, item);
 		return dsl
 			.insertInto(CATEGORIES)

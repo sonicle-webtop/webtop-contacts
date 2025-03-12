@@ -102,6 +102,7 @@ import org.slf4j.LoggerFactory;
  * https://stackoverflow.com/questions/73021872/openapi-generator-initialize-list-properties-as-null-and-not-as-empty-lists
  * https://github.com/OpenAPITools/openapi-generator/issues/17206
  * https://github.com/OpenAPITools/openapi-generator/issues/15891
+ * https://github.com/OpenAPITools/openapi-generator/issues/14526
  * 
  * @author malbinola
  */
