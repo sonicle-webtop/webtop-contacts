@@ -80,7 +80,7 @@ public class CategoryConditionBuildingVisitor extends JOOQConditionBuildingVisit
 		} else if (CategoryQuery.SYNC.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.SYNC, operator, parseSyncValues(values), DefaultConditionOption.stringICaseComparison());
 		
-		} else if (CategoryQuery.IS_DEFAULT.equals(fieldName)) {
+		} else if (CategoryQuery.IS_OWNER_DEFAULT.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.IS_DEFAULT, operator, values);
 		}
 		

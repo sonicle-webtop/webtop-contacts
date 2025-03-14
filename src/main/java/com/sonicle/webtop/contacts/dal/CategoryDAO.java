@@ -169,7 +169,7 @@ public class CategoryDAO extends BaseDAO {
 			else if (si.getField().equals(CategoryQuery.DESCRIPTION)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.DESCRIPTION, "")), si).nullsLast());
 			else if (si.getField().equals(CategoryQuery.COLOR)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.COLOR, "")), si).nullsLast());
 			else if (si.getField().equals(CategoryQuery.SYNC)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.SYNC, "")), si));
-			else if (si.getField().equals(CategoryQuery.IS_DEFAULT)) fields.add(BaseDAO.toSortField(CATEGORIES.IS_DEFAULT, si));
+			else if (si.getField().equals(CategoryQuery.IS_OWNER_DEFAULT)) fields.add(BaseDAO.toSortField(CATEGORIES.IS_DEFAULT, si));
 		}
 		return fields;
 	}
