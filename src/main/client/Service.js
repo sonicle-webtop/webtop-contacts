@@ -638,7 +638,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 							WT.handleNewMailMessage(rcpts);
 						},
 						callnumber: function(s, number) {
-							WT.handlePbxCall(number);
+							WT.handleCallNumber(number);
 						},
 						writesms: function(s, number, id, fn) {
 							WT.handleSendSMS(fn, number, null);
@@ -1072,14 +1072,14 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 			tooltip: null,
 			handler: function() {
 				var rec = me.getSelectedContact();
-				if (rec) WT.handlePbxCall(rec.get('telephone'));
+				if (rec) WT.handleCallNumber(rec.get('telephone'));
 			}
 		});
 		me.addAct('callMobile', {
 			tooltip: null,
 			handler: function() {
 				var rec = me.getSelectedContact();
-				if (rec) WT.handlePbxCall(rec.get('mobile'));
+				if (rec) WT.handleCallNumber(rec.get('mobile'));
 			}
 		});
 		me.addAct('sendSms', {
