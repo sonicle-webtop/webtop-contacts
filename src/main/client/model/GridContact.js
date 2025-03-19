@@ -113,7 +113,7 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 			} else {
 				name = displayName;
 			}
-			return SoS.coalesce(SoS.deflt(name, null), company);
+			return SoS.coalesce(name, company);
 		},
 		
 		calcAddressbookLetter: function(name) {
