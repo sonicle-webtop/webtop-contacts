@@ -32,13 +32,13 @@
  */
 package com.sonicle.webtop.contacts.rest.v2;
 
-import com.sonicle.commons.BitFlag;
+import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.IContactsManager;
-import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
+import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOption;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
@@ -98,7 +98,7 @@ public class Eas extends EasApi {
 		try {
 			Integer defltCategoryId = manager.getDefaultCategoryId();
 			Map<Integer, Category> cats = manager.listCategories();
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(cats.keySet());
 			for (Category category : cats.values()) {
 				if (category.isProviderRemote()) continue;
 				if (Category.Sync.OFF.equals(category.getSync())) continue;
@@ -111,7 +111,7 @@ public class Eas extends EasApi {
 			for (CategoryFSOrigin origin : manager.listIncomingCategoryOrigins().values()) {
 				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
 				Map<Integer, CategoryPropSet> folderProps = manager.getCategoriesCustomProps(folders.keySet());
-				revisions = manager.getCategoriesLastRevision(folders.keySet());
+				revisions = manager.getCategoriesItemsLastRevision(folders.keySet());
 				for (CategoryFSFolder folder : folders.values()) {
 					Category category = folder.getCategory();
 					if (category.isProviderRemote()) continue;
@@ -171,7 +171,7 @@ public class Eas extends EasApi {
 			if (cat == null) return respErrorBadRequest();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			ContactObjectWithBean cobj = (ContactObjectWithBean)manager.getContactObject(Integer.valueOf(id), ContactObjectOutputType.BEAN);
+			ContactObjectWithBean cobj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
 			if (cobj != null) {
 				return respOk(createSyncContact(cobj));
 			} else {
@@ -222,17 +222,17 @@ public class Eas extends EasApi {
 		
 		try {
 			boolean photoUpdateEnabled = getServiceSettings().getEasContactPhotoUpdateEnabled();
-			Contact contact = manager.getContact(Integer.valueOf(id), BitFlag.of(IContactsManager.ContactGetOptions.PICTURE));
+			Contact contact = manager.getContact(id, BitFlags.with(IContactsManager.ContactGetOption.PICTURE));
 			if (contact == null) return respErrorNotFound();
 			
-			BitFlag<ContactUpdateOptions> options = BitFlag.none();
+			BitFlags<ContactUpdateOption> options = BitFlags.noneOf(ContactUpdateOption.class);
 			mergeContact(contact, body);
 			if (photoUpdateEnabled && mergeContactPicture(contact, body) == true) {
-				options.set(ContactUpdateOptions.PICTURE);
+				options.set(ContactUpdateOption.PICTURE);
 			}
-			manager.updateContact(Integer.valueOf(id), contact, options);
+			manager.updateContact(id, contact, options);
 			
-			ContactObject card = manager.getContactObject(Integer.valueOf(id), ContactObjectOutputType.STAT);
+			ContactObject card = manager.getContactObject(id, ContactObjectOutputType.STAT);
 			if (card == null) return respErrorNotFound();
 			
 			return respOk(createSyncContactStat(card));
@@ -252,7 +252,7 @@ public class Eas extends EasApi {
 		}
 		
 		try {
-			manager.deleteContact(Integer.valueOf(id));
+			manager.deleteContact(id);
 			return respOkNoContent();
 			
 		} catch (WTNotFoundException ex) {

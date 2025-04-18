@@ -33,6 +33,8 @@
 package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.AlgoUtils;
+import com.sonicle.commons.beans.ItemsListResult;
+import com.sonicle.commons.beans.SortInfo;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiException;
@@ -49,7 +51,9 @@ import com.sonicle.webtop.contacts.mailchimp.cli.model.MembersToSubscribeUnsubsc
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
+import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactQuery;
+import com.sonicle.webtop.contacts.model.ContactQueryUI_OLD;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
@@ -207,9 +211,12 @@ public class MailchimpSyncThread extends Thread {
 					icats.add(category.getCategoryId());
 					//for each tag select and create/update contacts, then create tag with members
 					for(Tag tag: wtTags) {
-						ContactQuery q = new ContactQuery();
-						Condition<ContactQuery> cp=q.tag().eq(tag.getTagId());
+						ContactQueryUI_OLD q = new ContactQueryUI_OLD();
+						Condition<ContactQueryUI_OLD> cp=q.tag().eq(tag.getTagId());
 						ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
+						//TODO: use new query api
+						//Condition<ContactQueryApi> filterQuery = new ContactQueryApi().tagId().eq(tag.getTagId());
+						//ItemsListResult<ContactObject> result = manager.listContacts(icats, filterQuery, new SortInfo.Builder().asc("displayName", "company").build(), null, null, false, ContactObjectOutputType.BEAN);
 						ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,null,tag.getName());
 						count+=emails.size();
 						//save emails in tag map for this category
@@ -220,9 +227,11 @@ public class MailchimpSyncThread extends Thread {
 						allEmails.addAll(emails);
 					}
 					//create/update contacts without tags
-					ContactQuery q = new ContactQuery();
-					Condition<ContactQuery> cp=q.trueCondition();
+					ContactQueryUI_OLD q = new ContactQueryUI_OLD();
+					Condition<ContactQueryUI_OLD> cp=q.trueCondition();
 					ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
+					//TODO: use new query api
+					//ItemsListResult<ContactObject> result = manager.listContacts(icats, (String)null, new SortInfo.Builder().asc("displayName", "company").build(), null, null, false, ContactObjectOutputType.BEAN);
 					ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,allEmails,category.getName());
 					count+=emails.size();
 					//save emails in tag map for this category
@@ -251,10 +260,12 @@ public class MailchimpSyncThread extends Thread {
 					ArrayList<Integer> icats=new ArrayList<>();
 					icats.add(category.getCategoryId());
 					
-					ContactQuery q = new ContactQuery();
-					Condition<ContactQuery> cp=q.trueCondition();
+					ContactQueryUI_OLD q = new ContactQueryUI_OLD();
+					Condition<ContactQueryUI_OLD> cp=q.trueCondition();
 					//select and create contacts
 					ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
+					//TODO: use new query api
+					//ItemsListResult<ContactObject> result = manager.listContacts(icats, (String)null, new SortInfo.Builder().asc("displayName", "company").build(), null, null, false, ContactObjectOutputType.BEAN);
 					ArrayList<String> catEmails=updateMailchimpContacts(lists,audienceId,lcr,null,category.getName());
 					count+=catEmails.size();
 					//create tag for category, including all cat emails

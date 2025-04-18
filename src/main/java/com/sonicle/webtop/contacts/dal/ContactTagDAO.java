@@ -56,7 +56,7 @@ public class ContactTagDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
-	public Set<String> selectTagsByContact(Connection con, int contactId) throws DAOException {
+	public Set<String> selectTagsByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -72,7 +72,7 @@ public class ContactTagDAO extends BaseDAO {
 			.fetchSet(CONTACTS_TAGS.TAG_ID);
 	}
 	
-	public Map<Integer, List<String>> selectTagsByContact(Connection con, Collection<Integer> contactIds) throws DAOException {
+	public Map<String, List<String>> selectTagsByContact(Connection con, Collection<String> contactIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -89,7 +89,7 @@ public class ContactTagDAO extends BaseDAO {
 			.fetchGroups(CONTACTS_TAGS.CONTACT_ID, CONTACTS_TAGS.TAG_ID);
 	}
 	
-	public int insert(Connection con, int contactId, String tagId) throws DAOException {
+	public int insert(Connection con, String contactId, String tagId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.insertInto(CONTACTS_TAGS)
@@ -98,7 +98,7 @@ public class ContactTagDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int[] batchInsert(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+	public int[] batchInsert(Connection con, String contactId, Collection<String> tagIds) throws DAOException {
 		if (tagIds.isEmpty()) return new int[0];
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
@@ -106,7 +106,7 @@ public class ContactTagDAO extends BaseDAO {
 				CONTACTS_TAGS.CONTACT_ID, 
 				CONTACTS_TAGS.TAG_ID
 			)
-			.values((Integer)null, (String)null)
+			.values((String)null, (String)null)
 		);
 		for (String tagId : tagIds) {
 			batch.bind(
@@ -180,7 +180,7 @@ public class ContactTagDAO extends BaseDAO {
 		*/
 	}
 	
-	public int insertByCategoriesContacts(Connection con, Collection<Integer> categoryIds, Collection<Integer> contactIds, String tagId) throws DAOException {
+	public int insertByCategoriesContacts(Connection con, Collection<Integer> categoryIds, Collection<String> contactIds, String tagId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		ContactsTags cnttgs1 = CONTACTS_TAGS.as("cnttgs1");
 		return dsl
@@ -236,7 +236,7 @@ public class ContactTagDAO extends BaseDAO {
 		*/
 	}
 	
-	public int delete(Connection con, int contactId, String tagId) throws DAOException {
+	public int delete(Connection con, String contactId, String tagId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_TAGS)
@@ -247,7 +247,7 @@ public class ContactTagDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByIdTags(Connection con, int contactId, Collection<String> tagIds) throws DAOException {
+	public int deleteByIdTags(Connection con, String contactId, Collection<String> tagIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_TAGS)
@@ -258,7 +258,7 @@ public class ContactTagDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByContact(Connection con, int contactId) throws DAOException {
+	public int deleteByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_TAGS)
@@ -305,7 +305,7 @@ public class ContactTagDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByCategoriesContacts(Connection con, Collection<Integer> categoryIds, Collection<Integer> contactIds) throws DAOException {
+	public int deleteByCategoriesContacts(Connection con, Collection<Integer> categoryIds, Collection<String> contactIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_TAGS)
@@ -324,7 +324,7 @@ public class ContactTagDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByCategoriesContactsTags(Connection con, Collection<Integer> categoryIds, Collection<Integer> contactIds, Collection<String> tagIds) throws DAOException {
+	public int deleteByCategoriesContactsTags(Connection con, Collection<Integer> categoryIds, Collection<String> contactIds, Collection<String> tagIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_TAGS)

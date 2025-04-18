@@ -48,7 +48,7 @@ public class RBAddressbook {
 	public String categoryName;
 	public String categoryColor;
 	public Image categoryColorImage;
-	public Integer contactId;
+	public String contactId;
 	public String title;
 	public String firstName;
 	public String lastName;
@@ -98,7 +98,7 @@ public class RBAddressbook {
 		return categoryColorImage;
 	}
 
-	public Integer getContactId() {
+	public String getContactId() {
 		return contactId;
 	}
 

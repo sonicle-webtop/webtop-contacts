@@ -49,7 +49,7 @@ import java.util.ArrayList;
  */
 public class JsGridContact {
 	public String uid;
-	public Integer id;
+	public String id;
 	public boolean isList;
 	public String displayName;
 	public String firstName;
@@ -122,7 +122,7 @@ public class JsGridContact {
 	
 	public static class Id {
 		
-		public static CompositeId build(int contactId, boolean isList) {
+		public static CompositeId build(String contactId, boolean isList) {
 			return new CompositeId(contactId, isList ? "L" : "C");
 		}
 		
@@ -130,8 +130,8 @@ public class JsGridContact {
 			return new CompositeId(2).parse(id);
 		}
 		
-		public static int contactId(CompositeId cid) {
-			return Integer.valueOf(cid.getToken(0));
+		public static String contactId(CompositeId cid) {
+			return cid.getToken(0);
 		}
 		
 		public static boolean isList(CompositeId cid) {

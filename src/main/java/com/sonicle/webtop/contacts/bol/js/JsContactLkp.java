@@ -66,7 +66,7 @@ public class JsContactLkp {
 	public JsContactLkp(CategoryFSOrigin origin, CategoryFSFolder folder, CategoryPropSet folderProps, ContactLookup item) {
 		Category category = folder.getCategory();
 		
-		this.id = String.valueOf(item.getContactId());
+		this.id = item.getContactId();
 		this.displayName = item.getDisplayName();
 		this.firstName = item.getFirstName();
 		this.lastName = item.getLastName();

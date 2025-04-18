@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Sonicle S.r.l.
+ * Copyright (C) 2024 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,60 +28,51 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2018 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2024 Sonicle S.r.l.".
  */
 package com.sonicle.webtop.contacts.bol;
 
+import com.sonicle.webtop.core.sdk.WTException;
+import java.sql.Connection;
 import org.joda.time.DateTime;
 
 /**
  *
  * @author malbinola
  */
-public class VContactObjectChanged {
-	protected Integer contactId;
-	protected String revisionStatus;
-	protected DateTime revisionTimestamp;
-	protected DateTime creationTimestamp;
-	protected String href;
+public class VContactObjectChanged extends VContactObject {
+	protected DateTime changeTimestamp;
+	protected String changeType;
 
-	public Integer getContactId() {
-		return contactId;
+	public DateTime getChangeTimestamp() {
+		return changeTimestamp;
 	}
 
-	public void setContactId(Integer contactId) {
-		this.contactId = contactId;
+	public void setChangeTimestamp(DateTime changeTimestamp) {
+		this.changeTimestamp = changeTimestamp;
 	}
 
-	public String getRevisionStatus() {
-		return revisionStatus;
+	public String getChangeType() {
+		return changeType;
 	}
 
-	public void setRevisionStatus(String revisionStatus) {
-		this.revisionStatus = revisionStatus;
-	}
-
-	public DateTime getRevisionTimestamp() {
-		return revisionTimestamp;
-	}
-
-	public void setRevisionTimestamp(DateTime revisionTimestamp) {
-		this.revisionTimestamp = revisionTimestamp;
+	public void setChangeType(String changeType) {
+		this.changeType = changeType;
 	}
 	
-	public DateTime getCreationTimestamp() {
-		return creationTimestamp;
+	public boolean isChangeInsertion() {
+		return "C".equals(getChangeType());
 	}
-
-	public void setCreationTimestamp(DateTime creationTimestamp) {
-		this.creationTimestamp = creationTimestamp;
+	
+	public boolean isChangeUpdate() {
+		return "U".equals(getChangeType());
 	}
-
-	public String getHref() {
-		return href;
+	
+	public boolean isChangeDeletion() {
+		return "D".equals(getChangeType());
 	}
-
-	public void setHref(String href) {
-		this.href = href;
+	
+	public interface Consumer {
+		public void consume(final VContactObjectChanged vcoc, final Connection con) throws WTException;
 	}
 }

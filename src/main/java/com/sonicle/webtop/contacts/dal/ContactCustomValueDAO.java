@@ -52,7 +52,7 @@ public class ContactCustomValueDAO extends BaseDAO {
 		return INSTANCE;
 	}
 	
-	public List<OContactCustomValue> selectByContact(Connection con, int contactId) throws DAOException {
+	public List<OContactCustomValue> selectByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -87,7 +87,7 @@ public class ContactCustomValueDAO extends BaseDAO {
 				CONTACTS_CUSTOM_VALUES.DATE_VALUE,
 				CONTACTS_CUSTOM_VALUES.TEXT_VALUE
 			)
-			.values((Integer)null, null, null, null, null, null, null)
+			.values((String)null, null, null, null, null, null, null)
 		);
 		for (OContactCustomValue value : values) {
 			batch.bind(
@@ -103,7 +103,7 @@ public class ContactCustomValueDAO extends BaseDAO {
 		return batch.execute();
 	}
 	
-	public int deleteByContactFields(Connection con, int contactId, Collection<String> customFieldIds) throws DAOException {
+	public int deleteByContactFields(Connection con, String contactId, Collection<String> customFieldIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_CUSTOM_VALUES)

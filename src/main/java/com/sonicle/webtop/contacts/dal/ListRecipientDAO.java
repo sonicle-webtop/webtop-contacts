@@ -68,7 +68,7 @@ public class ListRecipientDAO extends BaseDAO {
 		return nextID;
 	}
 	
-	public VListRecipient select(Connection con, Integer listRecipientId) throws DAOException {
+	public VListRecipient select(Connection con, String listRecipientId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -89,7 +89,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.fetchOneInto(VListRecipient.class);
 	}
 	
-	public List<VListRecipient> viewByContact(Connection con, int contactId) throws DAOException {
+	public List<VListRecipient> viewByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -113,7 +113,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.fetchInto(VListRecipient.class);
 	}
 	
-	public List<VListRecipient> selectByProfileContact(Connection con, String domainId, String userId, int contactId) throws DAOException {
+	public List<VListRecipient> selectByProfileContact(Connection con, String domainId, String userId, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		Contacts contacts1=CONTACTS_.as("CONTACTS1");
 		return dsl
@@ -155,7 +155,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int[] batchInsert(Connection con, int contactId, Collection<ContactListRecipientBase> recipients) throws DAOException {
+	public int[] batchInsert(Connection con, String contactId, Collection<ContactListRecipientBase> recipients) throws DAOException {
 		if (recipients.isEmpty()) return new int[0];
 		DSLContext dsl = getDSL(con);
 		BatchBindStep batch = dsl.batch(
@@ -165,7 +165,7 @@ public class ListRecipientDAO extends BaseDAO {
 				LIST_RECIPIENTS.RECIPIENT_TYPE,
 				LIST_RECIPIENTS.RECIPIENT_CONTACT_ID
 			)
-			.values((Integer)null, null, null, null)
+			.values((String)null, null, null, null)
 		);
 		for (ContactListRecipientBase recipient : recipients) {
 			batch.bind(
@@ -190,7 +190,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int delete(Connection con, int listRecipientId) throws DAOException {
+	public int delete(Connection con, String listRecipientId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(LIST_RECIPIENTS)
@@ -198,7 +198,7 @@ public class ListRecipientDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int deleteByContact(Connection con, int contactId) throws DAOException {
+	public int deleteByContact(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(LIST_RECIPIENTS)

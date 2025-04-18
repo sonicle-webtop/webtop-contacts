@@ -40,7 +40,7 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 	idProperty: 'uid',
 	fields: [
 		WTF.roField('uid', 'string'),
-		WTF.roField('id', 'int'),
+		WTF.roField('id', 'string'),
 		WTF.roField('isList', 'boolean'),
 		WTF.roField('displayName', 'string'),
 		WTF.roField('title', 'string'),
@@ -113,7 +113,7 @@ Ext.define('Sonicle.webtop.contacts.model.GridContact', {
 			} else {
 				name = displayName;
 			}
-			return SoS.coalesce(SoS.deflt(name, null), company);
+			return SoS.coalesce(name, company);
 		},
 		
 		calcAddressbookLetter: function(name) {

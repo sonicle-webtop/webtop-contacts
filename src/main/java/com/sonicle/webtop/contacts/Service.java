@@ -38,20 +38,20 @@ import com.github.benmanes.caffeine.cache.CacheLoader;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.sonicle.commons.AlgoUtils.MD5HashBuilder;
-import com.sonicle.commons.BitFlag;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.InternetAddressUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.PathUtils;
 import com.sonicle.commons.URIUtils;
+import com.sonicle.commons.beans.ItemsListResult;
 import com.sonicle.commons.cache.AbstractPassiveExpiringBulkMap;
 import com.sonicle.commons.concurrent.KeyedReentrantLocks;
+import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.DispositionType;
 import com.sonicle.commons.web.ParameterException;
 import com.sonicle.commons.web.ServletUtils;
-import com.sonicle.commons.web.ServletUtils.IntegerArray;
 import com.sonicle.commons.web.ServletUtils.StringArray;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.commons.web.json.PayloadAsList;
@@ -64,8 +64,8 @@ import com.sonicle.commons.web.json.bean.StringSet;
 import com.sonicle.commons.web.json.extjs.GridMetadata;
 import com.sonicle.commons.web.json.extjs.ExtTreeNode;
 import com.sonicle.commons.web.json.extjs.GroupMeta;
-import com.sonicle.webtop.contacts.IContactsManager.ContactGetOptions;
-import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOptions;
+import com.sonicle.webtop.contacts.IContactsManager.ContactGetOption;
+import com.sonicle.webtop.contacts.IContactsManager.ContactUpdateOption;
 import com.sonicle.webtop.contacts.bol.js.JsContact;
 import com.sonicle.webtop.contacts.bol.js.JsCategory;
 import com.sonicle.webtop.contacts.bol.js.JsCategoryLinks;
@@ -109,11 +109,12 @@ import com.sonicle.webtop.contacts.model.ContactListEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
-import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.contacts.model.ContactListRecipient;
 import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.contacts.model.ContactObject;
+import com.sonicle.webtop.contacts.model.ContactQuery;
+import com.sonicle.webtop.contacts.model.ContactQueryUI;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
@@ -173,15 +174,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import jakarta.mail.internet.InternetAddress;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -268,7 +263,7 @@ public class Service extends BaseService {
 		
 		try {
 			ObjCustomFieldDefs.FieldsList scfields = new ObjCustomFieldDefs.FieldsList();
-			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.SEARCHABLE)).values()) {
+			for (CustomFieldEx cfield : coreMgr.listCustomFields(SERVICE_ID, BitFlags.with(CoreManager.CustomFieldListOption.SEARCHABLE)).values()) {
 				scfields.add(new ObjCustomFieldDefs.Field(cfield, up.getLanguageTag()));
 			}
 			return scfields;
@@ -634,14 +629,14 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.CREATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				item = manager.addCategory(JsCategory.createCategory(pl.data));
+				item = manager.addCategory(pl.data.createCategoryForInsert());
 				foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsCategory> pl = ServletUtils.getPayload(request, JsCategory.class);
 				
-				manager.updateCategory(JsCategory.createCategory(pl.data));
+				manager.updateCategory(pl.data.categoryId, pl.data.createCategoryForUpdate());
 				foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 				new JsonResult().printTo(out);
 				
@@ -870,7 +865,28 @@ public class Service extends BaseService {
 					.build();
 				
 				Integer cachedTotalCount = cacheManageGridContactsTotalCount.getIfPresent(reqId);
-				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), page, limit, cachedTotalCount == null);
+				ItemsListResult<ContactLookup> result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI.build(queryObj, map, utz), page, limit, cachedTotalCount == null);
+				int totalCount;
+				if (cachedTotalCount != null) {
+					totalCount = cachedTotalCount;
+				} else {
+					cacheManageGridContactsTotalCount.put(reqId, result.fullCount);
+					totalCount = result.getFullCount();
+				}
+				
+				for (ContactLookup item : result.getItems()) {
+					final CategoryFSOrigin origin = foldersTreeCache.getOriginByFolder(item.getCategoryId());
+					if (origin == null) continue;
+					final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
+					if (folder == null) continue;
+					
+					final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
+					items.add(new JsGridContact(view, origin, folder, props, item));
+				}
+				
+				// Replace old impl. with ContactQueryUI_OLD
+				/*
+				ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI_OLD.createCondition(queryObj, map, utz), page, limit, cachedTotalCount == null);
 				int totalCount;
 				if (cachedTotalCount != null) {
 					totalCount = cachedTotalCount;
@@ -889,6 +905,7 @@ public class Service extends BaseService {
 					final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 					items.add(new JsGridContact(view, origin, folder, props, item));
 				}
+				*/
 				
 				GridMetadata meta = new GridMetadata(true);
 				if (Grouping.COMPANY.equals(groupBy)) {
@@ -904,11 +921,11 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.DELETE)) {
 				StringArray uids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 				
-				ArrayList<Integer> contactIds = new ArrayList<>();
-				ArrayList<Integer> contactsListIds = new ArrayList<>();
+				ArrayList<String> contactIds = new ArrayList<>();
+				ArrayList<String> contactsListIds = new ArrayList<>();
 				for (String uid : uids) {
 					CompositeId cid = JsGridContact.Id.parse(uid);
-					int contactId = JsGridContact.Id.contactId(cid);
+					String contactId = JsGridContact.Id.contactId(cid);
 					boolean isList = JsGridContact.Id.isList(cid);
 					if (isList) {
 						contactIds.add(contactId);
@@ -927,11 +944,11 @@ public class Service extends BaseService {
 				Integer categoryId = ServletUtils.getIntParameter(request, "targetCategoryId", true);
 				boolean copy = ServletUtils.getBooleanParameter(request, "copy", false);
 				
-				ArrayList<Integer> contactIds = new ArrayList<>();
-				ArrayList<Integer> contactsListIds = new ArrayList<>();
+				ArrayList<String> contactIds = new ArrayList<>();
+				ArrayList<String> contactsListIds = new ArrayList<>();
 				for (String uid : uids) {
 					CompositeId cid = JsGridContact.Id.parse(uid);
-					int contactId = JsGridContact.Id.contactId(cid);
+					String contactId = JsGridContact.Id.contactId(cid);
 					boolean isList = JsGridContact.Id.isList(cid);
 					if (isList) {
 						//contactsListIds.add(contactId);
@@ -950,7 +967,7 @@ public class Service extends BaseService {
 				UpdateTagsOperation op = ServletUtils.getEnumParameter(request, "op", true, UpdateTagsOperation.class);
 				ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
 				
-				ArrayList<Integer> ids = new ArrayList<>();
+				ArrayList<String> ids = new ArrayList<>();
 				for (String uid : uids) {
 					CompositeId cid = JsGridContact.Id.parse(uid);
 					ids.add(JsGridContact.Id.contactId(cid));
@@ -985,17 +1002,44 @@ public class Service extends BaseService {
 				categoryIds = manager.listAllCategoryIds();
 			}
 			
-			Condition<ContactQuery> conditionPredicate = null;
+			Condition<ContactQuery> filterQuery = null;
 			if (!StringUtils.isBlank(id)) { // ID is set, force precise match (eg. custom-fields preview)
-				conditionPredicate = new ContactQuery()
+				filterQuery = new ContactQuery()
 					.id().eq(id);
 			} else if (!StringUtils.isBlank(query)) { // Query (from type-ahead) is set, try a match on name/email
-				conditionPredicate = new ContactQuery()
+				filterQuery = new ContactQuery()
+					.anyName().eq(query)
+					.or().anyEmail().eq(query);
+			} else if (queryObj != null) { // Full query object is set, try match from that
+				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
+				filterQuery = ContactQueryUI.build(queryObj, map, utz);
+			}
+			
+			ItemsListResult<ContactLookup> result = manager.listContacts(categoryIds, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, filterQuery, page, limit, true);
+			ArrayList<JsContactLkp> items = new ArrayList<>(result.items.size());
+			for (ContactLookup item : result.getItems()) {
+				final CategoryFSOrigin origin = foldersTreeCache.getOriginByFolder(item.getCategoryId());
+				if (origin == null) continue;
+				final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
+				if (folder == null) continue;
+
+				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
+				items.add(new JsContactLkp(origin, folder, props, item));
+			}
+			
+			// Replace old impl. with ContactQueryUI_OLD
+			/*
+			Condition<ContactQueryUI_OLD> conditionPredicate = null;
+			if (!StringUtils.isBlank(id)) { // ID is set, force precise match (eg. custom-fields preview)
+				conditionPredicate = new ContactQueryUI_OLD()
+					.id().eq(id);
+			} else if (!StringUtils.isBlank(query)) { // Query (from type-ahead) is set, try a match on name/email
+				conditionPredicate = new ContactQueryUI_OLD()
 					.name().eq(query)
 					.or().email().eq(query);
 			} else if (queryObj != null) { // Full query object is set, try match from that
 				Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
-				conditionPredicate = ContactQuery.createCondition(queryObj, map, utz);
+				conditionPredicate = ContactQueryUI_OLD.createCondition(queryObj, map, utz);
 			}
 			
 			ListContactsResult result = manager.listContacts(categoryIds, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, conditionPredicate, page, limit, true);
@@ -1010,6 +1054,7 @@ public class Service extends BaseService {
 				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 				items.add(new JsContactLkp(origin, folder, props, item));
 			}
+			*/
 			new JsonResult(items, result.fullCount)
 				.setPage(page)
 				.printTo(out);
@@ -1091,7 +1136,7 @@ public class Service extends BaseService {
 				String uid = ServletUtils.getStringParameter(request, "id", true);
 				
 				CompositeId cid = JsGridContact.Id.parse(uid);
-				int contactId = JsGridContact.Id.contactId(cid);
+				String contactId = JsGridContact.Id.contactId(cid);
 				boolean isList = JsGridContact.Id.isList(cid);
 				
 				if (isList) {
@@ -1104,7 +1149,7 @@ public class Service extends BaseService {
 					
 				} else {
 					UserProfile up = getEnv().getProfile();
-					Contact contact = manager.getContact(contactId, BitFlag.of(ContactGetOptions.PICTURE, ContactGetOptions.TAGS, ContactGetOptions.CUSTOM_VALUES));
+					Contact contact = manager.getContact(contactId, BitFlags.with(ContactGetOption.PICTURE, ContactGetOption.TAGS, ContactGetOption.CUSTOM_VALUES));
 					if (contact == null) throw new WTException("Contact not found [{}]", contactId);
 					ContactCompany company = contact.hasCompany() ? manager.getContactCompany(contactId) : null;
 					
@@ -1114,7 +1159,7 @@ public class Service extends BaseService {
 					if (folder == null) throw new WTException("Folder not found [{}]", contact.getCategoryId());
 					final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 					
-					Set<String> pvwfields = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.PREVIEWABLE));
+					Set<String> pvwfields = coreMgr.listCustomFieldIds(SERVICE_ID, BitFlags.with(CoreManager.CustomFieldListOption.PREVIEWABLE));
 					Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
 					Map<String, CustomField> cfields = new HashMap<>();
 					for (CustomPanel cpanel : cpanels.values()) {
@@ -1165,8 +1210,7 @@ public class Service extends BaseService {
 			if (crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
-				int contactId = Integer.parseInt(id);
-				Contact contact = manager.getContact(contactId);
+				Contact contact = manager.getContact(id);
 				UserProfileId ownerId = manager.getCategoryOwner(contact.getCategoryId());
 				
 				Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, contact.getTags());
@@ -1206,18 +1250,18 @@ public class Service extends BaseService {
 			} else if (crud.equals(Crud.UPDATE)) {
 				Payload<MapItem, JsContact> pl = ServletUtils.getPayload(request, JsContact.class);
 				
-				BitFlag<ContactUpdateOptions> processOpts = BitFlag.of(ContactUpdateOptions.TAGS, ContactUpdateOptions.ATTACHMENTS, ContactUpdateOptions.CUSTOM_VALUES);
+				BitFlags<ContactUpdateOption> processOpts = BitFlags.with(ContactUpdateOption.TAGS, ContactUpdateOption.ATTACHMENTS, ContactUpdateOption.CUSTOM_VALUES);
 				Contact contact = pl.data.createContactForUpdate(up.getTimeZone());
 				
 				// We reuse picture field passing the uploaded file ID.
 				// Due to different formats we can be sure that IDs don't collide.
 				if (hasUploadedFile(pl.data.picture)) {
 					// If found, new picture has been uploaded!
-					processOpts.set(ContactUpdateOptions.PICTURE);
+					processOpts.set(ContactUpdateOption.PICTURE);
 					contact.setPicture(getUploadedContactPicture(pl.data.picture));
 				} else {
 					// If blank, picture has been deleted!
-					if (StringUtils.isBlank(pl.data.picture)) processOpts.set(ContactUpdateOptions.PICTURE);
+					if (StringUtils.isBlank(pl.data.picture)) processOpts.set(ContactUpdateOption.PICTURE);
 				}
 				for (JsContact.Attachment jsatt : pl.data.attachments) {
 					if (!StringUtils.isBlank(jsatt._uplId)) {
@@ -1240,7 +1284,7 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if (crud.equals(Crud.DELETE)) {
-				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+				StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 				
 				if (ids.size() == 1) {
 					manager.deleteContact(ids.get(0));
@@ -1261,9 +1305,8 @@ public class Service extends BaseService {
 		try {
 			String id = ServletUtils.getStringParameter(request, "id", true);
 			String type = ServletUtils.getStringParameter(request, "type", true);
-			int contactId = Integer.parseInt(id);
 			
-			Contact contact = manager.getContact(contactId, BitFlag.of(ContactGetOptions.TAGS));
+			Contact contact = manager.getContact(id, BitFlags.with(ContactGetOption.TAGS));
 			JsEventContact eventContact = JsEventContact.createJsEventContact(contact, type);
 			
 			new JsonResult(eventContact).printTo(out);
@@ -1284,8 +1327,7 @@ public class Service extends BaseService {
 			if (hasUploadedFile(id)) {
 				picture = getUploadedContactPicture(id);
 			} else {
-				int contactId = Integer.parseInt(id);
-				picture = manager.getContactPicture(contactId);
+				picture = manager.getContactPicture(id);
 			}
 			if (picture != null) {
 				try (ByteArrayInputStream bais = new ByteArrayInputStream(picture.getBytes())) {
@@ -1305,7 +1347,7 @@ public class Service extends BaseService {
 			String attachmentId = ServletUtils.getStringParameter(request, "attachmentId", null);
 			
 			if (!StringUtils.isBlank(attachmentId)) {
-				Integer contactId = ServletUtils.getIntParameter(request, "contactId", true);
+				String contactId = ServletUtils.getStringParameter(request, "contactId", true);
 				
 				ContactAttachmentWithBytes attch = manager.getContactAttachment(contactId, attachmentId);
 				InputStream is = null;
@@ -1340,7 +1382,7 @@ public class Service extends BaseService {
 		
 		try {
 			ServletUtils.StringArray tags = ServletUtils.getObjectParameter(request, "tags", ServletUtils.StringArray.class, true);
-			Integer contactId = ServletUtils.getIntParameter(request, "id", false);
+			String contactId = ServletUtils.getStringParameter(request, "id", false);
 			
 			Map<String, CustomPanel> cpanels = coreMgr.listCustomPanelsUsedBy(SERVICE_ID, tags);
 			Map<String, CustomFieldValue> cvalues = (contactId != null) ? manager.getContactCustomValues(contactId) : null;
@@ -1367,8 +1409,7 @@ public class Service extends BaseService {
 			if(crud.equals(Crud.READ)) {
 				String id = ServletUtils.getStringParameter(request, "id", true);
 				
-				int contactId = Integer.parseInt(id);
-				ContactList list = manager.getContactList(contactId);
+				ContactList list = manager.getContactList(id);
 				UserProfileId ownerId = manager.getCategoryOwner(list.getCategoryId());
 				item = new JsContactsList(ownerId, list);
 				
@@ -1391,7 +1432,7 @@ public class Service extends BaseService {
 				new JsonResult().printTo(out);
 				
 			} else if(crud.equals(Crud.DELETE)) {
-				IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+				StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 				
 				if (ids.size() == 1) {
 					manager.deleteContactList(ids.get(0));
@@ -1416,7 +1457,7 @@ public class Service extends BaseService {
 			
 			InternetAddress iaVirtualRecipient = InternetAddressUtils.toInternetAddress(virtualRecipient);
 			if (iaVirtualRecipient == null) throw new WTException("Unable to parse '{}' as internetAddress", virtualRecipient);
-			Integer listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
+			String listId = ContactsUtils.virtualRecipientToListId(iaVirtualRecipient);
 			if (listId == null) throw new WTException("Recipient address is not a list [{}]", iaVirtualRecipient.getAddress());
 			
 			ArrayList<ContactListRecipientBase> recipients = new ArrayList<>();
@@ -1654,7 +1695,18 @@ public class Service extends BaseService {
 			
 			Map<String, CustomField.Type> map = cacheSearchableCustomFieldType.shallowCopy();
 			List<Integer> visibleCategoryIds = getActiveFolderIds();
-			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQuery.createCondition(queryObj, map, utz), 1, limit, true);
+			ItemsListResult<ContactLookup> result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI.build(queryObj, map, utz), 1, limit, true);
+			if (result.getFullCount() > limit) throw new WTException("Too many elements, limit is {}", limit);
+			for (ContactLookup item : result.getItems()) {
+				final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
+				if (folder == null) continue;
+
+				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
+				items.add(new RBAddressbook(folder.getCategory(), props, item));
+			}
+			// Replace old impl. with ContactQueryUI_OLD
+			/*
+			ListContactsResult result = manager.listContacts(visibleCategoryIds, type, groupBy, showBy, ContactQueryUI_OLD.createCondition(queryObj, map, utz), 1, limit, true);
 			if (result.fullCount > limit) throw new WTException("Too many elements, limit is {}", limit);
 			for (ContactLookup item : result.items) {
 				final CategoryFSFolder folder = foldersTreeCache.getFolder(item.getCategoryId());
@@ -1663,6 +1715,7 @@ public class Service extends BaseService {
 				final CategoryPropSet props = foldersPropsCache.get(folder.getFolderId()).orElse(null);
 				items.add(new RBAddressbook(folder.getCategory(), props, item));
 			}
+			*/
 			
 			ReportConfig.Builder builder = reportConfigBuilder();
 			RptAddressbook rpt = new RptAddressbook(builder.build());
@@ -1682,10 +1735,10 @@ public class Service extends BaseService {
 		
 		try {
 			String filename = ServletUtils.getStringParameter(request, "filename", "print");
-			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+			StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 			
 			Category category = null;
-			for (Integer id : ids) {
+			for (String id : ids) {
 				Contact contact = manager.getContact(id);
 				ContactPictureWithBytes picture = null;
 				ContactCompany company = null;
@@ -1714,12 +1767,12 @@ public class Service extends BaseService {
 		
 		try {
 			String tag = ServletUtils.getStringParameter(request, "uploadTag", true);
-			IntegerArray ids = ServletUtils.getObjectParameter(request, "ids", IntegerArray.class, true);
+			StringArray ids = ServletUtils.getObjectParameter(request, "ids", StringArray.class, true);
 			
 			String prodId = VCardUtils.buildProdId(ManagerUtils.getProductName());
 			VCardOutput vout = new VCardOutput(prodId)
 				.withEnableCaretEncoding(manager.VCARD_CARETENCODINGENABLED);
-			for (Integer id : ids) {
+			for (String id : ids) {
 				ContactObjectWithBean contactObj = (ContactObjectWithBean)manager.getContactObject(id, ContactObjectOutputType.BEAN);
 				final String filename = buildContactFilename(contactObj) + ".vcf";
 				UploadedFile upfile = addAsUploadedFile(tag, filename, "text/vcard", IOUtils.toInputStream(vout.writeVCard(contactObj.getContact(), null)));
@@ -1965,7 +2018,7 @@ public class Service extends BaseService {
 		if (origin instanceof MyCategoryFSOrigin) {
 			Category category = manager.getCategory(categoryId);
 			category.setColor(color);
-			manager.updateCategory(category);
+			manager.updateCategory(category.getCategoryId(), category);
 			foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 			
 		} else if (origin instanceof CategoryFSOrigin) {
@@ -1981,7 +2034,7 @@ public class Service extends BaseService {
 		if (origin instanceof MyCategoryFSOrigin) {
 			Category category = manager.getCategory(categoryId);
 			category.setSync(sync);
-			manager.updateCategory(category);
+			manager.updateCategory(category.getCategoryId(), category);
 			foldersTreeCache.init(AbstractFolderTreeCache.Target.FOLDERS);
 			
 		} else if (origin instanceof CategoryFSOrigin) {
@@ -2002,7 +2055,7 @@ public class Service extends BaseService {
 		protected Map<String, CustomField.Type> internalGetMap() {
 			try {
 				CoreManager coreMgr = WT.getCoreManager();
-				return coreMgr.listCustomFieldTypesById(SERVICE_ID, BitFlag.of(CoreManager.CustomFieldListOptions.SEARCHABLE));
+				return coreMgr.listCustomFieldTypesById(SERVICE_ID, BitFlags.with(CoreManager.CustomFieldListOption.SEARCHABLE));
 				
 			} catch(Throwable t) {
 				logger.error("[SearchableCustomFieldTypeCache] Unable to build cache", t);

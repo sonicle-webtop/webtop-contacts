@@ -364,7 +364,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 						}
 					}, {
 						xtype: 'button',
-						iconCls: 'fas fa-ellipsis-v',
+						iconCls: 'wt-glyph-menu-kebab',
 						arrowVisible: false,
 						handler: function(s, e) {
 							me.fireEvent('showmenu', me, e);

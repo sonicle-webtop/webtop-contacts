@@ -32,7 +32,6 @@
  */
 package com.sonicle.webtop.contacts.rest.v2;
 
-import com.sonicle.commons.LangUtils.CollectionChangeSet;
 import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
@@ -42,7 +41,6 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
 import com.sonicle.webtop.contacts.model.ContactObject;
-import com.sonicle.webtop.contacts.model.ContactObjectChanged;
 import com.sonicle.webtop.contacts.model.ContactObjectWithBean;
 import com.sonicle.webtop.contacts.model.ContactObjectWithVCard;
 import com.sonicle.webtop.contacts.swagger.v2.api.CarddavApi;
@@ -58,6 +56,8 @@ import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.model.FolderShare;
 import com.sonicle.webtop.core.app.sdk.WTNotFoundException;
+import com.sonicle.webtop.core.model.ChangedItem;
+import com.sonicle.webtop.core.model.Delta;
 import com.sonicle.webtop.core.sdk.UserProfile;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import com.sonicle.webtop.core.sdk.WTException;
@@ -97,14 +97,14 @@ public class CardDav extends CarddavApi {
 		
 		try {
 			Map<Integer, Category> cats = manager.listCategories();
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(cats.keySet());
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(cats.keySet());
 			for (Category category : cats.values()) {
 				if (category.isProviderRemote()) continue;
 				items.add(createAddressBook(currentProfileId, category, revisions.get(category.getCategoryId()), FolderShare.Permissions.full()));
 			}
 			for (CategoryFSOrigin origin : manager.listIncomingCategoryOrigins().values()) {
 				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
-				revisions = manager.getCategoriesLastRevision(folders.keySet());
+				revisions = manager.getCategoriesItemsLastRevision(folders.keySet());
 				for (CategoryFSFolder folder : folders.values()) {
 					Category category = folder.getCategory();
 					if (category.isProviderRemote()) continue;
@@ -135,7 +135,7 @@ public class CardDav extends CarddavApi {
 			if (category == null) return respErrorNotFound();
 			if (category.isProviderRemote()) return respErrorBadRequest();
 			
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(category.getCategoryId()));
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(Arrays.asList(category.getCategoryId()));
 			CategoryFSOrigin origin = manager.getIncomingCategoryOriginByFolderId(categoryId);
 			if (origin != null) {
 				Map<Integer, CategoryFSFolder> folders = manager.listIncomingCategoryFolders(origin);
@@ -195,7 +195,7 @@ public class CardDav extends CarddavApi {
 			if (body.getUpdatedFields().contains("description")) {
 				cat.setDescription(body.getDescription());
 			}
-			manager.updateCategory(cat);
+			manager.updateCategory(categoryId, cat);
 			return respOk();
 			
 		} catch (WTNotFoundException ex) {
@@ -281,7 +281,7 @@ public class CardDav extends CarddavApi {
 			if (cat == null) return respErrorNotFound();
 			if (cat.isProviderRemote()) return respErrorBadRequest();
 			
-			Map<Integer, DateTime> revisions = manager.getCategoriesLastRevision(Arrays.asList(categoryId));
+			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(Arrays.asList(categoryId));
 			
 			DateTime since = null;
 			if (!StringUtils.isBlank(syncToken)) {
@@ -289,8 +289,8 @@ public class CardDav extends CarddavApi {
 				if (since == null) return respErrorBadRequest();
 			}
 			
-			CollectionChangeSet<ContactObjectChanged> changes = manager.listContactObjectsChanges(categoryId, since, limit);
-			return respOk(createCardsChanges(revisions.get(categoryId), changes));
+			Delta<ContactObject> delta = manager.listContactsDelta(categoryId, since, ContactObjectOutputType.STAT);
+			return respOk(createCardsChanges(revisions.get(categoryId), delta));
 			
 		} catch (Throwable t) {
 			logger.error("[{}] getCardsChanges({}, {}, {})", RunContext.getRunProfileId(), addressBookUid, syncToken, limit, t);
@@ -432,27 +432,26 @@ public class CardDav extends CarddavApi {
 		}
 	}
 	
-	private ApiDavCardChanged createCardChanged(ContactObjectChanged card) {
+	private ApiDavCardChanged createCardChanged(ContactObject contactObject) {
 		return new ApiDavCardChanged()
-			.id(String.valueOf(card.getContactId()))
-			.href(card.getHref())
-			.etag(buildEtag(card.getRevisionTimestamp()));
+			.id(String.valueOf(contactObject.getContactId()))
+			.href(contactObject.getHref())
+			.etag(buildEtag(contactObject.getRevisionTimestamp()));
 	}
 	
-	private ApiDavCardsChanges createCardsChanges(DateTime lastRevisionTimestamp, CollectionChangeSet<ContactObjectChanged> changes) {
+	private ApiDavCardsChanges createCardsChanges(DateTime lastRevisionTimestamp, Delta<ContactObject> delta) {
 		ArrayList<ApiDavCardChanged> inserted = new ArrayList<>();
-		for (ContactObjectChanged card : changes.inserted) {
-			inserted.add(createCardChanged(card));
-		}
-		
 		ArrayList<ApiDavCardChanged> updated = new ArrayList<>();
-		for (ContactObjectChanged card : changes.updated) {
-			updated.add(createCardChanged(card));
-		}
-		
 		ArrayList<ApiDavCardChanged> deleted = new ArrayList<>();
-		for (ContactObjectChanged card : changes.deleted) {
-			deleted.add(createCardChanged(card));
+		
+		for (ChangedItem<ContactObject> item : delta.getItems()) {
+			if (ChangedItem.ChangeType.ADDED.equals(item.getChangeType())) {
+				inserted.add(createCardChanged(item.getObject()));
+			} else if (ChangedItem.ChangeType.DELETED.equals(item.getChangeType())) {
+				deleted.add(createCardChanged(item.getObject()));
+			} else {
+				updated.add(createCardChanged(item.getObject()));
+			}
 		}
 		
 		return new ApiDavCardsChanges()

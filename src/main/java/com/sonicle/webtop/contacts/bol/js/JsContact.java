@@ -60,7 +60,7 @@ import org.joda.time.format.DateTimeFormatter;
  * @author malbinola
  */
 public class JsContact {
-	public Integer id;
+	public String id;
 	public Integer categoryId;
 	public String displayName;
 	public String title;

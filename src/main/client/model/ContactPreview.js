@@ -43,7 +43,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 	idProperty: 'uid',
 	fields: [
 		WTF.roField('uid', 'string'),
-		WTF.roField('id', 'int'),
+		WTF.roField('id', 'string'),
 		WTF.roField('isList', 'boolean'),
 		WTF.roField('displayName', 'string'),
 		WTF.roField('title', 'string'),
@@ -66,7 +66,7 @@ Ext.define('Sonicle.webtop.contacts.model.ContactPreview', {
 		WTF.calcField('businessInfo', 'string', ['company', 'function'], function(v, rec) {
 			return Sonicle.String.join(', ', rec.get('function'), rec.get('company'));
 		}),
-		WTF.calcField('pictureId', 'int', ['pic'], function(v, rec) {
+		WTF.calcField('pictureId', 'string', ['pic'], function(v, rec) {
 			return rec.get('pic') === true ? rec.get('id') : null;
 		}),
 		WTF.calcField('fullName', 'string', ['title', 'firstName', 'lastName'], function(v, rec, title, fn, ln) {

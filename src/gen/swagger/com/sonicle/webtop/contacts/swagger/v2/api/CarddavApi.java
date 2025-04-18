@@ -20,7 +20,7 @@ import javax.validation.Valid;
 
 @Path("/carddav/addressbooks")
 @Api(description = "the carddav API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2024-11-04T12:38:17.584+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
 public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -28,9 +28,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Produces({ "application/json" })
     @ApiOperation(value = "Adds a new address-book", notes = "Creates new AddressBook.", response = ApiDavAddressBook.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Success", response = ApiDavAddressBook.class)
@@ -44,9 +44,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Consumes({ "application/json" })
     @ApiOperation(value = "Adds a new card", notes = "Creates new Card into specified AddressBook.", response = Void.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Success", response = Void.class)
@@ -59,9 +59,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Path("/{addressBookUid}")
     @ApiOperation(value = "Deletes an address-book", notes = "Deletes specified AddressBook.", response = Void.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 204, message = "Success", response = Void.class),
@@ -77,9 +77,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Path("/{addressBookUid}/cards/{href}")
     @ApiOperation(value = "Deletes a card", notes = "Deletes specified Card.", response = Void.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 204, message = "Success", response = Void.class),
@@ -95,9 +95,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Produces({ "application/json" })
     @ApiOperation(value = "Gets a single address-book", notes = "Gets the specified AddressBook.", response = ApiDavAddressBook.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiDavAddressBook.class),
@@ -112,9 +112,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Produces({ "application/json" })
     @ApiOperation(value = "List all address-books", notes = "List available AddressBooks.", response = ApiDavAddressBook.class, responseContainer = "List", authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiDavAddressBook.class, responseContainer = "List")
@@ -128,9 +128,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Produces({ "application/json" })
     @ApiOperation(value = "Get a single card", notes = "Gets specified Card.", response = ApiDavCard.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiDavCard.class),
@@ -146,9 +146,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Produces({ "application/json" })
     @ApiOperation(value = "List all cards for a specific address-book", notes = "List all Cards of specified AddressBook.", response = ApiDavCard.class, responseContainer = "List", authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiDavCard.class, responseContainer = "List")
@@ -162,9 +162,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Produces({ "application/json" })
     @ApiOperation(value = "Get card changes", notes = "Returns changed cards (added/modified/deleted) since the specified syncToken. If token is not provided, the initial sync configuration will be returned.", response = ApiDavCardsChanges.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiDavCardsChanges.class),
@@ -179,9 +179,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Consumes({ "application/json" })
     @ApiOperation(value = "Updates an address-book", notes = "Updates specified AddressBook.", response = Void.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = Void.class),
@@ -197,9 +197,9 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @Consumes({ "text/vcard" })
     @ApiOperation(value = "Updates a card", notes = "Updates specified Card.", response = Void.class, authorizations = {
         
-        @Authorization(value = "auth-basic"),
+        @Authorization(value = "auth-bearer"),
         
-        @Authorization(value = "auth-bearer")
+        @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = Void.class),

@@ -48,6 +48,7 @@ import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
 import com.sonicle.webtop.contacts.bol.VContactLookup;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryBase;
 import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
@@ -93,9 +94,16 @@ public class ManagerUtils {
 		return fillCategory(new Category(), src);
 	}
 	
-	static Category fillCategory(Category tgt, OCategory src) {
+	static <T extends Category> T fillCategory(T tgt, OCategory src) {
 		if ((tgt != null) && (src != null)) {
 			tgt.setCategoryId(src.getCategoryId());
+		}
+		fillCategory((CategoryBase)tgt, src);
+		return tgt;
+	}
+	
+	static <T extends CategoryBase> T fillCategory(T tgt, OCategory src) {
+		if ((tgt != null) && (src != null)) {
 			tgt.setDomainId(src.getDomainId());
 			tgt.setUserId(src.getUserId());
 			tgt.setBuiltIn(src.getBuiltIn());
@@ -114,14 +122,13 @@ public class ManagerUtils {
 		return tgt;
 	}
 	
-	static OCategory createOCategory(Category src) {
+	static OCategory createOCategory(CategoryBase src) {
 		if (src == null) return null;
 		return fillOCategory(new OCategory(), src);
 	}
 	
-	static OCategory fillOCategory(OCategory tgt, Category src) {
+	static OCategory fillOCategory(OCategory tgt, CategoryBase src) {
 		if ((tgt != null) && (src != null)) {
-			tgt.setCategoryId(src.getCategoryId());
 			tgt.setDomainId(src.getDomainId());
 			tgt.setUserId(src.getUserId());
 			tgt.setBuiltIn(src.getBuiltIn());

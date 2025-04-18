@@ -33,15 +33,18 @@
 package com.sonicle.webtop.contacts.dal;
 
 import com.sonicle.commons.EnumUtils;
+import com.sonicle.commons.beans.SortInfo;
 import com.sonicle.webtop.contacts.bol.OCategory;
 import static com.sonicle.webtop.contacts.jooq.Sequences.SEQ_CATEGORIES;
 import static com.sonicle.webtop.contacts.jooq.Tables.CATEGORIES;
 import com.sonicle.webtop.contacts.jooq.tables.records.CategoriesRecord;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.contacts.model.CategoryQuery;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +52,7 @@ import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.SortField;
 import org.jooq.impl.DSL;
 
 /**
@@ -153,6 +157,107 @@ public class CategoryDAO extends BaseDAO {
 			)
 			.fetchInto(OCategory.class);
 	}
+	
+	private static Collection<SortField<?>> toCategoriesOrderByClause(final Set<SortInfo> sortInfo) {
+		ArrayList<SortField<?>> fields = new ArrayList<>();
+		for (SortInfo si : sortInfo) {
+			if (si.getField().equals(CategoryQuery.ID)) fields.add(BaseDAO.toSortField(CATEGORIES.CATEGORY_ID, si));
+			else if (si.getField().equals(CategoryQuery.USER_ID)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.USER_ID, "")), si));
+			else if (si.getField().equals(CategoryQuery.BUILT_IN)) fields.add(BaseDAO.toSortField(CATEGORIES.BUILT_IN, si));
+			else if (si.getField().equals(CategoryQuery.PROVIDER)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.PROVIDER, "")), si));
+			else if (si.getField().equals(CategoryQuery.NAME)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.NAME, "")), si));
+			else if (si.getField().equals(CategoryQuery.DESCRIPTION)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.DESCRIPTION, "")), si).nullsLast());
+			else if (si.getField().equals(CategoryQuery.COLOR)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.COLOR, "")), si).nullsLast());
+			else if (si.getField().equals(CategoryQuery.SYNC)) fields.add(BaseDAO.toSortField(DSL.upper(DSL.nullif(CATEGORIES.SYNC, "")), si));
+			else if (si.getField().equals(CategoryQuery.IS_OWNER_DEFAULT)) fields.add(BaseDAO.toSortField(CATEGORIES.IS_DEFAULT, si));
+		}
+		return fields;
+	}
+	
+	public int countByDomainIn(Connection con, String domainId, Collection<Integer> categoryIds, Condition condition) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		return dsl
+			.selectCount()
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.DOMAIN_ID.equal(domainId)
+				.and(CATEGORIES.CATEGORY_ID.in(categoryIds))
+				.and(filterCndt)
+			)
+			.fetchOne(0, Integer.class);
+	}
+	
+	public List<OCategory> selectByDomainIn(Connection con, String domainId, Collection<Integer> categoryIds, Condition condition, Set<SortInfo> sortInfo, int limit, int offset) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		return dsl
+			.select()
+			.from(CATEGORIES)
+			.where(
+				CATEGORIES.DOMAIN_ID.equal(domainId)
+				.and(CATEGORIES.CATEGORY_ID.in(categoryIds))
+				.and(filterCndt)
+			)
+			.orderBy(
+				toCategoriesOrderByClause(sortInfo)
+			)
+			.limit(limit)
+			.offset(offset)
+			.fetchInto(OCategory.class);
+	}
+	
+	/*
+	public static Condition createCategoriesChangedNewOrModifiedCondition() {
+		return HISTORY_CATEGORIES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
+			.or(HISTORY_CATEGORIES.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
+	}
+	
+	public static Condition createCategoriesChangedSinceUntilCondition(DateTime since, DateTime until) {
+		return HISTORY_CATEGORIES.CHANGE_TIMESTAMP.greaterThan(since)
+			.and(HISTORY_CATEGORIES.CHANGE_TIMESTAMP.lessThan(until));
+	}
+	
+	public void lazy_viewChangedCategories(Connection con, Collection<Integer> categoryIds, Condition condition, boolean statFields, int limit, int offset, VCategoryChanged.Consumer consumer) throws DAOException, WTException {
+		DSLContext dsl = getDSL(con);
+		Condition filterCndt = (condition != null) ? condition : DSL.trueCondition();
+		
+		Cursor<Record> cursor = dsl
+			.select(
+				HISTORY_CATEGORIES.CHANGE_TIMESTAMP,
+				HISTORY_CATEGORIES.CHANGE_TYPE
+			)
+			.select(
+				CATEGORIES.fields()
+			)
+			.distinctOn(HISTORY_CATEGORIES.CATEGORY_ID)
+			.from(HISTORY_CATEGORIES)
+			.leftOuterJoin(CATEGORIES).on(HISTORY_CATEGORIES.CATEGORY_ID.equal(CATEGORIES.CATEGORY_ID))
+			.where(
+				HISTORY_CATEGORIES.CATEGORY_ID.in(categoryIds)
+				.and(filterCndt)
+			)
+			.orderBy(
+				HISTORY_CATEGORIES.CATEGORY_ID.asc(),
+				HISTORY_CATEGORIES.ID.desc()
+			)
+			.limit(limit)
+			.offset(offset)
+			.fetchLazy();
+		
+		try {
+			for(;;) {
+				VCategoryChanged vcc = cursor.fetchNextInto(VCategoryChanged.class);
+				if (vcc == null) break;
+				consumer.consume(vcc, con);
+			}
+		} finally {
+			cursor.close();
+		}
+	}
+	*/
 	
 	public List<OCategory> selectByDomainIn(Connection con, String domainId, Collection<Integer> categoryIds) throws DAOException {
 		DSLContext dsl = getDSL(con);
@@ -281,8 +386,10 @@ public class CategoryDAO extends BaseDAO {
 			.fetchSet(CATEGORIES.CATEGORY_ID);
 	}
 	
-	public int insert(Connection con, OCategory item) throws DAOException {
+	public int insert(Connection con, OCategory item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
+		item.setCreationTimestamp(revisionTimestamp);
+		item.setRevisionTimestamp(revisionTimestamp);
 		CategoriesRecord record = dsl.newRecord(CATEGORIES, item);
 		return dsl
 			.insertInto(CATEGORIES)
@@ -290,10 +397,12 @@ public class CategoryDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int update(Connection con, OCategory item) throws DAOException {
+	public int update(Connection con, OCategory item, DateTime revisionTimestamp) throws DAOException {
 		DSLContext dsl = getDSL(con);
+		item.setRevisionTimestamp(revisionTimestamp);
 		return dsl
 			.update(CATEGORIES)
+			.set(CATEGORIES.REVISION_TIMESTAMP, item.getRevisionTimestamp())
 			.set(CATEGORIES.NAME, item.getName())
 			.set(CATEGORIES.DESCRIPTION, item.getDescription())
 			.set(CATEGORIES.COLOR, item.getColor())
@@ -307,6 +416,7 @@ public class CategoryDAO extends BaseDAO {
 			.execute();
 	}
 	
+	/*
 	public int update(Connection con, int categoryId, FieldsMap fieldValues) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
@@ -317,6 +427,7 @@ public class CategoryDAO extends BaseDAO {
 			)
 			.execute();
 	}
+	*/
 	
 	public int updateRemoteSyncById(Connection con, int categoryId, DateTime syncTimestamp, String syncTag) throws DAOException {
 		DSLContext dsl = getDSL(con);

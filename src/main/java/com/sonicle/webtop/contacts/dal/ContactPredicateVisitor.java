@@ -65,7 +65,7 @@ public class ContactPredicateVisitor extends JOOQPredicateVisitorWithCValues {
 	protected Condition toCondition(String fieldName, ComparisonOperator operator, Collection<?> values, ComparisonNode node) {
 		if ("id".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));
-			return CONTACTS_.CONTACT_ID.equal(Integer.valueOf(singleAsString));
+			return CONTACTS_.CONTACT_ID.equal(singleAsString);
 			
 		} else if ("name".equals(fieldName)) {
 			String singleAsString = valueToLikePattern(singleAsString(values));

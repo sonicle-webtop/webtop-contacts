@@ -57,7 +57,7 @@ public class ContactPictureDAO extends BaseDAO {
 		return DSL.field("length({0})", Long.class, field);
 	}
 	
-	public OContactPictureMetaOnly selectMeta(Connection con, int contactId) throws DAOException {
+	public OContactPictureMetaOnly selectMeta(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select(
@@ -74,7 +74,7 @@ public class ContactPictureDAO extends BaseDAO {
 			.fetchOneInto(OContactPictureMetaOnly.class);
 	}
 	
-	public OContactPicture select(Connection con, int contactId) throws DAOException {
+	public OContactPicture select(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.select()
@@ -94,7 +94,7 @@ public class ContactPictureDAO extends BaseDAO {
 			.execute();
 	}
 	
-	public int delete(Connection con, int contactId) throws DAOException {
+	public int delete(Connection con, String contactId) throws DAOException {
 		DSLContext dsl = getDSL(con);
 		return dsl
 			.delete(CONTACTS_PICTURES)

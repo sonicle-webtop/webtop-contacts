@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.rpt;
 
+import com.sonicle.commons.ClassUtils;
 import com.sonicle.commons.LangUtils;
 import com.sonicle.webtop.core.io.output.AbstractReport;
 import com.sonicle.webtop.core.io.output.ReportConfig;
@@ -58,7 +59,7 @@ public class RptAddressbook extends AbstractReport {
 		super.fillBuiltInParams();
 		
 		String pkgName = LangUtils.getClassPackageName(this.getClass());
-		String basepath = LangUtils.packageToPath(pkgName);
+		String basepath = ClassUtils.classPackageAsPath(pkgName);
 		ClassLoader cl = LangUtils.findClassLoader(this.getClass());
 		
 		InputStream is = null;
