@@ -57,7 +57,7 @@ Ext.define('Sonicle.webtop.contacts.view.CategoryRemoteWiz', {
 			username: null,
 			password: null,
 			name: null,
-			color: '#FFFFFF',
+			color: '#F3F4F6',
 			syncFrequency: null
 		}
 	},
