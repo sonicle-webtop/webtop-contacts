@@ -109,6 +109,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 		
 		Sonicle.VMUtils.applyFormulas(me.getVM(), {
 			foIsView: WTF.foIsEqual('_mode', null, me.MODE_VIEW),
+			foIsNew: WTF.foIsEqual('_mode', null, me.MODE_NEW),
 			foTags: WTF.foTwoWay('record', 'tags', function(v) {
 					return Sonicle.String.split(v, '|');
 				}, function(v) {
@@ -1451,6 +1452,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				items: [
 					me.addAct('contactAuditLog', {
 						text: null,
+						bind: {
+							hidden: '{foIsNew}'
+						},
 						tooltip: WT.res('act-auditLog.lbl'),
 						iconCls: 'fas fa-history',
 						handler: function() {
