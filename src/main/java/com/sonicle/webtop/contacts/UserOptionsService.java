@@ -35,6 +35,7 @@ package com.sonicle.webtop.contacts;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
 import com.sonicle.commons.web.json.JsonResult;
@@ -72,7 +73,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 		try {
 			String crud = ServletUtils.getStringParameter(request, "crud", true);
 			ContactsUserSettings cus = new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
-			DateTimeFormatter hmf = DateTimeUtils.createHmFormatter();
+			DateTimeFormatter hmf = JodaTimeUtils.createFormatterHM();
 			
 			if(crud.equals(Crud.READ)) {
 				JsUserOptions jso = new JsUserOptions(getTargetProfileId().toString());
