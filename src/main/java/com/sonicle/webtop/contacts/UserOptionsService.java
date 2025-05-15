@@ -34,7 +34,6 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.db.DbUtils;
-import com.sonicle.commons.time.DateTimeUtils;
 import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.commons.web.Crud;
 import com.sonicle.commons.web.ServletUtils;
@@ -42,7 +41,6 @@ import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.commons.web.json.MapItem;
 import com.sonicle.commons.web.json.Payload;
 import com.sonicle.webtop.contacts.bol.js.JsUserOptions;
-import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.sdk.BaseUserOptionsService;
 import java.io.PrintWriter;

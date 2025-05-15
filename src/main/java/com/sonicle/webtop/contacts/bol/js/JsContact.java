@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.LangUtils;
-import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
@@ -119,7 +119,7 @@ public class JsContact {
 	public JsContact() {}
 	
 	public JsContact(UserProfileId ownerPid, Contact contact, Collection<CustomPanel> customPanels, Map<String, CustomField> customFields, String profileLanguageTag, DateTimeZone profileTz) {
-		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
+		DateTimeFormatter ymdFmt = JodaTimeUtils.createFormatterYMD();
 		
 		id = contact.getContactId();
 		categoryId = contact.getCategoryId();
@@ -177,7 +177,7 @@ public class JsContact {
 			for (ContactAttachment att : contact.getAttachments()) {
 				Attachment jsatt = new Attachment();
 				jsatt.id = att.getAttachmentId();
-				//jsatt.lastModified = DateTimeUtils.printYmdHmsWithZone(att.getRevisionTimestamp(), profileTz);
+				//jsatt.lastModified = JodaTimeUtils.printYMDHMS(profileTz, att.getRevisionTimestamp());
 				jsatt.name = att.getFilename();
 				jsatt.size = att.getSize();
 				attachments.add(jsatt);
@@ -208,7 +208,7 @@ public class JsContact {
 	}
 	
 	public Contact createContactForUpdate(DateTimeZone profileTz) {
-		DateTimeFormatter ymdFmt = DateTimeUtils.createYmdFormatter();
+		DateTimeFormatter ymdFmt = JodaTimeUtils.createFormatterYMD();
 		
 		Contact item = new Contact();
 		item.setContactId(id);

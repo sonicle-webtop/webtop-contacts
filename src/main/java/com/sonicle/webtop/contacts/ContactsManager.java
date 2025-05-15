@@ -47,7 +47,7 @@ import com.sonicle.commons.db.DbUtils;
 import com.sonicle.commons.flags.BitFlags;
 import com.sonicle.commons.flags.BitFlagsEnum;
 import com.sonicle.commons.qbuilders.QBuilderUtils;
-import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.commons.web.json.CId;
 import com.sonicle.commons.web.json.JsonResult;
 import com.sonicle.dav.CardDav;
@@ -70,7 +70,6 @@ import com.sonicle.webtop.contacts.bol.OListRecipient;
 import com.sonicle.webtop.contacts.bol.VContact;
 import com.sonicle.webtop.contacts.bol.VContactAttachmentWithBytes;
 import com.sonicle.webtop.contacts.bol.VContactObject;
-import com.sonicle.webtop.contacts.bol.VContactObjectStat;
 import com.sonicle.webtop.contacts.bol.VContactCompany;
 import com.sonicle.webtop.contacts.bol.VContactHrefSync;
 import com.sonicle.webtop.contacts.bol.VListRecipient;
@@ -203,7 +202,6 @@ import com.sonicle.webtop.contacts.model.CategoryQuery;
 import com.sonicle.webtop.contacts.model.ContactListRecipientBase;
 import com.sonicle.webtop.contacts.model.ContactQuery;
 import com.sonicle.webtop.core.app.AuditLogManager;
-import com.sonicle.webtop.core.app.ezvcard.XTag;
 import com.sonicle.webtop.core.app.model.FolderShare;
 import com.sonicle.webtop.core.app.model.FolderShareOriginFolders;
 import com.sonicle.webtop.core.app.model.FolderSharing;
@@ -1415,7 +1413,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		
 		try {
 			final boolean fullSync = (since == null);
-			final DateTime until = DateTimeUtils.now(true);
+			final DateTime until = JodaTimeUtils.now(true);
 			
 			checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
 			
@@ -2488,7 +2486,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					if (dbook == null) throw new WTException("DAV addressbook not found");
 					
 					final boolean syncIsSupported = !StringUtils.isBlank(dbook.getSyncToken());
-					final DateTime newLastSync = DateTimeUtils.now();
+					final DateTime newLastSync = JodaTimeUtils.now();
 					
 					if (!full && (syncIsSupported && !StringUtils.isBlank(cat.getRemoteSyncTag()))) { // Partial update using SYNC mode
 						String newSyncToken = dbook.getSyncToken();
@@ -3011,19 +3009,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			contact.setPicture(input.contactPicture);
 		}
 		if (processOpts.has(ContactProcessOpt.TAGS) && validTagIds != null && tagIdsByName != null) {
-			if (input.sourceObject != null) {
-				Set<String> tagIds = new HashSet<>();
-				for (XTag tag : input.sourceObject.getProperties(XTag.class)) {
-					String uid = tag.getUid();
-					String name = tag.getValue();
-					if (validTagIds.contains(uid)) tagIds.add(uid);
-					else {
-						List<String> ids = tagIdsByName.get(name);
-						if (ids!=null && ids.size()>0) tagIds.add(ids.get(0));
-					}
-				}
-				contact.setTags(tagIds);
-			}
+			contact.setTags(input.extractTags(validTagIds, tagIdsByName));
 		}
 		if (processOpts.has(ContactProcessOpt.ATTACHMENTS)) {
 			for (ContactAttachment attachment : input.extractAttachments()) {

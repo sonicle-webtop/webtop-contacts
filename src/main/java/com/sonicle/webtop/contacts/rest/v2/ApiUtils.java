@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.rest.v2;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.beans.ItemsListResult;
-import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryBase;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
@@ -117,8 +117,8 @@ public class ApiUtils {
 		tgt.id(String.valueOf(src.getCategoryId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
 		tgt.itemsETag(BaseRestApiUtils.buildETag(itemsRevisionTimestamp));
-		tgt.createdOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
-		tgt.updatedOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
+		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
 		tgt.owner(fillApiOwnerInfo(new ApiOwnerInfo(), src.getProfileId()));
 		return tgt;
 	}
@@ -135,7 +135,7 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "easSync")) tgt.setEasSync(EnumUtils.forName(src.getSync(), EasSyncEnum.class));
 		if (shouldSet(fields2set, "isPrivate")) tgt.setIsPrivate(src.getIsPrivate());
 		if (shouldSet(fields2set, "remoteSyncFrequency")) tgt.setRemoteSyncFrequency(BaseRestApiUtils.toInteger(src.getRemoteSyncFrequency()));
-		if (shouldSet(fields2set, "remoteSyncTimestamp")) tgt.setRemoteSyncTimestamp(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getRemoteSyncTimestamp()));
+		if (shouldSet(fields2set, "remoteSyncTimestamp")) tgt.setRemoteSyncTimestamp(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRemoteSyncTimestamp()));
 		if (shouldSet(fields2set, "remoteSyncToken")) tgt.setRemoteSyncToken(src.getRemoteSyncTag());
 		return tgt;
 	}
@@ -187,8 +187,8 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "assistantTelephone")) tgt.setAssistantTelephone(src.getAssistantTelephone());
 		if (shouldSet(fields2set, "managerName")) tgt.setManager(src.getManagerName());
 		if (shouldSet(fields2set, "partnerName")) tgt.setPartner(src.getPartnerName());
-		if (shouldSet(fields2set, "birthday")) tgt.setBirthday(DateTimeUtils.parseLocalDate(DateTimeUtils.ISO_LOCALDATE_FMT, src.getBirthday()));
-		if (shouldSet(fields2set, "anniversary")) tgt.setAnniversary(DateTimeUtils.parseLocalDate(DateTimeUtils.ISO_LOCALDATE_FMT, src.getAnniversary()));
+		if (shouldSet(fields2set, "birthday")) tgt.setBirthday(JodaTimeUtils.parseLocalDate(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getBirthday()));
+		if (shouldSet(fields2set, "anniversary")) tgt.setAnniversary(JodaTimeUtils.parseLocalDate(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getAnniversary()));
 		if (shouldSet(fields2set, "url")) tgt.setUrl(src.getUrl());
 		if (shouldSet(fields2set, "notes")) tgt.setNotes(src.getNotes());
 		//if (shouldSet(fields2set, "picture")) tgt.setPicture(picture);
@@ -226,8 +226,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getContact().getRevisionTimestamp()));
-		tgt.createdOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
-		tgt.updatedOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getContact().getRevisionTimestamp()));
+		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
+		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -235,8 +235,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
-		tgt.createdOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
-		tgt.updatedOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
+		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -244,8 +244,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src);
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
-		tgt.createdOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
-		tgt.updatedOn(DateTimeUtils.print(DateTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
+		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -303,8 +303,8 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "assistantTelephone")) tgt.setAssistantTelephone(src.getAssistantTelephone());
 		if (shouldSet(fields2set, "managerName")) tgt.setManagerName(src.getManager());
 		if (shouldSet(fields2set, "partnerName")) tgt.setPartnerName(src.getPartner());
-		if (shouldSet(fields2set, "birthday")) tgt.setBirthday(DateTimeUtils.print(DateTimeUtils.ISO_LOCALDATE_FMT, src.getBirthday()));
-		if (shouldSet(fields2set, "anniversary")) tgt.setAnniversary(DateTimeUtils.print(DateTimeUtils.ISO_LOCALDATE_FMT, src.getAnniversary()));
+		if (shouldSet(fields2set, "birthday")) tgt.setBirthday(JodaTimeUtils.print(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getBirthday()));
+		if (shouldSet(fields2set, "anniversary")) tgt.setAnniversary(JodaTimeUtils.print(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getAnniversary()));
 		if (shouldSet(fields2set, "url")) tgt.setUrl(src.getUrl());
 		if (shouldSet(fields2set, "notes")) tgt.setNotes(src.getNotes());
 		//if (shouldSet(fields2set, "picture")) tgt.setPicture(picture);
