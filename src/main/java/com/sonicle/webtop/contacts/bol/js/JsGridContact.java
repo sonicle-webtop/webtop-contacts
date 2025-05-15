@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts.bol.js;
 
+import com.sonicle.commons.LangUtils;
 import com.sonicle.commons.web.json.CompositeId;
 import com.sonicle.webtop.contacts.GridView;
 import com.sonicle.webtop.contacts.bol.model.MyCategoryFSOrigin;
@@ -91,12 +92,12 @@ public class JsGridContact {
 		
 		if (!item.getIsList()) {
 			if (GridView.WORK.equals(view)) {
-				this.email = item.getEmail1();
-				this.telephone = item.getWorkTelephone1();
+				this.email = LangUtils.coalesceStrings(item.getEmail1(), item.getEmail2(), item.getEmail3());
+				this.telephone = LangUtils.coalesceStrings(item.getWorkTelephone1(), item.getWorkTelephone2(), item.getHomeTelephone1(), item.getHomeTelephone2());
 				this.mobile = item.getMobile();
 			} else if (GridView.HOME.equals(view)) {
-				this.email = item.getEmail2();
-				this.telephone = item.getHomeTelephone1();
+				this.email = LangUtils.coalesceStrings(item.getEmail2(), item.getEmail1(), item.getEmail3());
+				this.telephone = LangUtils.coalesceStrings(item.getHomeTelephone1(), item.getHomeTelephone2(), item.getWorkTelephone1(), item.getWorkTelephone2());
 				this.mobile = item.getMobile();
 			}
 		} else {
