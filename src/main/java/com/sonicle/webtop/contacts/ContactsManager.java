@@ -88,6 +88,7 @@ import com.sonicle.webtop.contacts.dal.ContactVCardDAO;
 import com.sonicle.webtop.contacts.dal.ContactPredicateVisitor;
 import com.sonicle.webtop.contacts.dal.ContactTagDAO;
 import com.sonicle.webtop.contacts.dal.ContactUIConditionBuildingVisitor;
+import com.sonicle.webtop.contacts.dal.HistoryDAO;
 import com.sonicle.webtop.contacts.dal.ListRecipientDAO;
 import com.sonicle.webtop.contacts.io.ContactInput;
 import com.sonicle.webtop.contacts.io.VCardInput;
@@ -3183,6 +3184,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			return contDao.logicDeleteByCategory(con, categoryId, BaseDAO.createRevisionTimestamp());
 			
 		} else {
+			HistoryDAO hisDao = HistoryDAO.getInstance();
+			hisDao.deleteContactsHistoryByCategory(con, categoryId);
 			return contDao.deleteByCategory(con, categoryId);
 		}
 	}
