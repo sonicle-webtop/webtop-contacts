@@ -122,7 +122,7 @@ public class MemoryContactExcelFileReader extends MemoryExcelFileReader implemen
 			Integer index = headersIndexes.get(mapping.source);
 			fillContactByMapping(contact, mapping.target, row.getCell(index));
 		}
-		return new ContactInput(contact, contact.getCompany(), null, null, null);
+		return new ContactInput(contact, contact.getCompany(), null, null, null, null);
 	}
 	
 	private void fillContactByMapping(ContactEx contact, String target, Cell cell) {
