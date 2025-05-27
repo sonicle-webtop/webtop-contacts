@@ -37,6 +37,7 @@ DELETE FROM "contacts"."contacts_tags" WHERE "contact_id" NOT IN (SELECT co."con
 ALTER TABLE "contacts"."contacts_tags" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "contacts"."contacts_vcards" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "contacts"."list_recipients" ADD FOREIGN KEY ("contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE CASCADE ON UPDATE CASCADE;
+UPDATE "contacts"."list_recipients" SET "recipient_contact_id" = NULL WHERE "recipient_contact_id" NOT IN (SELECT "contact_id" FROM "contacts"."contacts");
 ALTER TABLE "contacts"."list_recipients" ADD FOREIGN KEY ("recipient_contact_id") REFERENCES "contacts"."contacts" ("contact_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- ----------------------------
