@@ -65,10 +65,10 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 		if (ContactQuery.ID.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.CONTACT_ID, operator, values);
 			
-		} else if (ContactQuery.CREATED_ON.equals(fieldName)) {
+		} else if (ContactQuery.CREATED_AT.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.CREATION_TIMESTAMP, operator, values);
 			
-		} else if (ContactQuery.UPDATED_ON.equals(fieldName)) {
+		} else if (ContactQuery.UPDATED_AT.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.REVISION_TIMESTAMP, operator, values);
 			
 		} else if (ContactQuery.DISPLAY_NAME.equals(fieldName)) {

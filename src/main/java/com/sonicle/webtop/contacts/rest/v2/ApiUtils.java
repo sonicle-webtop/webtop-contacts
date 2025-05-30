@@ -117,8 +117,8 @@ public class ApiUtils {
 		tgt.id(String.valueOf(src.getCategoryId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
 		tgt.itemsETag(BaseRestApiUtils.buildETag(itemsRevisionTimestamp));
-		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
-		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
 		tgt.owner(fillApiOwnerInfo(new ApiOwnerInfo(), src.getProfileId()));
 		return tgt;
 	}
@@ -226,8 +226,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getContact().getRevisionTimestamp()));
-		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
-		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -235,8 +235,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
-		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
-		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -244,8 +244,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src);
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
-		tgt.createdOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
-		tgt.updatedOn(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
 		return tgt;
 	}
 	

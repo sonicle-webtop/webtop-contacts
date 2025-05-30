@@ -24,7 +24,7 @@ import javax.validation.Valid;
 
 @Path("/me")
 @Api(description = "the me API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
 public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -34,6 +34,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiOperation(value = "Add a Category", notes = "Adds new category specifying the owning user ID. If no user ID is provided, the owner will be the current user.", response = ApiCategory.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -54,6 +58,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
     @ApiResponses(value = { 
@@ -72,8 +80,12 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
-         }, tags={ "me", "contacts" })
+         }, tags={ "me" })
     @ApiResponses(value = { 
         @ApiResponse(code = 201, message = "Contact created", response = ApiContact.class)
     })
@@ -86,6 +98,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiOperation(value = "Delete contact picture", notes = "Deletes the contact's picture of a given contact ID.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -102,6 +118,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiOperation(value = "Delete a category", notes = "Delete a category given its ID.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -121,6 +141,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
     @ApiResponses(value = { 
@@ -139,6 +163,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
     @ApiResponses(value = { 
@@ -154,18 +182,22 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @GET
     @Path("/contacts/{contact_id}")
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get a contact", notes = "Gets the specified contact given its ID.", response = ApiContact.class, authorizations = {
+    @ApiOperation(value = "Get a contact", notes = "Gets the specified contact given its ID.  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry", response = ApiContact.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
-         }, tags={ "me", "contacts" })
+         }, tags={ "me" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiContact.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Contact not found", response = Void.class)
     })
-    public Response getContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select) {
+    public Response getContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account.")  String select) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -175,6 +207,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiOperation(value = "Get contact picture binary data", notes = "Gets the contact's picture raw data (binary), if any, for a given contact ID.", response = Object.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -193,6 +229,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
     @ApiResponses(value = { 
@@ -206,9 +246,13 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @GET
     @Path("/categories")
     @Produces({ "application/json" })
-    @ApiOperation(value = "List Categories", notes = "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.", response = ApiCategoriesResult.class, authorizations = {
+    @ApiOperation(value = "List Categories", notes = "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.  Param *_filter* supports the following fields in RSQL condition: id, createdAt, updatedAt, userId, builtIn, provider, name, description, color, sync, default  Param *_select* supports the following fields: provider, builtIn, name, description, color, easSync, isPrivate, remoteSyncFrequency, remoteSyncTimestamp, remoteSyncToken", response = ApiCategoriesResult.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -216,16 +260,20 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @ApiResponse(code = 200, message = "Success", response = ApiCategoriesResult.class),
         @ApiResponse(code = 405, message = "Not allowed", response = Void.class)
     })
-    public Response listCategories(@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
+    public Response listCategories(@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
         return Response.ok().entity("magic!").build();
     }
 
     @GET
     @Path("/categories/{category_id}/contacts")
     @Produces({ "application/json" })
-    @ApiOperation(value = "List contacts", notes = "Returns a list of contacts from specified category.", response = ApiContactsResult.class, authorizations = {
+    @ApiOperation(value = "List contacts", notes = "Returns a list of contacts from specified category.  Param *_filter* supports the following fields in RSQL query conditions: id, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, tagId  With the addition of the following composite fields that helps filtering: * anyName: matches displayName || firstName || lastName * anyEmail: matches email1 || email2 || email3 * anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax * anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax * anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry", response = ApiContactsResult.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -234,23 +282,27 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @ApiResponse(code = 404, message = "Category not found", response = Void.class),
         @ApiResponse(code = 405, message = "Not allowed", response = Void.class)
     })
-    public Response listCategoryContacts(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
+    public Response listCategoryContacts(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
         return Response.ok().entity("magic!").build();
     }
 
     @GET
     @Path("/categories/{category_id}/contacts/delta")
     @Produces({ "application/json" })
-    @ApiOperation(value = "List changes on contacts collection", notes = "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.", response = ApiContactsResultDelta.class, authorizations = {
+    @ApiOperation(value = "List changes on contacts collection", notes = "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry", response = ApiContactsResultDelta.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Success", response = ApiContactsResultDelta.class)
     })
-    public Response listCategoryContactsDelta(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_sync_token")  @ApiParam("Token exchanged between client and server that tracks changes from a precise state.")  String syncToken,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional.")  String select) {
+    public Response listCategoryContactsDelta(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_sync_token")  @ApiParam("Token exchanged between client and server that tracks changes from a precise state.")  String syncToken,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account.")  String select) {
         return Response.ok().entity("magic!").build();
     }
 
@@ -260,6 +312,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiOperation(value = "Set contact picture", notes = "Assign a picture to the given contact ID. The picture should be in binary. It replaces any existing photo for that contact.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -277,6 +333,10 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @ApiOperation(value = "Update a category", notes = "Update the specified category given its ID. You can choose to update the entire object or only a subset of data.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "me" })
@@ -297,14 +357,18 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
-         }, tags={ "me", "contacts" })
+         }, tags={ "me" })
     @ApiResponses(value = { 
         @ApiResponse(code = 200, message = "Contact updated", response = Void.class),
         @ApiResponse(code = 400, message = "Invalid parameter", response = Void.class),
         @ApiResponse(code = 404, message = "Contact not found", response = Void.class)
     })
-    public Response updateContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("_update")  @ApiParam("List (comma-separated) of field names to update. Optional.")  String update,@Valid ApiContactEx body) {
+    public Response updateContact(@PathParam("contact_id") @ApiParam("The ID of a contact") String contactId,@QueryParam("_update")  @ApiParam("List (comma-separated) of field names to update. Optional, if omitted all available field will be taken into account.")  String update,@Valid ApiContactEx body) {
         return Response.ok().entity("magic!").build();
     }
 }

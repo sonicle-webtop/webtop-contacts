@@ -107,7 +107,7 @@ import org.slf4j.LoggerFactory;
  * @author malbinola
  */
 public class Me extends MeApi {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Eas.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Me.class);
 	
 	private ContactsServiceSettings getServiceSettings() {
 		return new ContactsServiceSettings(SERVICE_ID, RunContext.getRunProfileId().getDomainId());
