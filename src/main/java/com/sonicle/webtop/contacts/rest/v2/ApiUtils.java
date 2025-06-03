@@ -117,8 +117,8 @@ public class ApiUtils {
 		tgt.id(String.valueOf(src.getCategoryId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
 		tgt.itemsETag(BaseRestApiUtils.buildETag(itemsRevisionTimestamp));
-		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
-		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.printISO(src.getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.printISO(src.getRevisionTimestamp()));
 		tgt.owner(fillApiOwnerInfo(new ApiOwnerInfo(), src.getProfileId()));
 		return tgt;
 	}
@@ -135,7 +135,7 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "easSync")) tgt.setEasSync(EnumUtils.forName(src.getSync(), EasSyncEnum.class));
 		if (shouldSet(fields2set, "isPrivate")) tgt.setIsPrivate(src.getIsPrivate());
 		if (shouldSet(fields2set, "remoteSyncFrequency")) tgt.setRemoteSyncFrequency(BaseRestApiUtils.toInteger(src.getRemoteSyncFrequency()));
-		if (shouldSet(fields2set, "remoteSyncTimestamp")) tgt.setRemoteSyncTimestamp(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRemoteSyncTimestamp()));
+		if (shouldSet(fields2set, "remoteSyncTimestamp")) tgt.setRemoteSyncTimestamp(JodaTimeUtils.print(JodaTimeUtils.ISO_DATETIME_FMT, src.getRemoteSyncTimestamp()));
 		if (shouldSet(fields2set, "remoteSyncToken")) tgt.setRemoteSyncToken(src.getRemoteSyncTag());
 		return tgt;
 	}
@@ -226,8 +226,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getContact().getRevisionTimestamp()));
-		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
-		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.printISO(src.getContact().getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.printISO(src.getContact().getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -235,8 +235,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
-		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getContact().getCreationTimestamp()));
-		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.printISO(src.getContact().getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.printISO(src.getRevisionTimestamp()));
 		return tgt;
 	}
 	
@@ -244,8 +244,8 @@ public class ApiUtils {
 		fillApiContactBase(tgt, fields2set, src);
 		tgt.id(String.valueOf(src.getContactId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
-		tgt.createdAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getCreationTimestamp()));
-		tgt.updatedAt(JodaTimeUtils.print(JodaTimeUtils.ISO_DATEDIME_FMT, src.getRevisionTimestamp()));
+		tgt.createdAt(JodaTimeUtils.printISO(src.getCreationTimestamp()));
+		tgt.updatedAt(JodaTimeUtils.printISO(src.getRevisionTimestamp()));
 		return tgt;
 	}
 	
