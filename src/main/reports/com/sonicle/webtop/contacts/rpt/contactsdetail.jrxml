@@ -467,12 +467,12 @@
 				<textFieldExpression><![CDATA[$F{url}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="55">
+		<band height="55" splitType="Stretch">
 			<textField>
 				<reportElement style="FieldCaption" x="0" y="0" width="90" height="14" uuid="0e9c2ce8-2599-46ea-97fd-e34d64b0b75c"/>
 				<textFieldExpression><![CDATA[$R{fld.notes}]]></textFieldExpression>
 			</textField>
-			<textField>
+			<textField textAdjust="StretchHeight">
 				<reportElement style="FieldValue" stretchType="RelativeToBandHeight" x="90" y="0" width="468" height="40" uuid="ee1f90df-63f8-4d1d-b70b-87b81c4ad3ff"/>
 				<textElement verticalAlignment="Top"/>
 				<textFieldExpression><![CDATA[$F{notes}]]></textFieldExpression>
