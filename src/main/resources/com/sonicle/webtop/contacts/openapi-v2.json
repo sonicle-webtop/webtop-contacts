@@ -19,6 +19,10 @@
     },
     {
       "auth-bearer": []
+    },
+    {
+      "auth-apikey-bearer": [],
+      "auth-apikey-username": []
     }
   ],
   "paths": {
@@ -678,7 +682,7 @@
           }
         },
         "operationId": "listCategories",
-        "description": "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.\n\nParam *_filter* supports the following fields in RSQL condition:\nid, createdOn, updatedOn, userId, builtIn, provider, name, description, color, sync, default\n\nParam *_select* supports the following fields:\nprovider, builtIn, name, description, color, easSync, isPrivate, remoteSyncFrequency, remoteSyncTimestamp, remoteSyncToken",
+        "description": "Returns a list of categories readable by the current user: this includes both personal and incoming shared categories.\n\nParam *_filter* supports the following fields in RSQL condition:\nid, createdAt, updatedAt, userId, builtIn, provider, name, description, color, sync, default\n\nParam *_select* supports the following fields:\nprovider, builtIn, name, description, color, easSync, isPrivate, remoteSyncFrequency, remoteSyncTimestamp, remoteSyncToken",
         "parameters": [
           {
             "$ref": "#/components/parameters/_filter"
@@ -899,7 +903,7 @@
             "$ref": "#/components/parameters/_returnCount"
           }
         ],
-        "description": "Returns a list of contacts from specified category.\n\nParam *_filter* supports the following fields in RSQL query conditions:\nid, createdOn, updatedOn, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, tagId\n\nWith the addition of the following composite fields that helps filtering:\n* anyName: matches displayName || firstName || lastName\n* anyEmail: matches email1 || email2 || email3\n* anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax\n* anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax\n* anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
+        "description": "Returns a list of contacts from specified category.\n\nParam *_filter* supports the following fields in RSQL query conditions:\nid, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, tagId\n\nWith the addition of the following composite fields that helps filtering:\n* anyName: matches displayName || firstName || lastName\n* anyEmail: matches email1 || email2 || email3\n* anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax\n* anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax\n* anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
       },
       "post": {
         "summary": "Add a contact",
@@ -2058,7 +2062,7 @@
                 "description": "The revision identifier that refers to the last modification of the items.",
                 "readOnly": true
               },
-              "createdOn": {
+              "createdAt": {
                 "type": "string",
                 "x-stoplight": {
                   "id": "80znhqnynal4j"
@@ -2066,7 +2070,7 @@
                 "description": "Creation timestamp in ISO 8601 format and UTC time.",
                 "readOnly": true
               },
-              "updatedOn": {
+              "updatedAt": {
                 "type": "string",
                 "x-stoplight": {
                   "id": "5kf80dtfdw0u8"
@@ -2481,7 +2485,7 @@
                 "description": "The revision identifier that refers to the last modification.",
                 "readOnly": true
               },
-              "createdOn": {
+              "createdAt": {
                 "type": "string",
                 "x-stoplight": {
                   "id": "2r8snl8qaxvux"
@@ -2489,7 +2493,7 @@
                 "description": "Creation timestamp in ISO 8601 format and UTC time.",
                 "readOnly": true
               },
-              "updatedOn": {
+              "updatedAt": {
                 "type": "string",
                 "x-stoplight": {
                   "id": "r54ml5n3nl3zg"
@@ -2715,17 +2719,52 @@
           }
         },
         "description": "Represent a user owning an item."
+      },
+      "ContactCFValueBase": {
+        "title": "ContactCFValueBase",
+        "x-stoplight": {
+          "id": "807at1j9cxutl"
+        },
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "349sgw0rz9qgw"
+            }
+          },
+          "": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "1jd1f0q128kgx"
+            }
+          }
+        },
+        "required": [
+          "type"
+        ]
       }
     },
     "securitySchemes": {
       "auth-basic": {
         "type": "http",
-        "scheme": "basic",
-        "description": ""
+        "scheme": "basic"
       },
       "auth-bearer": {
         "type": "http",
         "scheme": "bearer"
+      },
+      "auth-apikey-bearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "APIKey",
+        "description": "API-Key Authentication: specifies the secret token (bearer and username are both required)"
+      },
+      "auth-apikey-username": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Auth-Username",
+        "description": "API-Key Authentication: specifies target username (bearer and username are both required)"
       }
     },
     "parameters": {

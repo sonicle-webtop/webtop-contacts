@@ -34,7 +34,7 @@ package com.sonicle.webtop.contacts.bol.js;
 
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.URIUtils;
-import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryBase;
 import com.sonicle.webtop.contacts.model.CategoryRemoteParameters;
@@ -78,7 +78,7 @@ public class JsCategory {
 			remotePassword = params.password;
 			remoteSyncFrequency = cat.getRemoteSyncFrequency();
 			if (cat.getRemoteSyncTimestamp() != null) {
-				remoteLastSync = DateTimeUtils.createYmdHmsFormatter(utz).print(cat.getRemoteSyncTimestamp());
+				remoteLastSync = JodaTimeUtils.createFormatterYMDHMS(utz).print(cat.getRemoteSyncTimestamp());
 			}
 		}
 	}

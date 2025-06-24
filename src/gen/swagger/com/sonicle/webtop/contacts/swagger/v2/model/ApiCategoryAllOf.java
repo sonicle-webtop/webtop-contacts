@@ -18,13 +18,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 
 
 @JsonTypeName("Category_allOf")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
 public class ApiCategoryAllOf   {
   private @Valid String id;
   private @Valid String etag;
   private @Valid String itemsETag;
-  private @Valid String createdOn;
-  private @Valid String updatedOn;
+  private @Valid String createdAt;
+  private @Valid String updatedAt;
   private @Valid ApiOwnerInfo owner;
 
   /**
@@ -90,41 +90,41 @@ public class ApiCategoryAllOf   {
   /**
    * Creation timestamp in ISO 8601 format and UTC time.
    **/
-  public ApiCategoryAllOf createdOn(String createdOn) {
-    this.createdOn = createdOn;
+  public ApiCategoryAllOf createdAt(String createdAt) {
+    this.createdAt = createdAt;
     return this;
   }
 
   
   @ApiModelProperty(value = "Creation timestamp in ISO 8601 format and UTC time.")
-  @JsonProperty("createdOn")
-  public String getCreatedOn() {
-    return createdOn;
+  @JsonProperty("createdAt")
+  public String getCreatedAt() {
+    return createdAt;
   }
 
-  @JsonProperty("createdOn")
-  public void setCreatedOn(String createdOn) {
-    this.createdOn = createdOn;
+  @JsonProperty("createdAt")
+  public void setCreatedAt(String createdAt) {
+    this.createdAt = createdAt;
   }
 
   /**
    * Modification timestamp in ISO 8601 format and UTC time.
    **/
-  public ApiCategoryAllOf updatedOn(String updatedOn) {
-    this.updatedOn = updatedOn;
+  public ApiCategoryAllOf updatedAt(String updatedAt) {
+    this.updatedAt = updatedAt;
     return this;
   }
 
   
   @ApiModelProperty(value = "Modification timestamp in ISO 8601 format and UTC time.")
-  @JsonProperty("updatedOn")
-  public String getUpdatedOn() {
-    return updatedOn;
+  @JsonProperty("updatedAt")
+  public String getUpdatedAt() {
+    return updatedAt;
   }
 
-  @JsonProperty("updatedOn")
-  public void setUpdatedOn(String updatedOn) {
-    this.updatedOn = updatedOn;
+  @JsonProperty("updatedAt")
+  public void setUpdatedAt(String updatedAt) {
+    this.updatedAt = updatedAt;
   }
 
   /**
@@ -159,14 +159,14 @@ public class ApiCategoryAllOf   {
     return Objects.equals(this.id, categoryAllOf.id) &&
         Objects.equals(this.etag, categoryAllOf.etag) &&
         Objects.equals(this.itemsETag, categoryAllOf.itemsETag) &&
-        Objects.equals(this.createdOn, categoryAllOf.createdOn) &&
-        Objects.equals(this.updatedOn, categoryAllOf.updatedOn) &&
+        Objects.equals(this.createdAt, categoryAllOf.createdAt) &&
+        Objects.equals(this.updatedAt, categoryAllOf.updatedAt) &&
         Objects.equals(this.owner, categoryAllOf.owner);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, etag, itemsETag, createdOn, updatedOn, owner);
+    return Objects.hash(id, etag, itemsETag, createdAt, updatedAt, owner);
   }
 
   @Override
@@ -177,8 +177,8 @@ public class ApiCategoryAllOf   {
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
     sb.append("    itemsETag: ").append(toIndentedString(itemsETag)).append("\n");
-    sb.append("    createdOn: ").append(toIndentedString(createdOn)).append("\n");
-    sb.append("    updatedOn: ").append(toIndentedString(updatedOn)).append("\n");
+    sb.append("    createdAt: ").append(toIndentedString(createdAt)).append("\n");
+    sb.append("    updatedAt: ").append(toIndentedString(updatedAt)).append("\n");
     sb.append("    owner: ").append(toIndentedString(owner)).append("\n");
     sb.append("}");
     return sb.toString();

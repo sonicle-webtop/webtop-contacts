@@ -46,7 +46,7 @@ Ext.define('Sonicle.webtop.contacts.model.CategoryLkp', {
 			return Sonicle.String.substrBeforeLast(rec.get('_profileId'), '@');
 		}),
 		WTF.field('name', 'string', false),
-		WTF.field('color', 'string', false, {defaultValue: '#FFFFFF'}),
+		WTF.field('color', 'string', false, {defaultValue: '#F3F4F6'}),
 		WTF.roField('_default', 'boolean', {defaultValue: false}),
 		WTF.roField('_profileId', 'string'),
 		WTF.roField('_profileDescription', 'string'),

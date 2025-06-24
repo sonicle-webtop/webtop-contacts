@@ -32,7 +32,7 @@
  */
 package com.sonicle.webtop.contacts.rest.v1;
 
-import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
@@ -83,7 +83,7 @@ import org.slf4j.LoggerFactory;
 public class CardDav extends CarddavApi {
 	private static final Logger logger = LoggerFactory.getLogger(CardDav.class);
 	private static final String DEFAULT_ETAG = "19700101000000000";
-	private static final DateTimeFormatter ETAG_FORMATTER = DateTimeUtils.createFormatter("yyyyMMddHHmmssSSS", DateTimeZone.UTC);
+	private static final DateTimeFormatter ETAG_FORMATTER = JodaTimeUtils.createFormatter("yyyyMMddHHmmssSSS", DateTimeZone.UTC);
 	
 	@Override
 	public Response getAddressBooks() {

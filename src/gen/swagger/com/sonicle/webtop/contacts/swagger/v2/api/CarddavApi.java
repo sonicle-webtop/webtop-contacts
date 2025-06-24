@@ -20,7 +20,7 @@ import javax.validation.Valid;
 
 @Path("/carddav/addressbooks")
 @Api(description = "the carddav API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
 public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -29,6 +29,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @ApiOperation(value = "Adds a new address-book", notes = "Creates new AddressBook.", response = ApiDavAddressBook.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
@@ -46,6 +50,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
@@ -60,6 +68,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @ApiOperation(value = "Deletes an address-book", notes = "Deletes specified AddressBook.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
@@ -79,6 +91,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
@@ -97,6 +113,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
@@ -114,6 +134,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
@@ -129,6 +153,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @ApiOperation(value = "Get a single card", notes = "Gets specified Card.", response = ApiDavCard.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
@@ -148,6 +176,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
@@ -163,6 +195,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @ApiOperation(value = "Get card changes", notes = "Returns changed cards (added/modified/deleted) since the specified syncToken. If token is not provided, the initial sync configuration will be returned.", response = ApiDavCardsChanges.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
@@ -181,6 +217,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })
     @ApiResponses(value = { 
@@ -198,6 +238,10 @@ public abstract class CarddavApi extends com.sonicle.webtop.core.sdk.BaseRestApi
     @ApiOperation(value = "Updates a card", notes = "Updates specified Card.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "dav" })

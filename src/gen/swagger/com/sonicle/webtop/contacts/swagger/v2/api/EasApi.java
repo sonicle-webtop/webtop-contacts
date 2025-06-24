@@ -18,7 +18,7 @@ import javax.validation.Valid;
 
 @Path("/eas/folders")
 @Api(description = "the eas API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
 public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -28,6 +28,10 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @ApiOperation(value = "Adds a message", notes = "Add new Contact into specified Category.", response = ApiEasSyncContactStat.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "eas" })
@@ -43,6 +47,10 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @ApiOperation(value = "Deletes a message", notes = "Deletes the specified Contact.", response = Void.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "eas" })
@@ -61,6 +69,10 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
@@ -76,6 +88,10 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @ApiOperation(value = "Get a single message", notes = "Gets the specified Contact.", response = ApiEasSyncContact.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "eas" })
@@ -95,6 +111,10 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
         
         @Authorization(value = "auth-bearer"),
         
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
         @Authorization(value = "auth-basic")
          }, tags={ "eas" })
     @ApiResponses(value = { 
@@ -111,6 +131,10 @@ public abstract class EasApi extends com.sonicle.webtop.core.sdk.BaseRestApiReso
     @ApiOperation(value = "Updates a message", notes = "Updates the specified Contact.", response = ApiEasSyncContactStat.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
         
         @Authorization(value = "auth-basic")
          }, tags={ "eas" })

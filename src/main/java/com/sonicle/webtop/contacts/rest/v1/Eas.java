@@ -33,7 +33,7 @@
 package com.sonicle.webtop.contacts.rest.v1;
 
 import com.sonicle.commons.flags.BitFlags;
-import com.sonicle.commons.time.DateTimeUtils;
+import com.sonicle.commons.time.JodaTimeUtils;
 import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
@@ -82,8 +82,8 @@ import org.slf4j.LoggerFactory;
 public class Eas extends EasApi {
 	private static final Logger logger = LoggerFactory.getLogger(Eas.class);
 	private static final String DEFAULT_ETAG = "19700101000000000";
-	private static final DateTimeFormatter ETAG_FMT = DateTimeUtils.createFormatter("yyyyMMddHHmmssSSS", DateTimeZone.UTC);
-	private static final DateTimeFormatter ISO_DATE_FMT = DateTimeUtils.createFormatter("yyyyMMdd", DateTimeZone.UTC);
+	private static final DateTimeFormatter ETAG_FMT = JodaTimeUtils.createFormatter("yyyyMMddHHmmssSSS", DateTimeZone.UTC);
+	private static final DateTimeFormatter ISO_DATE_FMT = JodaTimeUtils.createFormatter("yyyyMMdd", DateTimeZone.UTC);
 	
 	@Override
 	public Response getFolders() {
@@ -342,8 +342,8 @@ public class Eas extends EasApi {
 			.assistantTelephone(cont.getAssistantTelephone())
 			.manager(cont.getManager())
 			.partner(cont.getPartner())
-			.birthday(DateTimeUtils.print(ISO_DATE_FMT, cont.getBirthday()))
-			.anniversary(DateTimeUtils.print(ISO_DATE_FMT, cont.getAnniversary()))
+			.birthday(JodaTimeUtils.print(ISO_DATE_FMT, cont.getBirthday()))
+			.anniversary(JodaTimeUtils.print(ISO_DATE_FMT, cont.getAnniversary()))
 			.url(cont.getUrl())
 			.notes(cont.getNotes())
 			.picture(picture);
@@ -407,8 +407,8 @@ public class Eas extends EasApi {
 		orig.setAssistant(src.getAssistant());
 		orig.setAssistantTelephone(src.getAssistantTelephone());
 		orig.setPartner(src.getPartner());
-		orig.setBirthday(DateTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getBirthday()));
-		orig.setAnniversary(DateTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getAnniversary()));
+		orig.setBirthday(JodaTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getBirthday()));
+		orig.setAnniversary(JodaTimeUtils.parseLocalDate(ISO_DATE_FMT, src.getAnniversary()));
 		orig.setUrl(src.getUrl());
 		orig.setNotes(src.getNotes());
 		

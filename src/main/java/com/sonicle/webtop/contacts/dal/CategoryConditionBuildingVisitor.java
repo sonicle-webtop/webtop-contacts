@@ -53,10 +53,10 @@ public class CategoryConditionBuildingVisitor extends JOOQConditionBuildingVisit
 		if (CategoryQuery.ID.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.CATEGORY_ID, operator, values);
 			
-		} else if (CategoryQuery.CREATED_ON.equals(fieldName)) {
+		} else if (CategoryQuery.CREATED_AT.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.CREATION_TIMESTAMP, operator, values);
 			
-		} else if (CategoryQuery.UPDATED_ON.equals(fieldName)) {
+		} else if (CategoryQuery.UPDATED_AT.equals(fieldName)) {
 			return defaultCondition(CATEGORIES.REVISION_TIMESTAMP, operator, values);
 			
 		} else if (CategoryQuery.USER_ID.equals(fieldName)) {

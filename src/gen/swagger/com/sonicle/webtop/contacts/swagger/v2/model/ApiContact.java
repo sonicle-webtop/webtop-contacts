@@ -20,12 +20,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a contact, which is an item for users to organize and save information about the people and organizations that they communicate with. Contacts are contained in contact categories.")
 @JsonTypeName("Contact")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-02-06T10:04:09.242+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
 public class ApiContact extends ApiContactEx  {
   private @Valid String id;
   private @Valid String etag;
-  private @Valid String createdOn;
-  private @Valid String updatedOn;
+  private @Valid String createdAt;
+  private @Valid String updatedAt;
 
   /**
    * The contact&#39;s unique ID.
@@ -70,41 +70,41 @@ public class ApiContact extends ApiContactEx  {
   /**
    * Creation timestamp in ISO 8601 format and UTC time.
    **/
-  public ApiContact createdOn(String createdOn) {
-    this.createdOn = createdOn;
+  public ApiContact createdAt(String createdAt) {
+    this.createdAt = createdAt;
     return this;
   }
 
   
   @ApiModelProperty(value = "Creation timestamp in ISO 8601 format and UTC time.")
-  @JsonProperty("createdOn")
-  public String getCreatedOn() {
-    return createdOn;
+  @JsonProperty("createdAt")
+  public String getCreatedAt() {
+    return createdAt;
   }
 
-  @JsonProperty("createdOn")
-  public void setCreatedOn(String createdOn) {
-    this.createdOn = createdOn;
+  @JsonProperty("createdAt")
+  public void setCreatedAt(String createdAt) {
+    this.createdAt = createdAt;
   }
 
   /**
    * Modification timestamp in ISO 8601 format and UTC time.
    **/
-  public ApiContact updatedOn(String updatedOn) {
-    this.updatedOn = updatedOn;
+  public ApiContact updatedAt(String updatedAt) {
+    this.updatedAt = updatedAt;
     return this;
   }
 
   
   @ApiModelProperty(value = "Modification timestamp in ISO 8601 format and UTC time.")
-  @JsonProperty("updatedOn")
-  public String getUpdatedOn() {
-    return updatedOn;
+  @JsonProperty("updatedAt")
+  public String getUpdatedAt() {
+    return updatedAt;
   }
 
-  @JsonProperty("updatedOn")
-  public void setUpdatedOn(String updatedOn) {
-    this.updatedOn = updatedOn;
+  @JsonProperty("updatedAt")
+  public void setUpdatedAt(String updatedAt) {
+    this.updatedAt = updatedAt;
   }
 
 
@@ -119,14 +119,14 @@ public class ApiContact extends ApiContactEx  {
     ApiContact contact = (ApiContact) o;
     return Objects.equals(this.id, contact.id) &&
         Objects.equals(this.etag, contact.etag) &&
-        Objects.equals(this.createdOn, contact.createdOn) &&
-        Objects.equals(this.updatedOn, contact.updatedOn) &&
+        Objects.equals(this.createdAt, contact.createdAt) &&
+        Objects.equals(this.updatedAt, contact.updatedAt) &&
         super.equals(o);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, etag, createdOn, updatedOn, super.hashCode());
+    return Objects.hash(id, etag, createdAt, updatedAt, super.hashCode());
   }
 
   @Override
@@ -136,8 +136,8 @@ public class ApiContact extends ApiContactEx  {
     sb.append("    ").append(toIndentedString(super.toString())).append("\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
-    sb.append("    createdOn: ").append(toIndentedString(createdOn)).append("\n");
-    sb.append("    updatedOn: ").append(toIndentedString(updatedOn)).append("\n");
+    sb.append("    createdAt: ").append(toIndentedString(createdAt)).append("\n");
+    sb.append("    updatedAt: ").append(toIndentedString(updatedAt)).append("\n");
     sb.append("}");
     return sb.toString();
   }
