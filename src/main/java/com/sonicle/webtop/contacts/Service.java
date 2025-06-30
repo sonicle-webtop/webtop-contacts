@@ -101,7 +101,7 @@ import com.sonicle.webtop.contacts.model.CategoryPropSet;
 import com.sonicle.webtop.contacts.model.Contact;
 import com.sonicle.webtop.contacts.model.ContactAttachment;
 import com.sonicle.webtop.contacts.model.ContactAttachmentWithBytes;
-import com.sonicle.webtop.contacts.model.ContactAttachmentWithStream;
+import com.sonicle.webtop.contacts.model.ContactAttachmentWithInputStream;
 import com.sonicle.webtop.contacts.model.ContactCompany;
 import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.ContactList;
@@ -957,7 +957,9 @@ public class Service extends BaseService {
 						contactIds.add(contactId);
 					}
 				}
-				manager.moveContact(copy, contactIds, categoryId);
+				
+				BitFlags<ContactGetOption> options = BitFlags.with(ContactGetOption.PICTURE, ContactGetOption.ATTACHMENTS, ContactGetOption.TAGS, ContactGetOption.CUSTOM_VALUES, ContactGetOption.LIST_RECIPIENTS);
+				manager.moveContact(copy, contactIds, categoryId, options);
 				//manager.moveContactsList(copy, contactsListIds, categoryId);
 				
 				new JsonResult().printTo(out);
@@ -1237,7 +1239,7 @@ public class Service extends BaseService {
 				}
 				for (JsContact.Attachment jsatt : pl.data.attachments) {
 					UploadedFile upFile = getUploadedFileOrThrow(jsatt._uplId);
-					ContactAttachmentWithStream att = new ContactAttachmentWithStream(upFile.getFile());
+					ContactAttachmentWithInputStream att = new ContactAttachmentWithInputStream(upFile.getFile());
 					att.setAttachmentId(jsatt.id);
 					att.setFilename(upFile.getFilename());
 					att.setSize(upFile.getSize());
@@ -1266,7 +1268,7 @@ public class Service extends BaseService {
 				for (JsContact.Attachment jsatt : pl.data.attachments) {
 					if (!StringUtils.isBlank(jsatt._uplId)) {
 						UploadedFile upFile = getUploadedFileOrThrow(jsatt._uplId);
-						ContactAttachmentWithStream att = new ContactAttachmentWithStream(upFile.getFile());
+						ContactAttachmentWithInputStream att = new ContactAttachmentWithInputStream(upFile.getFile());
 						att.setAttachmentId(jsatt.id);
 						att.setFilename(upFile.getFilename());
 						att.setSize(upFile.getSize());
