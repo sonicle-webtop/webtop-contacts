@@ -1491,7 +1491,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fldassistant: mo.isFieldEmpty('assistant'),
 				fldassistanttelephone: mo.isFieldEmpty('assistantTelephone'),
 				fldworktelephone2: mo.isFieldEmpty('workTelephone2'),
-				fldworkFax: mo.isFieldEmpty('workFax'),
+				fldworkfax: mo.isFieldEmpty('workFax'),
 				fldhometelephone1: mo.isFieldEmpty('homeTelephone1'),
 				fldhometelephone2: mo.isFieldEmpty('homeTelephone2'),
 				fldhomefax: mo.isFieldEmpty('homeFax'),
