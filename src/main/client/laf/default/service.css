@@ -49,8 +49,8 @@
 .wtcon-icon-contactAddress:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
 .wtcon-icon-contactAttachments:before { content: '\f0c6'; font: var(--fa-font-solid); background-size: contain; } /* FIXME: defaults to FA for now */
 .wtcon-icon-mailchimp { background-image: url('mailchimp-freddie-icon.svg') !important; background-size: contain; }
-.wtcon-icon-viewHome { background-image: url('view-home-grayed_16.svg') !important; background-size: contain; }
-.wtcon-icon-viewWork { background-image: url('view-work-grayed_16.svg') !important; background-size: contain; }
+.wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; background-size: contain; }
+.wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; background-size: contain; }
 /* ---------- ToolPanel */
 .wtcon-tool-searchpanel-body {
     padding: 5px 5px 10px 5px;
