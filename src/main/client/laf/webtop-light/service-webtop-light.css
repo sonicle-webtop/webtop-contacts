@@ -1,0 +1,125 @@
+/* ---------- Icons (service) */
+.wtcon-icon-service,
+.wtcon-icon-service-sm { background-image: url('service-on@sm.svg') !important; background-size: contain; }
+.wtcon-icon-service-off-sm { background-image: url('service-off@sm.svg') !important; background-size: contain; }
+.wtcon-icon-service-md { background-image: url('service-on@md.svg') !important; background-size: contain; }
+.wtcon-icon-service-off-md { background-image: url('service-off@md.svg') !important; background-size: contain; }
+.wtcon-icon-service-lg { background-image: url('service-on@lg.svg') !important; background-size: contain; }
+.wtcon-icon-service-off-lg { background-image: url('service-off@lg.svg') !important; background-size: contain; }
+/* ---------- Icons (actions) */
+/*.wtcon-icon-addCategory { background-image: url('category-add_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-addRemoteCategory { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-viewCategoryLinks { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-editCategory { background-image: url('category-edit_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-deleteCategory { background-image: url('category-delete_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-newContact { background-image: url('contact-new_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-newContactsList { background-image: url('contactslist-new_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-addContact { background-image: url('contact-add_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-addContactsList { background-image: url('contactslist-add_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-openContact { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-copyContact { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-moveContact { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-importContacts { background-image: url('contact-import_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-exportContacts { background-image: url('contact-export_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-addContactsListFromSel { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-addToContactsListFromSel { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-sendByEmail { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-writeMessage { background-image: url('message-new_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-createEvent { background-image: none !important; background-size: contain; }*/
+/*.wtcon-icon-uploadContactPicture:before { content: '\f574'; font: var(--fa-font-solid); }*/
+/*.wtcon-icon-clearContactPicture:before { content: '\f2ed'; font: var(--fa-font-regular); }*/
+/* ---------- Icons (others) */
+/*.wtcon-icon-reminder-birthday { background-image: url('birthday_16.png') !important; background-size: contain; }*/
+/*.wtcon-icon-reminder-anniversary { background-image: url('anniversary_16.png') !important; background-size: contain; }*/
+/*.wtcon-icon-category { background-image: url('category_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-categoryMy { background-image: url('category-my_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-categoryIncoming { background-image: url('category-incoming_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-categoryRemote { background-image: url('category-remote_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-contact { background-image: url('contact_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-contactsList { background-image: url('contactslist_16.svg') !important; background-size: contain; }*/
+.wtcon-icon-contactName { background-image: url('section-name_16.svg') !important; background-size: contain; } .wtcon-icon-contactName:before { content: ''; }
+.wtcon-icon-contactCompany { background-image: url('section-company_16.svg') !important; background-size: contain; } .wtcon-icon-contactCompany:before { content: ''; }
+.wtcon-icon-contactEmail { background-image: url('section-email_16.svg') !important; background-size: contain; } .wtcon-icon-contactEmail:before { content: ''; }
+.wtcon-icon-contactPhone { background-image: url('section-phone_16.svg') !important; background-size: contain; } .wtcon-icon-contactPhone:before { content: ''; }
+.wtcon-icon-contactNotes { background-image: url('section-notes_16.svg') !important; background-size: contain; } .wtcon-icon-contactNotes:before { content: ''; }
+.wtcon-icon-contactUrl { background-image: url('section-url_16.svg') !important; background-size: contain; } .wtcon-icon-contactUrl:before { content: ''; }
+.wtcon-icon-contactPartner { background-image: url('section-partner_16.svg') !important; background-size: contain; } .wtcon-icon-contactPartner:before { content: ''; }
+.wtcon-icon-contactBirthday { background-image: url('section-birthday_16.svg') !important; background-size: contain; } .wtcon-icon-contactBirthday:before { content: ''; }
+.wtcon-icon-contactAnniversary { background-image: url('section-anniversary_16.svg') !important; background-size: contain; } .wtcon-icon-contactAnniversary:before { content: ''; }
+.wtcon-icon-contactAddress { background-image: url('section-address_16.svg') !important; background-size: contain; } .wtcon-icon-contactAddress:before { content: ''; }
+.wtcon-icon-contactAttachments { background-image: url('section-attachments_16.svg') !important; background-size: contain; } .wtcon-icon-contactAttachments:before { content: ''; }
+/*.wtcon-icon-mailchimp { background-image: url('mailchimp-freddie-icon.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; background-size: contain; }*/
+/*.wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; background-size: contain; }*/
+/* ---------- ToolPanel */
+.wtcon-tool-searchpanel-body {
+    padding: 5px 5px 10px 5px;
+}
+/* ---------- Grid (contacts) */
+.wtcon-gpcontacts .x-grid-group-hd {
+    /*background-color: #eff6fb;crisp-bg-alt*/
+}
+.wtcon-gpcontacts .x-grid-group-title {
+    font-size: var(--wt-theme-fontsize-lg);
+    line-height: var(--wt-theme-lineheight-lg);
+    font-weight: var(--wt-theme-fontweight-medium);
+    color: var(--wt-theme-color-info-ct-on);
+}
+.wtcon-gpcontacts .wtcon-group-letter {
+    padding-left: 16px;
+}
+/* ---------- Sonicle.webtop.contacts.ux.grid.column.Contact */
+.wtcon-contactcolumn-head {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.wtcon-contactcolumn-head > span {
+    vertical-align: top;
+    margin-left: 10px;
+    font-size: 0.9em; /* FIXME: make use of vars */
+    color: #767676; /* FIXME: make use of vars */
+}
+.wtcon-contactcolumn-body {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-top: 5px;
+}
+.wtcon-contactcolumn-body > span {
+	color: #767676; /* FIXME: make use of vars */
+	font-size: 0.9em; /* FIXME: make use of vars */
+}
+.wtcon-contactcolumn-body-float {
+	display: inline-block;
+	float: right;
+	margin-top: 5px;
+}
+.wtcon-contactcolumn-glyph {
+	display: inline-block;
+	margin: 0 0 0 2px;
+	text-align: center;
+}
+.wtcon-contactcolumn-icon {
+    margin-right: 5px;
+}
+.wtcon-contactcolumn-body span {
+    margin-left: 10px;
+}
+.wtcon-contactcolumn-body span:first-child {
+    margin-left: 0px;
+}
+/* ---------- Sonicle.webtop.contacts.ux.panel.ContactPreview */
+.wtcon-preview-header > * > .x-panel-body {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+.wtcon-preview-header-tbactions {
+    padding-left: 10px;
+}
+.wtcon-preview-main > * > .x-panel-body, .wtcon-preview-cfields > * > .x-panel-body {
+	padding-top: 10px;
+	padding-right: 10px;
+	padding-bottom: 10px;
+	padding-left: 10px;
+}
