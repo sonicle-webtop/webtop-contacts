@@ -51,7 +51,7 @@
 /*.wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; background-size: contain; }*/
 /* ---------- ToolPanel */
 .wtcon-tool-searchpanel-body {
-    padding: 5px 5px 10px 5px;
+    padding: 0px 8px 10px 8px;
 }
 /* ---------- Grid (contacts) */
 .wtcon-gpcontacts .x-grid-group-hd {
