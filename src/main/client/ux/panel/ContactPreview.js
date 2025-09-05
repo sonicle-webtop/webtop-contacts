@@ -35,7 +35,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	alias: 'widget.wtconcontactpreviewpanel',
 	requires: [
 		'Sonicle.VMUtils',
-		'Sonicle.form.field.InitialsAvatar',
+		'Sonicle.form.field.DisplayAvatar',
 		'Sonicle.form.field.DisplayImage',
 		'Sonicle.form.field.ColorDisplay',
 		'Sonicle.form.field.TagDisplay',
@@ -395,7 +395,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 								layout: 'anchor',
 								items: [
 									{
-										xtype: 'sointialsavatarfield',
+										xtype: 'soavatardisplayfield',
 										bind: {
 											value: '{record.avatarName}',
 											hidden: '{record.pic}'
