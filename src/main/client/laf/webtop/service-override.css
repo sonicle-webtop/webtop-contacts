@@ -54,8 +54,9 @@
     padding: 0px 8px 10px 8px;
 }
 /* ---------- Grid (contacts) */
-.wtcon-main-list-grid .x-grid-group-hd {
-    /*background-color: #eff6fb;crisp-bg-alt*/
+.wtcon-main-list-grid {
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
 }
 .wtcon-main-list-grid .x-grid-group-title {
     font-size: var(--wt-theme-fontsize-lg);
