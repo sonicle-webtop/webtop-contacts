@@ -54,16 +54,16 @@
     padding: 0px 8px 10px 8px;
 }
 /* ---------- Grid (contacts) */
-.wtcon-gpcontacts .x-grid-group-hd {
+.wtcon-main-list-grid .x-grid-group-hd {
     /*background-color: #eff6fb;crisp-bg-alt*/
 }
-.wtcon-gpcontacts .x-grid-group-title {
+.wtcon-main-list-grid .x-grid-group-title {
     font-size: var(--wt-theme-fontsize-lg);
     line-height: var(--wt-theme-lineheight-lg);
     font-weight: var(--wt-theme-fontweight-medium);
     color: var(--wt-theme-color-info-ct-on);
 }
-.wtcon-gpcontacts .wtcon-group-letter {
+.wtcon-main-list-grid .wtcon-group-letter {
     padding-left: 16px;
 }
 /* ---------- Sonicle.webtop.contacts.ux.grid.column.Contact */
