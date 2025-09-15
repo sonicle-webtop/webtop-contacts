@@ -438,7 +438,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 													value: '{record.businessInfo}',
 													hidden: '{!foHasBusinessInfo}'
 												},
-												iconCls: 'fas fa-building',
+												iconCls: 'wt-glyph-building',
 												cls: me.cls + '-header-info',
 												hidden: true
 											}, {
@@ -576,7 +576,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 									ui: 'default-toolbar',
 									text: null,
 									tooltip: WT.res('act-auditLog.lbl'),
-									iconCls: 'fas fa-history',
+									iconCls: 'wt-icon-audit',
 									handler: function() {
 										var vm = me.getVM();
 										me.fireEvent('showaudit', me, vm.get('record.isList'), vm.get('record.id'));
@@ -606,14 +606,18 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					home: me.mys.res('contactPreview.single.homeEmail')
 				},
 				captionIcons: {
-					work: 'fas fa-envelope',
-					home: 'fas fa-envelope'
+					work: 'wt-glyph-envelope',
+					home: 'wt-glyph-envelope'
 				},
+				clipboardIconCls: 'wt-icon-clipboard-copy',
 				clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
 				listeners: {
 					cellvalueclick: function(s, val) {
 						var vm = me.getVM();
 						me.fireEvent('writeemail', me, [val], vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+					},
+					cellvaluecopy: function(s, val) {
+						WT.toast(WT.res('toast.info.copied'));
 					}
 				}
 			}, cfg);
@@ -636,15 +640,19 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					home: me.mys.res('contactPreview.single.homeTelephone')
 				},
 				captionIcons: {
-					mobile: 'fas fa-mobile-alt',
-					work: 'fas fa-phone',
-					home: 'fas fa-phone'
+					mobile: 'wt-glyph-mobile',
+					work: 'wt-glyph-phone',
+					home: 'wt-glyph-phone'
 				},
+				clipboardIconCls: 'wt-icon-clipboard-copy',
 				clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
 				listeners: {
 					cellvalueclick: function(s, val) {
 						var vm = me.getVM();
 						me.fireEvent('callnumber', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
+					},
+					cellvaluecopy: function(s, val) {
+						WT.toast(WT.res('toast.info.copied'));
 					}
 				}
 			}, cfg);
@@ -667,11 +675,12 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 					homeadd: me.mys.res('contactPreview.single.homeAddress')
 				},
 				captionIcons: {
-					fullName: 'fas fa-signature',
-					company: 'fas fa-building',
-					workadd: 'fas fa-location-dot',
-					homeadd: 'fas fa-location-dot'
+					fullName: 'wt-glyph-signature',
+					company: 'wt-glyph-building',
+					workadd: 'wt-glyph-location-pin',
+					homeadd: 'wt-glyph-location-pin'
 				},
+				clipboardIconCls: 'wt-icon-clipboard-copy',
 				clipboardTooltipText: WT.res('sotilelist.clipboardTooltipText'),
 				listeners: {
 					cellvalueclick: function(s, val, rec) {
@@ -679,6 +688,9 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							var vm = me.getVM();
 							me.fireEvent('mapaddress', me, val, vm.get('record.id'), vm.get('record.avatarName'), vm.get('record.fullName'));
 						}
+					},
+					cellvaluecopy: function(s, val) {
+						WT.toast(WT.res('toast.info.copied'));
 					}
 				}
 			}, cfg);

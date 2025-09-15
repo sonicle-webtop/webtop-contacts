@@ -35,17 +35,17 @@
 .wtcon-icon-categoryRemote { background-image: url('category-remote_16.svg') !important; background-size: contain; }
 .wtcon-icon-contact { background-image: url('contact_16.svg') !important; background-size: contain; }
 .wtcon-icon-contactsList { background-image: url('contactslist_16.svg') !important; background-size: contain; }
-.wtcon-icon-contactName:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactCompany:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactEmail:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactPhone:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactNotes:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactUrl:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactPartner:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactBirthday:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactAnniversary:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactAddress:before { background-image: none !important; background-size: contain; } /* FIXME: defaults to FA for now */
-.wtcon-icon-contactAttachments:before { content: '\f0c6'; font: var(--fa-font-solid); background-size: contain; } /* FIXME: defaults to FA for now */
+.wtcon-icon-sectionAddress { background-size: contain; } .wtcon-icon-sectionAddress:before { content: '\f041'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionAnniversary { background-size: contain; } .wtcon-icon-sectionAnniversary:before { content: '\f783'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionAttachments { background-size: contain; } .wtcon-icon-sectionAttachments:before { content: '\f0c6'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionBirthday { background-size: contain; } .wtcon-icon-sectionBirthday:before { content: '\f1fd'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionCompany { background-size: contain; } .wtcon-icon-sectionCompany:before { content: '\f1ad'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionEmail { background-size: contain; } .wtcon-icon-sectionEmail:before { content: '\f041'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionName { background-size: contain; } .wtcon-icon-sectionName:before { content: '\f0e0'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionNotes { background-size: contain; } .wtcon-icon-sectionNotes:before { content: '\f036'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionPartner { background-size: contain; } .wtcon-icon-sectionPartner:before { content: '\f007'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionPhone { background-size: contain; } .wtcon-icon-sectionPhone:before { content: '\f095'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionUrl { background-size: contain; } .wtcon-icon-sectionUrl:before { content: '\f0ac'; font: var(--fa-font-solid); }
 .wtcon-icon-mailchimp { background-image: url('mailchimp-freddie-icon.svg') !important; background-size: contain; }
 .wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; background-size: contain; }
 .wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; background-size: contain; }
