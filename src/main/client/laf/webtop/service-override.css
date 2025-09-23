@@ -13,7 +13,9 @@
 /*.wtcon-icon-editCategory { background-image: url('category-edit_16.svg') !important; background-size: contain; }*/
 /*.wtcon-icon-deleteCategory { background-image: url('category-delete_16.svg') !important; background-size: contain; }*/
 /*.wtcon-icon-newContact { background-image: url('contact-new_16.svg') !important; background-size: contain; }*/
+.x-btn-ui-default .wtcon-icon-newContact { background-image: url('contact-new-primary_16.svg') !important; background-size: contain; }
 /*.wtcon-icon-newContactsList { background-image: url('contactslist-new_16.svg') !important; background-size: contain; }*/
+.x-btn-ui-default .wtcon-icon-newContactsList { background-image: url('contactslist-new-primary_16.svg') !important; background-size: contain; }
 /*.wtcon-icon-addContact { background-image: url('contact-add_16.svg') !important; background-size: contain; }*/
 /*.wtcon-icon-addContactsList { background-image: url('contactslist-add_16.svg') !important; background-size: contain; }*/
 /*.wtcon-icon-openContact { background-image: none !important; background-size: contain; }*/
