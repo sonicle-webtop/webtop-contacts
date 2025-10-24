@@ -1,0 +1,10 @@
+/* ---------- Main */
+.wtcon-main-list-grid .x-panel-body,
+.wtcon-main-list-grid .x-grid-group-hd,
+.wtcon-main-list-grid .x-toolbar {
+    background-color: var(--wt-theme-color-surface-l0);
+}
+.wtcon-preview .x-toolbar,
+.wtcon-preview .x-panel-body {
+    background-color: var(--wt-theme-color-surface-l0);
+}

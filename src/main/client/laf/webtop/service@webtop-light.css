@@ -1,0 +1,4 @@
+/* ---------- Main */
+.wtcon-main-list-grid .x-grid-group-title {
+    color: var(--wt-theme-color-info-ct-on); /* maybe use lX??? */
+}

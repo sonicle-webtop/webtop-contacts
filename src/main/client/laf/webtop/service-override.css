@@ -51,11 +51,12 @@
 /*.wtcon-icon-mailchimp { background-image: url('mailchimp-freddie-icon.svg') !important; background-size: contain; }*/
 /*.wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; background-size: contain; }*/
 /*.wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; background-size: contain; }*/
-/* ---------- ToolPanel */
+
+/* ---------- Tool */
 .wtcon-tool-searchpanel-body {
     padding: 0px 8px 10px 8px;
 }
-/* ---------- Grid (contacts) */
+/* ---------- Main */
 .wtcon-main-list-grid {
 	border-top-left-radius: 10px;
 	border-bottom-left-radius: 10px;
@@ -64,12 +65,11 @@
     font-size: var(--wt-theme-fontsize-lg);
     line-height: var(--wt-theme-lineheight-lg);
     font-weight: var(--wt-theme-fontweight-medium);
-    color: var(--wt-theme-color-info-ct-on);
 }
 .wtcon-main-list-grid .wtcon-group-letter {
     padding-left: 16px;
 }
-/* ---------- Sonicle.webtop.contacts.ux.grid.column.Contact */
+/* ---------- .ux.grid.column.Contact */
 .wtcon-contactcolumn-head {
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -79,7 +79,6 @@
     vertical-align: top;
     margin-left: 10px;
     font-size: 0.9em; /* FIXME: make use of vars */
-    color: #767676; /* FIXME: make use of vars */
 }
 .wtcon-contactcolumn-body {
 	overflow: hidden;
@@ -88,7 +87,6 @@
 	margin-top: 5px;
 }
 .wtcon-contactcolumn-body > span {
-	color: #767676; /* FIXME: make use of vars */
 	font-size: 0.9em; /* FIXME: make use of vars */
 }
 .wtcon-contactcolumn-body-float {
@@ -110,7 +108,7 @@
 .wtcon-contactcolumn-body span:first-child {
     margin-left: 0px;
 }
-/* ---------- Sonicle.webtop.contacts.ux.panel.ContactPreview */
+/* ---------- .ux.panel.ContactPreview */
 .wtcon-preview-header > * > .x-panel-body {
 	padding-left: 10px;
 	padding-right: 10px;
