@@ -520,7 +520,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -540,7 +541,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
@@ -640,7 +642,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -662,7 +665,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -682,7 +686,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -702,7 +707,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -722,7 +728,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
@@ -789,7 +796,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -809,7 +817,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
@@ -926,7 +935,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -946,7 +956,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -966,7 +977,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -986,7 +998,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -1006,7 +1019,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -1026,7 +1040,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
