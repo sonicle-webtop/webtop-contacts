@@ -85,7 +85,6 @@ import com.sonicle.webtop.contacts.dal.ContactCustomValueDAO;
 import com.sonicle.webtop.contacts.dal.ContactDAO;
 import com.sonicle.webtop.contacts.dal.ContactPictureDAO;
 import com.sonicle.webtop.contacts.dal.ContactVCardDAO;
-import com.sonicle.webtop.contacts.dal.ContactPredicateVisitor;
 import com.sonicle.webtop.contacts.dal.ContactTagDAO;
 import com.sonicle.webtop.contacts.dal.ContactUIConditionBuildingVisitor;
 import com.sonicle.webtop.contacts.dal.HistoryDAO;
@@ -113,8 +112,6 @@ import com.sonicle.webtop.contacts.model.ContactLookup;
 import com.sonicle.webtop.contacts.model.ContactPicture;
 import com.sonicle.webtop.contacts.model.ContactPictureWithBytes;
 import com.sonicle.webtop.contacts.model.ContactPictureWithSize;
-import com.sonicle.webtop.contacts.model.ContactQueryUI_OLD;
-import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.model.ContactType;
@@ -260,24 +257,6 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		}
 	}
 	
-	/**
-	 * @deprecated Use listMyCategoryIds() instead.
-	 */
-	@Deprecated
-	@Override
-	public Set<Integer> listCategoryIds() throws WTException {
-		return listMyCategoryIds();
-	}
-	
-	/**
-	 * @deprecated Use listMyCategories() instead.
-	 */
-	@Deprecated
-	@Override
-	public Map<Integer, Category> listCategories() throws WTException {
-		return listCategories(getTargetProfileId(), true);
-	}
-	
 	private CoreManager getCoreManager() {
 		return WT.getCoreManager(getTargetProfileId());
 	}
@@ -302,8 +281,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public List<RecipientsProviderBase> returnRecipientsProviders() {
 		try {
 			ArrayList<RecipientsProviderBase> providers = new ArrayList<>();
-			UserProfile.Data ud = WT.getUserData(getTargetProfileId());
-			providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), ud.getDisplayName(), getTargetProfileId(), listCategoryIds()));
+			UserProfile.Data ud = WT.getProfileData(getTargetProfileId());
+			providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), ud.getDisplayName(), getTargetProfileId(), listMyCategoryIds()));
 			for (CategoryFSOrigin origin : shareCache.getOrigins()) {
 				final Collection<Integer> catIds = shareCache.getFolderIdsByOrigin(origin.getProfileId());
 				providers.add(new RootRecipientsProvider(origin.getProfileId().toString(), origin.getDisplayName(), origin.getProfileId(), catIds));
@@ -1247,6 +1226,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		return ids.get(ids.size()-1);
 	}
 	
+	/* deprecated
 	@Override
 	@Deprecated public boolean existContact(final Collection<Integer> categoryIds, final Condition<ContactQueryUI_OLD> queryPredicate) throws WTException {
 		ContactDAO contDao = ContactDAO.getInstance();
@@ -1315,6 +1295,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			DbUtils.closeQuietly(con);
 		}
 	}
+	*/
 	
 	@Override
 	public ItemsListResult<ContactLookup> listContacts(final Collection<Integer> categoryIds, final ContactType type, final Grouping groupBy, final ShowBy showBy, final Condition<ContactQuery> filterQuery, final Integer page, final Integer limit, final boolean returnFullCount) throws WTException {
