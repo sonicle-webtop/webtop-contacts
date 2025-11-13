@@ -1322,7 +1322,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			Integer fullCount = null;
 			if (returnFullCount) fullCount = contDao.countByCategoryTypeCondition(con, okCategoryIds, type, condition);
 			ArrayList<ContactLookup> items = new ArrayList<>();
-			for (VContactLookup vcont : contDao.viewByCategoryTypeCondition(con, orderFields, okCategoryIds, type, condition, limit, ManagerUtils.toOffset(myPage, myLimit))) {
+			for (VContactLookup vcont : contDao.viewByCategoryTypeCondition(con, orderFields, okCategoryIds, type, condition, myLimit, ManagerUtils.toOffset(myPage, myLimit))) {
 				items.add(ManagerUtils.fillContactLookup(new ContactLookup(), vcont));
 			}
 			return new ItemsListResult(items, fullCount);
