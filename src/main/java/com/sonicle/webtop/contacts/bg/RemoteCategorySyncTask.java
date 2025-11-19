@@ -68,13 +68,11 @@ public class RemoteCategorySyncTask extends BaseBackgroundServiceTask {
 		SessionManager sesMgr = WebTopApp.getInstance().getSessionManager();
 		ContactsManager jobManager = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID);
 		
-		Map<String, Boolean> crseCache = new HashMap<>();
-		Map<String, Boolean> rsowoCache = new HashMap<>();
 		List<Category> cats = jobManager.listRemoteCategoriesToBeSynchronized();
 		for (Category cat : cats) {
 			if (shouldStop()) break; // Speed-up shutdown process!
-			if (!isCategoryRemoteSyncEnabled(bs.SERVICE_ID, crseCache, cat.getDomainId())) continue; // Skip if sync is disabled!
-			if (isRemoteSyncOnlyWhenOnline(bs.SERVICE_ID, rsowoCache, cat.getDomainId()) && !sesMgr.isOnline(cat.getProfileId())) continue; // Skip offline profiles!
+			if (!isCategoryRemoteSyncEnabled(bs.SERVICE_ID, cat.getDomainId())) continue; // Skip if sync is disabled!
+			if (isRemoteSyncOnlyWhenOnline(bs.SERVICE_ID, cat.getDomainId()) && !sesMgr.isOnline(cat.getProfileId())) continue; // Skip offline profiles!
 
 			LOGGER.debug("Checking category [{}, {}]", cat.getCategoryId(), cat.getName());
 			if (isSyncNeeded(cat, context.getExecuteInstant())) {
@@ -93,20 +91,12 @@ public class RemoteCategorySyncTask extends BaseBackgroundServiceTask {
 		}
 	}
 	
-	private boolean isCategoryRemoteSyncEnabled(String serviceId, Map<String, Boolean> cache, String domainId) {
-		if (!cache.containsKey(domainId)) {
-			ContactsServiceSettings css = new ContactsServiceSettings(serviceId, domainId);
-			cache.put(domainId, css.getCategoryRemoteAutoSyncEnabled());
-		}
-		return cache.get(domainId);
+	private boolean isCategoryRemoteSyncEnabled(String serviceId, String domainId) {
+		return new ContactsServiceSettings(serviceId, domainId).getCategoryRemoteAutoSyncEnabled();
 	}
 	
-	private boolean isRemoteSyncOnlyWhenOnline(String serviceId, Map<String, Boolean> cache, String domainId) {
-		if (!cache.containsKey(domainId)) {
-			ContactsServiceSettings css = new ContactsServiceSettings(serviceId, domainId);
-			cache.put(domainId, css.getCategoryRemoteAutoSyncOnlyWhenOnline());
-		}
-		return cache.get(domainId);
+	private boolean isRemoteSyncOnlyWhenOnline(String serviceId, String domainId) {
+		return new ContactsServiceSettings(serviceId, domainId).getCategoryRemoteAutoSyncOnlyWhenOnline();
 	}
 
 	private boolean isSyncNeeded(Category cat, DateTime now) {

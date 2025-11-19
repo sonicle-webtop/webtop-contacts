@@ -34,7 +34,6 @@ package com.sonicle.webtop.contacts;
 
 import com.sonicle.commons.AlgoUtils;
 import com.sonicle.commons.beans.ItemsListResult;
-import com.sonicle.commons.beans.SortInfo;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiClient;
 import com.sonicle.webtop.contacts.mailchimp.cli.ApiException;
@@ -51,12 +50,10 @@ import com.sonicle.webtop.contacts.mailchimp.cli.model.MembersToSubscribeUnsubsc
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.ContactEx;
 import com.sonicle.webtop.contacts.model.ContactLookup;
-import com.sonicle.webtop.contacts.model.ContactObject;
 import com.sonicle.webtop.contacts.model.ContactQuery;
-import com.sonicle.webtop.contacts.model.ContactQueryUI_OLD;
+import com.sonicle.webtop.contacts.model.ContactQueryUI;
 import com.sonicle.webtop.contacts.model.ContactType;
 import com.sonicle.webtop.contacts.model.Grouping;
-import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.contacts.msg.MailchimpSyncEndSM;
 import com.sonicle.webtop.contacts.msg.MailchimpSyncLogSM;
@@ -133,7 +130,7 @@ public class MailchimpSyncThread extends Thread {
 				String myPid=wts.getProfileId().toString();
 				Map<Integer, Category> cats=null;
 				if (myPid.equals(srcPid)) {
-					cats=manager.listCategories();
+					cats=manager.listMyCategories();
 					for(Category cat: cats.values()) {
 						if (!cat.isProviderRemote()) categories.add(cat);
 					}
@@ -211,13 +208,12 @@ public class MailchimpSyncThread extends Thread {
 					icats.add(category.getCategoryId());
 					//for each tag select and create/update contacts, then create tag with members
 					for(Tag tag: wtTags) {
-						ContactQueryUI_OLD q = new ContactQueryUI_OLD();
-						Condition<ContactQueryUI_OLD> cp=q.tag().eq(tag.getTagId());
-						ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
-						//TODO: use new query api
+						Condition<ContactQuery> filterQuery = new ContactQueryUI().tagId().eq(tag.getTagId());
+						ItemsListResult<ContactLookup> ilr = manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, filterQuery, null, null, false);
+						//TODO: maybe use new generic query api
 						//Condition<ContactQueryApi> filterQuery = new ContactQueryApi().tagId().eq(tag.getTagId());
 						//ItemsListResult<ContactObject> result = manager.listContacts(icats, filterQuery, new SortInfo.Builder().asc("displayName", "company").build(), null, null, false, ContactObjectOutputType.BEAN);
-						ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,null,tag.getName());
+						ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,ilr,null,tag.getName());
 						count+=emails.size();
 						//save emails in tag map for this category
 						updateMailchimpTagsMap(tagMap, category.getName(), emails);
@@ -227,12 +223,10 @@ public class MailchimpSyncThread extends Thread {
 						allEmails.addAll(emails);
 					}
 					//create/update contacts without tags
-					ContactQueryUI_OLD q = new ContactQueryUI_OLD();
-					Condition<ContactQueryUI_OLD> cp=q.trueCondition();
-					ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
-					//TODO: use new query api
+					ItemsListResult<ContactLookup> ilr = manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, (String)null, null, null, false);
+					//TODO: maybe use new generic query api
 					//ItemsListResult<ContactObject> result = manager.listContacts(icats, (String)null, new SortInfo.Builder().asc("displayName", "company").build(), null, null, false, ContactObjectOutputType.BEAN);
-					ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,lcr,allEmails,category.getName());
+					ArrayList<String> emails=updateMailchimpContacts(lists,audienceId,ilr,allEmails,category.getName());
 					count+=emails.size();
 					//save emails in tag map for this category
 					updateMailchimpTagsMap(tagMap, category.getName(), emails);
@@ -260,13 +254,11 @@ public class MailchimpSyncThread extends Thread {
 					ArrayList<Integer> icats=new ArrayList<>();
 					icats.add(category.getCategoryId());
 					
-					ContactQueryUI_OLD q = new ContactQueryUI_OLD();
-					Condition<ContactQueryUI_OLD> cp=q.trueCondition();
 					//select and create contacts
-					ListContactsResult lcr=manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, cp);
-					//TODO: use new query api
+					ItemsListResult<ContactLookup> ilr = manager.listContacts(icats, ContactType.CONTACT, Grouping.ALPHABETIC, ShowBy.DISPLAY, (String)null, null, null, false);
+					//TODO: maybe use new generic query api
 					//ItemsListResult<ContactObject> result = manager.listContacts(icats, (String)null, new SortInfo.Builder().asc("displayName", "company").build(), null, null, false, ContactObjectOutputType.BEAN);
-					ArrayList<String> catEmails=updateMailchimpContacts(lists,audienceId,lcr,null,category.getName());
+					ArrayList<String> catEmails=updateMailchimpContacts(lists,audienceId,ilr,null,category.getName());
 					count+=catEmails.size();
 					//create tag for category, including all cat emails
 					try {
@@ -328,7 +320,7 @@ public class MailchimpSyncThread extends Thread {
 		tagEmails.addAll(emails);
 	}
 	
-	private ArrayList<String> updateMailchimpContacts(ListsApi lists, String audienceId, ListContactsResult lcr, ArrayList<String> excludeEmails, String tagName) throws ApiException {
+	private ArrayList<String> updateMailchimpContacts(ListsApi lists, String audienceId, ItemsListResult<ContactLookup> ilr, ArrayList<String> excludeEmails, String tagName) throws ApiException {
 		//Mailchimp allows only a maximum of 500 members updates/insert per api call
 		ArrayList<MembersToSubscribeUnsubscribeTofromAListInBatch> bulks=new ArrayList<>();
 		int count=0;
@@ -336,7 +328,7 @@ public class MailchimpSyncThread extends Thread {
 		m500.setUpdateExisting(true);
 		bulks.add(m500);
 		ArrayList<String> emails=new ArrayList();
-		for(ContactLookup cl: lcr.items) {
+		for(ContactLookup cl: ilr.items) {
 			AddListMembers member=new AddListMembers();
 			String email=cl.getEmail1();
 			if (StringUtils.isEmpty(email)) continue;

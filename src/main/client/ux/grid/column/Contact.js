@@ -53,11 +53,11 @@ Ext.define('Sonicle.webtop.contacts.ux.grid.column.Contact', {
 	sortable: false,
 	groupable: false,
 	
-	tagIconCls: 'fas fa-tag',
+	tagIconCls: 'wt-glyph-tag',
 	dlistIconCls: 'fas fa-list-ul',
-	emailIconCls: 'far fa-envelope',
-	mobileIconCls: 'fas fa-mobile-alt',
-	telephoneIconCls: 'fas fa-phone',
+	emailIconCls: 'wt-glyph-envelope',
+	mobileIconCls: 'wt-glyph-mobile',
+	telephoneIconCls: 'wt-glyph-phone',
 	
 	tpl: [
 		'<div class="wtcon-grid-cell-contactcolumn">',

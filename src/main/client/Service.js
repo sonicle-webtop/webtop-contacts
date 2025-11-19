@@ -199,6 +199,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					],
 					tooltip: me.res('fld-search.tip'),
 					searchTooltip: me.res('fld-search.tip'),
+					listTopButtonText: me.res('fld-search.topbutton.lbl'),
 					emptyText: me.res('fld-search.emp'),
 					listeners: {
 						query: function(s, value, qObj) {
@@ -372,7 +373,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					region: 'center',
 					xtype: 'gridpanel',
 					reference: 'gpcontacts',
-					cls: 'wtcon-gpcontacts',
+					border: false,
+					cls: 'wtcon-main-list-grid',
 					store: {
 						type: 'buffered',
 						model: 'Sonicle.webtop.contacts.model.GridContact',

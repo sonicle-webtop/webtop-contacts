@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.List;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -170,6 +171,21 @@ public class ContactAttachmentDAO extends BaseDAO {
 			.insertInto(CONTACTS_ATTACHMENTS_DATA)
 			.set(CONTACTS_ATTACHMENTS_DATA.CONTACT_ATTACHMENT_ID, attachmentId)
 			.set(CONTACTS_ATTACHMENTS_DATA.BYTES, bytes)
+			.execute();
+	}
+	
+	public int insertBytesFromClone(Connection con, String attachmentId, String cloneAttachmentId) throws DAOException {
+		DSLContext dsl = getDSL(con);
+		return dsl
+			.insertInto(CONTACTS_ATTACHMENTS_DATA)
+			.select(
+				DSL.select(
+					DSL.value(attachmentId),
+					CONTACTS_ATTACHMENTS_DATA.BYTES
+				)
+				.from(CONTACTS_ATTACHMENTS_DATA)
+				.where(CONTACTS_ATTACHMENTS_DATA.CONTACT_ATTACHMENT_ID.equal(cloneAttachmentId))
+			)
 			.execute();
 	}
 	

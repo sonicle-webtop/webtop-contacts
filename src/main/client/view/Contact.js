@@ -440,7 +440,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactName',
+					labelIconCls: 'wtcon-icon-sectionName',
 					items: [
 						{
 							xtype: 'sofieldhgroup',
@@ -520,7 +520,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -540,14 +541,15 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactCompany',
+					labelIconCls: 'wtcon-icon-sectionCompany',
 					items: [
 						{
 							xtype: 'sofieldhgroup',
@@ -640,7 +642,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -662,7 +665,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -682,7 +686,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -702,7 +707,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -722,14 +728,15 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactEmail',
+					labelIconCls: 'wtcon-icon-sectionEmail',
 					items: [
 						{
 							xtype: 'sofieldhgroup',
@@ -789,7 +796,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -809,14 +817,15 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactPhone',
+					labelIconCls: 'wtcon-icon-sectionPhone',
 					items: [
 						{
 							xtype: 'sofieldhgroup',
@@ -926,7 +935,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -946,7 +956,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -966,7 +977,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -986,7 +998,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -1006,7 +1019,8 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}, {
@@ -1026,14 +1040,15 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								}, {
 									// Mocks inline addButtons spacing!
 									bind: { minWidth: '{addButtonsMinWidth}' },
-									cls: 'so-form-hspacer x-component-default'
+									cls: 'so-form-hspacer x-component-default',
+									height: 0
 								}
 							]
 						}
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactNotes',
+					labelIconCls: 'wtcon-icon-sectionNotes',
 					items: [
 						{
 							xtype: 'sofieldhgroup',
@@ -1047,7 +1062,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactUrl',
+					labelIconCls: 'wtcon-icon-sectionUrl',
 					bind: {
 						hidden: '{hidden.fldurl}'
 					},
@@ -1062,7 +1077,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactPartner',
+					labelIconCls: 'wtcon-icon-sectionPartner',
 					bind: {
 						hidden: '{hidden.fldpartner}'
 					},
@@ -1077,7 +1092,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactBirthday',
+					labelIconCls: 'wtcon-icon-sectionBirthday',
 					bind: {
 						hidden: '{hidden.fldbirthday}'
 					},
@@ -1094,7 +1109,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactAnniversary',
+					labelIconCls: 'wtcon-icon-sectionAnniversary',
 					bind: {
 						hidden: '{hidden.fldanniversary}'
 					},
@@ -1111,7 +1126,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactAddress',
+					labelIconCls: 'wtcon-icon-sectionAddress',
 					bind: {
 						hidden: '{hidden.fldworkaddress}'
 					},
@@ -1158,7 +1173,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactAddress',
+					labelIconCls: 'wtcon-icon-sectionAddress',
 					bind: {
 						hidden: '{hidden.fldhomeaddress}'
 					},
@@ -1205,7 +1220,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactAddress',
+					labelIconCls: 'wtcon-icon-sectionAddress',
 					bind: {
 						hidden: '{hidden.fldotheraddress}'
 					},
@@ -1328,7 +1343,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
-					labelIconCls: 'wtcon-icon-contactAttachments',
+					labelIconCls: 'wtcon-icon-sectionAttachments',
 					bind: {
 						hidden: '{!foHasAttachments}'
 					},
@@ -1456,7 +1471,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 							hidden: '{foIsNew}'
 						},
 						tooltip: WT.res('act-auditLog.lbl'),
-						iconCls: 'fas fa-history',
+						iconCls: 'wt-icon-audit',
 						handler: function() {
 							me.mys.openAuditUI(me.getModel().getId(), 'CONTACT');
 						},

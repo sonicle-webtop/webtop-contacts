@@ -96,7 +96,7 @@ public class CardDav extends CarddavApi {
 		}
 		
 		try {
-			Map<Integer, Category> cats = manager.listCategories();
+			Map<Integer, Category> cats = manager.listMyCategories();
 			Map<Integer, DateTime> revisions = manager.getCategoriesItemsLastRevision(cats.keySet());
 			for (Category category : cats.values()) {
 				if (category.isProviderRemote()) continue;
