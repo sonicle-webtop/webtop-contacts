@@ -354,7 +354,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					},
 					border: false,
 					scrollable: { trackPosition: 'v' },
-					cls: 'wt-tool-tree wtcon-tool-tree',
+					cls: 'wt-tool-tree wt-tool-scroll-inset wtcon-tool-tree',
 					bodyCls: 'wt-tool-bg',
 					width: '100%',
 					flex: 1
