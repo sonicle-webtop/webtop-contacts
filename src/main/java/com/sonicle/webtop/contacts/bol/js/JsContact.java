@@ -108,6 +108,8 @@ public class JsContact {
 	public String birthday;
 	public String anniversary;
 	public String url;
+	public String taxCode;
+	public String vatNumber;
 	public String notes;
 	public String tags;
 	public String picture;
@@ -169,6 +171,8 @@ public class JsContact {
 		birthday = (contact.getBirthday() != null) ? ymdFmt.print(contact.getBirthday()) : null;
 		anniversary = (contact.getAnniversary() != null) ? ymdFmt.print(contact.getAnniversary()) : null;
 		url = contact.getUrl();
+		taxCode = contact.getTaxCode();
+		vatNumber = contact.getVATNumber();
 		notes = contact.getNotes();
 		tags = new CompositeId(contact.getTags()).toString();
 		picture = contact.hasPicture() ? String.valueOf(id) : null;
@@ -259,6 +263,8 @@ public class JsContact {
 		if (!StringUtils.isEmpty(birthday)) item.setBirthday(ymdFmt.parseLocalDate(birthday));
 		if (!StringUtils.isEmpty(anniversary)) item.setAnniversary(ymdFmt.parseLocalDate(anniversary));
 		item.setUrl(url);
+		item.setTaxCode(taxCode);
+		item.setVATNumber(vatNumber);
 		item.setNotes(notes);
 		item.setTags(new LinkedHashSet<>(new CompositeId().parse(tags).getTokens()));
 		

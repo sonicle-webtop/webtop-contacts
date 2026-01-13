@@ -2448,6 +2448,20 @@
             },
             "description": "Contact's reference URL."
           },
+          "taxCode": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "11qp689u4fodq"
+            },
+            "description": "Contact's Tax code."
+          },
+          "vatNumber": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "0ej5d7vuaf72b"
+            },
+            "description": "Contact's VAT number."
+          },
           "notes": {
             "type": "string",
             "x-stoplight": {

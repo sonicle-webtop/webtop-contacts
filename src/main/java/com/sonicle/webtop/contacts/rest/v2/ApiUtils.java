@@ -190,6 +190,8 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "birthday")) tgt.setBirthday(JodaTimeUtils.parseLocalDate(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getBirthday()));
 		if (shouldSet(fields2set, "anniversary")) tgt.setAnniversary(JodaTimeUtils.parseLocalDate(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getAnniversary()));
 		if (shouldSet(fields2set, "url")) tgt.setUrl(src.getUrl());
+		if (shouldSet(fields2set, "taxCode")) tgt.setTaxCode(src.getTaxCode());
+		if (shouldSet(fields2set, "vatNumber")) tgt.setVATNumber(src.getVatNumber());
 		if (shouldSet(fields2set, "notes")) tgt.setNotes(src.getNotes());
 		//if (shouldSet(fields2set, "picture")) tgt.setPicture(picture);
 		return tgt;
@@ -306,6 +308,8 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "birthday")) tgt.setBirthday(JodaTimeUtils.print(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getBirthday()));
 		if (shouldSet(fields2set, "anniversary")) tgt.setAnniversary(JodaTimeUtils.print(JodaTimeUtils.ISO_LOCALDATE_FMT, src.getAnniversary()));
 		if (shouldSet(fields2set, "url")) tgt.setUrl(src.getUrl());
+		if (shouldSet(fields2set, "taxCode")) tgt.setTaxCode(src.getTaxCode());
+		if (shouldSet(fields2set, "vatNumber")) tgt.setVatNumber(src.getVATNumber());
 		if (shouldSet(fields2set, "notes")) tgt.setNotes(src.getNotes());
 		//if (shouldSet(fields2set, "picture")) tgt.setPicture(picture);
 		return tgt;

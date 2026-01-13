@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a contact object with extended data.")
 @JsonTypeName("ContactEx")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-01-13T16:13:15.508+01:00[Europe/Berlin]")
 public class ApiContactEx extends ApiContactBase  {
 
 

@@ -46,6 +46,7 @@
 .wtcon-icon-sectionPartner { background-size: contain; } .wtcon-icon-sectionPartner:before { content: '\f007'; font: var(--fa-font-solid); }
 .wtcon-icon-sectionPhone { background-size: contain; } .wtcon-icon-sectionPhone:before { content: '\f095'; font: var(--fa-font-solid); }
 .wtcon-icon-sectionUrl { background-size: contain; } .wtcon-icon-sectionUrl:before { content: '\f0ac'; font: var(--fa-font-solid); }
+.wtcon-icon-sectionTax { background-size: contain; } .wtcon-icon-sectionTax:before { content: '\f53d'; font: var(--fa-font-solid); }
 .wtcon-icon-mailchimp { background-image: url('mailchimp-freddie-icon.svg') !important; background-size: contain; }
 .wtcon-icon-viewHome { background-image: url('view-home_16.svg') !important; background-size: contain; }
 .wtcon-icon-viewWork { background-image: url('view-work_16.svg') !important; background-size: contain; }
