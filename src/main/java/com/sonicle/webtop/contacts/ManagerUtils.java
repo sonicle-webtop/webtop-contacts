@@ -320,6 +320,8 @@ public class ManagerUtils {
 			tgt.setBirthday(src.getBirthday());
 			tgt.setAnniversary(src.getAnniversary());
 			tgt.setUrl(src.getUrl());
+			tgt.setTaxCode(src.getTaxCode());
+			tgt.setVATNumber(src.getVatNumber());
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
@@ -448,6 +450,8 @@ public class ManagerUtils {
 			tgt.setBirthday(src.getBirthday());
 			tgt.setAnniversary(src.getAnniversary());
 			tgt.setUrl(src.getUrl());
+			tgt.setTaxCode(src.getTaxCode());
+			tgt.setVatNumber(src.getVATNumber());
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
