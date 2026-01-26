@@ -1100,6 +1100,7 @@ AND (ccnts.href IS NULL)
 			.set(CONTACTS_.URL, item.getUrl())
 			.set(CONTACTS_.TAX_CODE, item.getTaxCode())
 			.set(CONTACTS_.VAT_NUMBER, item.getVatNumber())
+			.set(CONTACTS_.E_INVOICING_CODE, item.getEInvoicingCode())
 			.set(CONTACTS_.NOTES, item.getNotes())
 			.set(CONTACTS_.ETAG, item.getEtag())
 			.where(

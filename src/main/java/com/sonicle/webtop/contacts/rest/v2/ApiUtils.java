@@ -192,6 +192,7 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "url")) tgt.setUrl(src.getUrl());
 		if (shouldSet(fields2set, "taxCode")) tgt.setTaxCode(src.getTaxCode());
 		if (shouldSet(fields2set, "vatNumber")) tgt.setVATNumber(src.getVatNumber());
+		if (shouldSet(fields2set, "eInvoicingCode")) tgt.setEInvoicingCode(src.geteInvoicingCode());
 		if (shouldSet(fields2set, "notes")) tgt.setNotes(src.getNotes());
 		//if (shouldSet(fields2set, "picture")) tgt.setPicture(picture);
 		return tgt;
@@ -310,6 +311,7 @@ public class ApiUtils {
 		if (shouldSet(fields2set, "url")) tgt.setUrl(src.getUrl());
 		if (shouldSet(fields2set, "taxCode")) tgt.setTaxCode(src.getTaxCode());
 		if (shouldSet(fields2set, "vatNumber")) tgt.setVatNumber(src.getVATNumber());
+		if (shouldSet(fields2set, "eInvoicingCode")) tgt.seteInvoicingCode(src.getEInvoicingCode());
 		if (shouldSet(fields2set, "notes")) tgt.setNotes(src.getNotes());
 		//if (shouldSet(fields2set, "picture")) tgt.setPicture(picture);
 		return tgt;

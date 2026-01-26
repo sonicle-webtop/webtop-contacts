@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a contact object with base updateable fields.")
 @JsonTypeName("ContactBase")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-01-13T16:13:15.508+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-01-26T15:34:09.565+01:00[Europe/Berlin]")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiContactBase   {
   private @Valid String displayName;
@@ -70,6 +70,7 @@ public class ApiContactBase   {
   private @Valid String url;
   private @Valid String taxCode;
   private @Valid String vatNumber;
+  private @Valid String eInvoicingCode;
   private @Valid String notes;
 
   /**
@@ -1033,6 +1034,26 @@ public class ApiContactBase   {
   }
 
   /**
+   * Contact&#39;s Electronic Invoicing Code.
+   **/
+  public ApiContactBase eInvoicingCode(String eInvoicingCode) {
+    this.eInvoicingCode = eInvoicingCode;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "Contact's Electronic Invoicing Code.")
+  @JsonProperty("eInvoicingCode")
+  public String geteInvoicingCode() {
+    return eInvoicingCode;
+  }
+
+  @JsonProperty("eInvoicingCode")
+  public void seteInvoicingCode(String eInvoicingCode) {
+    this.eInvoicingCode = eInvoicingCode;
+  }
+
+  /**
    * The user&#39;s notes about the contact.
    **/
   public ApiContactBase notes(String notes) {
@@ -1110,12 +1131,13 @@ public class ApiContactBase   {
         Objects.equals(this.url, contactBase.url) &&
         Objects.equals(this.taxCode, contactBase.taxCode) &&
         Objects.equals(this.vatNumber, contactBase.vatNumber) &&
+        Objects.equals(this.eInvoicingCode, contactBase.eInvoicingCode) &&
         Objects.equals(this.notes, contactBase.notes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, assistantName, assistantTelephone, managerName, partnerName, birthday, anniversary, url, taxCode, vatNumber, notes);
+    return Objects.hash(displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, assistantName, assistantTelephone, managerName, partnerName, birthday, anniversary, url, taxCode, vatNumber, eInvoicingCode, notes);
   }
 
   @Override
@@ -1171,6 +1193,7 @@ public class ApiContactBase   {
     sb.append("    url: ").append(toIndentedString(url)).append("\n");
     sb.append("    taxCode: ").append(toIndentedString(taxCode)).append("\n");
     sb.append("    vatNumber: ").append(toIndentedString(vatNumber)).append("\n");
+    sb.append("    eInvoicingCode: ").append(toIndentedString(eInvoicingCode)).append("\n");
     sb.append("    notes: ").append(toIndentedString(notes)).append("\n");
     sb.append("}");
     return sb.toString();

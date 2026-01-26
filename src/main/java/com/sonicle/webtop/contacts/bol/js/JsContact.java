@@ -110,6 +110,7 @@ public class JsContact {
 	public String url;
 	public String taxCode;
 	public String vatNumber;
+	public String eInvoicingCode;
 	public String notes;
 	public String tags;
 	public String picture;
@@ -173,6 +174,7 @@ public class JsContact {
 		url = contact.getUrl();
 		taxCode = contact.getTaxCode();
 		vatNumber = contact.getVATNumber();
+		eInvoicingCode = contact.getEInvoicingCode();
 		notes = contact.getNotes();
 		tags = new CompositeId(contact.getTags()).toString();
 		picture = contact.hasPicture() ? String.valueOf(id) : null;
@@ -265,6 +267,7 @@ public class JsContact {
 		item.setUrl(url);
 		item.setTaxCode(taxCode);
 		item.setVATNumber(vatNumber);
+		item.setEInvoicingCode(eInvoicingCode);
 		item.setNotes(notes);
 		item.setTags(new LinkedHashSet<>(new CompositeId().parse(tags).getTokens()));
 		
