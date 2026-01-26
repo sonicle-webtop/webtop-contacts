@@ -322,6 +322,7 @@ public class ManagerUtils {
 			tgt.setUrl(src.getUrl());
 			tgt.setTaxCode(src.getTaxCode());
 			tgt.setVATNumber(src.getVatNumber());
+			tgt.setEInvoicingCode(src.getEInvoicingCode());
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());
@@ -452,6 +453,7 @@ public class ManagerUtils {
 			tgt.setUrl(src.getUrl());
 			tgt.setTaxCode(src.getTaxCode());
 			tgt.setVatNumber(src.getVATNumber());
+			tgt.setEInvoicingCode(src.getEInvoicingCode());
 			tgt.setNotes(src.getNotes());
 			tgt.setHref(src.getHref());
 			tgt.setEtag(src.getEtag());

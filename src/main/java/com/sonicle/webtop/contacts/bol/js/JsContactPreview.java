@@ -112,6 +112,7 @@ public class JsContactPreview {
 		addValueItem(this.data3, "add2", item.getHomeFullAddress(), "homeadd");
 		//if (!StringUtils.isBlank(item.getTaxCode())) addValueItem(this.data3, "taxcode", item.getTaxCode(), "taxCode");
 		//if (!StringUtils.isBlank(item.getVATNumber())) addValueItem(this.data3, "vatnum", item.getVATNumber(), "vatNumber");
+		//if (!StringUtils.isBlank(item.getEInvoicingCode())) addValueItem(this.data3, "einvcode", item.getEInvoicingCode(), "eInvoicingCode");
 		this.notes = item.getNotes();
 		this.tags = new CompositeId(item.getTags()).toString();
 		this.pic = item.hasPicture();

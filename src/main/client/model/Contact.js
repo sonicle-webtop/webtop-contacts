@@ -97,6 +97,7 @@ Ext.define('Sonicle.webtop.contacts.model.Contact', {
 		WTF.field('url', 'string', true),
 		WTF.field('taxCode', 'string', true),
 		WTF.field('vatNumber', 'string', true),
+		WTF.field('eInvoicingCode', 'string', true),
 		WTF.field('notes', 'string', true),
 		WTF.field('tags', 'string', true),
 		WTF.field('picture', 'string', true),
