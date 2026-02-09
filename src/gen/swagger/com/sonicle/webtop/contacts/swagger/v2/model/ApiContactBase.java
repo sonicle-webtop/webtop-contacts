@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a contact object with base updateable fields.")
 @JsonTypeName("ContactBase")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2025-05-30T11:31:06.563+02:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-01-26T15:34:09.565+01:00[Europe/Berlin]")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiContactBase   {
   private @Valid String displayName;
@@ -68,6 +68,9 @@ public class ApiContactBase   {
   private @Valid String birthday;
   private @Valid String anniversary;
   private @Valid String url;
+  private @Valid String taxCode;
+  private @Valid String vatNumber;
+  private @Valid String eInvoicingCode;
   private @Valid String notes;
 
   /**
@@ -991,6 +994,66 @@ public class ApiContactBase   {
   }
 
   /**
+   * Contact&#39;s Tax code.
+   **/
+  public ApiContactBase taxCode(String taxCode) {
+    this.taxCode = taxCode;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "Contact's Tax code.")
+  @JsonProperty("taxCode")
+  public String getTaxCode() {
+    return taxCode;
+  }
+
+  @JsonProperty("taxCode")
+  public void setTaxCode(String taxCode) {
+    this.taxCode = taxCode;
+  }
+
+  /**
+   * Contact&#39;s VAT number.
+   **/
+  public ApiContactBase vatNumber(String vatNumber) {
+    this.vatNumber = vatNumber;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "Contact's VAT number.")
+  @JsonProperty("vatNumber")
+  public String getVatNumber() {
+    return vatNumber;
+  }
+
+  @JsonProperty("vatNumber")
+  public void setVatNumber(String vatNumber) {
+    this.vatNumber = vatNumber;
+  }
+
+  /**
+   * Contact&#39;s Electronic Invoicing Code.
+   **/
+  public ApiContactBase eInvoicingCode(String eInvoicingCode) {
+    this.eInvoicingCode = eInvoicingCode;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "Contact's Electronic Invoicing Code.")
+  @JsonProperty("eInvoicingCode")
+  public String geteInvoicingCode() {
+    return eInvoicingCode;
+  }
+
+  @JsonProperty("eInvoicingCode")
+  public void seteInvoicingCode(String eInvoicingCode) {
+    this.eInvoicingCode = eInvoicingCode;
+  }
+
+  /**
    * The user&#39;s notes about the contact.
    **/
   public ApiContactBase notes(String notes) {
@@ -1066,12 +1129,15 @@ public class ApiContactBase   {
         Objects.equals(this.birthday, contactBase.birthday) &&
         Objects.equals(this.anniversary, contactBase.anniversary) &&
         Objects.equals(this.url, contactBase.url) &&
+        Objects.equals(this.taxCode, contactBase.taxCode) &&
+        Objects.equals(this.vatNumber, contactBase.vatNumber) &&
+        Objects.equals(this.eInvoicingCode, contactBase.eInvoicingCode) &&
         Objects.equals(this.notes, contactBase.notes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, assistantName, assistantTelephone, managerName, partnerName, birthday, anniversary, url, notes);
+    return Objects.hash(displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, companyId, companyName, function, department, assistantName, assistantTelephone, managerName, partnerName, birthday, anniversary, url, taxCode, vatNumber, eInvoicingCode, notes);
   }
 
   @Override
@@ -1125,6 +1191,9 @@ public class ApiContactBase   {
     sb.append("    birthday: ").append(toIndentedString(birthday)).append("\n");
     sb.append("    anniversary: ").append(toIndentedString(anniversary)).append("\n");
     sb.append("    url: ").append(toIndentedString(url)).append("\n");
+    sb.append("    taxCode: ").append(toIndentedString(taxCode)).append("\n");
+    sb.append("    vatNumber: ").append(toIndentedString(vatNumber)).append("\n");
+    sb.append("    eInvoicingCode: ").append(toIndentedString(eInvoicingCode)).append("\n");
     sb.append("    notes: ").append(toIndentedString(notes)).append("\n");
     sb.append("}");
     return sb.toString();

@@ -209,6 +209,15 @@ public class ContactConditionBuildingVisitor extends JOOQConditionBuildingVisito
 		} else if (ContactQuery.URL.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.URL, operator, values);
 			
+		} else if (ContactQuery.TAX_CODE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.TAX_CODE, operator, values);
+			
+		} else if (ContactQuery.VAT_NUMBER.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.VAT_NUMBER, operator, values);
+			
+		} else if (ContactQuery.E_INVOICING_CODE.equals(fieldName)) {
+			return defaultCondition(CONTACTS_.E_INVOICING_CODE, operator, values);
+			
 		} else if (ContactQuery.NOTES.equals(fieldName)) {
 			return defaultCondition(CONTACTS_.NOTES, operator, values);
 			

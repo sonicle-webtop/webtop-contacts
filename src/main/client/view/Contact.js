@@ -92,6 +92,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fldinstantmsg1: true,
 				fldinstantmsg2: true,
 				fldinstantmsg3: true,
+				fldtaxcode: true,
+				fldvatnumber: true,
+				fldeinvoicingcode: true,
 				fldurl: true,
 				fldpartner: true,
 				fldbirthday: true,
@@ -137,7 +140,7 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				Ext.iterate(v, function(name, value) { disable = disable && !value; });
 				return disable;
 			}),
-			foDisableAddOtherField: WTF.foMultiGetFn('hidden', ['fldurl', 'fldpartner', 'fldbirthday', 'fldanniversary', 'fldworkaddress', 'fldhomeaddress', 'fldotheraddress'], function(v) {
+			foDisableAddOtherField: WTF.foMultiGetFn('hidden', ['fldtaxcode', 'fldvatnumber', 'fldeinvoicingcode', 'fldurl', 'fldpartner', 'fldbirthday', 'fldanniversary', 'fldworkaddress', 'fldhomeaddress', 'fldotheraddress'], function(v) {
 				var disable = true;
 				Ext.iterate(v, function(name, value) { disable = disable && !value; });
 				return disable;
@@ -1062,6 +1065,51 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 					]
 				}, {
 					xtype: 'sofieldsection',
+					labelIconCls: 'wtcon-icon-sectionTax',
+					bind: {
+						hidden: '{hidden.fldtaxcode}'
+					},
+					hidden: true,
+					items: [
+						{
+							xtype: 'textfield',
+							reference: 'fldtaxcode',
+							bind: '{record.taxCode}',
+							fieldLabel: me.res('contact.fld-taxCode.lbl')
+						}
+					]
+				}, {
+					xtype: 'sofieldsection',
+					labelIconCls: 'wtcon-icon-sectionTax',
+					bind: {
+						hidden: '{hidden.fldvatnumber}'
+					},
+					hidden: true,
+					items: [
+						{
+							xtype: 'textfield',
+							reference: 'fldvatnumber',
+							bind: '{record.vatNumber}',
+							fieldLabel: me.res('contact.fld-vatNumber.lbl')
+						}
+					]
+				}, {
+					xtype: 'sofieldsection',
+					labelIconCls: 'wtcon-icon-sectionTax',
+					bind: {
+						hidden: '{hidden.fldeinvoicingcode}'
+					},
+					hidden: true,
+					items: [
+						{
+							xtype: 'textfield',
+							reference: 'fldeinvoicingcode',
+							bind: '{record.eInvoicingCode}',
+							fieldLabel: me.res('contact.fld-eInvoicingCode.lbl')
+						}
+					]
+				}, {
+					xtype: 'sofieldsection',
 					labelIconCls: 'wtcon-icon-sectionUrl',
 					bind: {
 						hidden: '{hidden.fldurl}'
@@ -1277,6 +1325,24 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 							menu: {
 								items: [
 									{
+										itemId: 'taxCode',
+										text: me.res('contact.fld-taxCode.lbl'),
+										handler: function() {
+											me.showField('fldtaxcode', true);
+										}
+									}, {
+										itemId: 'vatNumber',
+										text: me.res('contact.fld-vatNumber.lbl'),
+										handler: function() {
+											me.showField('fldvatnumber', true);
+										}
+									}, {
+										itemId: 'eInvoicingCode',
+										text: me.res('contact.fld-eInvoicingCode.lbl'),
+										handler: function() {
+											me.showField('fldeinvoicingcode', true);
+										}
+									}, {
 										itemId: 'url',
 										text: me.res('contact.fld-url.lbl'),
 										handler: function() {
@@ -1329,6 +1395,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 								listeners: {
 									beforeshow: function(s) {
 										var address = s.getComponent('address').getMenu();
+										s.getComponent('taxCode').setHidden(me.isFieldHidden('fldtaxcode'));
+										s.getComponent('vatNumber').setHidden(me.isFieldHidden('fldvatnumber'));
+										s.getComponent('eInvoicingCode').setHidden(me.isFieldHidden('fldeinvoicingcode'));
 										s.getComponent('url').setHidden(me.isFieldHidden('fldurl'));
 										s.getComponent('partner').setHidden(me.isFieldHidden('fldpartner'));
 										s.getComponent('birthday').setHidden(me.isFieldHidden('fldbirthday'));
@@ -1517,6 +1586,9 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 				fldinstantmsg1: mo.isFieldEmpty('instantMsg1'),
 				fldinstantmsg2: mo.isFieldEmpty('instantMsg2'),
 				fldinstantmsg3: mo.isFieldEmpty('instantMsg3'),
+				fldtaxcode: mo.isFieldEmpty('taxCode'),
+				fldvatnumber: mo.isFieldEmpty('vatNumber'),
+				fldeinvoicingcode: mo.isFieldEmpty('eInvoicingCode'),
 				fldurl: mo.isFieldEmpty('url'),
 				fldpartner: mo.isFieldEmpty('partner'),
 				fldbirthday: mo.isFieldEmpty('birthday'),

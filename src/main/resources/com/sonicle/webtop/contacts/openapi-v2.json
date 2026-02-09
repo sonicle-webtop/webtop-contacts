@@ -903,7 +903,7 @@
             "$ref": "#/components/parameters/_returnCount"
           }
         ],
-        "description": "Returns a list of contacts from specified category.\n\nParam *_filter* supports the following fields in RSQL query conditions:\nid, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, notes, tagId\n\nWith the addition of the following composite fields that helps filtering:\n* anyName: matches displayName || firstName || lastName\n* anyEmail: matches email1 || email2 || email3\n* anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax\n* anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax\n* anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
+        "description": "Returns a list of contacts from specified category.\n\nParam *_filter* supports the following fields in RSQL query conditions:\nid, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, taxCode, vatNumber, eInvoicingCode, notes, tagId\n\nWith the addition of the following composite fields that helps filtering:\n* anyName: matches displayName || firstName || lastName\n* anyEmail: matches email1 || email2 || email3\n* anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax\n* anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax\n* anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode"
       },
       "post": {
         "summary": "Add a contact",
@@ -977,7 +977,7 @@
             "$ref": "#/components/parameters/_select"
           }
         ],
-        "description": "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
+        "description": "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode"
       }
     },
     "/me/contacts": {
@@ -1064,7 +1064,7 @@
             "$ref": "#/components/parameters/_select"
           }
         ],
-        "description": "Gets the specified contact given its ID.\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry"
+        "description": "Gets the specified contact given its ID.\n\nParam *_select* supports the following fields:\ndisplayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode"
       },
       "put": {
         "summary": "Update a contact",
@@ -2448,6 +2448,27 @@
             },
             "description": "Contact's reference URL."
           },
+          "taxCode": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "11qp689u4fodq"
+            },
+            "description": "Contact's Tax code."
+          },
+          "vatNumber": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "0ej5d7vuaf72b"
+            },
+            "description": "Contact's VAT number."
+          },
+          "eInvoicingCode": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "e5w76o0eh83re"
+            },
+            "description": "Contact's eInvoicing Code (like Italian SDI Code)."
+          },
           "notes": {
             "type": "string",
             "x-stoplight": {
@@ -2733,7 +2754,7 @@
               "id": "349sgw0rz9qgw"
             }
           },
-          "": {
+          "value": {
             "type": "string",
             "x-stoplight": {
               "id": "1jd1f0q128kgx"
