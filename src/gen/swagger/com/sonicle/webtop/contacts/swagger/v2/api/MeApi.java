@@ -24,7 +24,7 @@ import javax.validation.Valid;
 
 @Path("/me")
 @Api(description = "the me API")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-01-26T15:34:09.565+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-02-17T14:58:21.674+01:00[Europe/Berlin]")
 public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResource {
 
     @POST
@@ -182,7 +182,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @GET
     @Path("/contacts/{contact_id}")
     @Produces({ "application/json" })
-    @ApiOperation(value = "Get a contact", notes = "Gets the specified contact given its ID.  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry", response = ApiContact.class, authorizations = {
+    @ApiOperation(value = "Get a contact", notes = "Gets the specified contact given its ID.  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode", response = ApiContact.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
         
@@ -267,7 +267,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @GET
     @Path("/categories/{category_id}/contacts")
     @Produces({ "application/json" })
-    @ApiOperation(value = "List contacts", notes = "Returns a list of contacts from specified category.  Param *_filter* supports the following fields in RSQL query conditions: id, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, taxCode, vatNumber, notes, tagId  With the addition of the following composite fields that helps filtering: * anyName: matches displayName || firstName || lastName * anyEmail: matches email1 || email2 || email3 * anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax * anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax * anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode", response = ApiContactsResult.class, authorizations = {
+    @ApiOperation(value = "List contacts", notes = "Returns a list of contacts from specified category.  Param *_filter* supports the following fields in RSQL query conditions: id, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, taxCode, vatNumber, eInvoicingCode, notes, tagId  With the addition of the following composite fields that helps filtering: * anyName: matches displayName || firstName || lastName * anyEmail: matches email1 || email2 || email3 * anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax * anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax * anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode", response = ApiContactsResult.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
         
@@ -289,7 +289,7 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
     @GET
     @Path("/categories/{category_id}/contacts/delta")
     @Produces({ "application/json" })
-    @ApiOperation(value = "List changes on contacts collection", notes = "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry", response = ApiContactsResultDelta.class, authorizations = {
+    @ApiOperation(value = "List changes on contacts collection", notes = "Get a set of contacts that have been added, deleted, or updated in a specified category, starting from a precise instant identified by a given syncToken.  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode", response = ApiContactsResultDelta.class, authorizations = {
         
         @Authorization(value = "auth-bearer"),
         
@@ -303,6 +303,27 @@ public abstract class MeApi extends com.sonicle.webtop.core.sdk.BaseRestApiResou
         @ApiResponse(code = 200, message = "Success", response = ApiContactsResultDelta.class)
     })
     public Response listCategoryContactsDelta(@PathParam("category_id") @ApiParam("The ID of a category") String categoryId,@QueryParam("_sync_token")  @ApiParam("Token exchanged between client and server that tracks changes from a precise state.")  String syncToken,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account.")  String select) {
+        return Response.ok().entity("magic!").build();
+    }
+
+    @GET
+    @Path("/contacts")
+    @Produces({ "application/json" })
+    @ApiOperation(value = "List contacts", notes = "Returns a list of contacts from specified categories.  Param *_filter* supports the following fields in RSQL query conditions: id, createdAt, updatedAt, title, displayName, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workTelephone1, workTelephone2, workFax, homeTelephone1, homeTelephone2, homeFax, workAddress, workPostalCode, workCity, workState, workCountry, homeAddress, homePostalCode, homeCity, homeState, homeCountry, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, company, companyId, function, department, manager, assistant, assistantTelephone, partner, birthday, anniversary, url, taxCode, vatNumber, eInvoicingCode, notes, tagId  With the addition of the following composite fields that helps filtering: * anyName: matches displayName || firstName || lastName * anyEmail: matches email1 || email2 || email3 * anyPhone: matches mobile || pager1 || pager2 || workTelephone1 || workTelephone2 || workFax || homeTelephone1 || homeTelephone2 || homeFax * anyWorkPhone: matches workTelephone1 || workTelephone2 || workFax * anyHomePhone: matches homeTelephone1 || homeTelephone2 || homeFax  Param *_select* supports the following fields: displayName, title, firstName, lastName, nickname, mobile, pager1, pager2, email1, email2, email3, im1, im2, im3, workAddress, workPostalCode, workCity, workState, workCountry, workTelephone1, workTelephone2, workFax, homeAddress, homePostalCode, homeCity, homeState, homeCountry, homeTelephone1, homeTelephone2, homeFax, otherAddress, otherPostalCode, otherCity, otherState, otherCountry, taxCode, vatNumber, eInvoicingCode", response = ApiContactsResult.class, authorizations = {
+        
+        @Authorization(value = "auth-bearer"),
+        
+        @Authorization(value = "auth-apikey-username"),
+        
+        @Authorization(value = "auth-apikey-bearer"),
+        
+        @Authorization(value = "auth-basic")
+         }, tags={ "me" })
+    @ApiResponses(value = { 
+        @ApiResponse(code = 200, message = "Success", response = ApiContactsResult.class),
+        @ApiResponse(code = 405, message = "Not allowed", response = Void.class)
+    })
+    public Response listContacts(@QueryParam("category_ids") @NotNull  @ApiParam("List (comma-separated) of category IDs whose contacts should be included in the results.")  String categoryIds,@QueryParam("_filter")  @ApiParam("A RSQL filter query to filter out resulting items. Optional.")  String filter,@QueryParam("_select")  @ApiParam("List (comma-separated) of field names to include in resulting items. Optional, if omitted all available field will be taken into account.")  String select,@QueryParam("_order_by")  @ApiParam("List (comma-separated) of field names and direction (ASC or DESC) to sort resulting items. Optional.")  String orderBy,@QueryParam("_page_no") @Min(1)  @ApiParam("The page number to return, providing a value actually activates pagination. Optional.")  Integer pageNo,@QueryParam("_page_size") @Min(1)  @ApiParam("How many items to return when paginating. Defaults to 50.")  Integer pageSize,@QueryParam("_return_count")  @ApiParam("Specifies whether to compute and return the full count of a list of items. Useful when dealing with paginated data. Optional.")  Boolean returnCount) {
         return Response.ok().entity("magic!").build();
     }
 

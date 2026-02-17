@@ -141,7 +141,7 @@ public class Me extends MeApi {
 					})
 					.collect(Collectors.toList())
 			);
-			return respOk(ApiUtils.fillApiCategoriesResult(new ApiCategoriesResult(), BaseRestApiUtils.parseSet(_select), result, itemsLastRevisionMap));
+			return respOk(ApiUtils.fillApiCategoriesResult(new ApiCategoriesResult(), BaseRestApiUtils.parseStringSet(_select), result, itemsLastRevisionMap));
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] listCategories()", RunContext.getRunProfileId(), t);
@@ -241,7 +241,7 @@ public class Me extends MeApi {
 		try {
 			boolean returnFullCount = _returnCount == null ? false : _returnCount;
 			ItemsListResult<ContactObject> result = manager.listContacts(Arrays.asList(ApiUtils.parseCategory(categoryId)), _filter, BaseRestApiUtils.parseSortInfo(_orderBy), _pageNo, BaseRestApiUtils.pageSizeOrDefault(_pageNo, _pageSize), returnFullCount, ContactObjectOutputType.BEAN);
-			return respOk(ApiUtils.fillApiContactsResult(new ApiContactsResult(), BaseRestApiUtils.parseSet(_select), result));
+			return respOk(ApiUtils.fillApiContactsResult(new ApiContactsResult(), BaseRestApiUtils.parseStringSet(_select), result));
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] listCategoryContacts({})", RunContext.getRunProfileId(), categoryId, t);
@@ -264,7 +264,7 @@ public class Me extends MeApi {
 		
 		try {
 			Delta<ContactObject> changes = manager.listContactsDelta(ApiUtils.parseCategory(categoryId), _syncToken, ContactObjectOutputType.BEAN);
-			return respOk(ApiUtils.fillApiContactsResultDelta(new ApiContactsResultDelta(), BaseRestApiUtils.parseSet(_select), changes));
+			return respOk(ApiUtils.fillApiContactsResultDelta(new ApiContactsResultDelta(), BaseRestApiUtils.parseStringSet(_select), changes));
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] listCategoryContactsDelta({})", RunContext.getRunProfileId(), categoryId, t);
@@ -304,13 +304,32 @@ public class Me extends MeApi {
 			//BitFlags<IContactsManager.ContactGetOptions> options = new BitFlags<>(IContactsManager.ContactGetOptions.class);
 			Contact contact = manager.getContact(contactId, BitFlags.noneOf(ContactGetOption.class));
 			if (contact != null) {
-				return respOk(ApiUtils.fillApiContact(new ApiContact(), BaseRestApiUtils.parseSet(_select), contact));
+				return respOk(ApiUtils.fillApiContact(new ApiContact(), BaseRestApiUtils.parseStringSet(_select), contact));
 			} else {
 				return respErrorNotFound();
 			}
 			
 		} catch (Throwable t) {
 			LOGGER.error("[{}] getContact({})", RunContext.getRunProfileId(), contactId, t);
+			return respError(t);
+		}
+	}
+	
+	@Override
+	public Response listContacts(String categoryIds, String _filter, String _select, String _orderBy, Integer _pageNo, Integer _pageSize, Boolean _returnCount) {
+		ContactsManager manager = getManager();
+		
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("[{}] listContacts({})", RunContext.getRunProfileId(), categoryIds);
+		}
+		
+		try {
+			boolean returnFullCount = _returnCount == null ? false : _returnCount;
+			ItemsListResult<ContactObject> result = manager.listContacts(BaseRestApiUtils.parseIntegerSet(categoryIds), _filter, BaseRestApiUtils.parseSortInfo(_orderBy), _pageNo, BaseRestApiUtils.pageSizeOrDefault(_pageNo, _pageSize), returnFullCount, ContactObjectOutputType.BEAN);
+			return respOk(ApiUtils.fillApiContactsResult(new ApiContactsResult(), BaseRestApiUtils.parseStringSet(_select), result));
+			
+		} catch (Throwable t) {
+			LOGGER.error("[{}] listContacts({})", RunContext.getRunProfileId(), categoryIds, t);
 			return respError(t);
 		}
 	}
@@ -347,7 +366,7 @@ public class Me extends MeApi {
 			Contact contact = manager.getContact(contactId, BitFlags.noneOf(ContactGetOption.class));
 			if (contact == null) return respErrorNotFound();
 			
-			ApiUtils.fillContactEx(contact, BaseRestApiUtils.parseSet(_update), body);
+			ApiUtils.fillContactEx(contact, BaseRestApiUtils.parseStringSet(_update), body);
 			BitFlags<ContactUpdateOption> options = BitFlags.noneOf(ContactUpdateOption.class);
 			manager.updateContact(contactId, contact, options);
 			return respOk();
