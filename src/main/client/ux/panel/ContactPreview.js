@@ -134,12 +134,13 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 	mys: null,
 	
 	constructor: function(cfg) {
-		var me = this;
+		var me = this,
+			SoVMU = Sonicle.VMUtils;
 		me.config.viewModel = Ext.create('Ext.app.ViewModel');
 		me.callParent([cfg]);
 		
-		Sonicle.VMUtils.applyFormulas(me.getVM(), {
-			foHasPicture: WTF.foIsEqual('record', 'pic', true),
+		SoVMU.applyFormulas(me.getVM(), {
+			foHasPicture: WTF.foFieldIsEqual('pic', true),
 			foIsEditable: WTF.foGetFn('record', '_itPerms', function(val) {
 				return WTA.util.FoldersTree2.toRightsObj(val).UPDATE;
 			}),
@@ -167,15 +168,15 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 				}
 				return (val && val.getCount() > 0) ? val.first().get('value') : null;
 			}),
-			foHasEmails: WTF.foIsEmpty(null, 'foMainEmail', true),
-			foHasTelephones: WTF.foIsEmpty(null, 'foMainTelephone', true),
-			foHasMobile: WTF.foIsEmpty(null, 'foMobile', true),
-			foHasUser: WTF.foIsEmpty('record', 'userProfile', true),
+			foHasEmails: SoVMU.foPropIsEmpty('', 'foMainEmail', true),
+			foHasTelephones: SoVMU.foPropIsEmpty('', 'foMainTelephone', true),
+			foHasMobile: SoVMU.foPropIsEmpty('', 'foMobile', true),
+			foHasUser: WTF.foFieldIsEmpty('userProfile', true),
 			foHideOpenChat: WTF.foMultiGetFn(undefined, ['record.isList', 'foHasUser'], function(v) {
 				return !!v['record.isList'] || !v['foHasUser'];
 			}),
-			foHasBusinessInfo: WTF.foIsEmpty('record', 'businessInfo', true),
-			foHasNotes: WTF.foIsEmpty('record', 'notes', true),
+			foHasBusinessInfo: WTF.foFieldIsEmpty('businessInfo', true),
+			foHasNotes: WTF.foFieldIsEmpty('notes', true),
 			foWriteMessageTip: WTF.foResFormat(null, 'foMainEmail', me.mys.ID, 'contactPreview.single.tb.writeMessage.tip'),
 			foWriteListMessageTip: WTF.foResFormat('record', 'avatarName', me.mys.ID, 'contactPreview.single.tb.writeMessage.tip'),
 			foOpenChatTip: WTF.foResFormat('record', 'userDisplayName', me.mys.ID, 'contactPreview.single.tb.openChat.tip'),
@@ -184,7 +185,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 			foMultiSelTitle: WTF.foGetFn(null, 'contacts', function(val) {
 				return val ? me.mys.res('contactPreview.multi.tit', val.length) : null;
 			}),
-			foHasTags: WTF.foIsEmpty('record', 'tags', true)
+			foHasTags: WTF.foFieldIsEmpty('tags', true)
 		});
 		me.loadContactBuffered = Ext.Function.createBuffered(me.loadContact, 200);
 	},

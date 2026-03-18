@@ -56,7 +56,7 @@ Ext.define('Sonicle.webtop.contacts.view.Category', {
 		me.callParent([cfg]);
 		
 		Sonicle.VMUtils.applyFormulas(me.getVM(), {
-			//foColor: WTF.foTwoWay('record', 'color', 
+			//foColor: WTF.foFieldTwoWay('color', 
 			//	function(v) { return Sonicle.String.removeStart(v, '#'); },
 			//	function(v) { return Sonicle.String.prepend(v, '#', true); }
 			//),
