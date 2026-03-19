@@ -370,8 +370,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if(!cache.containsKey(pid)) {
 			LocalTime time = new ContactsUserSettings(SERVICE_ID, pid).getAnniversaryReminderTime();
 			//TODO: valutare se uniformare i minuti a quelli consentiti (ai min 0 e 30), se errato non verrà mai preso in considerazione
-			UserProfile.Data ud = WT.getUserData(pid);
-			DateTime value = new DateTime(ud.getTimeZone()).withDate(date).withTime(time);
+			UserProfile.Data pdata = WT.getProfileData(pid);
+			DateTime value = new DateTime(pdata.getTimeZone()).withDate(date).withTime(time);
 			cache.put(pid, value);
 			return value;
 		} else {
@@ -676,10 +676,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public Map<String, String> getCategoryLinks(final int categoryId) throws WTException {
 		checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
 		
-		UserProfile.Data ud = WT.getUserData(getTargetProfileId());
+		UserProfile.Data pdata = WT.getProfileData(getTargetProfileId());
 		String davServerBaseUrl = WT.getDavServerBaseUrl(getTargetProfileId().getDomainId());
 		String categoryUid = ContactsUtils.encodeAsCategoryUid(categoryId);
-		String addressbookUrl = MessageFormat.format(ContactsUtils.CARDDAV_ADDRESSBOOK_URL, ud.getProfileEmailAddress(), categoryUid);
+		String addressbookUrl = MessageFormat.format(ContactsUtils.CARDDAV_ADDRESSBOOK_URL, pdata.getProfileEmailAddress(), categoryUid);
 		
 		LinkedHashMap<String, String> links = new LinkedHashMap<>();
 		links.put(ContactsUtils.CATEGORY_LINK_CARDDAV, PathUtils.concatPathParts(davServerBaseUrl, addressbookUrl));
@@ -2375,12 +2375,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					if(ok) {
 						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
 						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
-						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+						UserProfile.Data pdata = WT.getProfileData(cont.getCategoryProfileId());
 
 						if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), true, cont, dateTime));
+							alerts.add(createAnniversaryEmailReminder(pdata.getLocale(), pdata.getEmail(), true, cont, dateTime));
 						} else if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), true, cont, dateTime));
+							alerts.add(createAnniversaryInAppReminder(pdata.getLocale(), true, cont, dateTime));
 						}
 					}
 				}
@@ -2396,12 +2396,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					if(ok) {
 						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
 						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
-						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+						UserProfile.Data pdata = WT.getProfileData(cont.getCategoryProfileId());
 
 						if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), false, cont, dateTime));
+							alerts.add(createAnniversaryEmailReminder(pdata.getLocale(), pdata.getEmail(), false, cont, dateTime));
 						} else if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), false, cont, dateTime));
+							alerts.add(createAnniversaryInAppReminder(pdata.getLocale(), false, cont, dateTime));
 						}
 					}
 				}

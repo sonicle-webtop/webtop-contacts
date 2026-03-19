@@ -393,14 +393,14 @@ public class CardDav extends CarddavApi {
 	}
 	
 	private AddressBook createAddressBook(UserProfileId currentProfileId, Category cat, DateTime lastRevisionTimestamp, FolderShare.Permissions permissions) {
-		UserProfile.Data owud = WT.getUserData(cat.getProfileId());
+		UserProfile.Data pdata = WT.getProfileData(cat.getProfileId());
 		
 		String displayName = cat.getName();
 		if (!currentProfileId.equals(cat.getProfileId())) {
 			//String apn = LangUtils.abbreviatePersonalName(false, owud.getDisplayName());
-			displayName = "[" + owud.getDisplayName() + "] " + displayName;
+			displayName = "[" + pdata.getDisplayName() + "] " + displayName;
 		}
-		String ownerUsername = owud.getProfileEmailAddress();
+		String ownerUsername = pdata.getProfileEmailAddress();
 		
 		return new AddressBook()
 			.id(cat.getCategoryId())
