@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a contact object with base updateable fields.")
 @JsonTypeName("ContactBase")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-01-26T15:34:09.565+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-02-17T14:58:21.674+01:00[Europe/Berlin]")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiContactBase   {
   private @Valid String displayName;
@@ -1034,7 +1034,7 @@ public class ApiContactBase   {
   }
 
   /**
-   * Contact&#39;s Electronic Invoicing Code.
+   * Contact&#39;s eInvoicing Code (like Italian SDI Code).
    **/
   public ApiContactBase eInvoicingCode(String eInvoicingCode) {
     this.eInvoicingCode = eInvoicingCode;
@@ -1042,7 +1042,7 @@ public class ApiContactBase   {
   }
 
   
-  @ApiModelProperty(value = "Contact's Electronic Invoicing Code.")
+  @ApiModelProperty(value = "Contact's eInvoicing Code (like Italian SDI Code).")
   @JsonProperty("eInvoicingCode")
   public String geteInvoicingCode() {
     return eInvoicingCode;

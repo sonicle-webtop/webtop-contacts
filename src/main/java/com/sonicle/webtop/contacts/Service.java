@@ -1189,9 +1189,9 @@ public class Service extends BaseService {
 			String emailAddress = ServletUtils.getStringParameter(request, "address", true);
 			
 			List<JsRecipient> jsrcpts = new ArrayList<>();
-			List<Recipient> recipients = coreMgr.expandVirtualProviderRecipient(emailAddress);
+			List<Recipient> recipients = coreMgr.expandVirtualRecipient(emailAddress);
 			recipients.forEach(recipient -> {
-				jsrcpts.add(new JsRecipient(recipient.getType().toString(), InternetAddressUtils.toFullAddress(recipient.getAddress(), recipient.getPersonal())));
+				jsrcpts.add(new JsRecipient(recipient.getRcptType().toString(), InternetAddressUtils.toFullAddress(recipient.getAddress(), recipient.getPersonal())));
 			});
 				
 			new JsonResult(jsrcpts).printTo(out);

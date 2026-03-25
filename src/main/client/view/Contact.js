@@ -107,18 +107,19 @@ Ext.define('Sonicle.webtop.contacts.view.Contact', {
 	},
 	
 	constructor: function(cfg) {
-		var me = this;
+		var me = this,
+			SoVMU = Sonicle.VMUtils;
 		me.callParent([cfg]);
 		
-		Sonicle.VMUtils.applyFormulas(me.getVM(), {
-			foIsView: WTF.foIsEqual('_mode', null, me.MODE_VIEW),
-			foIsNew: WTF.foIsEqual('_mode', null, me.MODE_NEW),
-			foTags: WTF.foTwoWay('record', 'tags', function(v) {
+		SoVMU.applyFormulas(me.getVM(), {
+			foIsView: SoVMU.foPropIsEqual('', '_mode', me.MODE_VIEW),
+			foIsNew: SoVMU.foPropIsEqual('', '_mode', me.MODE_NEW),
+			foTags: WTF.foFieldTwoWay('tags', function(v) {
 					return Sonicle.String.split(v, '|');
 				}, function(v) {
 					return Sonicle.String.join('|', v);
 			}),
-			foHasTags: WTF.foIsEmpty('record', 'tags', true),
+			foHasTags: WTF.foFieldIsEmpty('tags', true),
 			foHasAttachments: WTF.foAssociationIsEmpty('record', 'attachments', true),
 			foDisableAddNameField: WTF.foMultiGetFn('hidden', ['fldtitle', 'fldnickname'], function(v) {
 				var disable = true;

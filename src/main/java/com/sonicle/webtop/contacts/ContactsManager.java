@@ -282,10 +282,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		try {
 			ArrayList<RecipientsProviderBase> providers = new ArrayList<>();
 			UserProfile.Data ud = WT.getProfileData(getTargetProfileId());
-			providers.add(new RootRecipientsProvider(getTargetProfileId().toString(), ud.getDisplayName(), getTargetProfileId(), listMyCategoryIds()));
+			providers.add(new RootRecipientsProvider(CId.build(SERVICE_ID, getTargetProfileId()).toString(), ud.getDisplayName(), getTargetProfileId(), listMyCategoryIds()));
 			for (CategoryFSOrigin origin : shareCache.getOrigins()) {
 				final Collection<Integer> catIds = shareCache.getFolderIdsByOrigin(origin.getProfileId());
-				providers.add(new RootRecipientsProvider(origin.getProfileId().toString(), origin.getDisplayName(), origin.getProfileId(), catIds));
+				providers.add(new RootRecipientsProvider(CId.build(SERVICE_ID, origin.getProfileId()).toString(), origin.getDisplayName(), origin.getProfileId(), catIds));
 			}
 			return providers;
 			
@@ -370,8 +370,8 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		if(!cache.containsKey(pid)) {
 			LocalTime time = new ContactsUserSettings(SERVICE_ID, pid).getAnniversaryReminderTime();
 			//TODO: valutare se uniformare i minuti a quelli consentiti (ai min 0 e 30), se errato non verrà mai preso in considerazione
-			UserProfile.Data ud = WT.getUserData(pid);
-			DateTime value = new DateTime(ud.getTimeZone()).withDate(date).withTime(time);
+			UserProfile.Data pdata = WT.getProfileData(pid);
+			DateTime value = new DateTime(pdata.getTimeZone()).withDate(date).withTime(time);
 			cache.put(pid, value);
 			return value;
 		} else {
@@ -676,10 +676,10 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	public Map<String, String> getCategoryLinks(final int categoryId) throws WTException {
 		checkRightsOnCategory(categoryId, FolderShare.FolderRight.READ);
 		
-		UserProfile.Data ud = WT.getUserData(getTargetProfileId());
+		UserProfile.Data pdata = WT.getProfileData(getTargetProfileId());
 		String davServerBaseUrl = WT.getDavServerBaseUrl(getTargetProfileId().getDomainId());
 		String categoryUid = ContactsUtils.encodeAsCategoryUid(categoryId);
-		String addressbookUrl = MessageFormat.format(ContactsUtils.CARDDAV_ADDRESSBOOK_URL, ud.getProfileEmailAddress(), categoryUid);
+		String addressbookUrl = MessageFormat.format(ContactsUtils.CARDDAV_ADDRESSBOOK_URL, pdata.getProfileEmailAddress(), categoryUid);
 		
 		LinkedHashMap<String, String> links = new LinkedHashMap<>();
 		links.put(ContactsUtils.CATEGORY_LINK_CARDDAV, PathUtils.concatPathParts(davServerBaseUrl, addressbookUrl));
@@ -2375,12 +2375,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					if(ok) {
 						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
 						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
-						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+						UserProfile.Data pdata = WT.getProfileData(cont.getCategoryProfileId());
 
 						if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), true, cont, dateTime));
+							alerts.add(createAnniversaryEmailReminder(pdata.getLocale(), pdata.getEmail(), true, cont, dateTime));
 						} else if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), true, cont, dateTime));
+							alerts.add(createAnniversaryInAppReminder(pdata.getLocale(), true, cont, dateTime));
 						}
 					}
 				}
@@ -2396,12 +2396,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 					if(ok) {
 						DateTime dateTime = getAnniversaryReminderTime(dateTimeCache, cont.getCategoryProfileId(), date);
 						String delivery = getAnniversaryReminderDelivery(deliveryCache, cont.getCategoryProfileId());
-						UserProfile.Data ud = WT.getUserData(cont.getCategoryProfileId());
+						UserProfile.Data pdata = WT.getProfileData(cont.getCategoryProfileId());
 
 						if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_EMAIL)) {
-							alerts.add(createAnniversaryEmailReminder(ud.getLocale(), ud.getEmail(), false, cont, dateTime));
+							alerts.add(createAnniversaryEmailReminder(pdata.getLocale(), pdata.getEmail(), false, cont, dateTime));
 						} else if(delivery.equals(ContactsSettings.ANNIVERSARY_REMINDER_DELIVERY_APP)) {
-							alerts.add(createAnniversaryInAppReminder(ud.getLocale(), false, cont, dateTime));
+							alerts.add(createAnniversaryInAppReminder(pdata.getLocale(), false, cont, dateTime));
 						}
 					}
 				}
@@ -3661,14 +3661,14 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 						final String value = StringUtils.trim(vcont.getValueBy(fieldType, fieldCategory));
 						final String recipientId=vcont.getContactId()!=null?vcont.getContactId():null;
 						if (vcont.getIsList() && fieldCategory.equals(RecipientFieldCategory.WORK) && fieldType.equals(RecipientFieldType.EMAIL)) {
-							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LIST, vcont.getDisplayName(), value, Recipient.Type.TO, recipientId));
+							items.add(new Recipient(this.getId(), this.getName(), RCPT_ORIGIN_LIST, recipientId, value, vcont.getDisplayName(), Recipient.RecipientType.TO));
 							
 						} else if (!listsOnly) {
 							if (fieldType.equals(RecipientFieldType.EMAIL) && !InternetAddressUtils.isAddressValid(value)) continue;
 							
 							String personal = vcont.getDisplayName();
 							if (StringUtils.isBlank(personal)) personal = InternetAddressUtils.toPersonal(vcont.getFirstname(), vcont.getLastname());
-							items.add(new Recipient(this.getId(), this.getDescription(), origin, personal, value, Recipient.Type.TO, recipientId));
+							items.add(new Recipient(this.getId(), this.getName(), origin, recipientId, value, personal, Recipient.RecipientType.TO));
 						}
 					}
 				}
@@ -3693,13 +3693,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 				con = WT.getConnection(SERVICE_ID);
 				String contactId = ContactsUtils.virtualRecipientToListId(virtualRecipient);
 				if (contactId != null) {
-					UserProfileId pid = new UserProfileId(getId());
-					List<VListRecipient> recipients = dao.selectByProfileContact(con, pid.getDomainId(), pid.getUserId(), contactId);
+					List<VListRecipient> recipients = dao.selectByProfileContact(con, ownerId.getDomainId(), ownerId.getUserId(), contactId);
 					for (VListRecipient recipient : recipients) {
-						Recipient.Type rcptType = EnumUtils.forSerializedName(recipient.getRecipientType(), Recipient.Type.class);
+						Recipient.RecipientType rcptType = EnumUtils.forSerializedName(recipient.getRecipientType(), Recipient.RecipientType.class);
 						InternetAddress ia = InternetAddressUtils.toInternetAddress(recipient.getRecipient());
 						if (ia != null) {
-							items.add(new Recipient(this.getId(), this.getDescription(), RCPT_ORIGIN_LISTITEM, ia.getPersonal(), ia.getAddress(), rcptType));
+							items.add(new Recipient(this.getId(), this.getName(), RCPT_ORIGIN_LISTITEM, recipient.getContactId(), ia.getAddress(), ia.getPersonal(), rcptType));
 						}
 					}
 				} else {

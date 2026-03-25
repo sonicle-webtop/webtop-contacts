@@ -59,17 +59,18 @@ Ext.define('Sonicle.webtop.contacts.view.ContactsList', {
 	modelName: 'Sonicle.webtop.contacts.model.ContactsList',
 	
 	constructor: function(cfg) {
-		var me = this;
+		var me = this,
+			SoVMU = Sonicle.VMUtils;
 		me.callParent([cfg]);
 		
 		Sonicle.VMUtils.applyFormulas(me.getVM(), {
-			isView: WTF.foIsEqual(null, '_mode', 'view'),
-			foTags: WTF.foTwoWay('record', 'tags', function(v) {
+			isView: SoVMU.foPropIsEqual('', '_mode', 'view'),
+			foTags: WTF.foFieldTwoWay('tags', function(v) {
 					return Sonicle.String.split(v, '|');
 				}, function(v) {
 					return Sonicle.String.join('|', v);
 			}),
-			foHasTags: WTF.foIsEmpty('record', 'tags', true)
+			foHasTags: WTF.foFieldIsEmpty('tags', true)
 		});
 	},
 	
