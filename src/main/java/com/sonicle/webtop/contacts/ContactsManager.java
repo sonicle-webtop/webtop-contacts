@@ -32,6 +32,7 @@
  */
 package com.sonicle.webtop.contacts;
 
+import com.sonicle.commons.Check;
 import com.sonicle.commons.qbuilders.conditions.Condition;
 import com.sonicle.commons.EnumUtils;
 import com.sonicle.commons.IdentifierUtils;
@@ -181,7 +182,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import jakarta.mail.internet.InternetAddress;
-import net.sf.qualitycheck.Check;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
