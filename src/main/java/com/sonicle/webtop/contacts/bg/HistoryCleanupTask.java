@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Sonicle S.r.l.
+ * Copyright (C) 2026 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,54 +28,40 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2023 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2026 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts;
+package com.sonicle.webtop.contacts.bg;
 
-import com.sonicle.webtop.contacts.bg.HistoryCleanupTask;
-import com.sonicle.webtop.contacts.bg.RemoteCategorySyncTask;
-import com.sonicle.webtop.core.sdk.BaseBackgroundService;
-import java.util.Arrays;
-import java.util.Collection;
-import org.joda.time.LocalTime;
-import org.quartz.CronScheduleBuilder;
-import org.quartz.SimpleScheduleBuilder;
-import org.quartz.TriggerBuilder;
+import com.sonicle.webtop.contacts.BackgroundService;
+import com.sonicle.webtop.contacts.ContactsManager;
+import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.sdk.Result;
+import com.sonicle.webtop.core.sdk.BaseBackgroundServiceTask;
+import org.quartz.JobExecutionContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author malbinola
  */
-public class BackgroundService extends BaseBackgroundService {
-
-	@Override
-	public void initialize() throws Exception {}
-
-	@Override
-	public void cleanup() throws Exception {}
+public class HistoryCleanupTask extends BaseBackgroundServiceTask {
+	private static final Logger LOGGER = (Logger)LoggerFactory.getLogger(HistoryCleanupTask.class);
+	public static final int RETENTION_YEARS = 1;
 	
 	@Override
-	protected Collection<TaskDefinition> createTasks() {
-		return Arrays.asList(
-			// History cleanup task
-			new BaseBackgroundService.TaskDefinition(
-				HistoryCleanupTask.class,
-				TriggerBuilder.newTrigger()
-					.withSchedule(historyCleanupTaskScheduleBuilder()) // every 1st day of month at...
-					.build()
-			),
-			// Remote categories sync task
-			new TaskDefinition(
-				RemoteCategorySyncTask.class,
-				TriggerBuilder.newTrigger()
-					.withSchedule(SimpleScheduleBuilder.repeatMinutelyForever(5))
-					.build()
-			)
-		);
+	public Logger getLogger() {
+		return LOGGER;
 	}
 	
-	private CronScheduleBuilder historyCleanupTaskScheduleBuilder() {
-		LocalTime time = new ContactsServiceSettings(SERVICE_ID, "*").getHistoryCleanupTime();
-		return CronScheduleBuilder.monthlyOnDayAndHourAndMinute(1, time.getHourOfDay(), time.getMinuteOfHour());
+	@Override
+	public void executeWork(JobExecutionContext jec, TaskContext context) throws Exception {
+		BackgroundService bs = ((BackgroundService)getBackgroundService(jec));
+		ContactsManager conMgr = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID);
+		
+		Result<Integer[]> result = conMgr.cleanupHistory(RETENTION_YEARS);
+		if (result.hasExceptions()) LOGGER.warn("Cleanup process return errors: {}", result.collectExceptionsMessages());
+		LOGGER.debug("Categories history: cleaned {} rows", result.getObject()[0]);
+		LOGGER.debug("Contacts history: cleaned {} rows", result.getObject()[1]);
 	}
 }

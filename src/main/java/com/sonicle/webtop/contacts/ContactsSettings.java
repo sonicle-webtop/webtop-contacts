@@ -39,6 +39,13 @@ package com.sonicle.webtop.contacts;
 public class ContactsSettings {
 	
 	/**
+	 * [system]
+	 * [time(hh:mm)]
+	 * Time instant at which the history cleanup task will run every 1st day of the month.
+	 */
+	public static final String HISTORY_CLEANUP_TIME = "history.cleanup.time";
+	
+	/**
 	 * [system+domain]
 	 * [boolean](false)
 	 * Enable/Disable remote categories auto-sync functionality. Defaults to ``false``.

@@ -205,8 +205,10 @@ import com.sonicle.webtop.core.app.AuditLogManager;
 import com.sonicle.webtop.core.app.model.FolderShare;
 import com.sonicle.webtop.core.app.model.FolderShareOriginFolders;
 import com.sonicle.webtop.core.app.model.FolderSharing;
+import com.sonicle.webtop.core.app.model.HomedThrowable;
 import com.sonicle.webtop.core.app.model.ShareOrigin;
 import com.sonicle.webtop.core.app.sdk.AbstractFolderShareCache;
+import com.sonicle.webtop.core.app.sdk.Result;
 import com.sonicle.webtop.core.app.sdk.WTOperationException;
 import com.sonicle.webtop.core.app.sdk.WTParseException;
 import com.sonicle.webtop.core.model.ChangedItem;
@@ -293,6 +295,25 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 			logger.error("Unable to return providers");
 			return null;
 		}
+	}
+	
+	public Result<Integer[]> cleanupHistory(final int retentionYears) {
+		HistoryDAO hisDao = HistoryDAO.getInstance();
+		Connection con = null;
+		
+		HomedThrowable exc = null;
+		Integer[] ret = new Integer[2];
+		try {
+			con = WT.getConnection(SERVICE_ID);
+			ret[0] = hisDao.deleteCategoriesHistoryByAge(con, retentionYears);
+			ret[1] = hisDao.deleteContactsHistoryByAge(con, retentionYears);
+			
+		} catch (Exception ex) {
+			exc = HomedThrowable.wrap(SERVICE_ID, ExceptionUtils.wrapThrowable(ex));
+		} finally {
+			DbUtils.closeQuietly(con);
+		}
+		return new Result<>(ret, exc);
 	}
 	
 	@Override
