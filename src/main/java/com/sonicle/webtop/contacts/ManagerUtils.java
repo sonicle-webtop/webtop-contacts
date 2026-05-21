@@ -106,6 +106,8 @@ public class ManagerUtils {
 		if ((tgt != null) && (src != null)) {
 			tgt.setDomainId(src.getDomainId());
 			tgt.setUserId(src.getUserId());
+			tgt.setRevisionTimestamp(src.getRevisionTimestamp());
+			tgt.setCreationTimestamp(src.getCreationTimestamp());
 			tgt.setBuiltIn(src.getBuiltIn());
 			tgt.setProvider(EnumUtils.forSerializedName(src.getProvider(), Category.Provider.class));
 			tgt.setName(src.getName());

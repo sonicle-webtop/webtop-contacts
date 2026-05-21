@@ -37,6 +37,7 @@ import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
 import com.sonicle.webtop.core.sdk.BaseServiceSettings;
+import org.joda.time.LocalTime;
 
 /**
  *
@@ -46,6 +47,10 @@ public class ContactsServiceSettings extends BaseServiceSettings {
 	
 	public ContactsServiceSettings(String serviceId, String domainId) {
 		super(serviceId, domainId);
+	}
+	
+	public LocalTime getHistoryCleanupTime() {
+		return getTime(HISTORY_CLEANUP_TIME, "00:30", "HH:mm");
 	}
 	
 	public boolean getCategoryRemoteAutoSyncEnabled() {

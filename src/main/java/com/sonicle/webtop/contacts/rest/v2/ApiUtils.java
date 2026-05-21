@@ -77,6 +77,14 @@ import static com.sonicle.webtop.core.sdk.BaseRestApiUtils.shouldSet;
  */
 public class ApiUtils {
 	
+	public static int parseCategory(final String categoryId) throws WTParseException {
+		try {
+			return Integer.valueOf(categoryId);
+		} catch (NumberFormatException ex) {
+			throw new WTParseException(ex);
+		}
+	}
+	
 	public static CategoryBase fillCategoryBase(final CategoryBase tgt, final Set<String> fields2set, final ApiCategoryBase src) {
 		if (shouldSet(fields2set, "provider")) {
 			tgt.setProvider(EnumUtils.forName(src.getProvider(), CategoryBase.Provider.class));
@@ -101,14 +109,6 @@ public class ApiUtils {
 			items.add(fillApiCategory(new ApiCategory(), fields2set, item, itemsLastRevision));
 		}
 		tgt.items(items);
-		return tgt;
-	}
-	
-	public static ApiOwnerInfo fillApiOwnerInfo(final ApiOwnerInfo tgt, final UserProfileId profileId) {
-		tgt.userId(profileId.getUserId());
-		UserProfile.Data ud = WT.getProfileData(profileId);
-		tgt.emailAddress(ud.getPersonalEmailAddress());
-		tgt.displayName(ud.getDisplayName());
 		return tgt;
 	}
 	
@@ -317,11 +317,11 @@ public class ApiUtils {
 		return tgt;
 	}
 	
-	public static int parseCategory(final String categoryId) throws WTParseException {
-		try {
-			return Integer.valueOf(categoryId);
-		} catch (NumberFormatException ex) {
-			throw new WTParseException(ex);
-		}
+	public static ApiOwnerInfo fillApiOwnerInfo(final ApiOwnerInfo tgt, final UserProfileId profileId) {
+		tgt.userId(profileId.getUserId());
+		UserProfile.Data ud = WT.getProfileData(profileId);
+		tgt.emailAddress(ud.getPersonalEmailAddress());
+		tgt.displayName(ud.getDisplayName());
+		return tgt;
 	}
 }
