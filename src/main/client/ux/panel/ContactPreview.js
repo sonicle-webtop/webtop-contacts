@@ -428,6 +428,7 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 										xtype: 'displayfield',
 										bind: '{record.avatarName}',
 										cls: me.cls + '-header-dn',
+										htmlEncode: true,
 										flex: 1
 									}, {
 										xtype: 'fieldcontainer',
