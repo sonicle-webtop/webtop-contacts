@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a response object that returns a collection of changed contacts between an instant in past.")
 @JsonTypeName("ContactsResultDelta")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-02-17T14:58:21.674+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-07-07T16:10:59.155+02:00[Europe/Rome]")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiContactsResultDelta   {
   private @Valid String nextSyncToken;

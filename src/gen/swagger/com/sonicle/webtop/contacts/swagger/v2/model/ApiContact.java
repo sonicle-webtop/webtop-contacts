@@ -20,9 +20,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  **/
 @ApiModel(description = "Represent a contact, which is an item for users to organize and save information about the people and organizations that they communicate with. Contacts are contained in contact categories.")
 @JsonTypeName("Contact")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-02-17T14:58:21.674+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-07-07T16:10:59.155+02:00[Europe/Rome]")
 public class ApiContact extends ApiContactEx  {
   private @Valid String id;
+  private @Valid String categoryId;
   private @Valid String etag;
   private @Valid String createdAt;
   private @Valid String updatedAt;
@@ -45,6 +46,26 @@ public class ApiContact extends ApiContactEx  {
   @JsonProperty("id")
   public void setId(String id) {
     this.id = id;
+  }
+
+  /**
+   * The ID of the category this contact belongs to.
+   **/
+  public ApiContact categoryId(String categoryId) {
+    this.categoryId = categoryId;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "The ID of the category this contact belongs to.")
+  @JsonProperty("categoryId")
+  public String getCategoryId() {
+    return categoryId;
+  }
+
+  @JsonProperty("categoryId")
+  public void setCategoryId(String categoryId) {
+    this.categoryId = categoryId;
   }
 
   /**
@@ -118,6 +139,7 @@ public class ApiContact extends ApiContactEx  {
     }
     ApiContact contact = (ApiContact) o;
     return Objects.equals(this.id, contact.id) &&
+        Objects.equals(this.categoryId, contact.categoryId) &&
         Objects.equals(this.etag, contact.etag) &&
         Objects.equals(this.createdAt, contact.createdAt) &&
         Objects.equals(this.updatedAt, contact.updatedAt) &&
@@ -126,7 +148,7 @@ public class ApiContact extends ApiContactEx  {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, etag, createdAt, updatedAt, super.hashCode());
+    return Objects.hash(id, categoryId, etag, createdAt, updatedAt, super.hashCode());
   }
 
   @Override
@@ -135,6 +157,7 @@ public class ApiContact extends ApiContactEx  {
     sb.append("class ApiContact {\n");
     sb.append("    ").append(toIndentedString(super.toString())).append("\n");
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    categoryId: ").append(toIndentedString(categoryId)).append("\n");
     sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
     sb.append("    createdAt: ").append(toIndentedString(createdAt)).append("\n");
     sb.append("    updatedAt: ").append(toIndentedString(updatedAt)).append("\n");

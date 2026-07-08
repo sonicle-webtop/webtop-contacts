@@ -114,7 +114,7 @@ public class MailchimpSyncThread extends Thread {
 		boolean errors=false;
 		
 		try {
-			ContactsManager manager = (ContactsManager)WT.getServiceManager(serviceId);
+			ContactsManager manager = (ContactsManager)WT.getServiceManager(serviceId, wts.getProfileId());
 			CoreManager cm=WT.getCoreManager();
 			UserProfileId srcPidUserProfileId=new UserProfileId(srcPid);
 			

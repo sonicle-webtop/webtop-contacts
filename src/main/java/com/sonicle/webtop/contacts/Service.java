@@ -220,10 +220,10 @@ public class Service extends BaseService {
 	
 	@Override
 	public void initialize() throws Exception {
-		UserProfile up = getEnv().getProfile();
-		manager = (ContactsManager)WT.getServiceManager(SERVICE_ID);
-		ss = new ContactsServiceSettings(SERVICE_ID, up.getDomainId());
-		us = new ContactsUserSettings(SERVICE_ID, up.getId());
+		UserProfileId upId = getEnv().getProfileId();
+		manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, upId);
+		ss = new ContactsServiceSettings(SERVICE_ID, upId.getDomainId());
+		us = new ContactsUserSettings(SERVICE_ID, upId);
 		initFolders();
 		
 		// Default lookup: if not yet configured this will implicitly set built-in folder as default!

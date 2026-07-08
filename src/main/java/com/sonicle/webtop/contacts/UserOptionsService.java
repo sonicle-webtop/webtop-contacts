@@ -61,7 +61,7 @@ public class UserOptionsService extends BaseUserOptionsService {
 	
 	public UserOptionsService() {
 		super();
-		manager=(ContactsManager)WT.getServiceManager(SERVICE_ID);
+		manager=(ContactsManager)WT.getServiceManager(SERVICE_ID, getTargetProfileId());
 	}
 	
 	@Override

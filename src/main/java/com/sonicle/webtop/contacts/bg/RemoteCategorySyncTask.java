@@ -37,6 +37,7 @@ import com.sonicle.webtop.contacts.ConcurrentSyncException;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.model.Category;
+import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.SessionManager;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.WebTopApp;
@@ -66,7 +67,7 @@ public class RemoteCategorySyncTask extends BaseBackgroundServiceTask {
 	public void executeWork(JobExecutionContext jec, TaskContext context) throws Exception {
 		BackgroundService bs = ((BackgroundService)getBackgroundService(jec));
 		SessionManager sesMgr = WebTopApp.getInstance().getSessionManager();
-		ContactsManager jobManager = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID);
+		ContactsManager jobManager = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID, true, RunContext.getSysAdminProfileId());
 		
 		List<Category> cats = jobManager.listRemoteCategoriesToBeSynchronized();
 		for (Category cat : cats) {

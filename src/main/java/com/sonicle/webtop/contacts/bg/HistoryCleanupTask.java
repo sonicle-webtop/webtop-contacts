@@ -34,6 +34,7 @@ package com.sonicle.webtop.contacts.bg;
 
 import com.sonicle.webtop.contacts.BackgroundService;
 import com.sonicle.webtop.contacts.ContactsManager;
+import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.sdk.Result;
 import com.sonicle.webtop.core.sdk.BaseBackgroundServiceTask;
@@ -57,7 +58,7 @@ public class HistoryCleanupTask extends BaseBackgroundServiceTask {
 	@Override
 	public void executeWork(JobExecutionContext jec, TaskContext context) throws Exception {
 		BackgroundService bs = ((BackgroundService)getBackgroundService(jec));
-		ContactsManager conMgr = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID);
+		ContactsManager conMgr = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID, true, RunContext.getSysAdminProfileId());
 		
 		Result<Integer[]> result = conMgr.cleanupHistory(RETENTION_YEARS);
 		if (result.hasExceptions()) LOGGER.warn("Cleanup process return errors: {}", result.collectExceptionsMessages());

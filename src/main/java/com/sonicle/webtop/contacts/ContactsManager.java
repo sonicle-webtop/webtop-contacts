@@ -129,6 +129,7 @@ import com.sonicle.webtop.core.app.util.ExceptionUtils;
 import com.sonicle.webtop.core.app.util.log.LogHandler;
 import com.sonicle.webtop.core.app.util.log.LogMessage;
 import com.sonicle.webtop.core.sdk.BaseManager;
+import com.sonicle.webtop.core.sdk.SharedManager;
 import com.sonicle.webtop.core.bol.Owner;
 import com.sonicle.webtop.core.model.Recipient;
 import com.sonicle.webtop.core.dal.BaseDAO;
@@ -226,7 +227,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseManager implements IContactsManager, IRecipientsProvidersSource {
+public class ContactsManager extends BaseManager implements SharedManager, IContactsManager, IRecipientsProvidersSource {
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String SHARE_CONTEXT_CATEGORY = "CATEGORY";
 	
@@ -239,26 +240,54 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
 	public final MailchimpProduct MAILCHIMP_PRODUCT;
-	private boolean hasMailchimp=false;
-	
+	private final boolean hasMailchimp;
+
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
 		VCARD_CARETENCODINGENABLED = ContactsProps.getVCardWriterCaretEncodingEnabled(WT.getProperties());
 		if (!fastInit) {
 			shareCache.init();
 		}
-		
-		// targetProfile can be null in case of public context where 
+
+		// targetProfile can be null in case of public context where
 		// we have no logged user. So check it!
 		//TODO: evaluate whether to create a dedicated dummy user for this (eg. wt-public@domain, ...)
-		if (!RunContext.isSysAdmin() && targetProfileId != null) {
+		// Derive product/license state from the TARGET profile only: this instance
+		// may be shared and its creation can be triggered by ANY caller (web
+		// session, sessionless REST, admin background task) — caller identity must
+		// not freeze state on it.
+		if (targetProfileId != null && !RunContext.isSysAdmin(targetProfileId)) {
 			MAILCHIMP_PRODUCT = new MailchimpProduct(targetProfileId.getDomainId());
 			hasMailchimp = WT.isLicensed(MAILCHIMP_PRODUCT) && WT.isLicensed(MAILCHIMP_PRODUCT, targetProfileId.getUserId()) > 0;
 		} else {
 			MAILCHIMP_PRODUCT = null;
+			hasMailchimp = false;
 		}
 	}
-	
+
+	/**
+	 * SharedManager lifecycle: one instance per (service, target user), serving
+	 * every web session and every REST/CardDAV/EAS call of that user. There is
+	 * no background machinery to start: caches are lock-guarded and build
+	 * eagerly (shareCache when !fastInit) or lazily on first access.
+	 */
+	@Override
+	public void onSharedStartup() {
+		logger.info("[{}] shared ContactsManager created", getTargetProfileId());
+	}
+
+	/**
+	 * SharedManager lifecycle: runs at registry eviction (no more session refs +
+	 * idle grace elapsed) or application shutdown. Nothing to tear down; just
+	 * release cache memory.
+	 */
+	@Override
+	public void onSharedShutdown() {
+		logger.info("[{}] shared ContactsManager shutting down", getTargetProfileId());
+		shareCache.clear();
+		ownerCache.clear();
+	}
+
 	private CoreManager getCoreManager() {
 		return WT.getCoreManager(getTargetProfileId());
 	}
@@ -448,8 +477,12 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		ContactsUserSettings us = new ContactsUserSettings(SERVICE_ID, getTargetProfileId());
 		
 		Integer categoryId = null;
+		boolean locked = false;
 		try {
-			locks.tryLock("getDefaultCategoryId", 60, TimeUnit.SECONDS);
+			//on timeout proceed unlocked (availability over strictness), but only
+			//unlock when actually held: unlocking a lock owned by another thread
+			//throws IllegalMonitorStateException masking the real outcome
+			locked = locks.tryLock("getDefaultCategoryId", 60, TimeUnit.SECONDS);
 			categoryId = us.getDefaultCategoryFolder();
 			if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, FolderShare.ItemsRight.CREATE)) {
 				try {
@@ -463,7 +496,7 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 		} catch (InterruptedException ex) {
 			// Do nothing...
 		} finally {
-			locks.unlock("getDefaultCategoryId");
+			if (locked) locks.unlock("getDefaultCategoryId");
 		}
 		return categoryId;
 	}
@@ -3445,6 +3478,9 @@ public class ContactsManager extends BaseManager implements IContactsManager, IR
 	}
 	
 	private void onAfterCategoryAction(int categoryId, UserProfileId owner) {
+		//long-lived shared instance: drop the cached owner so a deleted (and
+		//possibly recycled) categoryId cannot serve a stale entry; next get re-fills
+		ownerCache.remove(categoryId);
 		if (!owner.equals(getTargetProfileId())) shareCache.init();
 	}
 	

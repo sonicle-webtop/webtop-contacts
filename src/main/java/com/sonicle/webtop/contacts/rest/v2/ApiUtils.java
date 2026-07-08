@@ -77,6 +77,10 @@ import static com.sonicle.webtop.core.sdk.BaseRestApiUtils.shouldSet;
  */
 public class ApiUtils {
 	
+	public static String asCategoryId(final Integer categoryId) {
+		return (categoryId != null) ? String.valueOf(categoryId) : null;
+	}
+
 	public static int parseCategory(final String categoryId) throws WTParseException {
 		try {
 			return Integer.valueOf(categoryId);
@@ -237,15 +241,17 @@ public class ApiUtils {
 	public static ApiContact fillApiContact(final ApiContact tgt, final Set<String> fields2set, final ContactObjectWithBean src) {
 		fillApiContactBase(tgt, fields2set, src.getContact());
 		tgt.id(String.valueOf(src.getContactId()));
+		tgt.categoryId(asCategoryId(src.getCategoryId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
 		tgt.createdAt(JodaTimeUtils.printISO(src.getContact().getCreationTimestamp()));
 		tgt.updatedAt(JodaTimeUtils.printISO(src.getRevisionTimestamp()));
 		return tgt;
 	}
-	
+
 	public static ApiContact fillApiContact(final ApiContact tgt, final Set<String> fields2set, final Contact src) {
 		fillApiContactBase(tgt, fields2set, src);
 		tgt.id(String.valueOf(src.getContactId()));
+		tgt.categoryId(asCategoryId(src.getCategoryId()));
 		tgt.etag(BaseRestApiUtils.buildETag(src.getRevisionTimestamp()));
 		tgt.createdAt(JodaTimeUtils.printISO(src.getCreationTimestamp()));
 		tgt.updatedAt(JodaTimeUtils.printISO(src.getRevisionTimestamp()));

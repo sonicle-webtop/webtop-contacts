@@ -14,56 +14,51 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
-/**
- * Bean for carry messageStat fields
- **/
-@ApiModel(description = "Bean for carry messageStat fields")
-@JsonTypeName("EasSyncContactStat")
+
+
+@JsonTypeName("ContactCFValueBase")
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-07-07T16:10:59.155+02:00[Europe/Rome]")
-public class ApiEasSyncContactStat   {
-  private @Valid String id;
-  private @Valid String etag;
+public class ApiContactCFValueBase   {
+  private @Valid String type;
+  private @Valid String value;
 
   /**
-   * Message ID (internal)
    **/
-  public ApiEasSyncContactStat id(String id) {
-    this.id = id;
+  public ApiContactCFValueBase type(String type) {
+    this.type = type;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Message ID (internal)")
-  @JsonProperty("id")
+  @ApiModelProperty(required = true, value = "")
+  @JsonProperty("type")
   @NotNull
-  public String getId() {
-    return id;
+  public String getType() {
+    return type;
   }
 
-  @JsonProperty("id")
-  public void setId(String id) {
-    this.id = id;
+  @JsonProperty("type")
+  public void setType(String type) {
+    this.type = type;
   }
 
   /**
-   * Revision tag
    **/
-  public ApiEasSyncContactStat etag(String etag) {
-    this.etag = etag;
+  public ApiContactCFValueBase value(String value) {
+    this.value = value;
     return this;
   }
 
   
-  @ApiModelProperty(required = true, value = "Revision tag")
-  @JsonProperty("etag")
-  @NotNull
-  public String getEtag() {
-    return etag;
+  @ApiModelProperty(value = "")
+  @JsonProperty("value")
+  public String getValue() {
+    return value;
   }
 
-  @JsonProperty("etag")
-  public void setEtag(String etag) {
-    this.etag = etag;
+  @JsonProperty("value")
+  public void setValue(String value) {
+    this.value = value;
   }
 
 
@@ -75,23 +70,23 @@ public class ApiEasSyncContactStat   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ApiEasSyncContactStat easSyncContactStat = (ApiEasSyncContactStat) o;
-    return Objects.equals(this.id, easSyncContactStat.id) &&
-        Objects.equals(this.etag, easSyncContactStat.etag);
+    ApiContactCFValueBase contactCFValueBase = (ApiContactCFValueBase) o;
+    return Objects.equals(this.type, contactCFValueBase.type) &&
+        Objects.equals(this.value, contactCFValueBase.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, etag);
+    return Objects.hash(type, value);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ApiEasSyncContactStat {\n");
+    sb.append("class ApiContactCFValueBase {\n");
     
-    sb.append("    id: ").append(toIndentedString(id)).append("\n");
-    sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
+    sb.append("    value: ").append(toIndentedString(value)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -2550,6 +2550,11 @@
                 "description": "The contact's unique ID.",
                 "readOnly": true
               },
+              "categoryId": {
+                "type": "string",
+                "description": "The ID of the category this contact belongs to.",
+                "readOnly": true
+              },
               "etag": {
                 "type": "string",
                 "x-stoplight": {

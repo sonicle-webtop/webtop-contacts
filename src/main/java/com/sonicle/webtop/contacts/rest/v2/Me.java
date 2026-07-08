@@ -119,7 +119,7 @@ public class Me extends MeApi {
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
 		ContactsManager manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
-		manager.setSoftwareName("rest");
+		RunContext.setSoftwareName("rest");
 		return manager;
 	}
 
