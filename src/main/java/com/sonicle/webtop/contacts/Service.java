@@ -118,7 +118,7 @@ import com.sonicle.webtop.contacts.model.ContactQueryUI;
 import com.sonicle.webtop.contacts.model.ListContactsResult;
 import com.sonicle.webtop.contacts.model.Grouping;
 import com.sonicle.webtop.contacts.model.ShowBy;
-import com.sonicle.webtop.contacts.msg.ContactImportLogSM;
+import com.sonicle.webtop.contacts.msg.ContactsImportLogSM;
 import com.sonicle.webtop.contacts.msg.RemoteSyncResult;
 import com.sonicle.webtop.contacts.rpt.RptAddressbook;
 import com.sonicle.webtop.contacts.rpt.RptContactsDetail;
@@ -1496,7 +1496,7 @@ public class Service extends BaseService {
 			LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
 				@Override
 				public void handle(Collection<LogEntry> entries) {
-					if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+					if (entries != null) wts.notify(toContactsImportLogSMs(oid, true, entries));
 				}
 			};
 			
@@ -1569,7 +1569,7 @@ public class Service extends BaseService {
 				LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
 					@Override
 					public void handle(Collection<LogEntry> entries) {
-						if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+						if (entries != null) wts.notify(toContactsImportLogSMs(oid, true, entries));
 					}
 				};
 				
@@ -1619,7 +1619,7 @@ public class Service extends BaseService {
 			LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
 				@Override
 				public void handle(Collection<LogEntry> entries) {
-					if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+					if (entries != null) wts.notify(toContactsImportLogSMs(oid, true, entries));
 				}
 			};
 			
@@ -1655,7 +1655,7 @@ public class Service extends BaseService {
 			LogHandler logHandler = !"do".equals(op) ? null : new LogHandler() {
 				@Override
 				public void handle(Collection<LogEntry> entries) {
-					if (entries != null) wts.notify(toContactImportLogSMs(oid, true, entries));
+					if (entries != null) wts.notify(toContactsImportLogSMs(oid, true, entries));
 				}
 			};
 			
@@ -1898,13 +1898,13 @@ public class Service extends BaseService {
 			.printedBy(ud.getDisplayName());
 	}
 	
-	private ServiceMessage toContactImportLogSMs(String operationId, boolean pushDown, Collection<LogEntry> entries) {
+	private ServiceMessage toContactsImportLogSMs(String operationId, boolean pushDown, Collection<LogEntry> entries) {
 		StringJoiner sj = new StringJoiner("\n");
 		for (LogEntry entry : entries) {
 			if (pushDown) entry.pushDown();
 			sj.add(entry.toString());
 		}
-		return new ContactImportLogSM(SERVICE_ID, operationId, sj.toString());
+		return new ContactsImportLogSM(SERVICE_ID, operationId, sj.toString());
 	}
 	
 	private String buildContactFilename(ContactObjectWithBean cobj) {
