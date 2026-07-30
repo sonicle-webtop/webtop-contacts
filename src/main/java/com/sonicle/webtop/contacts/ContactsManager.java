@@ -227,7 +227,7 @@ import java.util.zip.ZipOutputStream;
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseManager implements SharedManager, IContactsManager, IRecipientsProvidersSource {
+public class ContactsManager extends BaseManager implements /*SharedManager,*/ IContactsManager, IRecipientsProvidersSource {
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String SHARE_CONTEXT_CATEGORY = "CATEGORY";
 	
@@ -271,22 +271,22 @@ public class ContactsManager extends BaseManager implements SharedManager, ICont
 	 * no background machinery to start: caches are lock-guarded and build
 	 * eagerly (shareCache when !fastInit) or lazily on first access.
 	 */
-	@Override
+/*	@Override
 	public void onSharedStartup() {
 		logger.info("[{}] shared ContactsManager created", getTargetProfileId());
-	}
+	}*/
 
 	/**
 	 * SharedManager lifecycle: runs at registry eviction (no more session refs +
 	 * idle grace elapsed) or application shutdown. Nothing to tear down; just
 	 * release cache memory.
 	 */
-	@Override
+/*	@Override
 	public void onSharedShutdown() {
 		logger.info("[{}] shared ContactsManager shutting down", getTargetProfileId());
 		shareCache.clear();
 		ownerCache.clear();
-	}
+	}*/
 
 	private CoreManager getCoreManager() {
 		return WT.getCoreManager(getTargetProfileId());
