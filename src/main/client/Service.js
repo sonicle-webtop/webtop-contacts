@@ -2816,7 +2816,8 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 	
 	buildPushMessageEventName: function(msg) {
 		var name = this.callParent(arguments);
-		if ('contactImportLog' === msg.action && msg.payload && msg.payload.oid) {
+		// Override default naming function to create a combined name for import
+		if (Sonicle.String.isIn(msg.action, ['contactsImportLog']) && msg.payload && msg.payload.oid) {
 			name += '-' + msg.payload.oid;
 		}
 		return name;
