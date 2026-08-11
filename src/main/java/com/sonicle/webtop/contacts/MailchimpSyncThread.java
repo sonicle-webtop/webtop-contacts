@@ -61,6 +61,7 @@ import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.WT;
 import com.sonicle.webtop.core.app.WebTopSession;
 import com.sonicle.webtop.core.model.Tag;
+import com.sonicle.webtop.core.sdk.BaseServiceAsyncAction;
 import com.sonicle.webtop.core.sdk.UserProfileId;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,31 +76,31 @@ import org.slf4j.Logger;
  *
  * @author gabriele.bulfon
  */
-public class MailchimpSyncThread extends Thread {
-	
+public class MailchimpSyncThread extends BaseServiceAsyncAction {
+
 	public static final Logger logger=Service.logger;
-	
-	String serviceId;
-	WebTopSession wts;
-	
-	String oid;
-	String srcPid;
-	String srcCatId;
-	String audienceId;
-	boolean syncTags;
-	String tags[];
-	String incomingAudienceId;
-	String incomingCategoryId;
-	
-	public MailchimpSyncThread(String threadName, WebTopSession wts, 
-			String oid, String srcPid, String srcCatId, String audienceId, boolean syncTags, String tags[], 
+
+	private final String serviceId;
+	private final WebTopSession wts;
+
+	private final String oid;
+	private final String srcPid;
+	private final String srcCatId;
+	private final String audienceId;
+	private final boolean syncTags;
+	private final String tags[];
+	private final String incomingAudienceId;
+	private final String incomingCategoryId;
+
+	public MailchimpSyncThread(String threadName, WebTopSession wts,
+			String oid, String srcPid, String srcCatId, String audienceId, boolean syncTags, String tags[],
 			String incomingAudienceId, String incomingCategoryId) {
-		
+
 		super(threadName);
-		
+
 		this.serviceId="com.sonicle.webtop.contacts";
 		this.wts=wts;
-		
+
 		this.oid=oid;
 		this.srcPid=srcPid;
 		this.srcCatId=srcCatId;
@@ -109,13 +110,16 @@ public class MailchimpSyncThread extends Thread {
 		this.incomingAudienceId=incomingAudienceId;
 		this.incomingCategoryId=incomingCategoryId;
 	}
-	
-	public void run() {
+
+	@Override
+	public void executeAction() {
 		boolean errors=false;
-		
+
 		try {
 			ContactsManager manager = (ContactsManager)WT.getServiceManager(serviceId, wts.getProfileId());
-			CoreManager cm=WT.getCoreManager();
+			//target-scoped: this runs on a background thread — never derive the
+			//core manager from the thread's own context
+			CoreManager cm=WT.getCoreManager(wts.getProfileId());
 			UserProfileId srcPidUserProfileId=new UserProfileId(srcPid);
 			
 			ApiClient cli=manager.getMailchimpApiClient();
@@ -203,6 +207,7 @@ public class MailchimpSyncThread extends Thread {
 				//for each category run entire loop
 				int count=0;
 				for(Category category: categories) {
+					if (shouldStop) return; //stopped by session cleanup: abort quietly
 					wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.syncCategory", srcPidUserProfileId.toString(), category.getName())));
 					ArrayList<Integer> icats=new ArrayList<>();
 					icats.add(category.getCategoryId());
@@ -249,6 +254,7 @@ public class MailchimpSyncThread extends Thread {
 				//for each category add all contacts creating necessary tags
 				int count=0;
 				for(Category category: categories) {
+					if (shouldStop) return; //stopped by session cleanup: abort quietly
 					wts.notify(new MailchimpSyncLogSM(oid,WT.lookupFormattedResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.syncCategory", srcPidUserProfileId.toString(), category.getName())));
 					
 					ArrayList<Integer> icats=new ArrayList<>();
@@ -275,6 +281,7 @@ public class MailchimpSyncThread extends Thread {
 			wts.notify(new MailchimpSyncLogSM(oid,WT.lookupResource(serviceId, wts.getUserProfile().getLocale(), "syncMailchimp.log.receiveNew")));
 			List<ListMembers4> members=lists.getListsIdMembers(incomingAudienceId, null, null, 1000, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null).getMembers();
 			for(ListMembers4 member: members) {
+				if (shouldStop) return; //stopped by session cleanup: abort quietly
 				Map<String,Object> mfields=member.getMergeFields();
 				ContactEx contact=new ContactEx();
 				contact.setEmail1(member.getEmailAddress());
@@ -306,7 +313,8 @@ public class MailchimpSyncThread extends Thread {
 			logger.error("Error in SyncMailChimp", t);
 			errors=true;
 		}
-					
+
+		this.completed();
 		wts.notify(new MailchimpSyncEndSM(errors));
 	}
 	

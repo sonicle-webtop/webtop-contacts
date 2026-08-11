@@ -197,9 +197,11 @@ public class Service extends BaseService {
 	public static final String HOME_VIEW = "h";
 	public static final String META_CONTEXT_SEARCH = "mainsearch";
 	
-	private ContactsManager manager;
-	private ContactsUserSettings us;
-	private ContactsServiceSettings ss;
+	//volatile: async threads (sync actions, cache loaders) read these while
+	//cleanup() nulls them — they need visibility and must null-guard
+	private volatile ContactsManager manager;
+	private volatile ContactsUserSettings us;
+	private volatile ContactsServiceSettings ss;
 	
 	private final KeyedReentrantLocks<String> locks = new KeyedReentrantLocks<>();
 	private final SearchableCustomFieldTypeCache cacheSearchableCustomFieldType = new SearchableCustomFieldTypeCache(5, TimeUnit.SECONDS);
@@ -208,6 +210,7 @@ public class Service extends BaseService {
 	private StringSet inactiveOrigins = null;
 	private IntegerSet inactiveFolders = null;	
 	private final AsyncActionCollection<Integer, SyncRemoteCategoryAA> syncRemoteCategoryAAs = new AsyncActionCollection<>();
+	private final AsyncActionCollection<String, MailchimpSyncThread> mailchimpSyncAAs = new AsyncActionCollection<>();
 	private final Cache<String, Integer> cacheManageGridContactsTotalCount = Caffeine.newBuilder()
 		.expireAfterWrite(500, TimeUnit.MILLISECONDS)
 		.maximumSize(10)
@@ -236,6 +239,7 @@ public class Service extends BaseService {
 		synchronized(syncRemoteCategoryAAs) {
 			syncRemoteCategoryAAs.clear();
 		}
+		mailchimpSyncAAs.clear(); //stops any in-flight Mailchimp sync
 		if (inactiveFolders != null) inactiveFolders.clear();
 		if (foldersTreeCache != null) foldersTreeCache.clear();
 		us = null;
@@ -1098,8 +1102,12 @@ public class Service extends BaseService {
 		MailchimpSyncThread t=new MailchimpSyncThread("MailchimpSyncThread", wts, oid,
 				srcPid, srcCatId, audienceId, syncTags, tags,
 				incomingAudienceId, incomingCategoryId);
-		
-		t.start();
+
+		//tracked async action (Subject-associated, stopped by cleanup()) instead
+		//of a raw unmanaged thread
+		mailchimpSyncAAs.values().removeIf(aa -> !aa.isRunning()); //purge finished
+		mailchimpSyncAAs.put(oid, t);
+		t.start(RunContext.getSubject(), RunContext.getRunProfileId());
 		
 		String pidAndCatId=srcPid;
 		if (!StringUtils.isEmpty(srcCatId)) pidAndCatId+="-"+srcCatId;
@@ -2070,26 +2078,32 @@ public class Service extends BaseService {
 		private final int categoryId;
 		private final String categoryName;
 		private final boolean full;
-		
+		//captured at creation (request thread, session alive): the outer fields
+		//are nulled by cleanup() while this action may still be running
+		private final ContactsManager mgr;
+		private final WebTopSession wts;
+
 		public SyncRemoteCategoryAA(int categoryId, String categoryName, boolean full) {
 			super();
 			setName(this.getClass().getSimpleName());
 			this.categoryId = categoryId;
 			this.categoryName = categoryName;
 			this.full = full;
+			this.mgr = manager;
+			this.wts = getWts();
 		}
 
 		@Override
 		public void executeAction() {
-			getWts().notify(new RemoteSyncResult(true)
+			wts.notify(new RemoteSyncResult(true)
 				.setCategoryId(categoryId)
 				.setCategoryName(categoryName)
 				.setSuccess(true)
 			);
 			try {
-				manager.syncRemoteCategory(categoryId, full);
+				mgr.syncRemoteCategory(categoryId, full);
 				this.completed();
-				getWts().notify(new RemoteSyncResult(false)
+				wts.notify(new RemoteSyncResult(false)
 					.setCategoryId(categoryId)
 					.setCategoryName(categoryName)
 					.setSuccess(true)
@@ -2098,14 +2112,14 @@ public class Service extends BaseService {
 			} catch(ConcurrentSyncException ex) {
 				logger.debug("SyncRemoteCategoryAA already running", ex);
 				//TODO: add localized message for this well known situation
-				getWts().notify(new RemoteSyncResult(false)
+				wts.notify(new RemoteSyncResult(false)
 					.setCategoryId(categoryId)
 					.setCategoryName(categoryName)
 					.setThrowable(ex, true)
 				);
 			} catch(Throwable t) {
 				logger.error("SyncRemoteCategoryAA failure", t);
-				getWts().notify(new RemoteSyncResult(false)
+				wts.notify(new RemoteSyncResult(false)
 					.setCategoryId(categoryId)
 					.setCategoryName(categoryName)
 					.setThrowable(t, true)
@@ -2126,10 +2140,13 @@ public class Service extends BaseService {
 		public Optional<CategoryPropSet> load(Integer k) throws Exception {
 			try {
 				logger.trace("[FoldersPropsCache] Loading... [{}]", k);
+				//local copy: cleanup() nulls the field while a load may be in flight
+				final ContactsManager mgr = manager;
+				if (mgr == null) return null; // Session tearing down: do not cache
 				final CategoryFSOrigin origin = foldersTreeCache.getOriginByFolder(k);
 				if (origin == null) return Optional.empty(); // Disable lookup for unknown folder IDs
 				if (origin instanceof MyCategoryFSOrigin) return Optional.empty(); // Disable lookup for personal folder IDs
-				return Optional.ofNullable(manager.getCategoryCustomProps(k));
+				return Optional.ofNullable(mgr.getCategoryCustomProps(k));
 				
 			} catch (Exception ex) {
 				logger.error("[FoldersPropsCache] Unable to load [{}]", k);

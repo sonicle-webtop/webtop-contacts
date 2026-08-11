@@ -120,6 +120,7 @@ import com.sonicle.webtop.contacts.products.MailchimpProduct;
 import com.sonicle.webtop.core.CoreManager;
 import com.sonicle.webtop.core.app.RunContext;
 import com.sonicle.webtop.core.app.WT;
+import com.sonicle.webtop.core.app.WebTopManager;
 import com.sonicle.webtop.core.app.io.BatchBeanHandler;
 import com.sonicle.webtop.core.app.io.input.WTReaderException;
 import com.sonicle.webtop.core.app.provider.RecipientsProviderBase;
@@ -227,7 +228,11 @@ import java.util.zip.ZipOutputStream;
  *
  * @author malbinola
  */
-public class ContactsManager extends BaseManager implements /*SharedManager,*/ IContactsManager, IRecipientsProvidersSource {
+//Hybrid scope: web sessions keep PRIVATE per-session ContactsManagers
+//(re-login = fresh); only sessionless consumers (REST, CardDAV/EAS) share the
+//registry instance. Remove the annotation for everyone-shares-one.
+@com.sonicle.webtop.core.sdk.SharedManagerScope(com.sonicle.webtop.core.sdk.SharedManagerScope.Scope.SESSIONLESS_ONLY)
+public class ContactsManager extends BaseManager implements SharedManager, IContactsManager, IRecipientsProvidersSource {
 	private static final Logger logger = WT.getLogger(ContactsManager.class);
 	private static final String SHARE_CONTEXT_CATEGORY = "CATEGORY";
 	
@@ -240,53 +245,62 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 	private static final ConcurrentHashMap<String, UserProfileId> pendingRemoteCategorySyncs = new ConcurrentHashMap<>();
 	
 	public final MailchimpProduct MAILCHIMP_PRODUCT;
-	private final boolean hasMailchimp;
+	private static final long MAILCHIMP_LICENSE_TTL_MS = 5 * 60 * 1000L;
+	private volatile Boolean mailchimpLicensed = null;
+	private volatile long mailchimpLicenseResolvedTs = 0;
 
 	public ContactsManager(boolean fastInit, UserProfileId targetProfileId) {
 		super(fastInit, targetProfileId);
 		VCARD_CARETENCODINGENABLED = ContactsProps.getVCardWriterCaretEncodingEnabled(WT.getProperties());
-		if (!fastInit) {
-			shareCache.init();
-		}
+		//no eager shareCache.init() here: in shared mode the constructor runs
+		//under the registry bin lock and must stay cheap (no DB access); the
+		//cache lazily builds on first getter access in any mode
 
 		// targetProfile can be null in case of public context where
 		// we have no logged user. So check it!
 		//TODO: evaluate whether to create a dedicated dummy user for this (eg. wt-public@domain, ...)
-		// Derive product/license state from the TARGET profile only: this instance
-		// may be shared and its creation can be triggered by ANY caller (web
-		// session, sessionless REST, admin background task) — caller identity must
-		// not freeze state on it.
-		if (targetProfileId != null && !RunContext.isSysAdmin(targetProfileId)) {
+		// Derive product state from the TARGET profile only: this instance may be
+		// shared and its creation can be triggered by ANY caller (web session,
+		// sessionless REST, admin background task) — caller identity must not
+		// freeze state on it. WebTopManager.isSysAdmin is a pure identity check
+		// (no Shiro authz load — this ctor must stay cheap, see above); the
+		// license itself is resolved lazily in isMailchimpLicensed().
+		if (targetProfileId != null && !WebTopManager.isSysAdmin(targetProfileId)) {
 			MAILCHIMP_PRODUCT = new MailchimpProduct(targetProfileId.getDomainId());
-			hasMailchimp = WT.isLicensed(MAILCHIMP_PRODUCT) && WT.isLicensed(MAILCHIMP_PRODUCT, targetProfileId.getUserId()) > 0;
 		} else {
 			MAILCHIMP_PRODUCT = null;
-			hasMailchimp = false;
 		}
 	}
 
 	/**
 	 * SharedManager lifecycle: one instance per (service, target user), serving
-	 * every web session and every REST/CardDAV/EAS call of that user. There is
-	 * no background machinery to start: caches are lock-guarded and build
-	 * eagerly (shareCache when !fastInit) or lazily on first access.
+	 * every web session and every REST/CardDAV/EAS call of that user. No
+	 * background machinery to start; just warm the share cache off the request
+	 * path.
 	 */
-/*	@Override
+	@Override
 	public void onSharedStartup() {
 		logger.info("[{}] shared ContactsManager created", getTargetProfileId());
-	}*/
+		//warm the share cache: latch-gated on the first caller's thread, AFTER
+		//the registry bin lock is released. Safe here because it resolves
+		//CoreManager (a different registry key) — it never re-enters this
+		//manager's own (serviceId, profile) key
+		shareCache.init();
+	}
 
 	/**
 	 * SharedManager lifecycle: runs at registry eviction (no more session refs +
 	 * idle grace elapsed) or application shutdown. Nothing to tear down; just
 	 * release cache memory.
 	 */
-/*	@Override
+	@Override
 	public void onSharedShutdown() {
 		logger.info("[{}] shared ContactsManager shutting down", getTargetProfileId());
 		shareCache.clear();
 		ownerCache.clear();
-	}*/
+		cacheCustomFieldsNameToID.clear();
+		cacheCustomFieldsIDToType.clear();
+	}
 
 	private CoreManager getCoreManager() {
 		return WT.getCoreManager(getTargetProfileId());
@@ -479,22 +493,26 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 		Integer categoryId = null;
 		boolean locked = false;
 		try {
-			//on timeout proceed unlocked (availability over strictness), but only
-			//unlock when actually held: unlocking a lock owned by another thread
-			//throws IllegalMonitorStateException masking the real outcome
 			locked = locks.tryLock("getDefaultCategoryId", 60, TimeUnit.SECONDS);
-			categoryId = us.getDefaultCategoryFolder();
-			if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, FolderShare.ItemsRight.CREATE)) {
-				try {
-					categoryId = getBuiltInCategoryId();
-					if (categoryId == null) throw new WTException("Built-in category is null");
-					us.setDefaultCategoryFolder(categoryId);
-				} catch (Throwable t) {
-					logger.error("Unable to get built-in category", t);
+			if (locked) {
+				categoryId = us.getDefaultCategoryFolder();
+				if (categoryId == null || !quietlyCheckRightsOnCategory(categoryId, FolderShare.ItemsRight.CREATE)) {
+					try {
+						categoryId = getBuiltInCategoryId();
+						if (categoryId == null) throw new WTException("Built-in category is null");
+						us.setDefaultCategoryFolder(categoryId);
+					} catch (Throwable t) {
+						logger.error("Unable to get built-in category", t);
+					}
 				}
+			} else {
+				//on lock timeout the check-and-repair must NOT run unsynchronized:
+				//serve the stored value as-is
+				logger.warn("[{}] getDefaultCategoryId lock timeout, returning stored value", getTargetProfileId());
+				categoryId = us.getDefaultCategoryFolder();
 			}
 		} catch (InterruptedException ex) {
-			// Do nothing...
+			Thread.currentThread().interrupt();
 		} finally {
 			if (locked) locks.unlock("getDefaultCategoryId");
 		}
@@ -3481,7 +3499,11 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 		//long-lived shared instance: drop the cached owner so a deleted (and
 		//possibly recycled) categoryId cannot serve a stale entry; next get re-fills
 		ownerCache.remove(categoryId);
-		if (!owner.equals(getTargetProfileId())) shareCache.init();
+		//invalidate only, no eager init(): callers run this while their own JDBC
+		//connection is still open, and rebuilding here nests more pooled
+		//connections inside it (pool-exhaustion risk under concurrent load).
+		//The cleared cache lazily rebuilds on next access.
+		if (!owner.equals(getTargetProfileId())) shareCache.clear();
 	}
 	
 	private void checkRightsOnCategoryOrigin(UserProfileId originPid, String action) throws WTException {
@@ -3927,7 +3949,9 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 				if (owner == null) throw new WTException("Owner not found [{0}]", key);
 				mapObject.put(key, owner);
 			} catch(WTException ex) {
-				logger.trace("OwnerCache miss", ex);
+				//never at trace: a DB failure here silently yields a null owner,
+				//degrading rights checks into "Owner not found" with no evidence
+				logger.error("OwnerCache: unable to resolve category owner [{}]", key, ex);
 			}
 		}
 	}
@@ -3980,7 +4004,24 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 	}
 	
 	public boolean isMailchimpEnabled() {
-		return hasMailchimp && (RunContext.isImpersonated()||RunContext.isPermitted(true, SERVICE_ID, "MAILCHIMP"));
+		//permission is evaluated against the CALLING subject on purpose: the only
+		//callers are web-session paths (ServiceVars, UserOptions) where the actor's
+		//authorization is what gates the feature UI
+		return isMailchimpLicensed() && (RunContext.isImpersonated()||RunContext.isPermitted(true, SERVICE_ID, "MAILCHIMP"));
+	}
+
+	private boolean isMailchimpLicensed() {
+		if (MAILCHIMP_PRODUCT == null) return false;
+		//lazy + TTL re-resolve (racy single-check: recompute is idempotent, last
+		//write wins): keeps license I/O out of the ctor and makes license changes
+		//visible on the long-lived shared instance without waiting for eviction
+		Boolean licensed = mailchimpLicensed;
+		if (licensed == null || (System.currentTimeMillis() - mailchimpLicenseResolvedTs) >= MAILCHIMP_LICENSE_TTL_MS) {
+			licensed = WT.isLicensed(MAILCHIMP_PRODUCT) && WT.isLicensed(MAILCHIMP_PRODUCT, getTargetProfileId().getUserId()) > 0;
+			mailchimpLicensed = licensed;
+			mailchimpLicenseResolvedTs = System.currentTimeMillis();
+		}
+		return licensed;
 	}
 	
 	public ApiClient getMailchimpApiClient() throws WTException {
@@ -4008,7 +4049,10 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 		@Override
 		protected Map<String, String> internalGetMap() {
 			try {
-				CoreManager coreMgr = WT.getCoreManager();
+				//target-scoped: a rebuild can be triggered from ANY thread (Quartz,
+				//DAV, REST) and the map is served to all of the user's threads —
+				//never bake the calling thread's context into it
+				CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 				return coreMgr.getCustomFieldNamesMap(SERVICE_ID, BitFlags.noneOf(CoreManager.CustomFieldListOption.class));
 				
 			} catch(Throwable t) {
@@ -4027,7 +4071,8 @@ public class ContactsManager extends BaseManager implements /*SharedManager,*/ I
 		@Override
 		protected Map<String, CustomField.Type> internalGetMap() {
 			try {
-				CoreManager coreMgr = WT.getCoreManager();
+				//target-scoped: see CustomFieldsNameToIDCache
+				CoreManager coreMgr = WT.getCoreManager(getTargetProfileId());
 				return coreMgr.listCustomFieldTypesById(SERVICE_ID, BitFlags.noneOf(CoreManager.CustomFieldListOption.class));
 				
 			} catch(Throwable t) {
