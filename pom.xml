@@ -10,7 +10,7 @@
 	<parent>
 		<groupId>com.sonicle.webtop</groupId>
 		<artifactId>webtop-superpom-service</artifactId>
-		<version>11</version>
+		<version>12</version>
 	</parent>
 	
 	<properties>
@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>com.sonicle.libraries</groupId>
 			<artifactId>sonicle-dav</artifactId>
-			<version>LATEST</version>
+			<version>[1.0,2.0-alpha)</version>
 		</dependency>
 		<dependency>
 			<groupId>org.imgscalr</groupId>
