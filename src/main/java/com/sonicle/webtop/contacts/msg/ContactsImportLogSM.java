@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2026 Sonicle S.r.l.
+ * Copyright (C) 2021 Sonicle S.r.l.
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU Affero General Public License version 3 as published by
@@ -28,41 +28,21 @@
  * version 3, these Appropriate Legal Notices must retain the display of the
  * Sonicle logo and Sonicle copyright notice. If the display of the logo is not
  * reasonably feasible for technical reasons, the Appropriate Legal Notices must
- * display the words "Copyright (C) 2026 Sonicle S.r.l.".
+ * display the words "Copyright (C) 2021 Sonicle S.r.l.".
  */
-package com.sonicle.webtop.contacts.bg;
+package com.sonicle.webtop.contacts.msg;
 
-import com.sonicle.webtop.contacts.BackgroundService;
-import com.sonicle.webtop.contacts.ContactsManager;
-import com.sonicle.webtop.core.app.RunContext;
-import com.sonicle.webtop.core.app.WT;
-import com.sonicle.webtop.core.app.sdk.Result;
-import com.sonicle.webtop.core.sdk.BaseBackgroundServiceTask;
-import org.quartz.JobExecutionContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.sonicle.webtop.core.sdk.ServiceMessage;
 
 /**
  *
  * @author malbinola
  */
-public class HistoryCleanupTask extends BaseBackgroundServiceTask {
-	private static final Logger LOGGER = (Logger)LoggerFactory.getLogger(HistoryCleanupTask.class);
-	public static final int RETENTION_YEARS = 1;
+public class ContactsImportLogSM extends ServiceMessage {
 	
-	@Override
-	public Logger getLogger() {
-		return LOGGER;
-	}
-	
-	@Override
-	public void executeWork(JobExecutionContext jec, TaskContext context) throws Exception {
-		BackgroundService bs = ((BackgroundService)getBackgroundService(jec));
-		ContactsManager conMgr = (ContactsManager)WT.getServiceManager(bs.SERVICE_ID, true, RunContext.getSysAdminProfileId());
-		
-		Result<Integer[]> result = conMgr.cleanupHistory(RETENTION_YEARS);
-		if (result.hasExceptions()) LOGGER.warn("Cleanup process return errors: {}", result.collectExceptionsMessages());
-		LOGGER.debug("Categories history: cleaned {} rows", result.getObject()[0]);
-		LOGGER.debug("Contacts history: cleaned {} rows", result.getObject()[1]);
+	public ContactsImportLogSM(String serviceId, String operationId, String log) {
+		super(serviceId, "contactsImportLog");
+		this.setMappedPayload("oid", operationId);
+		this.setMappedPayload("log", log);
 	}
 }

@@ -17,9 +17,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 
 
 @JsonTypeName("Contact_allOf")
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-02-17T14:58:21.674+01:00[Europe/Berlin]")
+@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJAXRSSpecServerCodegen", date = "2026-07-07T16:10:59.155+02:00[Europe/Rome]")
 public class ApiContactAllOf   {
   private @Valid String id;
+  private @Valid String categoryId;
   private @Valid String etag;
   private @Valid String createdAt;
   private @Valid String updatedAt;
@@ -42,6 +43,26 @@ public class ApiContactAllOf   {
   @JsonProperty("id")
   public void setId(String id) {
     this.id = id;
+  }
+
+  /**
+   * The ID of the category this contact belongs to.
+   **/
+  public ApiContactAllOf categoryId(String categoryId) {
+    this.categoryId = categoryId;
+    return this;
+  }
+
+  
+  @ApiModelProperty(value = "The ID of the category this contact belongs to.")
+  @JsonProperty("categoryId")
+  public String getCategoryId() {
+    return categoryId;
+  }
+
+  @JsonProperty("categoryId")
+  public void setCategoryId(String categoryId) {
+    this.categoryId = categoryId;
   }
 
   /**
@@ -115,6 +136,7 @@ public class ApiContactAllOf   {
     }
     ApiContactAllOf contactAllOf = (ApiContactAllOf) o;
     return Objects.equals(this.id, contactAllOf.id) &&
+        Objects.equals(this.categoryId, contactAllOf.categoryId) &&
         Objects.equals(this.etag, contactAllOf.etag) &&
         Objects.equals(this.createdAt, contactAllOf.createdAt) &&
         Objects.equals(this.updatedAt, contactAllOf.updatedAt);
@@ -122,7 +144,7 @@ public class ApiContactAllOf   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, etag, createdAt, updatedAt);
+    return Objects.hash(id, categoryId, etag, createdAt, updatedAt);
   }
 
   @Override
@@ -131,6 +153,7 @@ public class ApiContactAllOf   {
     sb.append("class ApiContactAllOf {\n");
     
     sb.append("    id: ").append(toIndentedString(id)).append("\n");
+    sb.append("    categoryId: ").append(toIndentedString(categoryId)).append("\n");
     sb.append("    etag: ").append(toIndentedString(etag)).append("\n");
     sb.append("    createdAt: ").append(toIndentedString(createdAt)).append("\n");
     sb.append("    updatedAt: ").append(toIndentedString(updatedAt)).append("\n");

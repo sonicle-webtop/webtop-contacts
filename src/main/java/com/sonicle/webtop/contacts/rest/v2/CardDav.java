@@ -487,7 +487,7 @@ public class CardDav extends CarddavApi {
 	
 	private ContactsManager getManager(UserProfileId targetProfileId) {
 		ContactsManager manager = (ContactsManager)WT.getServiceManager(SERVICE_ID, targetProfileId);
-		manager.setSoftwareName("rest-carddav");
+		RunContext.setSoftwareName("rest-carddav");
 		return manager;
 	}
 	
