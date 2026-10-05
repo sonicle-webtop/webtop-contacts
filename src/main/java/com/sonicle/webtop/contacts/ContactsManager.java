@@ -220,6 +220,7 @@ import com.sonicle.webtop.core.model.Delta;
 import com.sonicle.webtop.core.model.TagCandidate;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -1484,7 +1485,7 @@ public class ContactsManager extends BaseManager implements SharedManager, ICont
 				contDao.lazy_viewChangedContactObjects(
 					con,
 					Arrays.asList(categoryId),
-					ContactDAO.createChangedContactsNewOrModifiedCondition(),
+					ContactDAO.createChangedContactsFullSyncCondition(),
 					ContactObjectOutputType.STAT.equals(outputType),
 					myLimit,
 					ManagerUtils.toOffset(myPage, myLimit),

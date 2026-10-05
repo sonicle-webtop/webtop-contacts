@@ -1228,9 +1228,14 @@ AND (ccnts.href IS NULL)
 		}
 	}
 	
-	public static Condition createChangedContactsNewOrModifiedCondition() {
+	public static Condition createChangedContactsFullSyncCondition() {
+		// Change-type alone is not enough: rows are filtered before DISTINCT ON, so a deleted (or moved-away)
+		// contact would still surface through its older C/U row. Only contacts currently alive in that category count.
 		return HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_CREATION)
-			.or(HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE));
+			.or(HISTORY_CONTACTS.CHANGE_TYPE.equal(BaseDAO.CHANGE_TYPE_UPDATE))
+			.and(CONTACTS_.CATEGORY_ID.equal(HISTORY_CONTACTS.CATEGORY_ID))
+			.and(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.NEW))
+				.or(CONTACTS_.REVISION_STATUS.equal(EnumUtils.toSerializedName(ContactBase.RevisionStatus.MODIFIED))));
 	}
 	
 	public static Condition createChangedContactsSinceUntilCondition(DateTime since, DateTime until) {

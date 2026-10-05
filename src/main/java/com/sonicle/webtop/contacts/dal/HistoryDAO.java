@@ -33,12 +33,14 @@
 package com.sonicle.webtop.contacts.dal;
 
 import static com.sonicle.webtop.contacts.jooq.Tables.HISTORY_CATEGORIES;
+import com.sonicle.webtop.contacts.jooq.tables.HistoryContacts;
 import static com.sonicle.webtop.contacts.jooq.tables.HistoryContacts.HISTORY_CONTACTS;
 import com.sonicle.webtop.core.dal.BaseDAO;
 import com.sonicle.webtop.core.dal.DAOException;
 import java.sql.Connection;
 import org.joda.time.DateTime;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 /**
  *
@@ -74,11 +76,32 @@ public class HistoryDAO extends BaseDAO {
 	public int deleteContactsHistoryByAge(Connection con, int retentionYears) throws DAOException {
 		DateTime cutoff = BaseDAO.createRevisionTimestamp().minusYears(retentionYears);
 		DSLContext dsl = getDSL(con);
+		// The history is not just a changelog: a full sync (see ContactDAO.lazy_viewChangedContactObjects)
+		// is driven by it, so a contact with no history rows in its category is invisible to DAV clients.
+		// Expired rows can go only if they are superseded by a newer row for the same contact in the same
+		// category, or if they record a deletion; the latest C/U row of a live contact is always kept.
+		HistoryContacts NEWER = HISTORY_CONTACTS.as("newer");
 		return dsl
 			.delete(HISTORY_CONTACTS)
 			.where(
 				HISTORY_CONTACTS.CHANGE_TIMESTAMP.lessThan(cutoff)
+				.and(
+					HISTORY_CONTACTS.CHANGE_TYPE.equal(CHANGE_TYPE_DELETION)
+					.or(DSL.exists(
+						DSL.selectOne()
+						.from(NEWER)
+						.where(
+							NEWER.CONTACT_ID.equal(HISTORY_CONTACTS.CONTACT_ID)
+							.and(NEWER.CATEGORY_ID.equal(HISTORY_CONTACTS.CATEGORY_ID))
+							.and(NEWER.ID.greaterThan(HISTORY_CONTACTS.ID))
+						)
+					))
+				)
 			)
 			.execute();
+	}
+	
+	public static DateTime createAgeCutoff(final int retentionYears) {
+		return BaseDAO.createRevisionTimestamp().minusYears(retentionYears);
 	}
 }
