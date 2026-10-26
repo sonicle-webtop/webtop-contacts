@@ -37,6 +37,8 @@ import com.sonicle.webtop.contacts.ContactObjectOutputType;
 import com.sonicle.webtop.contacts.ContactsManager;
 import com.sonicle.webtop.contacts.ContactsServiceSettings;
 import com.sonicle.webtop.contacts.ContactsUtils;
+import com.sonicle.webtop.contacts.bg.HistoryCleanupTask;
+import com.sonicle.webtop.contacts.dal.HistoryDAO;
 import com.sonicle.webtop.contacts.model.Category;
 import com.sonicle.webtop.contacts.model.CategoryFSFolder;
 import com.sonicle.webtop.contacts.model.CategoryFSOrigin;
@@ -287,6 +289,16 @@ public class CardDav extends CarddavApi {
 			if (!StringUtils.isBlank(syncToken)) {
 				since = ETAG_FORMATTER.parseDateTime(syncToken);
 				if (since == null) return respErrorBadRequest();
+				
+				// History rows older than the retention window may have been cleaned up (deletions included),
+				// so changes since such a token cannot be reported reliably: reject it and let the client
+				// start over with a full sync (CardDAV: Sabre turns it into a DAV:valid-sync-token error).
+				if (since.isBefore(HistoryDAO.createAgeCutoff(HistoryCleanupTask.RETENTION_YEARS))) {
+					if (logger.isDebugEnabled()) {
+						logger.debug("[{}] getCardsChanges({}): syncToken '{}' is older than history retention", RunContext.getRunProfileId(), syncToken);
+					}
+					return respErrorBadRequest("syncToken is older than history retention ({} years): a full sync is required", HistoryCleanupTask.RETENTION_YEARS);
+				}
 			}
 			
 			Delta<ContactObject> delta = manager.listContactsDelta(categoryId, since, ContactObjectOutputType.STAT);
