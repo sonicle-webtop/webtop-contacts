@@ -1128,6 +1128,23 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 				if (rec) me.createEventUI(rec);
 			}
 		});
+		// NethVoice chat: a colleague gets a chat, someone outside an email with the chat link
+		me.addAct('nvChat', {
+			text: WT.res('act-nvChat.lbl'),
+			tooltip: null,
+			iconCls: 'wt-icon-nvchat',
+			hidden: WT.getVar('nvChatEnabled') !== true,
+			handler: function() {
+				var rec = me.getSelectedContact(), email = rec ? rec.get('email') : null;
+				if (Ext.isEmpty(email)) return;
+				WT.handleNewChat([{email: email, name: rec.get('fullName') || email}], {
+					onLink: function(link) {
+						// handleNewMailMessage decodes its arguments (it serves mailto: links)
+						WT.handleNewMailMessage(encodeURIComponent(email), '', encodeURIComponent(Ext.String.format(WT.res('nvchat.invite.text'), link)));
+					}
+				});
+			}
+		});
 		if (me.hasAuditUI()) {
 			me.addAct('contactAuditLog', {
 				text: WT.res('act-auditLog.lbl'),
@@ -1319,6 +1336,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					itemId: 'actionsep2'
 				},
 				me.getAct('createEvent'),
+				me.getAct('nvChat'),
 				me.getAct('sendByEmail'),
 				'-',
 				//TODO: maybe add support to external actions coming from other services
@@ -1333,6 +1351,7 @@ Ext.define('Sonicle.webtop.contacts.Service', {
 					me.getAct('openContact').setHidden(hideActions);
 					me.getAct('sendSms').setHidden(hideActions);
 					me.getAct('createEvent').setHidden(hideActions);
+					me.getAct('nvChat').setHidden(hideActions || WT.getVar('nvChatEnabled') !== true || Ext.isEmpty((me.getSelectedContact() || {get: Ext.emptyFn}).get('email')));
 					me.getAct('sendByEmail').setHidden(hideActions);
 					
 					me.updateDisabled('openContact');
