@@ -313,6 +313,27 @@ Ext.define('Sonicle.webtop.contacts.ux.panel.ContactPreview', {
 							me.fireEvent('openchat', me, null);
 						}
 					},
+					WT.getVar('nvChatEnabled') !== true ? null : {
+						// NethVoice chat: a colleague gets a chat, someone outside an email with the chat link
+						xtype: 'button',
+						ui: '{tertiary}',
+						bind: {
+							hidden: '{!foHasEmails}'
+						},
+						tooltip: WT.res('act-nvChat.lbl'),
+						iconCls: 'wt-icon-nvchat',
+						hidden: true,
+						handler: function() {
+							var vm = me.getVM(), email = vm.get('foMainEmail');
+							if (Ext.isEmpty(email)) return;
+							WT.handleNewChat([{email: email, name: vm.get('record.fullName') || email}], {
+								onLink: function(link) {
+									// handleNewMailMessage decodes its arguments (it serves mailto: links)
+									WT.handleNewMailMessage(encodeURIComponent(email), '', encodeURIComponent(Ext.String.format(WT.res('nvchat.invite.text'), link)));
+								}
+							});
+						}
+					},
 					!WT.getVar('pbxConfigured') ? null : {
 						xtype: 'button',
 						ui: '{tertiary}',
